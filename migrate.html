@@ -3,57 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Migração de Dados — Gestão PMS</title>
+<title>Migração — Gestão PMS</title>
 <link rel="icon" href="img/logo_sertania.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;background:#080f1e;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;padding:20px;color:#e2e8f0}
-.card{background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:32px;width:100%;max-width:600px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.card{background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:32px;width:100%;max-width:600px}
 h2{font-size:20px;font-weight:800;margin-bottom:6px}
-.sub{font-size:13px;color:#64748b;margin-bottom:22px;line-height:1.5}
-.summary{display:flex;gap:12px;margin-bottom:22px}
-.s-box{flex:1;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:14px;text-align:center}
-.s-val{font-size:28px;font-weight:800;color:#3b82f6}
-.s-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-top:4px}
-.secs-list{display:flex;flex-direction:column;gap:6px;margin-bottom:22px;max-height:260px;overflow-y:auto}
-.sec-item{background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
-.sec-icon{font-size:18px;flex-shrink:0}
-.sec-name{flex:1;font-weight:600}
-.sec-count{font-size:11px;color:#64748b}
-.sec-st{font-size:14px}
-.btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
-.btn:hover{opacity:.9}.btn:disabled{opacity:.55;cursor:not-allowed}
-.log{background:#020810;border:1px solid #1e3a5f;border-radius:8px;padding:12px;font-size:12px;font-family:monospace;color:#64748b;margin-top:16px;max-height:180px;overflow-y:auto;display:none}
-.log p{margin-bottom:3px}.ok{color:#34d399}.er{color:#f87171}.in{color:#60a5fa}
-.done{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:16px;text-align:center;margin-top:16px;display:none;line-height:1.8}
+.sub{font-size:13px;color:#64748b;margin-bottom:20px}
+.summary{display:flex;gap:10px;margin-bottom:20px}
+.s-box{flex:1;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center}
+.s-val{font-size:26px;font-weight:800;color:#3b82f6}
+.s-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-top:3px}
+.secs{display:flex;flex-direction:column;gap:5px;margin-bottom:20px;max-height:220px;overflow-y:auto}
+.sec-row{background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:9px 13px;display:flex;align-items:center;gap:9px;font-size:13px}
+.sec-row .name{flex:1;font-weight:600}
+.sec-row .cnt{font-size:11px;color:#64748b}
+.btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.prog-wrap{background:#1e3a5f;border-radius:5px;height:7px;margin-top:12px;overflow:hidden;display:none}
+.prog-bar{height:100%;background:#3b82f6;border-radius:5px;transition:width .3s;width:0}
+.log{background:#020810;border:1px solid #1e3a5f;border-radius:8px;padding:10px;font-size:12px;font-family:monospace;color:#64748b;margin-top:12px;max-height:200px;overflow-y:auto;display:none}
+.log p{margin-bottom:2px}.ok{color:#34d399}.er{color:#f87171}.in{color:#60a5fa}
+.done{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:14px;text-align:center;margin-top:12px;display:none}
 .done a{color:#34d399;font-weight:700;text-decoration:none;font-size:15px}
-.prog-wrap{background:#1e3a5f;border-radius:6px;height:8px;margin-top:14px;overflow:hidden;display:none}
-.prog-bar{height:100%;background:#3b82f6;border-radius:6px;transition:width .3s;width:0}
 </style>
 </head>
 <body>
 <div class="card">
-  <h2>📦 Migração de Dados</h2>
-  <p class="sub">Importa todas as atividades e itens do WorkTWZ para o Firebase. Execute apenas uma vez.</p>
+  <h2>📦 Migração do WorkTWZ</h2>
+  <p class="sub">Importa as atividades EXPOCOSE 52, LIDERANÇAS, CONTROLE DE EMPREGOS, DEMANDAS, AGENDA, ASSOCIAÇÕES e PONTOS DE CISTERNAS para o Firebase.</p>
   <div class="summary">
-    <div class="s-box"><div class="s-val">8</div><div class="s-lbl">Atividades</div></div>
-    <div class="s-box"><div class="s-val">100</div><div class="s-lbl">Itens</div></div>
+    <div class="s-box"><div class="s-val">7</div><div class="s-lbl">Atividades</div></div>
+    <div class="s-box"><div class="s-val">55</div><div class="s-lbl">Itens</div></div>
+    <div class="s-box"><div class="s-val">57</div><div class="s-lbl">Sub-itens</div></div>
     <div class="s-box"><div class="s-val" id="tot-ok" style="color:#34d399">0</div><div class="s-lbl">Importados</div></div>
   </div>
-  <div class="secs-list" id="secs-list"></div>
+  <div class="secs" id="secs-list"></div>
   <button class="btn" id="btn" onclick="runMigrate()">🚀 Importar Tudo Agora</button>
-  <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+  <div class="prog-wrap" id="pw"><div class="prog-bar" id="pb"></div></div>
   <div class="log" id="log"></div>
-  <div class="done" id="done">✅ <strong>Migração concluída!</strong><br><br>
-    <a href="index.html">→ Abrir o Sistema</a>
-  </div>
+  <div class="done" id="done">✅ <strong>Migração concluída!</strong><br><br><a href="index.html">→ Abrir o Sistema</a></div>
 </div>
-
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import{getFirestore,collection,addDoc,serverTimestamp,getDocs,query,where}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
-import{MIGRATE_SECS,MIGRATE_ITEMS}from"./js/migrate-data.js";
+import{MIGRATE_SECS,MIGRATE_ITEMS,MIGRATE_SUBS}from"./js/migrate-data.js";
 
 const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
 const app=initializeApp(FB);
@@ -63,80 +59,92 @@ const db=getFirestore(app);
 // Render list
 const list=document.getElementById('secs-list');
 MIGRATE_SECS.forEach(s=>{
-  const cnt=MIGRATE_ITEMS.filter(i=>i.atividade_id===s.id).length;
-  list.innerHTML+=`<div class="sec-item"><span class="sec-icon">${s.icon}</span><span class="sec-name">${s.name}</span><span class="sec-count">${cnt} itens</span><span class="sec-st" id="ss-${s.id}">⏳</span></div>`;
+  const items=MIGRATE_ITEMS.filter(i=>i.sec_id===s.id);
+  const subs=MIGRATE_SUBS.filter(sb=>items.some(i=>i.id===sb.item_id));
+  list.innerHTML+=`<div class="sec-row"><span style="font-size:18px">${s.icon||'📅'}</span><span class="name">${s.name}</span><span class="cnt">${items.length} itens · ${subs.length} sub</span><span id="ss-${s.id}" style="font-size:14px">⏳</span></div>`;
 });
 
-function log(msg,cls='in'){const el=document.getElementById('log');el.style.display='block';const p=document.createElement('p');p.className=cls;p.textContent=msg;el.appendChild(p);el.scrollTop=el.scrollHeight;}
-function setBar(pct){document.getElementById('prog-bar').style.width=pct+'%';}
+onAuthStateChanged(auth,u=>{if(!u){document.getElementById('btn').disabled=true;document.getElementById('btn').textContent='⚠️ Faça login primeiro';}});
 
-onAuthStateChanged(auth,u=>{
-  if(!u){
-    document.getElementById('btn').disabled=true;
-    document.getElementById('btn').textContent='⚠️ Faça login primeiro';
-    document.querySelector('.sub').innerHTML='<span style="color:#f87171">Você precisa estar logado para importar.</span> <a href="login.html" style="color:#60a5fa">→ Fazer login</a>';
-  }
-});
+function log(m,c='in'){const el=document.getElementById('log');el.style.display='block';const p=document.createElement('p');p.className=c;p.textContent=m;el.appendChild(p);el.scrollTop=el.scrollHeight;}
+let totOk=0;
+function addOk(n=1){totOk+=n;document.getElementById('tot-ok').textContent=totOk;}
 
 window.runMigrate=async function(){
-  const btn=document.getElementById('btn');
-  btn.disabled=true;btn.textContent='Importando…';
-  document.getElementById('prog-wrap').style.display='block';
-  let totOk=0,total=MIGRATE_SECS.length+MIGRATE_ITEMS.length;
-  const idMap={}; // old MySQL id → new Firestore id
+  const btn=document.getElementById('btn');btn.disabled=true;btn.textContent='Importando…';
+  document.getElementById('pw').style.display='block';
+  const total=MIGRATE_SECS.length+MIGRATE_ITEMS.length+MIGRATE_SUBS.length;
+  let done=0;
+  const setBar=()=>{document.getElementById('pb').style.width=Math.round(done/total*100)+'%';};
+  const idMap={};// old mysql id → firestore id
 
-  for(let si=0;si<MIGRATE_SECS.length;si++){
-    const s=MIGRATE_SECS[si];
-    const st=document.getElementById('ss-'+s.id);
-    log(`Criando atividade: ${s.name}…`);
+  for(const s of MIGRATE_SECS){
+    log(`Atividade: ${s.name}…`);
     try{
-      // Check if already exists
       const ex=await getDocs(query(collection(db,'secretariats'),where('_old_id','==',s.id)));
       let fid;
-      if(!ex.empty){
-        fid=ex.docs[0].id;
-        log(`  ↺ Já existe (${fid})`,);
-      }else{
+      if(!ex.empty){fid=ex.docs[0].id;log(`  ↺ Já existe (${fid})`);}
+      else{
         const ref=await addDoc(collection(db,'secretariats'),{
-          name:s.name, icon:s.icon, color:s.color,
-          order_num:s.order_num, observacoes:'', responsaveis:'',
-          _old_id:s.id, created_at:serverTimestamp()
+          name:s.name,icon:s.icon||'📅',color:s.color||'#3b82f6',
+          order_num:s.order_num,observacoes:s.observacoes||'',
+          responsaveis:s.responsaveis||'',description:s.description||'',
+          _old_id:s.id,created_at:serverTimestamp()
         });
-        fid=ref.id;
-        log(`  ✅ Criada: ${fid}`,'ok');
+        fid=ref.id;log(`  ✅ ${s.name}`,'ok');
       }
-      idMap[s.id]=fid;
-      st.textContent='✅';totOk++;
-      document.getElementById('tot-ok').textContent=totOk;
-      setBar(Math.round((si+1)/total*100));
-    }catch(e){st.textContent='❌';log(`  ❌ ${e.message}`,'er');}
+      idMap['s'+s.id]=fid;
+      document.getElementById('ss-'+s.id).textContent='✅';
+      addOk();done++;setBar();
+    }catch(e){document.getElementById('ss-'+s.id).textContent='❌';log(`  ❌ ${e.message}`,'er');}
   }
 
-  log('\nImportando 100 itens…','in');
+  log('\nImportando itens…');
   for(let ii=0;ii<MIGRATE_ITEMS.length;ii++){
     const item=MIGRATE_ITEMS[ii];
-    const secFid=idMap[item.atividade_id];
-    if(!secFid){log(`  ⚠ Item ${item.id}: atividade ${item.atividade_id} não encontrada`,'er');continue;}
+    const secFid=idMap['s'+item.sec_id];
+    if(!secFid){done++;setBar();continue;}
     try{
       const ex=await getDocs(query(collection(db,'items'),where('_old_id','==',item.id)));
-      if(!ex.empty){log(`  ↺ Item ${item.id} já existe`);}
+      let fid;
+      if(!ex.empty){fid=ex.docs[0].id;}
       else{
-        await addDoc(collection(db,'items'),{
-          description:item.description, atividade_id:secFid,
-          order_num:item.order_num, concluded:0,
-          item_icon:'📋', observacao:'', responsaveis:'',
-          _old_id:item.id, created_at:serverTimestamp()
+        const ref=await addDoc(collection(db,'items'),{
+          description:item.description,atividade_id:secFid,
+          observacao:item.observacao||'',responsaveis:item.responsaveis||'',
+          order_num:item.order_num,concluded:item.concluded||0,
+          item_icon:item.item_icon||'📋',_old_id:item.id,created_at:serverTimestamp()
         });
+        fid=ref.id;
       }
-      totOk++;
-      document.getElementById('tot-ok').textContent=totOk;
-      setBar(Math.round((MIGRATE_SECS.length+ii+1)/total*100));
-      if((ii+1)%10===0)log(`  … ${ii+1}/100 itens`,'in');
-    }catch(e){log(`  ❌ Item ${item.id}: ${e.message}`,'er');}
+      idMap['i'+item.id]=fid;
+      addOk();done++;setBar();
+      if((ii+1)%10===0)log(`  … ${ii+1}/${MIGRATE_ITEMS.length} itens`);
+    }catch(e){log(`  ❌ Item ${item.id}: ${e.message}`,'er');done++;setBar();}
   }
 
-  setBar(100);
-  log('\n🎉 Migração concluída! '+totOk+' registros importados.','ok');
+  log('\nImportando sub-itens…');
+  for(let si=0;si<MIGRATE_SUBS.length;si++){
+    const sub=MIGRATE_SUBS[si];
+    const itemFid=idMap['i'+sub.item_id];
+    if(!itemFid){done++;setBar();continue;}
+    const secFid=idMap['s'+(MIGRATE_ITEMS.find(i=>i.id===sub.item_id)?.sec_id||'')];
+    try{
+      const ex=await getDocs(query(collection(db,'subitems'),where('_old_id','==',sub.id)));
+      if(ex.empty){
+        await addDoc(collection(db,'subitems'),{
+          description:sub.description,item_id:itemFid,
+          atividade_id:secFid||'',observacao:sub.observacao||'',
+          responsaveis:sub.responsaveis||'',order_num:sub.order_num,
+          concluded:sub.concluded||0,_old_id:sub.id,created_at:serverTimestamp()
+        });
+      }
+      addOk();done++;setBar();
+    }catch(e){log(`  ❌ Sub ${sub.id}: ${e.message}`,'er');done++;setBar();}
+  }
+
+  document.getElementById('pb').style.width='100%';
+  log(`\n🎉 Concluído! ${totOk} registros importados.`,'ok');
   document.getElementById('done').style.display='block';
   btn.textContent='✅ Concluído';
 };
