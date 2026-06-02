@@ -765,7 +765,7 @@ window.gerarPdf=async function(secId){
   toast('PDF gerado!');
 };
 
-async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
+window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
   <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
@@ -786,6 +786,13 @@ async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const 
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-item" style="accent-color:#0e7490;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#60a5fa">Item encontrado</strong> → mostrar todos os subitens</span></label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-show-parent" style="accent-color:#8b5cf6;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#a78bfa">Subitem encontrado</strong> → exibir item pai</span></label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-sub" style="accent-color:#f59e0b;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#fcd34d">Subitem encontrado</strong> → mostrar subitens irmãos</span></label>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
+      <div style="font-size:11px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px">📷 Imagens no PDF:</div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-img-cov" checked style="accent-color:#6366f1;width:14px;height:14px"><span><strong style="color:#818cf8">Imagem da atividade</strong></span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-img-item-cov" checked style="accent-color:#6366f1;width:14px;height:14px"><span><strong style="color:#818cf8">Imagens dos itens</strong></span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-img-item-resp" checked style="accent-color:#6366f1;width:14px;height:14px"><span><strong style="color:#818cf8">Fotos responsáveis (itens)</strong></span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-img-sub-resp" checked style="accent-color:#6366f1;width:14px;height:14px"><span><strong style="color:#818cf8">Fotos responsáveis (subitens)</strong></span></label>
     </div>
     <div id="busca-resultados" style="margin-top:12px"></div>
   </div>
@@ -880,44 +887,72 @@ async function gerarPdfBusca(){
   const {results,query,campo,secId}=window._buscaRes;
   const S=window.S;
   const sec=S.secs.find(s=>s.id===secId);
-  if(!sec||!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
-  toast('Gerando PDF…','info',6000);
+  if(!sec||!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
+  window.toast('Gerando PDF\u2026','info',8000);
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
-  const mx=14,BODY_TOP=28,FTR_Y=H-10;
-  const campoLabel={todos:'Todos os campos',nome:'Nome/Descrição',resp:'Responsáveis',obs:'Observação'};
-  const addDecor=()=>{
-    doc.setFillColor(13,34,64);doc.rect(0,0,W,BODY_TOP-2,'F');
-    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
-    doc.text(sec.name+' — Resultados da Busca',mx,10);
-    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,210,255);
-    doc.text('Campo: '+(campoLabel[campo]||campo)+' | Busca: "'+query+'"',mx,17);
-    doc.text('Gerado em '+new Date().toLocaleDateString('pt-BR'),W-mx,17,{align:'right'});
-    doc.setFillColor(13,34,64);doc.rect(0,H-14,W,14,'F');
-    doc.setFontSize(7.5);doc.setTextColor(180,210,255);
-    doc.text('Página '+doc.getCurrentPageInfo().pageNumber,W-mx,H-5,{align:'right'});
-  };
-  addDecor();
-  const chkAllSubsItem=document.getElementById('bchk-allsubs-item').checked;
-  const chkAllSubsSub=document.getElementById('bchk-allsubs-sub').checked;
-  const iFill=[20,45,95],iTC=[220,235,255];
-  const tblH=[['#','Item / Sub-item','Status','Responsáveis','Observação']];
-  const tblB=[];let c=1;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=14,cw=W-mx*2;
+  const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const lhf=pt=>(pt||9)*0.3528*1.5;
+  const now=new Date().toLocaleDateString('pt-BR');
+  const campoLabel={todos:'Todos os campos',nome:'Nome/Descri\u00e7\u00e3o',resp:'Respons\u00e1veis',obs:'Observa\u00e7\u00e3o'};
+  const lObj=await window.loadB64('img/logo_sertania.png','png',120);
+  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
+  function bgTextura(){doc.setFillColor(215,242,215);for(let gx=14;gx<=196;gx+=7)for(let gy=HDR_H+4;gy<=FTR_Y-2;gy+=7)doc.circle(gx,gy,0.22,'F');}
+  function cabecalho(){bgTextura();doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RESULTADOS DA BUSCA',mx+10,14);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania \u2014 PE  \u2022  Controle PMS  \u2022  '+now,mx+10,23);}
+  function rodape(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');if(lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}sf(7,true,[185,245,185]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA \u2014 PE',mx+16,FTR_Y+7);sf(6.5,false,[180,240,180]);doc.text('Sert\u00e2nia \u2014 PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});}
+  let y=BODY_TOP,pageNum=1;
+  const chk=n=>{if(y+n>BODY_BOT){rodape();doc.addPage();pageNum++;cabecalho();y=BODY_TOP;}};
+  cabecalho();
+  const chkAllSubsItem=document.getElementById('bchk-allsubs-item')?.checked||false;
+  const chkAllSubsSub=document.getElementById('bchk-allsubs-sub')?.checked||false;
+  const chkImgCov=document.getElementById('bchk-img-cov')?.checked!==false;
+  const chkImgItemCov=document.getElementById('bchk-img-item-cov')?.checked!==false;
+  const chkImgItemResp=document.getElementById('bchk-img-item-resp')?.checked!==false;
+  const chkImgSubResp=document.getElementById('bchk-img-sub-resp')?.checked!==false;
+  // Title block
+  doc.setFillColor(13,34,64);doc.rect(mx,y,cw,0.7,'F');y+=3;
+  sf(15,true,[13,34,64]);doc.text(sec.name||'ATIVIDADE',mx,y+8);
+  sf(8,false,[80,100,140]);doc.text('Busca: "'+query+'"  |  Campo: '+(campoLabel[campo]||campo),mx,y+15);
+  let titleBot=y+19;
+  if(chkImgCov&&sec.cover_url){try{const covD=await window.loadB64(sec.cover_url,'jpeg',450);if(covD){const covW=58,covMaxH=44,ar=covD.w/covD.h;let iW=covW,iH=covW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){}titleBot=Math.max(titleBot,y-2+iH+2);}}catch(e){}}
+  y=titleBot;
+  if(sec.responsaveis){chk(10);const rL=doc.splitTextToSize(sec.responsaveis,cw-38);const rH=Math.max(8,rL.length*lhf(8)+4);doc.setFillColor(235,240,255);doc.rect(mx,y,cw,rH,'F');doc.setFillColor(99,102,241);doc.rect(mx,y,2.5,rH,'F');sf(7.5,true,[67,56,202]);doc.text('Responsaveis:',mx+5,y+5);sf(7.5,false,[30,30,80]);doc.text(rL,mx+36,y+5);y+=rH+2;}
+  y+=2;
+  // Stats
+  chk(18);
+  const totalR=results.length,totalSR=results.reduce((t,r)=>t+r.displaySubs.length,0);
+  const cw2=(cw-3)/2;
+  [{v:String(totalR),l:'Itens encontrados',c:[59,130,246]},{v:String(totalSR),l:'Sub-itens exibidos',c:[110,192,46]}].forEach((card,i)=>{const cx=mx+i*(cw2+3);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,y,cw2,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,y,cw2,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cw2/2,y+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cw2/2,y+13,{align:'center'});});
+  y+=19;
+  // Table header
+  chk(12);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');sf(10,true,[255,255,255]);doc.text('ITENS E SUBITENS ENCONTRADOS',mx+5,y+6.5);y+=13;
+  // Build rows
+  const tblH=[['#','Item / Sub-item / Respons\u00e1veis','Prog.','Status','Observa\u00e7\u00e3o']];
+  const tblB=[];const tblE=[];let c=1;
   results.forEach(({item,allSubs,matchSubs,displaySubs,itemMatch})=>{
     let subsToRender=displaySubs;
-    if(itemMatch&&chkAllSubsItem) subsToRender=allSubs;
-    else if(!itemMatch&&matchSubs.length>0&&chkAllSubsSub) subsToRender=allSubs;
+    if(itemMatch&&chkAllSubsItem)subsToRender=allSubs;
+    else if(!itemMatch&&matchSubs.length>0&&chkAllSubsSub)subsToRender=allSubs;
     const isDone=item.concluded==1;
-    tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:iFill,textColor:iTC}},{content:item.description||'',styles:{fontStyle:'bold',fillColor:iFill,textColor:iTC}},{content:isDone?'✅ Concluído':'⏳ Pendente',styles:{fillColor:iFill,textColor:isDone?[100,230,175]:[180,200,240]}},{content:item.responsaveis||'',styles:{fillColor:iFill,textColor:iTC,fontSize:7.5}},{content:item.observacao||'',styles:{fillColor:iFill,textColor:iTC,fontSize:7.5}}]);
-    subsToRender.forEach(s=>{
-      const sD=s.concluded==1;
-      tblB.push(['',{content:'  › '+(s.description||''),styles:{textColor:[150,170,200],fontSize:7.5}},{content:sD?'✅ Concluído':'⏳ Pendente',styles:{textColor:sD?[16,185,129]:[100,120,150],fontSize:7.5}},{content:s.responsaveis||'',styles:{textColor:[100,120,150],fontSize:7}},{content:s.observacao||'',styles:{textColor:[100,120,150],fontSize:7}}]);
-    });
+    const pr=S.subitems.filter(s=>s.item_id===item.id);
+    const pct=pr.length>0?Math.round(pr.filter(s=>s.concluded==1).length/pr.length*100):(isDone?100:0);
+    let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
+    tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[20,45,95],textColor:[220,235,255]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[20,45,95],textColor:[220,235,255]}},{content:pct+'%',styles:{halign:'center',fillColor:[20,45,95],textColor:[220,235,255]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[20,45,95],textColor:isDone?[100,230,175]:[180,200,240]}},{content:item.observacao||'',styles:{fillColor:[20,45,95],textColor:[220,235,255],fontSize:7.5}}]);
+    tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
+    subsToRender.forEach(s=>{const sD=s.concluded==1;let sc='  \u203a '+(s.description||'');if(s.responsaveis)sc+='\n  Resp: '+s.responsaveis;tblB.push(['',{content:sc,styles:{fontSize:7.5,textColor:[150,170,200]}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:[100,120,150]}},{content:sD?'\u2713 Conclu\u00eddo':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:[100,120,150]}},{content:s.observacao||'',styles:{fontSize:7,textColor:[100,120,150]}}]);tblE.push({cu:null,ru:chkImgSubResp?s.resp_url:null});});
   });
-  doc.autoTable({startY:BODY_TOP+2,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},columnStyles:{1:{cellWidth:'auto'}},didDrawPage:()=>addDecor()});
-  doc.save((sec.name||'busca').replace(/[^a-zA-Z0-9À-ú ]/g,'_')+'_busca.pdf');
-  toast('PDF gerado!','success');
+  // Load images sequentially
+  const iDims=[];
+  for(const e of tblE){const cd=e.cu?await window.loadB64(e.cu,'jpeg',150).catch(()=>null):null;const rd=e.ru?await window.loadB64(e.ru,'jpeg',120).catch(()=>null):null;iDims.push({cd,rd});}
+  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:22},4:{cellWidth:38}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+  rodape();
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}
+  const qClean=query.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').trim().replace(/\s+/g,'_').substring(0,20)||'BUSCA';
+  doc.save((sec.name||'atividade').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_'+qClean+'.pdf');
+  window.toast('PDF gerado!','success');
 }
 </script>
 </body>
