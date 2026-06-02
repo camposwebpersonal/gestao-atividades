@@ -8,102 +8,89 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;background:linear-gradient(135deg,#06101f 0%,#0a1830 50%,#06101f 100%);display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;padding:20px}
-.login-card{background:linear-gradient(160deg,#1a2540,#111827);border:1px solid rgba(59,130,246,.2);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.login-logo{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:32px}
-.login-logo img{height:52px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(59,130,246,.4))}
-.login-logo-text{font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;line-height:1.3}
-.login-logo-text strong{display:block;font-size:18px;color:#e2e8f0;letter-spacing:.2px}
-h2{text-align:center;font-size:22px;font-weight:800;color:#f1f5f9;margin-bottom:6px}
-.login-sub{text-align:center;font-size:13px;color:#64748b;margin-bottom:28px}
-.field{margin-bottom:18px}
-.field label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:7px;letter-spacing:.3px}
-.field input{width:100%;background:#0f172a;border:1px solid rgba(59,130,246,.2);border-radius:10px;color:#f1f5f9;padding:12px 16px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s}
+.card{background:linear-gradient(160deg,#1a2540,#111827);border:1px solid rgba(59,130,246,.2);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:30px}
+.logo-row img{height:54px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(59,130,246,.4))}
+.logo-txt{font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;line-height:1.3}
+.logo-txt strong{display:block;font-size:17px;color:#e2e8f0;letter-spacing:.2px}
+h2{text-align:center;font-size:21px;font-weight:800;color:#f1f5f9;margin-bottom:4px}
+.sub{text-align:center;font-size:13px;color:#475569;margin-bottom:28px}
+.field{margin-bottom:16px;position:relative}
+.field label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:7px;letter-spacing:.3px;text-transform:uppercase}
+.field input{width:100%;background:#0f172a;border:1px solid rgba(59,130,246,.2);border-radius:10px;color:#f1f5f9;padding:12px 16px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:.3px}
 .field input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-.btn-login{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s,transform .1s;letter-spacing:.3px}
-.btn-login:hover{opacity:.9}
-.btn-login:active{transform:scale(.98)}
-.btn-login:disabled{opacity:.6;cursor:not-allowed}
-.error-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin-top:14px;display:none}
-.login-footer{text-align:center;font-size:11px;color:#374151;margin-top:28px}
-@media(max-width:480px){.login-card{padding:28px 20px}}
+.field input::placeholder{color:#374151;letter-spacing:0}
+.btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s,transform .1s;letter-spacing:.3px}
+.btn:hover{opacity:.9}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin-top:14px;display:none}
+.footer{text-align:center;font-size:11px;color:#1e293b;margin-top:28px}
+@media(max-width:480px){.card{padding:28px 20px}}
 </style>
 </head>
 <body>
-<div class="login-card">
-  <div class="login-logo">
-    <img src="img/logo_sertania.png" alt="Logo">
-    <div class="login-logo-text"><span>Prefeitura Municipal de</span><strong>Sertânia</strong></div>
+<div class="card">
+  <div class="logo-row">
+    <img src="img/logo_sertania.png" alt="Logo PMS">
+    <div class="logo-txt"><span>Prefeitura Municipal de</span><strong>Sertânia</strong></div>
   </div>
   <h2>Bem-vindo</h2>
-  <p class="login-sub">Sistema de Gestão de Atividades</p>
+  <p class="sub">Sistema de Gestão de Atividades</p>
+
   <div class="field">
-    <label>E-mail</label>
-    <input type="email" id="email" placeholder="seu@email.com" autocomplete="email">
+    <label>Usuário</label>
+    <input type="text" id="usuario" placeholder="Ex: RCAMPOS" autocomplete="username" autocapitalize="off" spellcheck="false">
   </div>
   <div class="field">
     <label>Senha</label>
     <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
   </div>
-  <button class="btn-login" id="btn-login" onclick="doLogin()">Entrar</button>
-  <div class="error-msg" id="error-msg"></div>
-  <div class="login-footer">Gestão de Atividades PMS &copy; 2026</div>
+  <button class="btn" id="btn" onclick="doLogin()">Entrar</button>
+  <div class="err" id="err"></div>
+  <div class="footer">Gestão de Atividades PMS &copy; 2026</div>
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+import{getAuth,signInWithEmailAndPassword,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",
-  authDomain: "gestao-atividades-26257.firebaseapp.com",
-  projectId: "gestao-atividades-26257",
-  storageBucket: "gestao-atividades-26257.firebasestorage.app",
-  messagingSenderId: "113932809324",
-  appId: "1:113932809324:web:b441b9549106822a9cd449"
-};
+const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
+const auth=getAuth(initializeApp(FB));
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+// Se já logado, vai direto para o app
+onAuthStateChanged(auth,u=>{if(u)location.href='index.html';});
 
-onAuthStateChanged(auth, user => {
-  if (user) window.location.href = 'index.html';
-});
+// Converte usuário → email interno
+// Ex: RCAMPOS → rcampos@pms.sertania
+function toEmail(user){return user.trim().toLowerCase()+'@pms.sertania';}
 
-window.doLogin = async function() {
-  const email = document.getElementById('email').value.trim();
-  const senha = document.getElementById('senha').value;
-  const btn = document.getElementById('btn-login');
-  const err = document.getElementById('error-msg');
-  if (!email || !senha) { showErr('Preencha e-mail e senha.'); return; }
-  btn.disabled = true;
-  btn.textContent = 'Entrando…';
-  err.style.display = 'none';
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    window.location.href = 'index.html';
-  } catch(e) {
-    const msgs = {
-      'auth/invalid-credential': 'E-mail ou senha incorretos.',
-      'auth/user-not-found': 'Usuário não encontrado.',
-      'auth/wrong-password': 'Senha incorreta.',
-      'auth/too-many-requests': 'Muitas tentativas. Aguarde.',
-      'auth/invalid-email': 'E-mail inválido.'
+window.doLogin=async function(){
+  const user=document.getElementById('usuario').value.trim();
+  const pass=document.getElementById('senha').value;
+  const btn=document.getElementById('btn');
+  const err=document.getElementById('err');
+  if(!user||!pass){showErr('Preencha usuário e senha.');return;}
+  btn.disabled=true;btn.textContent='Entrando…';err.style.display='none';
+  try{
+    await signInWithEmailAndPassword(auth,toEmail(user),pass);
+    location.href='index.html';
+  }catch(e){
+    const msgs={
+      'auth/invalid-credential':'Usuário ou senha incorretos.',
+      'auth/user-not-found':'Usuário não encontrado.',
+      'auth/wrong-password':'Senha incorreta.',
+      'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
+      'auth/invalid-email':'Usuário inválido.'
     };
-    showErr(msgs[e.code] || 'Erro ao entrar. Tente novamente.');
-    btn.disabled = false;
-    btn.textContent = 'Entrar';
+    showErr(msgs[e.code]||'Erro ao entrar. Tente novamente. ('+e.code+')');
+    btn.disabled=false;btn.textContent='Entrar';
   }
 };
 
-function showErr(msg) {
-  const el = document.getElementById('error-msg');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-document.getElementById('senha').addEventListener('keydown', e => {
-  if (e.key === 'Enter') window.doLogin();
-});
+function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
+document.getElementById('senha').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
+document.getElementById('usuario').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('senha').focus();});
 </script>
 </body>
 </html>
