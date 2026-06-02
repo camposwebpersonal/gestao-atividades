@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Usuários autenticados podem ler tudo
+    match /{document=**} {
+      allow read: if request.auth != null;
+    }
+    // Apenas admins podem escrever (verificado por campo role no /users)
+    match /secretariats/{id} {
+      allow write: if request.auth != null && isAdmin();
+    }
+    match /items/{id} {
+      allow write: if request.auth != null && isAdmin();
+    }
+    match /subitems/{id} {
+      allow write: if request.auth != null && isAdmin();
+    }
+    match /entity_images/{id} {
+      allow write: if request.auth != null && isAdmin();
+    }
+    match /users/{id} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+  }
+}
