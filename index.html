@@ -525,46 +525,201 @@ function renderAdmin(){
 window.gerarPdf=async function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando PDF…','info',8000);
   const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,mx=14,cw=W-mx*2,BT=40,FY=H-16;
-  let y=BT,pg=1;
+  const W=210,H=297,mx=14,cw=W-mx*2,HH=36,FY=H-20;
+  let y=HH+6,pg=1;
   const lImg=await loadB64('img/logo_sertania.png');
-  function cab(){doc.setFillColor(13,34,64);doc.rect(0,0,W,BT-1,'F');if(lImg)try{doc.addImage(lImg,'PNG',mx,4,26,26);}catch(e){}doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA',mx+30,13);doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(180,200,230);doc.text('Sistema de Gestão de Atividades',mx+30,19);doc.text(new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}),W-mx,13,{align:'right'});}
-  function rod(){doc.setFillColor(13,34,64);doc.rect(0,FY-1,W,H-FY+1,'F');doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(160,185,220);doc.text('Prefeitura Municipal de Sertânia — Gestão de Atividades',mx,FY+5);doc.text('Página '+pg,W-mx,FY+5,{align:'right'});}
-  function chk(need){if(y+need>FY-4){doc.addPage();pg++;y=BT;cab();rod();}}
-  const lhf=fs=>fs*0.4;
-  cab();rod();
-  // Title
-  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(26,32,44);doc.text(sec.name||'ATIVIDADE',mx,y+8);y+=14;
-  if(sec.observacoes){doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(80,100,120);const oL=doc.splitTextToSize(sec.observacoes,cw);doc.text(oL,mx,y);y+=oL.length*4+4;}
-  // Cover image
-  if(sec.cover_url){try{const iD=await loadB64(sec.cover_url);if(iD){const ar=iD.w/iD.h,mW=55,mH=38;let iW=mW,iH=mW/ar;if(iH>mH){iH=mH;iW=mH*ar;}doc.addImage(iD.d,'JPEG',W-mx-iW,BT,iW,iH);if(BT+iH>y)y=BT+iH+4;}}catch(e){}}
-  // Responsaveis
-  if(sec.responsaveis){chk(10);const rL=doc.splitTextToSize('Responsáveis: '+sec.responsaveis,cw-8);const rH=Math.max(8,rL.length*lhf(8)+4);doc.setFillColor(235,240,255);doc.rect(mx,y,cw,rH,'F');doc.setFillColor(99,102,241);doc.rect(mx,y,2.5,rH,'F');doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(67,56,202);doc.text('Responsáveis:',mx+5,y+5);doc.setFont('helvetica','normal');doc.setTextColor(30,30,80);doc.text(doc.splitTextToSize(sec.responsaveis,cw-38),mx+36,y+5);if(sec.resp_url){try{const rD=await loadB64(sec.resp_url);if(rD){const rs=Math.min(rH-2,9),rw=rs*(rD.w/rD.h);doc.addImage(rD.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}}catch(e){}}y+=rH+2;}
-  // Table
+  const dt=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  function drawHdr(){
+    doc.setFillColor(44,88,34);doc.rect(0,0,W,HH,'F');
+    doc.setFillColor(60,110,45);doc.rect(0,HH-3,W,3,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(255,255,255);
+    doc.text('RELATORIO DE ATIVIDADE',mx,14);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(180,220,160);
+    doc.text('Prefeitura de Sertania \u2014 PE  \u2022  Controle PMS  \u2022  '+dt,mx,22);
+    if(lImg){try{const lh=26,lw=lh*(lImg.w/lImg.h);doc.addImage(lImg.d,'PNG',W-mx-lw,5,lw,lh);}catch(e){}}
+  }
+
+  function drawFoot(){
+    doc.setDrawColor(200,210,195);doc.setLineWidth(0.3);doc.line(mx,FY,W-mx,FY);
+    if(lImg){try{const lh=11,lw=lh*(lImg.w/lImg.h);doc.addImage(lImg.d,'PNG',mx,FY+3,lw,lh);}catch(e){}}
+    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(44,88,34);
+    doc.text('PREFEITURA DE SERT\u00c2NIA \u2014 PE',mx+14,FY+7);
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(120,140,115);
+    doc.text('Sert\u00e2nia \u2014 PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',mx+14,FY+12);
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(100,120,95);
+    doc.text(pg+'',W-mx,FY+9,{align:'right'});
+  }
+
+  function chk(need){if(y+need>FY-4){doc.addPage();pg++;y=HH+6;drawHdr();drawFoot();}}
+
+  drawHdr();drawFoot();
+
+  // ── Stats ──
   const items=S.items.filter(i=>i.atividade_id===secId);
   const today=new Date();today.setHours(0,0,0,0);
-  const tblH=[['#','Item / Responsáveis','Status','Prazo']];
-  const tblB=[];
-  const tblE=[];
+  let concI=0,lateI=0,totalSubs=0,concSubs=0;
+  const itemProgs=[];
   for(const item of items){
-    const pr=iProg(item),done=pr.pct===100,late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-    const st=done?'✓ Concluído':late?'⚠ Atrasado':pr.pct>0?'Em andamento':'Pendente';
-    tblB.push([String(tblB.length+1),item.description+(item.responsaveis?'\n👤 '+item.responsaveis:''),st,item.deadline_date?fmtD(item.deadline_date):'—']);
-    tblE.push({cu:item.cover_url,ru:item.resp_url});
-    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;tblB.push(['','  › '+s.description+(s.responsaveis?'\n    👤 '+s.responsaveis:''),sD?'✓ Concluído':sL?'⚠ Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'—']);tblE.push({cu:s.cover_url,ru:s.resp_url});}}
+    const pr=iProg(item);itemProgs.push(pr);
+    const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
+    const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+    if(done)concI++;else if(late)lateI++;
+    if(pr.hasSubs){totalSubs+=pr.total;concSubs+=pr.concluded;}
   }
-  // Pre-load images
+  const pendI=items.length-concI-lateI;
+  const overallPct=items.length?Math.round((concI/items.length)*100):0;
+
+  // ── Cover image ──
+  let covD=null;
+  if(sec.cover_url){try{covD=await loadB64(sec.cover_url);}catch(e){}}
+
+  // ── Activity title block ──
+  const covW=58,covMaxH=44;
+  const titleW=covD?cw-covW-6:cw;
+  doc.setFont('helvetica','bold');doc.setFontSize(20);doc.setTextColor(26,32,44);
+  doc.text(sec.name||'ATIVIDADE',mx,y+14);
+  let titleBot=y+20;
+  if(covD){
+    const ar=covD.w/covD.h;let iW=covW,iH=covW/ar;
+    if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}
+    try{doc.addImage(covD.d,'JPEG',W-mx-iW,y,iW,iH);}catch(e){}
+    titleBot=Math.max(titleBot,y+iH+2);
+  }
+  y=titleBot+2;
+  doc.setDrawColor(210,220,205);doc.setLineWidth(0.4);doc.line(mx,y,W-mx,y);y+=5;
+
+  // ── Responsáveis ──
+  if(sec.responsaveis){
+    chk(12);
+    const rL=doc.splitTextToSize(sec.responsaveis,cw-42);
+    const rH=Math.max(10,rL.length*4.2+5);
+    doc.setFillColor(235,242,255);doc.rect(mx,y,cw,rH,'F');
+    doc.setFillColor(99,102,241);doc.rect(mx,y,2.5,rH,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(67,56,202);
+    doc.text('Responsaveis:',mx+5,y+5.5);
+    doc.setFont('helvetica','normal');doc.setTextColor(30,30,80);
+    doc.text(rL,mx+36,y+5.5);
+    if(sec.resp_url){try{const rd=await loadB64(sec.resp_url);if(rd){const rs=Math.min(rH-2,11),rw=rs*(rd.w/rd.h);doc.addImage(rd.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}}catch(e){}}
+    y+=rH+4;
+  }
+
+  // ── Observações ──
+  const obsText=(sec.observacoes||'').trim();
+  if(obsText){
+    chk(18);
+    const oL=doc.splitTextToSize(obsText,cw-8);
+    const oH=oL.length*4+12;
+    doc.setFillColor(255,251,235);doc.rect(mx,y,cw,oH,'F');
+    doc.setDrawColor(245,158,11);doc.setLineWidth(0.5);doc.rect(mx,y,cw,oH,'S');
+    doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(217,119,6);
+    doc.text('Observacoes:',mx+4,y+6);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(146,64,14);
+    doc.text(oL,mx+4,y+12);
+    y+=oH+5;
+  }
+
+  // ── Stats boxes ──
+  chk(22);
+  const bW=(cw-9)/4,bH=20;
+  [[items.length,'Total Itens',[59,130,246]],[concI,'Conclu\u00eddos',[16,185,129]],[pendI,'Pendentes',[59,130,246]],[lateI,'Atrasados',[239,68,68]]].forEach(([val,lbl,col],i)=>{
+    const bx=mx+i*(bW+3);
+    doc.setFillColor(248,250,255);doc.rect(bx,y,bW,bH,'F');
+    doc.setDrawColor(220,228,245);doc.setLineWidth(0.25);doc.rect(bx,y,bW,bH,'S');
+    doc.setFillColor(...col);doc.rect(bx,y,bW,2.5,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(17);doc.setTextColor(...col);
+    doc.text(String(val),bx+bW/2,y+13,{align:'center'});
+    doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(100,116,139);
+    doc.text(lbl,bx+bW/2,y+18,{align:'center'});
+  });
+  y+=bH+4;
+
+  // ── Sub-itens + progresso geral ──
+  if(totalSubs>0){
+    chk(8);
+    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(26,32,44);
+    doc.text('Sub-itens: '+concSubs+'/'+totalSubs+' conclui\u00eddos ('+Math.round(concSubs/totalSubs*100)+'%)',mx,y+5);
+    y+=9;
+  }
+  chk(12);
+  const pbW=cw,pbH=7;
+  doc.setFillColor(210,225,240);doc.rect(mx,y,pbW,pbH,'F');
+  if(overallPct>0){doc.setFillColor(16,185,129);doc.rect(mx,y,pbW*(overallPct/100),pbH,'F');}
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);
+  doc.text('Progresso Geral: '+overallPct+'%',mx+pbW/2,y+pbH-1.5,{align:'center'});
+  y+=pbH+7;
+
+  // ── Ranking ──
+  chk(14);
+  doc.setFillColor(44,88,34);doc.rect(mx,y,cw,8,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(255,255,255);
+  doc.text('RANKING DE PROGRESSO POR ITEM',mx+4,y+5.5);
+  y+=9;
+  const rankBarX=mx+cw*0.60,rankBarW=cw*0.32,rankPctX=W-mx-1;
+  items.forEach((item,ii)=>{
+    chk(8);
+    const pr=itemProgs[ii];
+    const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
+    if(ii%2===0){doc.setFillColor(247,250,246);doc.rect(mx,y,cw,7,'F');}
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(26,32,44);
+    const nm=doc.splitTextToSize(item.description,cw*0.57)[0];
+    doc.text(nm,mx+2,y+5);
+    doc.setFillColor(210,225,240);doc.rect(rankBarX,y+1.8,rankBarW,3.5,'F');
+    if(pct>0){doc.setFillColor(pct===100?16:59,pct===100?185:130,pct===100?129:246);doc.rect(rankBarX,y+1.8,rankBarW*(pct/100),3.5,'F');}
+    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(100,116,139);
+    doc.text(pct+'%',rankPctX,y+5,{align:'right'});
+    y+=7;
+  });
+  y+=6;
+
+  // ── Tabela de itens ──
+  chk(16);
+  doc.setFillColor(44,88,34);doc.rect(mx,y,cw,8,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(255,255,255);
+  doc.text('ITENS DA ATIVIDADE',mx+4,y+5.5);
+  y+=9;
+
+  const tblH=[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']];
+  const tblB=[];const tblE=[];
+  let rowNum=0;
+  for(let ii=0;ii<items.length;ii++){
+    const item=items[ii];const pr=itemProgs[ii];
+    const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
+    const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+    const st=done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente';
+    rowNum++;
+    let cell1=item.description;
+    if(item.observacao)cell1+='\nObs: '+item.observacao;
+    if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
+    const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
+    tblB.push([String(rowNum),cell1,pr.hasSubs?concSubs+'/'+pr.total:'—',pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);
+    tblE.push({cu:item.cover_url,ru:item.resp_url,isItem:true});
+    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:null,isItem:false});}}
+  }
   const iDims=[];
   for(const e of tblE){
     const cd=e.cu?await loadB64(e.cu).catch(()=>null):null;
-    const rd2=e.ru?await loadB64(e.ru).catch(()=>null):null;
-    iDims.push({cd,rd:rd2});
+    const rd=e.ru?await loadB64(e.ru).catch(()=>null):null;
+    iDims.push({cd,rd});
   }
-  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BT,bottom:H-FY+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8},2:{cellWidth:24},3:{cellWidth:22}},
-    didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h),ix=dat.cell.x+dat.cell.width-iw-1.5,iy2=dat.cell.y+(dat.cell.height-ih)/2;try{doc.addImage(e.cd.d,'JPEG',ix,iy2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),rx=dat.cell.x+dat.cell.width-(e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0)-rw-1.5,ry2=dat.cell.y+(dat.cell.height-rs)/2;try{doc.addImage(e.rd.d,'JPEG',rx,ry2,rw,rs);}catch(er){}}},
-    didDrawPage:d=>{if(d.pageNumber>1){cab();pg=d.pageNumber;}rod();}});
+  doc.autoTable({startY:y,head:tblH,body:tblB,
+    margin:{left:mx,right:mx,top:HH+6,bottom:H-FY+6},
+    rowPageBreak:'avoid',
+    styles:{fontSize:7.5,cellPadding:2,overflow:'linebreak',textColor:[26,32,44],lineColor:[210,225,200],lineWidth:0.12},
+    headStyles:{fillColor:[60,100,50],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5,cellPadding:2},
+    alternateRowStyles:{fillColor:[248,252,246]},
+    columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:24},5:{cellWidth:24}},
+    didDrawCell:function(dat){
+      if(dat.section!=='body'||dat.column.index!==1)return;
+      const e=iDims[dat.row.index];if(!e)return;
+      if(e.cd){const ih=Math.min(dat.cell.height-2,12),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}
+      if(e.rd){const rs=Math.min(dat.cell.height-2,10),rw=rs*(e.rd.w/e.rd.h),offset=e.cd?Math.min(dat.cell.height-2,12)*(e.cd.w/e.cd.h)+3:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-offset-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}
+    },
+    didDrawPage:d=>{if(d.pageNumber>1){pg=d.pageNumber;drawHdr();drawFoot();}}
+  });
   doc.save((sec.name||'atividade').replace(/[^a-zA-Z0-9]/g,'_')+'.pdf');
   toast('PDF gerado!');
 };
