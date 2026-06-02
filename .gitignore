@@ -1,0 +1,25 @@
+# Credenciais e configuração sensível
+config.php
+upload_ftp.py
+
+# Scripts temporários / diagnóstico
+diag.php
+genhash.php
+resetpw.php
+teste_db.php
+setup.php
+migrate_from_ci.php
+import_data.php
+import_atividades.php
+importar_atividades.sql
+db_backup.php
+dados_worktwz.sql
+err.php
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
