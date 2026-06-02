@@ -254,6 +254,7 @@ window.openActivity=function(secId){
     <div style="flex:1"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="gerarPdf('${secId}')">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
@@ -285,7 +286,7 @@ function renderItem(item,today){
   }).join(''):'';
   return`<div class="item-row" id="ir-${item.id}">
     <div class="item-header" onclick="togItem('${item.id}')">
-      <span style="font-size:20px;flex-shrink:0">${esc(item.item_icon||'📋')}</span>
+      <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
         <div class="item-name">${esc(item.description)} ${badge}
           ${item.deadline_date?`<span style="font-size:11px;color:${late?'#f87171':'#64748b'}">📅 ${fmtD(item.deadline_date)}</span>`:''}
@@ -765,6 +766,157 @@ window.gerarPdf=async function(secId){
 };
 
 async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
+</script>
+<div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
+  <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
+    <button onclick="fecharBusca()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer">✕</button>
+    <div style="font-size:16px;font-weight:800;margin-bottom:14px">🔍 Buscar na Atividade</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <input id="busca-input" type="text" placeholder="Digite o texto a buscar..." onkeydown="if(event.key==='Enter')executarBusca()" style="flex:1;min-width:200px;padding:10px 14px;background:#020810;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;font-size:14px">
+      <select id="busca-campo" style="padding:10px 14px;background:#020810;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;font-size:13px">
+        <option value="todos">Todos os campos</option>
+        <option value="nome">Nome / Descrição</option>
+        <option value="resp">Responsáveis</option>
+        <option value="obs">Observação</option>
+      </select>
+      <button onclick="executarBusca()" style="padding:10px 18px;background:#0e7490;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔍 Buscar</button>
+      <button onclick="limparBusca()" style="padding:10px 14px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕ Limpar</button>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-item" style="accent-color:#0e7490;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#60a5fa">Item encontrado</strong> → mostrar todos os subitens</span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-show-parent" style="accent-color:#8b5cf6;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#a78bfa">Subitem encontrado</strong> → exibir item pai</span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-sub" style="accent-color:#f59e0b;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#fcd34d">Subitem encontrado</strong> → mostrar subitens irmãos</span></label>
+    </div>
+    <div id="busca-resultados" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+let _buscaSecId=null;
+function abrirBusca(secId){
+  _buscaSecId=secId;
+  window._buscaRes=null;
+  document.getElementById('busca-input').value='';
+  document.getElementById('busca-resultados').innerHTML='';
+  document.getElementById('busca-overlay').style.display='block';
+  setTimeout(()=>document.getElementById('busca-input').focus(),80);
+}
+function fecharBusca(){document.getElementById('busca-overlay').style.display='none';}
+function limparBusca(){document.getElementById('busca-input').value='';document.getElementById('busca-resultados').innerHTML='';window._buscaRes=null;}
+function _norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function executarBusca(){
+  const q=_norm(document.getElementById('busca-input').value.trim());
+  const campo=document.getElementById('busca-campo').value;
+  const secId=_buscaSecId;
+  const sec=S.secs.find(s=>s.id===secId);
+  if(!q||!sec){document.getElementById('busca-resultados').innerHTML='<div style="color:#64748b;text-align:center;padding:20px">Digite um termo para buscar.</div>';return;}
+  const items=S.items.filter(i=>i.atividade_id===secId);
+  const _match=val=>val&&_norm(String(val)).includes(q);
+  const _matchIt=(it)=>{
+    if(campo==='todos')return _match(it.description)||_match(it.observacao)||_match(it.responsaveis);
+    if(campo==='nome')return _match(it.description);
+    if(campo==='resp')return _match(it.responsaveis);
+    if(campo==='obs')return _match(it.observacao);
+    return false;
+  };
+  const hl=txt=>{if(!txt)return '';const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return String(txt).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])).replace(re,'<mark style="background:#f59e0b44;color:#fcd34d;border-radius:3px;padding:0 2px">$1</mark>');};
+  const chkAllSubsItem=document.getElementById('bchk-allsubs-item').checked;
+  const chkShowParent=document.getElementById('bchk-show-parent').checked;
+  const chkAllSubsSub=document.getElementById('bchk-allsubs-sub').checked;
+  const results=[];
+  items.forEach(item=>{
+    const allSubs=S.subitems.filter(s=>s.item_id===item.id);
+    const itemMatch=_matchIt(item);
+    const matchSubs=allSubs.filter(s=>_matchIt(s));
+    if(itemMatch||matchSubs.length>0){
+      let displaySubs=matchSubs;
+      let showParentBadge=false;
+      if(itemMatch&&chkAllSubsItem) displaySubs=allSubs;
+      if(!itemMatch&&matchSubs.length>0){
+        showParentBadge=chkShowParent;
+        if(chkAllSubsSub) displaySubs=allSubs;
+      }
+      results.push({item,allSubs,matchSubs,displaySubs,itemMatch,showParentBadge});
+    } else if(chkShowParent){
+      // already handled above
+    }
+  });
+  const total=results.reduce((t,r)=>t+(r.itemMatch?1:0)+r.matchSubs.length,0);
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:13px;color:#64748b"><strong style="color:#38bdf8">${total}</strong> resultado(s) para "<strong>${q}</strong>"</div><button onclick="gerarPdfBusca()" style="padding:8px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF dos Resultados</button></div>`;
+  if(!results.length){html+='<div style="color:#64748b;text-align:center;padding:30px">Nenhum resultado encontrado.</div>';}
+  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  results.forEach(({item,allSubs,matchSubs,displaySubs,itemMatch,showParentBadge})=>{
+    const isDone=item.concluded==1;
+    const borderColor=itemMatch?'#0e7490':'#7c3aed';
+    html+=`<div style="background:#0a1222;border-radius:12px;padding:14px;border:1px solid ${borderColor}">`;
+    if(!itemMatch&&showParentBadge) html+=`<div style="font-size:10px;font-weight:700;color:#a78bfa;margin-bottom:4px">📌 ITEM PAI DO SUBITEM ENCONTRADO</div>`;
+    html+=`<div style="font-size:14px;font-weight:700;color:${isDone?'#34d399':'#e2e8f0'}">${itemMatch?hl(item.description):item.description||''}</div>`;
+    if(item.responsaveis) html+=`<div style="font-size:11px;color:#a78bfa;margin-top:3px">👤 ${itemMatch?hl(item.responsaveis):item.responsaveis}</div>`;
+    if(item.observacao) html+=`<div style="font-size:11px;color:#64748b;margin-top:3px;font-style:italic">📝 ${itemMatch?hl(item.observacao):item.observacao}</div>`;
+    html+=`<span style="font-size:11px;background:${isDone?'#10b98122':'#33415522'};color:${isDone?'#34d399':'#94a3b8'};border-radius:999px;padding:3px 10px;display:inline-block;margin-top:6px">${isDone?'✅ Concluído':'⏳ Pendente'}</span>`;
+    if(displaySubs.length>0){
+      const extra=displaySubs.length-matchSubs.length;
+      if(extra>0) html+=`<div style="font-size:10px;color:#f59e0b;margin-top:8px;font-weight:600">📂 ${itemMatch?'Exibindo todos os subitens':'Subitens irmãos incluídos'} (${displaySubs.length} total, ${matchSubs.length} com match)</div>`;
+      html+='<div style="margin-top:8px;padding-left:12px;border-left:2px solid #334155;display:flex;flex-direction:column;gap:6px">';
+      displaySubs.forEach(s=>{
+        const sD=s.concluded==1;
+        const sMatched=matchSubs.some(ms=>ms.id===s.id);
+        html+=`<div style="background:#0e1729;border-radius:8px;padding:8px 12px;border-left:2px solid ${sMatched?'#0e7490':'transparent'}"><div style="font-size:12px;font-weight:600;color:${sD?'#34d399':'#e2e8f0'}">  › ${sMatched?hl(s.description):s.description||''}</div>`;
+        if(s.responsaveis) html+=`<div style="font-size:10px;color:#a78bfa;margin-top:2px">👤 ${sMatched?hl(s.responsaveis):s.responsaveis}</div>`;
+        if(s.observacao) html+=`<div style="font-size:10px;color:#64748b;margin-top:2px;font-style:italic">📝 ${sMatched?hl(s.observacao):s.observacao}</div>`;
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  window._buscaRes={results,query:q,campo,secId};
+  document.getElementById('busca-resultados').innerHTML=html;
+}
+async function gerarPdfBusca(){
+  if(!window._buscaRes)return;
+  const {results,query,campo,secId}=window._buscaRes;
+  const sec=S.secs.find(s=>s.id===secId);
+  if(!sec||!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando PDF…','info',6000);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=doc.internal.pageSize.getWidth(),H=doc.internal.pageSize.getHeight();
+  const mx=14,BODY_TOP=28,FTR_Y=H-10;
+  const campoLabel={todos:'Todos os campos',nome:'Nome/Descrição',resp:'Responsáveis',obs:'Observação'};
+  const addDecor=()=>{
+    doc.setFillColor(13,34,64);doc.rect(0,0,W,BODY_TOP-2,'F');
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(255,255,255);
+    doc.text(sec.name+' — Resultados da Busca',mx,10);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(180,210,255);
+    doc.text('Campo: '+(campoLabel[campo]||campo)+' | Busca: "'+query+'"',mx,17);
+    doc.text('Gerado em '+new Date().toLocaleDateString('pt-BR'),W-mx,17,{align:'right'});
+    doc.setFillColor(13,34,64);doc.rect(0,H-14,W,14,'F');
+    doc.setFontSize(7.5);doc.setTextColor(180,210,255);
+    doc.text('Página '+doc.getCurrentPageInfo().pageNumber,W-mx,H-5,{align:'right'});
+  };
+  addDecor();
+  const chkAllSubsItem=document.getElementById('bchk-allsubs-item').checked;
+  const chkAllSubsSub=document.getElementById('bchk-allsubs-sub').checked;
+  const iFill=[20,45,95],iTC=[220,235,255];
+  const tblH=[['#','Item / Sub-item','Status','Responsáveis','Observação']];
+  const tblB=[];let c=1;
+  results.forEach(({item,allSubs,matchSubs,displaySubs,itemMatch})=>{
+    let subsToRender=displaySubs;
+    if(itemMatch&&chkAllSubsItem) subsToRender=allSubs;
+    else if(!itemMatch&&matchSubs.length>0&&chkAllSubsSub) subsToRender=allSubs;
+    const isDone=item.concluded==1;
+    tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:iFill,textColor:iTC}},{content:item.description||'',styles:{fontStyle:'bold',fillColor:iFill,textColor:iTC}},{content:isDone?'✅ Concluído':'⏳ Pendente',styles:{fillColor:iFill,textColor:isDone?[100,230,175]:[180,200,240]}},{content:item.responsaveis||'',styles:{fillColor:iFill,textColor:iTC,fontSize:7.5}},{content:item.observacao||'',styles:{fillColor:iFill,textColor:iTC,fontSize:7.5}}]);
+    subsToRender.forEach(s=>{
+      const sD=s.concluded==1;
+      tblB.push(['',{content:'  › '+(s.description||''),styles:{textColor:[150,170,200],fontSize:7.5}},{content:sD?'✅ Concluído':'⏳ Pendente',styles:{textColor:sD?[16,185,129]:[100,120,150],fontSize:7.5}},{content:s.responsaveis||'',styles:{textColor:[100,120,150],fontSize:7}},{content:s.observacao||'',styles:{textColor:[100,120,150],fontSize:7}}]);
+    });
+  });
+  doc.autoTable({startY:BODY_TOP+2,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},columnStyles:{1:{cellWidth:'auto'}},didDrawPage:()=>addDecor()});
+  doc.save((sec.name||'busca').replace(/[^a-zA-Z0-9À-ú ]/g,'_')+'_busca.pdf');
+  toast('PDF gerado!','success');
+}
 </script>
 </body>
 </html>
