@@ -158,7 +158,7 @@ const db=getFirestore(fbApp);
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,secs:[],items:[],subitems:[]};
+let S={user:null,isAdmin:false,secs:[],items:[],subitems:[]};window.S=S;
 let curSecId=null,_pRT={};
 
 // ── AUTH ──
@@ -808,6 +808,7 @@ function executarBusca(){
   const q=_norm(document.getElementById('busca-input').value.trim());
   const campo=document.getElementById('busca-campo').value;
   const secId=_buscaSecId;
+  const S=window.S;
   const sec=S.secs.find(s=>s.id===secId);
   if(!q||!sec){document.getElementById('busca-resultados').innerHTML='<div style="color:#64748b;text-align:center;padding:20px">Digite um termo para buscar.</div>';return;}
   const items=S.items.filter(i=>i.atividade_id===secId);
@@ -877,6 +878,7 @@ function executarBusca(){
 async function gerarPdfBusca(){
   if(!window._buscaRes)return;
   const {results,query,campo,secId}=window._buscaRes;
+  const S=window.S;
   const sec=S.secs.find(s=>s.id===secId);
   if(!sec||!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF…','info',6000);
