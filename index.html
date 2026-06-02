@@ -535,7 +535,7 @@ window.gerarPdf=async function(secId){
   const now=new Date().toLocaleDateString('pt-BR');
   const today=new Date();today.setHours(0,0,0,0);
 
-  const lObj=await loadB64('img/logo_sertania.png');
+  const lObj=await loadB64('img/logo_sertania.png','png');
   const logo=lObj?lObj.d:null;
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
 
@@ -764,7 +764,7 @@ window.gerarPdf=async function(secId){
   toast('PDF gerado!');
 };
 
-async function loadB64(url){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;c.getContext('2d').drawImage(img,0,0);res({d:c.toDataURL('image/jpeg',.85),w:img.naturalWidth,h:img.naturalHeight});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
+async function loadB64(url,fmt='jpeg'){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,c.width,c.height);}ctx.drawImage(img,0,0);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.88),w:img.naturalWidth,h:img.naturalHeight});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
 </script>
 </body>
 </html>
