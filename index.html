@@ -195,7 +195,7 @@ async function loadData(){
 // ── UTILS ──
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const fmtD=d=>{if(!d)return'—';try{return new Date(d+'T00:00').toLocaleDateString('pt-BR');}catch{return d;}};
-function toast(msg,type='success',dur=3200){const el=document.createElement('div');el.className='toast-item '+type;el.textContent=msg;document.getElementById('toast').appendChild(el);setTimeout(()=>el.remove(),dur);}
+function toast(msg,type='success',dur=3200){const el=document.createElement('div');el.className='toast-item '+type;el.textContent=msg;document.getElementById('toast').appendChild(el);setTimeout(()=>el.remove(),dur);}window.toast=toast;
 const setC=h=>document.getElementById('content').innerHTML=h;
 const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
