@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migração de Dados — Gestão PMS</title>
+<link rel="icon" href="img/logo_sertania.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:#080f1e;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;padding:20px;color:#e2e8f0}
+.card{background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:32px;width:100%;max-width:600px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+h2{font-size:20px;font-weight:800;margin-bottom:6px}
+.sub{font-size:13px;color:#64748b;margin-bottom:22px;line-height:1.5}
+.summary{display:flex;gap:12px;margin-bottom:22px}
+.s-box{flex:1;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:14px;text-align:center}
+.s-val{font-size:28px;font-weight:800;color:#3b82f6}
+.s-lbl{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;margin-top:4px}
+.secs-list{display:flex;flex-direction:column;gap:6px;margin-bottom:22px;max-height:260px;overflow-y:auto}
+.sec-item{background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.sec-icon{font-size:18px;flex-shrink:0}
+.sec-name{flex:1;font-weight:600}
+.sec-count{font-size:11px;color:#64748b}
+.sec-st{font-size:14px}
+.btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn:hover{opacity:.9}.btn:disabled{opacity:.55;cursor:not-allowed}
+.log{background:#020810;border:1px solid #1e3a5f;border-radius:8px;padding:12px;font-size:12px;font-family:monospace;color:#64748b;margin-top:16px;max-height:180px;overflow-y:auto;display:none}
+.log p{margin-bottom:3px}.ok{color:#34d399}.er{color:#f87171}.in{color:#60a5fa}
+.done{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:16px;text-align:center;margin-top:16px;display:none;line-height:1.8}
+.done a{color:#34d399;font-weight:700;text-decoration:none;font-size:15px}
+.prog-wrap{background:#1e3a5f;border-radius:6px;height:8px;margin-top:14px;overflow:hidden;display:none}
+.prog-bar{height:100%;background:#3b82f6;border-radius:6px;transition:width .3s;width:0}
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>📦 Migração de Dados</h2>
+  <p class="sub">Importa todas as atividades e itens do WorkTWZ para o Firebase. Execute apenas uma vez.</p>
+  <div class="summary">
+    <div class="s-box"><div class="s-val">8</div><div class="s-lbl">Atividades</div></div>
+    <div class="s-box"><div class="s-val">100</div><div class="s-lbl">Itens</div></div>
+    <div class="s-box"><div class="s-val" id="tot-ok" style="color:#34d399">0</div><div class="s-lbl">Importados</div></div>
+  </div>
+  <div class="secs-list" id="secs-list"></div>
+  <button class="btn" id="btn" onclick="runMigrate()">🚀 Importar Tudo Agora</button>
+  <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+  <div class="log" id="log"></div>
+  <div class="done" id="done">✅ <strong>Migração concluída!</strong><br><br>
+    <a href="index.html">→ Abrir o Sistema</a>
+  </div>
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import{getFirestore,collection,addDoc,serverTimestamp,getDocs,query,where}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
+import{MIGRATE_SECS,MIGRATE_ITEMS}from"./js/migrate-data.js";
+
+const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
+const app=initializeApp(FB);
+const auth=getAuth(app);
+const db=getFirestore(app);
+
+// Render list
+const list=document.getElementById('secs-list');
+MIGRATE_SECS.forEach(s=>{
+  const cnt=MIGRATE_ITEMS.filter(i=>i.atividade_id===s.id).length;
+  list.innerHTML+=`<div class="sec-item"><span class="sec-icon">${s.icon}</span><span class="sec-name">${s.name}</span><span class="sec-count">${cnt} itens</span><span class="sec-st" id="ss-${s.id}">⏳</span></div>`;
+});
+
+function log(msg,cls='in'){const el=document.getElementById('log');el.style.display='block';const p=document.createElement('p');p.className=cls;p.textContent=msg;el.appendChild(p);el.scrollTop=el.scrollHeight;}
+function setBar(pct){document.getElementById('prog-bar').style.width=pct+'%';}
+
+onAuthStateChanged(auth,u=>{
+  if(!u){
+    document.getElementById('btn').disabled=true;
+    document.getElementById('btn').textContent='⚠️ Faça login primeiro';
+    document.querySelector('.sub').innerHTML='<span style="color:#f87171">Você precisa estar logado para importar.</span> <a href="login.html" style="color:#60a5fa">→ Fazer login</a>';
+  }
+});
+
+window.runMigrate=async function(){
+  const btn=document.getElementById('btn');
+  btn.disabled=true;btn.textContent='Importando…';
+  document.getElementById('prog-wrap').style.display='block';
+  let totOk=0,total=MIGRATE_SECS.length+MIGRATE_ITEMS.length;
+  const idMap={}; // old MySQL id → new Firestore id
+
+  for(let si=0;si<MIGRATE_SECS.length;si++){
+    const s=MIGRATE_SECS[si];
+    const st=document.getElementById('ss-'+s.id);
+    log(`Criando atividade: ${s.name}…`);
+    try{
+      // Check if already exists
+      const ex=await getDocs(query(collection(db,'secretariats'),where('_old_id','==',s.id)));
+      let fid;
+      if(!ex.empty){
+        fid=ex.docs[0].id;
+        log(`  ↺ Já existe (${fid})`,);
+      }else{
+        const ref=await addDoc(collection(db,'secretariats'),{
+          name:s.name, icon:s.icon, color:s.color,
+          order_num:s.order_num, observacoes:'', responsaveis:'',
+          _old_id:s.id, created_at:serverTimestamp()
+        });
+        fid=ref.id;
+        log(`  ✅ Criada: ${fid}`,'ok');
+      }
+      idMap[s.id]=fid;
+      st.textContent='✅';totOk++;
+      document.getElementById('tot-ok').textContent=totOk;
+      setBar(Math.round((si+1)/total*100));
+    }catch(e){st.textContent='❌';log(`  ❌ ${e.message}`,'er');}
+  }
+
+  log('\nImportando 100 itens…','in');
+  for(let ii=0;ii<MIGRATE_ITEMS.length;ii++){
+    const item=MIGRATE_ITEMS[ii];
+    const secFid=idMap[item.atividade_id];
+    if(!secFid){log(`  ⚠ Item ${item.id}: atividade ${item.atividade_id} não encontrada`,'er');continue;}
+    try{
+      const ex=await getDocs(query(collection(db,'items'),where('_old_id','==',item.id)));
+      if(!ex.empty){log(`  ↺ Item ${item.id} já existe`);}
+      else{
+        await addDoc(collection(db,'items'),{
+          description:item.description, atividade_id:secFid,
+          order_num:item.order_num, concluded:0,
+          item_icon:'📋', observacao:'', responsaveis:'',
+          _old_id:item.id, created_at:serverTimestamp()
+        });
+      }
+      totOk++;
+      document.getElementById('tot-ok').textContent=totOk;
+      setBar(Math.round((MIGRATE_SECS.length+ii+1)/total*100));
+      if((ii+1)%10===0)log(`  … ${ii+1}/100 itens`,'in');
+    }catch(e){log(`  ❌ Item ${item.id}: ${e.message}`,'er');}
+  }
+
+  setBar(100);
+  log('\n🎉 Migração concluída! '+totOk+' registros importados.','ok');
+  document.getElementById('done').style.display='block';
+  btn.textContent='✅ Concluído';
+};
+</script>
+</body>
+</html>
