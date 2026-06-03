@@ -112,6 +112,7 @@ main{flex:1;overflow-y:auto}
 .sub-row.drag-over{border:1px solid #0e7490!important;background:rgba(14,116,144,.12)!important}
 .drag-handle{cursor:grab;color:#334155;font-size:14px;user-select:none;flex-shrink:0;padding:0 2px}
 .drag-handle:active{cursor:grabbing}
+.item-row.dragging,.sub-row.dragging{opacity:0.4;pointer-events:none}
 @media(max-width:768px){.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:1}.cards-grid{grid-template-columns:1fr}.stats-row{gap:8px}}
 @media(max-width:600px){.modal-overlay{padding:0;align-items:flex-end}.modal-box{border-radius:16px 16px 0 0;max-height:93vh;max-width:100%}}
 </style>
@@ -296,8 +297,8 @@ function renderItem(item,today){
   const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const subsHtml=pr.hasSubs?pr.subs.map(s=>{
     const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
-    return`<div class="sub-row" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
-      <span class="drag-handle" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" title="Arraste para reordenar">⣿</span>
+    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}',this)" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragend="onDrEnd(event)">
+      <span class="drag-handle" title="Arraste para reordenar">⣿</span>
       <span>${sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
         ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
@@ -320,9 +321,9 @@ function renderItem(item,today){
     </div>`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}',this)" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')" ondragend="onDrEnd(event)">
     <div class="item-header" onclick="togItem('${item.id}')">
-      <span class="drag-handle" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
+      <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
         <div class="item-name">${esc(item.description)} ${badge}
@@ -377,10 +378,13 @@ window.toggleDone=async function(col,id,val){
 };
 window.openConclusaoModal=function(col,id){
   const e2=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
+  const sbs=col==='item'?S.subitems.filter(s=>s.item_id===id):[];
   const today=new Date().toISOString().split('T')[0];
-  openModal('✅ Marcar como Concluído','',
-    `<div style="padding:6px 0">
-      <div style="font-size:14px;font-weight:600;margin-bottom:14px">${esc(e2?.description||'')}</div>
+  const subWarn=sbs.length?`<div style="background:#0f2a1a;border:1px solid #065f46;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#6ee7b7">⚠️ Isso também marcará os <strong>${sbs.length} sub-item(ns)</strong> como concluídos.</div>`:'';
+  openModal('✅ Confirmar Conclusão','',
+    `<div style="padding:4px 0">
+      <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(e2?.description||'')}</div>
+      ${subWarn}
       <div class="form-group full"><label>Data de Conclusão</label><input type="date" id="conc-date" value="${today}"></div>
     </div>
     <div class="modal-actions">
@@ -391,7 +395,8 @@ window.openConclusaoModal=function(col,id){
 window.saveConclusao=async function(col,id){
   const d=document.getElementById('conc-date')?.value||new Date().toISOString().split('T')[0];
   await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'});
-  await loadData();closeModal();toast('Concluído!');openActivity(curSecId);
+  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido'});}
+  await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.deleteSec=async function(id){
   if(!confirm('Excluir esta atividade e todos os seus itens e sub-itens?\nEsta ação NÃO pode ser desfeita.'))return;
@@ -1144,10 +1149,31 @@ function confirmarGerarPdf(){
 }
 // ── DRAG & DROP ──
 let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
-function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;ev.dataTransfer.effectAllowed='move';}
-function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrOver(ev){ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
+function onDrItemStart(ev,id,el){
+  if(!ev.target.closest('.drag-handle')){ev.preventDefault();return;}
+  _dragItemId=id;_dragSubId=null;_dragSubParent=null;
+  ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);
+  setTimeout(()=>el.classList.add('dragging'),0);
+}
+function onDrSubStart(ev,id,parentId,el){
+  if(!ev.target.closest('.drag-handle')){ev.preventDefault();return;}
+  _dragSubId=id;_dragSubParent=parentId;_dragItemId=null;
+  ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);
+  ev.stopPropagation();
+  setTimeout(()=>el.classList.add('dragging'),0);
+}
+function onDrItemOver(ev){
+  if(!_dragItemId)return;
+  ev.preventDefault();ev.stopPropagation();
+  ev.currentTarget.classList.add('drag-over');
+}
+function onDrSubOver(ev,parentId){
+  if(!_dragSubId||_dragSubParent!==parentId)return;
+  ev.preventDefault();ev.stopPropagation();
+  ev.currentTarget.classList.add('drag-over');
+}
 function onDrLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function onDrEnd(ev){ev.currentTarget.classList.remove('dragging');}
 function onDrItemDrop(ev,targetId,secId){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
