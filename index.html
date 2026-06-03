@@ -338,7 +338,8 @@ function renderItem(item,today){
       ${pRing(pr.pct)}
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
       ${S.isAdmin?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
-      ${S.isAdmin&&!pr.hasSubs?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',${done?0:1})">${done?'↺':'✓'}</button>`:''}
+      ${S.isAdmin&&done?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
+      ${S.isAdmin&&!done&&!pr.hasSubs?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
@@ -375,7 +376,12 @@ function _restoreExpanded(){_expandedItems.forEach(id=>{const b=document.getElem
 window.toggleDone=async function(col,id,val){
   if(val===1){openConclusaoModal(col,id);return;}
   await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null,status:'pendente'});
-  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id&&s.auto_concluded===true);for(const sb of sbs)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});}
+  if(col==='item'){
+    const allConc=S.subitems.filter(s=>s.item_id===id&&s.concluded==1);
+    const hasFlag=allConc.some(s=>s.auto_concluded===true);
+    const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
+    for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+  }
   await loadData();openActivity(curSecId);
 };
 window.openConclusaoModal=function(col,id){
@@ -1008,9 +1014,17 @@ window.setItemStatus=async function(id,col,status){
   if(status==='concluido'){openConclusaoModal(col,id);return;}
   const colN=col==='item'?'items':'subitems';
   const obj=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
-  if(obj)obj.status=status;
-  await updateDoc(doc(db,colN,id),{status});
-  openActivity(curSecId);
+  const wasConcluded=obj?.concluded==1;
+  if(obj){obj.status=status;if(wasConcluded)obj.concluded=0;}
+  const upd={status};if(wasConcluded)upd.concluded=0;
+  await updateDoc(doc(db,colN,id),upd);
+  if(col==='item'&&wasConcluded){
+    const allConc=S.subitems.filter(s=>s.item_id===id&&s.concluded==1);
+    const hasFlag=allConc.some(s=>s.auto_concluded===true);
+    const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
+    for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+  }
+  await loadData();openActivity(curSecId);
 };
 window.markActivityConcluded=function(secId){
   const today=new Date().toISOString().split('T')[0];
