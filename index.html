@@ -273,7 +273,9 @@ window.openActivity=function(secId){
     <div style="flex:1"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
+    ${S.isAdmin&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
+    ${S.isAdmin&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
     <button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
@@ -358,6 +360,7 @@ function renderItem(item,today){
       })()}
       ${subsHtml}
       ${S.isAdmin&&pr.hasSubs?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
+      ${S.isAdmin&&pr.hasSubs?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
   </div>`;
@@ -393,7 +396,8 @@ window.openConclusaoModal=function(col,id){
     `<div style="padding:4px 0">
       <div style="font-size:14px;font-weight:600;margin-bottom:10px">${esc(e2?.description||'')}</div>
       ${subWarn}
-      <div class="form-group full"><label>Data de Conclusão</label><input type="date" id="conc-date" value="${today}"></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="conc-use-date" checked onchange="document.getElementById('conc-date-row').style.display=this.checked?'':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data de conclusão</label>
+      <div id="conc-date-row"><div class="form-group full"><label>Data de Conclusão</label><input type="date" id="conc-date" value="${today}"></div></div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
@@ -401,7 +405,8 @@ window.openConclusaoModal=function(col,id){
     </div>`);
 };
 window.saveConclusao=async function(col,id){
-  const d=document.getElementById('conc-date')?.value||new Date().toISOString().split('T')[0];
+  const _ud=document.getElementById('conc-use-date')?.checked!==false;
+  const d=_ud?document.getElementById('conc-date')?.value||null:null;
   await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'});
   if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});}
   await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
@@ -1015,6 +1020,16 @@ window.setItemStatus=async function(id,col,status){
   const colN=col==='item'?'items':'subitems';
   const obj=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
   const wasConcluded=obj?.concluded==1;
+  if(status!=='pendente'){
+    const today=new Date().toISOString().split('T')[0];
+    const si=_ST.find(x=>x.v===status)||{l:status,bg:'#1e3a5f22',c:'#94a3b8'};
+    openModal('📋 Mudar Status',`<span style="padding:2px 10px;border-radius:999px;background:${si.bg};color:${si.c};font-size:13px;font-weight:700">${si.l}</span>`,
+      `<div style="padding:4px 0">${wasConcluded?`<div style="background:#1e1a00;border:1px solid #b45309;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24">⚠️ Este item será desmarcado como concluído.</div>`:''}
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="st-use-date" onchange="document.getElementById('st-date-row').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data desta mudança</label>
+        <div id="st-date-row" style="display:none"><div class="form-group full"><label>Data</label><input type="date" id="st-date" value="${today}"></div></div>
+      </div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="_doSetStatus('${id}','${col}','${status}',${wasConcluded})">✅ Confirmar</button></div>`);
+    return;
+  }
   if(obj){obj.status=status;if(wasConcluded)obj.concluded=0;}
   const upd={status};if(wasConcluded)upd.concluded=0;
   await updateDoc(doc(db,colN,id),upd);
@@ -1026,17 +1041,36 @@ window.setItemStatus=async function(id,col,status){
   }
   await loadData();openActivity(curSecId);
 };
+window._doSetStatus=async function(id,col,status,wasConcluded){
+  const colN=col==='item'?'items':'subitems';
+  const obj=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
+  const useDate=document.getElementById('st-use-date')?.checked;
+  const d=useDate?document.getElementById('st-date')?.value||null:null;
+  if(obj){obj.status=status;if(wasConcluded)obj.concluded=0;}
+  const upd={status};if(wasConcluded)upd.concluded=0;if(d)upd.status_date=d;
+  await updateDoc(doc(db,colN,id),upd);
+  if(col==='item'&&wasConcluded){
+    const allConc=S.subitems.filter(s=>s.item_id===id&&s.concluded==1);
+    const hasFlag=allConc.some(s=>s.auto_concluded===true);
+    const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
+    for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+  }
+  await loadData();closeModal();openActivity(curSecId);
+};
 window.markActivityConcluded=function(secId){
   const today=new Date().toISOString().split('T')[0];
   openModal('✅ Concluir Atividade','Todos os itens e sub-itens serão marcados como concluídos.',
-    `<div class="form-group full" style="margin-top:8px"><label>Data de Conclusão</label><input type="date" id="act-conc-date" value="${today}"></div>
+    `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="act-use-date" checked onchange="document.getElementById('act-date-row').style.display=this.checked?'':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data de conclusão</label>
+    <div id="act-date-row"><div class="form-group full" style="margin-top:4px"><label>Data de Conclusão</label><input type="date" id="act-conc-date" value="${today}"></div></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="_doMarkActivityConcluded('${secId}')">✅ Confirmar</button>
     </div>`);
 };
 window._doMarkActivityConcluded=async function(secId){
-  const d=document.getElementById('act-conc-date')?.value||new Date().toISOString().split('T')[0];
+  const _ud=document.getElementById('act-use-date')?.checked!==false;
+  const d=_ud?document.getElementById('act-conc-date')?.value||null:null;
+  await updateDoc(doc(db,'secretariats',secId),{concluded:1,conclusion_date:d,status:'concluido'});
   const its=S.items.filter(i=>i.atividade_id===secId);
   for(const it of its){
     if(it.concluded!=1)await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
@@ -1049,18 +1083,74 @@ window.markItemConcluded=function(itemId,secId){
   const today=new Date().toISOString().split('T')[0];
   const it=S.items.find(x=>x.id===itemId);
   openModal('✅ Concluir Item',esc(it?.description||''),
-    `<div class="form-group full" style="margin-top:8px"><label>Data de Conclusão</label><input type="date" id="item-conc-date" value="${today}"></div>
+    `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="item-use-date" checked onchange="document.getElementById('item-date-row').style.display=this.checked?'':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data de conclusão</label>
+    <div id="item-date-row"><div class="form-group full" style="margin-top:4px"><label>Data de Conclusão</label><input type="date" id="item-conc-date" value="${today}"></div></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="_doMarkItemConcluded('${itemId}','${secId}')">✅ Confirmar</button>
     </div>`);
 };
 window._doMarkItemConcluded=async function(itemId,secId){
-  const d=document.getElementById('item-conc-date')?.value||new Date().toISOString().split('T')[0];
+  const _ud=document.getElementById('item-use-date')?.checked!==false;
+  const d=_ud?document.getElementById('item-conc-date')?.value||null:null;
   const sbs=S.subitems.filter(s=>s.item_id===itemId);
   for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
   if((S.items.find(x=>x.id===itemId))?.concluded!=1)await updateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d,status:'concluido'});
   await loadData();closeModal();toast('✅ Item concluído!');openActivity(secId);
+};
+// ── ACTIVITY UNMARK + LIMPAR ──
+window._doMarkActivityUnconcluded=async function(secId){
+  await updateDoc(doc(db,'secretariats',secId),{concluded:0,conclusion_date:null,status:'pendente'});
+  const its=S.items.filter(i=>i.atividade_id===secId&&i.concluded==1);
+  const hasFlag=its.some(i=>i.auto_concluded===true);
+  const toReset=hasFlag?its.filter(i=>i.auto_concluded===true):its;
+  for(const it of toReset){
+    await updateDoc(doc(db,'items',it.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+    const allConc=S.subitems.filter(s=>s.item_id===it.id&&s.concluded==1);
+    const sbHasFlag=allConc.some(s=>s.auto_concluded===true);
+    const sbReset=sbHasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
+    for(const sb of sbReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+  }
+  await loadData();toast('↺ Atividade desmarcada!');openActivity(secId);
+};
+window.limparItem=function(itemId,secId){
+  const it=S.items.find(x=>x.id===itemId);
+  const cnt=S.subitems.filter(s=>s.item_id===itemId).length;
+  openModal('🧹 Limpar Item',esc(it?.description||''),
+    `<div style="padding:4px 0"><div style="background:#1a1205;border:1px solid #78350f;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fbbf24">⚠️ Isso marcará o item e ${cnt} sub-item(ns) como Pendente.</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="limpar-obs" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar também observações e anotações</label></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#78350f;color:#fbbf24" onclick="_doLimparItem('${itemId}','${secId}')">🧹 Confirmar</button></div>`);
+};
+window._doLimparItem=async function(itemId,secId){
+  const clr=document.getElementById('limpar-obs')?.checked;
+  const upd={concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false};
+  if(clr){upd.observacao='';upd.extra_fields={};}
+  await updateDoc(doc(db,'items',itemId),upd);
+  const sbs=S.subitems.filter(s=>s.item_id===itemId);
+  for(const sb of sbs)await updateDoc(doc(db,'subitems',sb.id),upd);
+  await loadData();closeModal();toast('🧹 Item limpo!');openActivity(secId);
+};
+window.limparAtividade=function(secId){
+  const sec=S.secs.find(s=>s.id===secId);
+  const its=S.items.filter(i=>i.atividade_id===secId);
+  const tot=its.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
+  openModal('🧹 Limpar Atividade',esc(sec?.name||''),
+    `<div style="padding:4px 0"><div style="background:#1a1205;border:1px solid #78350f;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fbbf24">⚠️ Isso marcará ${its.length} item(ns) e ${tot} sub-item(ns) como Pendente.</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="limpar-obs" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar também observações e anotações</label></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#78350f;color:#fbbf24" onclick="_doLimparAtividade('${secId}')">🧹 Confirmar</button></div>`);
+};
+window._doLimparAtividade=async function(secId){
+  const clr=document.getElementById('limpar-obs')?.checked;
+  const upd={concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false};
+  if(clr){upd.observacao='';upd.extra_fields={};}
+  await updateDoc(doc(db,'secretariats',secId),{concluded:0,conclusion_date:null,status:'pendente'});
+  const its=S.items.filter(i=>i.atividade_id===secId);
+  for(const it of its){
+    await updateDoc(doc(db,'items',it.id),upd);
+    const sbs=S.subitems.filter(s=>s.item_id===it.id);
+    for(const sb of sbs)await updateDoc(doc(db,'subitems',sb.id),upd);
+  }
+  await loadData();closeModal();toast('🧹 Atividade limpa!');openActivity(secId);
 };
 // ── RENDER CADASTROS (LISTAGEM PLANA) ──
 window.renderCadastros=function(secId){
@@ -1073,12 +1163,12 @@ window.renderCadastros=function(secId){
     const iD=it.concluded==1,iL=!iD&&it.deadline_date&&new Date(it.deadline_date)<today;
     const iSt=_ST.find(x=>x.v===(it.status||'pendente'))||_ST[0];
     rows+=`<tr style="background:#0a1222;border-bottom:2px solid ${it.item_color||'#3B82F6'}22">
-      <td style="padding:10px 12px;font-size:13px;font-weight:700;color:${it.item_color||'#60a5fa'};border-left:4px solid ${it.item_color||'#3B82F6'}">${esc(it.item_icon||'📋')} ${esc(it.description)}</td>
+      <td style="padding:10px 12px;font-size:13px;font-weight:700;color:${it.item_color||'#60a5fa'};border-left:4px solid ${it.item_color||'#3B82F6'}">${/^\?+$/.test(it.item_icon||'')?'📋':esc(it.item_icon||'📋')} ${esc(it.description)}</td>
       <td style="padding:10px 8px"><span style="padding:2px 8px;border-radius:999px;background:${iSt.bg};color:${iSt.c};font-size:10px;font-weight:700">${iSt.l}</span></td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted)">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'}">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</td>
       <td style="padding:10px 8px;font-size:12px">${iD?'<span style="color:#10b981">✅ Concluído</span>':iL?'<span style="color:#f87171">⚠ Atrasado</span>':'<span style="color:#64748b">⏳ Pendente</span>'}</td>
-      <td style="padding:10px 8px">${S.isAdmin?`<button class="card-btn" style="font-size:11px" onclick="openItemModal('${it.id}','${secId}',false,null)">✏️</button>`:''}</td>
+      <td style="padding:10px 8px">${S.isAdmin?`<button class="card-btn" style="font-size:11px" onclick="openItemModal('${it.id}','${secId}',false,null)">✏️</button> <button class="card-btn" style="font-size:11px" onclick="openItemModal(null,'${secId}',true,'${it.id}')">+ Sub</button>`:''}</td>
     </tr>`;
     for(const sb of sbs){
       const sD=sb.concluded==1,sL=!sD&&sb.deadline_date&&new Date(sb.deadline_date)<today;
@@ -1097,6 +1187,7 @@ window.renderCadastros=function(secId){
     <button class="btn-action" onclick="openActivity('${secId}')">← Voltar</button>
     <div style="font-size:15px;font-weight:800">📋 ${esc(sec.name)}</div>
     ${S.isAdmin?`<button class="btn-action" style="margin-left:auto" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="overflow-x:auto">
   <table style="width:100%;border-collapse:collapse">
