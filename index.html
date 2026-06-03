@@ -273,6 +273,7 @@ window.openActivity=function(secId){
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
+    <button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
@@ -318,7 +319,8 @@ function renderItem(item,today){
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
     </div>`;
   }).join(''):'';
-  return`<div class="item-row" id="ir-${item.id}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  const iColor=item.item_color||'#3B82F6';
+  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
@@ -351,6 +353,7 @@ function renderItem(item,today){
         return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
       })()}
       ${subsHtml}
+      ${S.isAdmin&&pr.hasSubs?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
   </div>`;
@@ -484,7 +487,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
     <div class="form-group full"><label>Responsáveis</label><input id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
-    ${!isSub?`<div class="form-group full"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div>`:''}
+    ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#0f172a;cursor:pointer"></div>`:''}
     ${isSub?`<div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão neste sub-item</label></div>`:''}
   </div>
   ${(()=>{
@@ -539,7 +542,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
   const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
-  if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';}
+  if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{data.item_id=parentId;data.atividade_id=secId;data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;}
   const ef={};
   document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();});
@@ -599,37 +602,46 @@ function renderImgs(cont,type,id,imgs){
     <div style="background:#0e1729;border-radius:8px;padding:10px;margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">📌 Imagem Representativa</div>
       ${rep?`<img class="img-rep-preview" src="${esc(rep.imgbb_url)}" alt="">
+        <input type="text" placeholder="Título..." value="${esc(rep.title||'')}" onchange="setImgProp('${rep.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:5px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
+        <input type="text" placeholder="Observação..." value="${esc(rep.obs||'')}" onchange="setImgProp('${rep.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
         <div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}')">🔄 Trocar</button>
           <button class="btn-action" style="font-size:11px;padding:4px 10px;color:#f87171;border-color:#f8717144" onclick="delImg('${rep.id}','${type}','${id}',true)">✕ Remover</button>
         </div>`:`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="addImg('${type}','${id}',true,'')">➕ Adicionar Imagem</button>`}
     </div>
-    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">🗂 Galeria (${gal.length})</div>
+    <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">🗂 Galeria (${gal.length}) <span style="font-weight:400;font-size:10px">— clique direito para remover</span></div>
     <div class="gal-grid">
-      ${gal.map(g=>`<img class="gal-thumb" src="${esc(g.imgbb_url)}" loading="lazy" onclick="openLb('${esc(g.imgbb_url)}')" title="Clique direito → Remover" oncontextmenu="event.preventDefault();if(confirm('Remover?'))delImg('${g.id}','${type}','${id}',false)">`).join('')}
-      <button onclick="addImg('${type}','${id}',false,'')" style="height:54px;width:70px;background:#0e1729;border:2px dashed var(--border);border-radius:6px;color:var(--muted);font-size:20px;cursor:pointer">+</button>
+      ${gal.map(g=>`<div style="display:inline-block;vertical-align:top;width:90px;margin:0 4px 8px 0">
+        <img class="gal-thumb" src="${esc(g.imgbb_url)}" loading="lazy" onclick="openLb('${esc(g.imgbb_url)}')" oncontextmenu="event.preventDefault();if(confirm('Remover?'))delImg('${g.id}','${type}','${id}',false)" style="width:90px;height:60px;object-fit:cover">
+        <input type="text" placeholder="Título..." value="${esc(g.title||'')}" onchange="setImgProp('${g.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:3px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
+        <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
+      </div>`).join('')}
+      <div style="display:inline-block;vertical-align:top"><button onclick="addImgMulti('${type}','${id}')" style="height:60px;width:70px;background:#0e1729;border:2px dashed var(--border);border-radius:6px;color:var(--muted);font-size:20px;cursor:pointer">+</button></div>
     </div>
-    <input type="file" id="iup-${type}-${id}" accept="image/*" style="display:none" onchange="handleUpload(this,'${type}','${id}')">`;
+    <input type="file" id="iup-${type}-${id}" accept="image/*" multiple style="display:none" onchange="handleUpload(this,'${type}','${id}')">
+    <input type="file" id="iup-rep-${type}-${id}" accept="image/*" style="display:none" onchange="handleUpload(this,'${type}','${id}',true)">`;
 }
 
-let _upIsRep=false,_upReplId='';
-window.addImg=function(t,id,isRep,oldId){_upIsRep=isRep;_upReplId=oldId;document.getElementById(`iup-${t}-${id}`)?.click();};
-window.handleUpload=async function(inp,type,id){
-  const f=inp.files[0];if(!f)return;inp.value='';
-  toast('Enviando…','info');
-  const rd=new FileReader();
-  rd.onload=async e=>{
-    const url=await imgbbUp(e.target.result);
-    if(!url){toast('Erro ao enviar imagem','error');return;}
-    if(_upIsRep){
+let _upReplId='';
+window.addImg=function(t,id,isRep,oldId){_upReplId=oldId;document.getElementById(isRep?`iup-rep-${t}-${id}`:`iup-${t}-${id}`)?.click();};
+window.addImgMulti=function(t,id){document.getElementById(`iup-${t}-${id}`)?.click();};
+window.handleUpload=async function(inp,type,id,isRep){
+  const files=Array.from(inp.files);if(!files.length)return;inp.value='';
+  toast('Enviando '+files.length+' imagem(ns)…','info');
+  for(const f of files){
+    const url=await new Promise(res=>{const rd=new FileReader();rd.onload=async e=>res(await imgbbUp(e.target.result));rd.readAsDataURL(f);});
+    if(!url){toast('Erro ao enviar: '+f.name,'error');continue;}
+    if(isRep){
       if(_upReplId)await deleteDoc(doc(db,'entity_images',_upReplId));
       const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems';
       await updateDoc(doc(db,coll,id),{cover_url:url});
     }
-    await addDoc(collection(db,'entity_images'),{entity_type:type,entity_id:id,is_representative:_upIsRep,imgbb_url:url,title:'',order_num:0,created_at:serverTimestamp()});
-    await loadData();await loadImgs(type,id);toast('Imagem salva!');
-  };
-  rd.readAsDataURL(f);
+    await addDoc(collection(db,'entity_images'),{entity_type:type,entity_id:id,is_representative:!!isRep,imgbb_url:url,title:'',obs:'',order_num:0,created_at:serverTimestamp()});
+  }
+  await loadData();await loadImgs(type,id);toast('Imagens salvas!');
+};
+window.setImgProp=async function(imgId,prop,val,type,entityId){
+  await updateDoc(doc(db,'entity_images',imgId),{[prop]:val});
 };
 window.delImg=async function(imgId,type,entityId,isRep){
   if(!confirm('Remover imagem?'))return;
@@ -987,16 +999,90 @@ window.setItemStatus=async function(id,col,status){
   await updateDoc(doc(db,colN,id),{status});
   openActivity(curSecId);
 };
-window.markActivityConcluded=async function(secId){
-  if(!confirm('Marcar TODA a atividade como concluída?\nIsso irá marcar todos os itens e sub-itens como concluídos.'))return;
+window.markActivityConcluded=function(secId){
   const today=new Date().toISOString().split('T')[0];
+  openModal('✅ Concluir Atividade','Todos os itens e sub-itens serão marcados como concluídos.',
+    `<div class="form-group full" style="margin-top:8px"><label>Data de Conclusão</label><input type="date" id="act-conc-date" value="${today}"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="_doMarkActivityConcluded('${secId}')">✅ Confirmar</button>
+    </div>`);
+};
+window._doMarkActivityConcluded=async function(secId){
+  const d=document.getElementById('act-conc-date')?.value||new Date().toISOString().split('T')[0];
   const its=S.items.filter(i=>i.atividade_id===secId);
   for(const it of its){
-    if(it.concluded!=1){await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:today});}
+    if(it.concluded!=1)await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:d});
     const sbs=S.subitems.filter(s=>s.item_id===it.id);
-    for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:today});
+    for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d});
   }
-  await loadData();toast('✅ Atividade concluída!');openActivity(secId);
+  await loadData();closeModal();toast('✅ Atividade concluída!');openActivity(secId);
+};
+window.markItemConcluded=function(itemId,secId){
+  const today=new Date().toISOString().split('T')[0];
+  const it=S.items.find(x=>x.id===itemId);
+  openModal('✅ Concluir Item',esc(it?.description||''),
+    `<div class="form-group full" style="margin-top:8px"><label>Data de Conclusão</label><input type="date" id="item-conc-date" value="${today}"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="_doMarkItemConcluded('${itemId}','${secId}')">✅ Confirmar</button>
+    </div>`);
+};
+window._doMarkItemConcluded=async function(itemId,secId){
+  const d=document.getElementById('item-conc-date')?.value||new Date().toISOString().split('T')[0];
+  const sbs=S.subitems.filter(s=>s.item_id===itemId);
+  for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d});
+  if((S.items.find(x=>x.id===itemId))?.concluded!=1)await updateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d});
+  await loadData();closeModal();toast('✅ Item concluído!');openActivity(secId);
+};
+// ── RENDER CADASTROS (LISTAGEM PLANA) ──
+window.renderCadastros=function(secId){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const today=new Date();today.setHours(0,0,0,0);
+  let rows='';
+  for(const it of items){
+    const sbs=[...S.subitems.filter(s=>s.item_id===it.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const iD=it.concluded==1,iL=!iD&&it.deadline_date&&new Date(it.deadline_date)<today;
+    const iSt=_ST.find(x=>x.v===(it.status||'pendente'))||_ST[0];
+    rows+=`<tr style="background:#0a1222;border-bottom:2px solid ${it.item_color||'#3B82F6'}22">
+      <td style="padding:10px 12px;font-size:13px;font-weight:700;color:${it.item_color||'#60a5fa'};border-left:4px solid ${it.item_color||'#3B82F6'}">${esc(it.item_icon||'📋')} ${esc(it.description)}</td>
+      <td style="padding:10px 8px"><span style="padding:2px 8px;border-radius:999px;background:${iSt.bg};color:${iSt.c};font-size:10px;font-weight:700">${iSt.l}</span></td>
+      <td style="padding:10px 8px;font-size:12px;color:var(--muted)">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</td>
+      <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'}">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</td>
+      <td style="padding:10px 8px;font-size:12px">${iD?'<span style="color:#10b981">✅ Concluído</span>':iL?'<span style="color:#f87171">⚠ Atrasado</span>':'<span style="color:#64748b">⏳ Pendente</span>'}</td>
+      <td style="padding:10px 8px">${S.isAdmin?`<button class="card-btn" style="font-size:11px" onclick="openItemModal('${it.id}','${secId}',false,null)">✏️</button>`:''}</td>
+    </tr>`;
+    for(const sb of sbs){
+      const sD=sb.concluded==1,sL=!sD&&sb.deadline_date&&new Date(sb.deadline_date)<today;
+      const sSt=_ST.find(x=>x.v===(sb.status||'pendente'))||_ST[0];
+      rows+=`<tr style="background:#080e1a">
+        <td style="padding:6px 12px 6px 28px;font-size:12px;color:var(--text);border-left:4px solid ${it.item_color||'#3B82F6'}44">↳ ${esc(sb.description)}</td>
+        <td style="padding:6px 8px"><span style="padding:2px 8px;border-radius:999px;background:${sSt.bg};color:${sSt.c};font-size:10px;font-weight:700">${sSt.l}</span></td>
+        <td style="padding:6px 8px;font-size:11px;color:var(--muted)">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</td>
+        <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'}">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</td>
+        <td style="padding:6px 8px;font-size:11px">${sD?'<span style="color:#10b981">✅ Concluído</span>':sL?'<span style="color:#f87171">⚠ Atrasado</span>':'<span style="color:#64748b">⏳ Pendente</span>'}</td>
+        <td style="padding:6px 8px">${S.isAdmin?`<button class="card-btn" style="font-size:11px" onclick="openItemModal('${sb.id}','${secId}',true,'${it.id}')">✏️</button>`:''}</td>
+      </tr>`;
+    }
+  }
+  setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+    <button class="btn-action" onclick="openActivity('${secId}')">← Voltar</button>
+    <div style="font-size:15px;font-weight:800">📋 ${esc(sec.name)}</div>
+    ${S.isAdmin?`<button class="btn-action" style="margin-left:auto" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+  </div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse">
+    <thead><tr style="background:#0e1729;font-size:11px;color:var(--muted);text-transform:uppercase">
+      <th style="padding:8px 12px;text-align:left">Item / Sub-item</th>
+      <th style="padding:8px">Status</th>
+      <th style="padding:8px;text-align:left">Responsáveis</th>
+      <th style="padding:8px">Prazo</th>
+      <th style="padding:8px">Situação</th>
+      <th style="padding:8px"></th>
+    </tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)">Nenhum item.</td></tr>'}</tbody>
+  </table></div>`);
 };
 window.reorderItems=async function(fromId,toId,secId){
   const its=[...S.items.filter(i=>i.atividade_id===secId)];
