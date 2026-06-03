@@ -255,6 +255,18 @@ window.openActivity=function(secId){
   const items=S.items.filter(i=>i.atividade_id===secId);
   const today=new Date();today.setHours(0,0,0,0);
   const itemsHtml=items.map(item=>renderItem(item,today)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+  const _ss=sec.show_stats!==0;
+  const statsHtml=_ss?(()=>{
+    const total=items.length,conc=items.filter(i=>iProg(i).pct===100).length;
+    const atras=items.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
+    const pend=total-conc-atras;
+    return`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#10b981">${conc}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Concluídos</div></div>
+      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#3b82f6">${pend}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Pendentes</div></div>
+      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">${atras}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Atrasados</div></div>
+      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
+    </div>`;
+  })():'';
   setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
     <button class="btn-action" onclick="setView('dash')">← Voltar</button>
     <div style="flex:1"></div>
@@ -271,11 +283,13 @@ window.openActivity=function(secId){
       ${sec.resp_url?`<img src="${esc(sec.resp_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #818cf8">`:''}
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
+  ${statsHtml}
   <div id="items-cnt">${itemsHtml}</div>`);
 };
 
 function renderItem(item,today){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
+  const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const subsHtml=pr.hasSubs?pr.subs.map(s=>{
@@ -285,7 +299,17 @@ function renderItem(item,today){
       <span>${sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
         ${s.responsaveis||s.observacao?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}</div>`:''}
-      ${(()=>{const ef=s.extra_fields||{};const ks=Object.keys(ef);if(!ks.length)return '';return`<div style="font-size:10px;color:#94a3b8;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">${ks.map(k=>`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(k)}:</strong> ${esc(ef[k])}</span>`).join('')}</div>`;})()}</div>
+      ${(()=>{
+        const ef=s.extra_fields||{};const ks=Object.keys(ef);
+        const tags=[];
+        if(ks.length)ks.forEach(k=>tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(k)}:</strong> ${esc(ef[k])}</span>`));
+        if(_sec?.show_verba&&_sec?.verba_on_subitems&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
+        if(_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
+        if(_sec?.show_documentacao&&_sec?.documentacao_on_subitems&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
+        if(_sec?.show_licitacao&&_sec?.licitacao_on_subitems&&s.licitacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${s.licitacao==1?'Concluída':'Pendente'}</span>`);
+        if(!tags.length)return '';
+        return`<div style="font-size:10px;color:#94a3b8;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">${tags.join('')}</div>`;
+      })()}</div>
       ${s.resp_url?`<img src="${esc(s.resp_url)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8" loading="lazy">`:''}
       ${s.cover_url?`<img src="${esc(s.cover_url)}" style="height:26px;border-radius:4px;object-fit:contain;background:transparent" loading="lazy">`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
@@ -312,7 +336,17 @@ function renderItem(item,today){
     </div>
     <div id="ib-${item.id}" style="padding:0 16px 14px;border-top:1px solid var(--border);display:none">
       ${item.observacao?`<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:#0a1222;border-radius:6px;margin:8px 0">${esc(item.observacao)}</div>`:''}
-      ${(()=>{const ef=item.extra_fields||{};const ks=Object.keys(ef);if(!ks.length)return '';return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${ks.map(k=>`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(k)}:</strong> ${esc(ef[k])}</span>`).join('')}</div>`;})()}
+      ${(()=>{
+        const ef=item.extra_fields||{};const ks=Object.keys(ef);
+        const tags=[];
+        if(ks.length)ks.forEach(k=>tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(k)}:</strong> ${esc(ef[k])}</span>`));
+        if(_sec?.show_verba&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
+        if(_sec?.show_origem_verba&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
+        if(_sec?.show_documentacao&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
+        if(_sec?.show_licitacao&&item.licitacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.licitacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">⚖️ ${item.licitacao==1?'Lic. Concluída':'Lic. Pendente'}</span>`);
+        if(!tags.length)return '';
+        return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
+      })()}
       ${subsHtml}
       ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
@@ -354,6 +388,17 @@ window.openSecModal=function(id){
   </div>
   ${rtHtml('activity',id||'',s?.resp_url||null)}
   ${imgHtml('activity',id||'')}
+  <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+    <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
+      ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
+        const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
+        const extraHtml=field==='verba'?`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="s-verba-sum" ${s?.verba_sum_subitems?'checked':''} style="width:12px;height:12px;accent-color:#38bdf8"> Somar verbas dos sub-itens no total do item</label>`:''
+        return`<div style="background:#0e1729;border-radius:8px;padding:9px 12px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600"><input type="checkbox" id="s-show-${fid}" ${show?'checked':''} onchange="document.getElementById('so-${fid}').style.display=this.checked?'flex':'none'" style="width:14px;height:14px;cursor:pointer;accent-color:#38bdf8"> ${lbl}</label><div id="so-${fid}" style="margin-top:8px;padding-left:20px;display:${show?'flex':'none'};flex-direction:column;gap:5px"><label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="s-${fid}-subs" ${s&&s[field+'_on_subitems']?'checked':''} style="width:12px;height:12px;accent-color:#38bdf8"> Exibir também nos sub-itens</label>${extraHtml}<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="s-${fid}-obs" ${s&&s[field+'_has_obs']?'checked':''} style="width:12px;height:12px;accent-color:#38bdf8"> Campo de observação individual</label></div></div>`
+      }).join('')}
+    </div>
+  </div>
   ${id?`<div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px">
     <div style="font-size:14px;font-weight:800;margin-bottom:4px">🗂️ Campos Personalizados</div>
     <div style="font-size:12px;color:#64748b;margin-bottom:12px">Defina campos extras que aparecerão em todos os itens e subitens desta atividade.</div>
@@ -377,7 +422,8 @@ window.openSecModal=function(id){
 window.saveSec=async function(id){
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
-  const data={name,observacoes:document.getElementById('s-obs')?.value.trim()||'',responsaveis:document.getElementById('s-resp')?.value.trim()||'',start_date:document.getElementById('s-start')?.value||null,end_date:document.getElementById('s-end')?.value||null,updated_at:serverTimestamp()};
+  const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:g('s-resp')?.value.trim()||'',start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
@@ -400,6 +446,30 @@ window.openItemModal=function(id,secId,isSub,parentId){
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
     ${!isSub?`<div class="form-group full"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div>`:''}
   </div>
+  ${(()=>{
+    const effSec2=S.secs.find(s=>s.id===(secId||curSecId));
+    if(!effSec2)return '';
+    const chk=(fl)=>isSub?(effSec2['show_'+fl]&&effSec2[fl+'_on_subitems']):effSec2['show_'+fl];
+    let out2='';
+    if(chk('verba')){
+      const v=String(it?.verba??'');
+      out2+=`<div class="form-group full"><label>💰 Verba (R$)</label><input type="number" step="0.01" id="it-verba" value="${esc(v)}" style="max-width:180px"></div>`;
+      if(effSec2.verba_has_obs)out2+=`<div class="form-group full"><label>Obs. da Verba</label><input id="it-verba-obs" value="${esc(it?.verba_obs||'')}"></div>`;
+    }
+    if(chk('origem_verba'))out2+=`<div class="form-group full"><label>📍 Origem da Verba</label><input id="it-origem-verba" value="${esc(it?.origem_verba||'')}"></div>`;
+    if(chk('documentacao')){
+      const d=it?.documentacao;
+      out2+=`<div class="form-group full"><label>📁 Documentação</label><select id="it-documentacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${d===0||d==='0'?'selected':''}>Pendente</option><option value="1" ${d===1||d==='1'?'selected':''}>Concluída</option></select></div>`;
+      if(effSec2.documentacao_has_obs)out2+=`<div class="form-group full"><label>Obs. Documentação</label><input id="it-doc-obs" value="${esc(it?.documentacao_obs||'')}"></div>`;
+    }
+    if(chk('licitacao')){
+      const l=it?.licitacao;
+      out2+=`<div class="form-group full"><label>⚖️ Licitação</label><select id="it-licitacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${l===0||l==='0'?'selected':''}>Pendente</option><option value="1" ${l===1||l==='1'?'selected':''}>Concluída</option></select></div>`;
+      if(effSec2.licitacao_has_obs)out2+=`<div class="form-group full"><label>Obs. Licitação</label><input id="it-lic-obs" value="${esc(it?.licitacao_obs||'')}"></div>`;
+    }
+    if(!out2)return '';
+    return`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:8px">⚙️ Campos Específicos da Atividade</div><div class="form-grid">${out2}</div></div>`;
+  })()}
   ${(()=>{
     const effSecId=secId||curSecId;
     const scope=isSub?'subitem':'item';
@@ -433,6 +503,12 @@ window.saveItem=async function(id,secId,isSub,parentId){
   document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();});
   if(Object.keys(ef).length)data.extra_fields=ef;
   else data.extra_fields={};
+  const effSec=S.secs.find(s=>s.id===secId);
+  const _chk=(fl)=>isSub?(effSec?.['show_'+fl]&&effSec?.[fl+'_on_subitems']):effSec?.['show_'+fl];
+  if(_chk('verba')){const vv=document.getElementById('it-verba')?.value;if(vv!==undefined&&vv!=='')data.verba=parseFloat(vv)||0;if(effSec.verba_has_obs)data.verba_obs=document.getElementById('it-verba-obs')?.value||'';}
+  if(_chk('origem_verba')){data.origem_verba=document.getElementById('it-origem-verba')?.value||'';}
+  if(_chk('documentacao')){const dv=document.getElementById('it-documentacao')?.value;data.documentacao=dv!==''&&dv!=null?parseInt(dv):null;if(effSec.documentacao_has_obs)data.documentacao_obs=document.getElementById('it-doc-obs')?.value||'';}
+  if(_chk('licitacao')){const lv=document.getElementById('it-licitacao')?.value;data.licitacao=lv!==''&&lv!=null?parseInt(lv):null;if(effSec.licitacao_has_obs)data.licitacao_obs=document.getElementById('it-lic-obs')?.value||'';}
   let did=id;
   if(id){await updateDoc(doc(db,colName,id),data);}
   else{data.order_num=isSub?S.subitems.length:S.items.length;data.concluded=0;data.created_at=serverTimestamp();const r=await addDoc(collection(db,colName),data);did=r.id;}
