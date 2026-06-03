@@ -272,6 +272,7 @@ window.openActivity=function(secId){
     <div style="flex:1"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
@@ -298,7 +299,7 @@ function renderItem(item,today){
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
       <span>${sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
-        ${s.responsaveis||s.observacao?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}</div>`:''}
+        ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef);
         const tags=[];
@@ -361,8 +362,41 @@ window.togItem=function(id){
 };
 
 window.toggleDone=async function(col,id,val){
-  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:val,conclusion_date:val?new Date().toISOString().split('T')[0]:null});
+  if(val===1){openConclusaoModal(col,id);return;}
+  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null});
   await loadData();openActivity(curSecId);
+};
+window.openConclusaoModal=function(col,id){
+  const e2=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
+  const today=new Date().toISOString().split('T')[0];
+  openModal('✅ Marcar como Concluído','',
+    `<div style="padding:6px 0">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">${esc(e2?.description||'')}</div>
+      <div class="form-group full"><label>Data de Conclusão</label><input type="date" id="conc-date" value="${today}"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveConclusao('${col}','${id}')">✅ Confirmar</button>
+    </div>`);
+};
+window.saveConclusao=async function(col,id){
+  const d=document.getElementById('conc-date')?.value||new Date().toISOString().split('T')[0];
+  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d});
+  await loadData();closeModal();toast('Concluído!');openActivity(curSecId);
+};
+window.deleteSec=async function(id){
+  if(!confirm('Excluir esta atividade e todos os seus itens e sub-itens?\nEsta ação NÃO pode ser desfeita.'))return;
+  const its=S.items.filter(i=>i.atividade_id===id);
+  for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
+  const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
+  await deleteDoc(doc(db,'secretariats',id));
+  await loadData();closeModal();toast('Atividade excluída!');renderDash();
+};
+window.deleteItem=async function(id,isSub){
+  if(!confirm('Excluir este '+(isSub?'sub-item':'item')+(isSub?'':' e todos os seus sub-itens')+'?'))return;
+  if(!isSub){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
+  await deleteDoc(doc(db,isSub?'subitems':'items',id));
+  await loadData();closeModal();toast('Excluído!');openActivity(curSecId);
 };
 
 // ── MODAL ──
@@ -415,7 +449,11 @@ window.openSecModal=function(id){
       </div>
     </div>
   </div>`:'<!-- sem id -->'}
-  <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button></div>`);
+  <div class="modal-actions">
+    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteSec('${id}')">🗑️ Excluir</button>`:''}
+    <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    <button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button>
+  </div>`);
   if(id)loadImgs('activity',id);
 };
 
@@ -445,6 +483,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
     ${!isSub?`<div class="form-group full"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div>`:''}
+    ${isSub?`<div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão neste sub-item</label></div>`:''}
   </div>
   ${(()=>{
     const effSec2=S.secs.find(s=>s.id===(secId||curSecId));
@@ -452,9 +491,9 @@ window.openItemModal=function(id,secId,isSub,parentId){
     const chk=(fl)=>isSub?(effSec2['show_'+fl]&&effSec2[fl+'_on_subitems']):effSec2['show_'+fl];
     let out2='';
     if(chk('verba')){
-      const v=String(it?.verba??'');
-      out2+=`<div class="form-group full"><label>💰 Verba (R$)</label><input type="number" step="0.01" id="it-verba" value="${esc(v)}" style="max-width:180px"></div>`;
-      if(effSec2.verba_has_obs)out2+=`<div class="form-group full"><label>Obs. da Verba</label><input id="it-verba-obs" value="${esc(it?.verba_obs||'')}"></div>`;
+      let verbas=[];try{verbas=Array.isArray(it?.verbas_list)?it.verbas_list:(it?.verbas_list?JSON.parse(it.verbas_list):[]);}catch(e){if(it?.verba!=null)verbas=[{v:it.verba,ov:it.origem_verba||'',obs:it.verba_obs||''}];}
+      if(!verbas.length&&it?.verba!=null)verbas=[{v:it.verba,ov:it.origem_verba||'',obs:it.verba_obs||''}];
+      out2+=`<div class="form-group full"><label>💰 Verbas (R$)</label><div id="vb-list" style="margin-bottom:6px">${verbas.map(vb=>`<div class="vb-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><input type="number" class="vb-val" step="0.01" value="${esc(String(vb.v||''))}" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" value="${esc(vb.ov||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" value="${esc(vb.obs||'')}" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button></div>`).join('')}</div><button type="button" onclick="vbAdd()" style="padding:4px 12px;background:#065f46;color:#6ee7b7;border:1px solid #10b981;border-radius:6px;font-size:12px;cursor:pointer">➕ Adicionar Verba</button></div>`;
     }
     if(chk('origem_verba'))out2+=`<div class="form-group full"><label>📍 Origem da Verba</label><input id="it-origem-verba" value="${esc(it?.origem_verba||'')}"></div>`;
     if(chk('documentacao')){
@@ -485,6 +524,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
   ${rtHtml(col,id||'',it?.resp_url||null)}
   ${imgHtml(col,id||'')}
   <div class="modal-actions">
+    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteItem('${id}',${isSub})">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">${isSub?'← Voltar':'Cancelar'}</button>
     <button class="btn-save" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button>
   </div>`);
@@ -498,14 +538,14 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const colName=isSub?'subitems':'items';
   const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';}
-  else{data.item_id=parentId;data.atividade_id=secId;}
+  else{data.item_id=parentId;data.atividade_id=secId;data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;}
   const ef={};
   document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();});
   if(Object.keys(ef).length)data.extra_fields=ef;
   else data.extra_fields={};
   const effSec=S.secs.find(s=>s.id===secId);
   const _chk=(fl)=>isSub?(effSec?.['show_'+fl]&&effSec?.[fl+'_on_subitems']):effSec?.['show_'+fl];
-  if(_chk('verba')){const vv=document.getElementById('it-verba')?.value;if(vv!==undefined&&vv!=='')data.verba=parseFloat(vv)||0;if(effSec.verba_has_obs)data.verba_obs=document.getElementById('it-verba-obs')?.value||'';}
+  if(_chk('verba')){const vbl=vbCollect();data.verbas_list=vbl;if(vbl.length){data.verba=vbl[0].v||0;data.verba_obs=vbl[0].obs||'';data.origem_verba=vbl[0].ov||'';}else{data.verba=null;data.verba_obs='';data.origem_verba='';}}
   if(_chk('origem_verba')){data.origem_verba=document.getElementById('it-origem-verba')?.value||'';}
   if(_chk('documentacao')){const dv=document.getElementById('it-documentacao')?.value;data.documentacao=dv!==''&&dv!=null?parseInt(dv):null;if(effSec.documentacao_has_obs)data.documentacao_obs=document.getElementById('it-doc-obs')?.value||'';}
   if(_chk('licitacao')){const lv=document.getElementById('it-licitacao')?.value;data.licitacao=lv!==''&&lv!=null?parseInt(lv):null;if(effSec.licitacao_has_obs)data.licitacao_obs=document.getElementById('it-lic-obs')?.value||'';}
@@ -903,6 +943,28 @@ window.delFieldTpl=async function(id,actId){
   await loadData();openSecModal(actId);
 };
 window.getFieldTpls=function(actId,scope){return S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope);};
+// ── VERBAS LIST ──
+window.vbAdd=function(){
+  const list=document.getElementById('vb-list');if(!list)return;
+  const row=document.createElement('div');row.className='vb-row';row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
+  row.innerHTML=`<input type="number" class="vb-val" step="0.01" placeholder="R$ 0,00" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
+  list.appendChild(row);
+};
+window.vbCollect=function(){
+  return Array.from(document.querySelectorAll('#vb-list .vb-row')).map(r=>({v:parseFloat(r.querySelector('.vb-val')?.value)||null,ov:r.querySelector('.vb-orig')?.value.trim()||'',obs:r.querySelector('.vb-obs')?.value.trim()||''})).filter(x=>x.v!=null);
+};
+// ── MARCAR ATIVIDADE CONCLUÍDA ──
+window.markActivityConcluded=async function(secId){
+  if(!confirm('Marcar TODA a atividade como concluída?\nIsso irá marcar todos os itens e sub-itens como concluídos.'))return;
+  const today=new Date().toISOString().split('T')[0];
+  const its=S.items.filter(i=>i.atividade_id===secId);
+  for(const it of its){
+    if(it.concluded!=1){await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:today});}
+    const sbs=S.subitems.filter(s=>s.item_id===it.id);
+    for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:today});
+  }
+  await loadData();toast('✅ Atividade concluída!');openActivity(secId);
+};
 window.reorderItems=async function(fromId,toId,secId){
   const its=[...S.items.filter(i=>i.atividade_id===secId)];
   const fi=its.findIndex(i=>i.id===fromId),ti=its.findIndex(i=>i.id===toId);
