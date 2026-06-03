@@ -368,7 +368,7 @@ window.togItem=function(id){
 
 window.toggleDone=async function(col,id,val){
   if(val===1){openConclusaoModal(col,id);return;}
-  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null});
+  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null,status:'pendente'});
   await loadData();openActivity(curSecId);
 };
 window.openConclusaoModal=function(col,id){
@@ -386,7 +386,7 @@ window.openConclusaoModal=function(col,id){
 };
 window.saveConclusao=async function(col,id){
   const d=document.getElementById('conc-date')?.value||new Date().toISOString().split('T')[0];
-  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d});
+  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'});
   await loadData();closeModal();toast('Concluído!');openActivity(curSecId);
 };
 window.deleteSec=async function(id){
@@ -969,7 +969,7 @@ window.vbCollect=function(){
 };
 // ── MARCAR ATIVIDADE CONCLUÍDA ──
 // ── STATUS MENU ──
-const _ST=[{v:'pendente',l:'Pendente',bg:'#33415522',c:'#94A3B8'},{v:'solicitado',l:'Solicitado',bg:'#2563EB22',c:'#60A5FA'},{v:'recebido',l:'Recebido',bg:'#0D948822',c:'#2DD4BF'},{v:'analisando',l:'Analisando',bg:'#8B5CF622',c:'#C4B5FD'},{v:'aprovado',l:'Aprovado',bg:'#10B98122',c:'#34D399'},{v:'ressalva',l:'Ressalva',bg:'#F59E0B22',c:'#FBBF24'},{v:'reprovado',l:'Reprovado',bg:'#EF444422',c:'#F87171'}];
+const _ST=[{v:'pendente',l:'Pendente',bg:'#33415522',c:'#94A3B8'},{v:'solicitado',l:'Solicitado',bg:'#2563EB22',c:'#60A5FA'},{v:'recebido',l:'Recebido',bg:'#0D948822',c:'#2DD4BF'},{v:'analisando',l:'Analisando',bg:'#8B5CF622',c:'#C4B5FD'},{v:'aprovado',l:'Aprovado',bg:'#10B98122',c:'#34D399'},{v:'ressalva',l:'Ressalva',bg:'#F59E0B22',c:'#FBBF24'},{v:'reprovado',l:'Reprovado',bg:'#EF444422',c:'#F87171'},{v:'concluido',l:'Concluído',bg:'#059669aa',c:'#ffffff'}];
 window.statusBadge=function(status,id,col,ev){
   const st=_ST.find(x=>x.v===(status||'pendente'))||_ST[0];
   return`<span onclick="event.stopPropagation();openStatusMenu('${id}','${col}',event)" style="cursor:pointer;padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px;font-weight:700;border:1px solid ${st.c}40;white-space:nowrap;flex-shrink:0">${st.l}</span>`;
@@ -993,6 +993,7 @@ window.openStatusMenu=function(id,col,ev){
 };
 window.setItemStatus=async function(id,col,status){
   document.querySelectorAll('.st-popup').forEach(p=>p.remove());
+  if(status==='concluido'){openConclusaoModal(col,id);return;}
   const colN=col==='item'?'items':'subitems';
   const obj=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
   if(obj)obj.status=status;
