@@ -1023,9 +1023,9 @@ window._doMarkActivityConcluded=async function(secId){
   const d=document.getElementById('act-conc-date')?.value||new Date().toISOString().split('T')[0];
   const its=S.items.filter(i=>i.atividade_id===secId);
   for(const it of its){
-    if(it.concluded!=1)await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:d});
+    if(it.concluded!=1)await updateDoc(doc(db,'items',it.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
     const sbs=S.subitems.filter(s=>s.item_id===it.id);
-    for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d});
+    for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
   }
   await loadData();closeModal();toast('✅ Atividade concluída!');openActivity(secId);
 };
@@ -1042,8 +1042,8 @@ window.markItemConcluded=function(itemId,secId){
 window._doMarkItemConcluded=async function(itemId,secId){
   const d=document.getElementById('item-conc-date')?.value||new Date().toISOString().split('T')[0];
   const sbs=S.subitems.filter(s=>s.item_id===itemId);
-  for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d});
-  if((S.items.find(x=>x.id===itemId))?.concluded!=1)await updateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d});
+  for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
+  if((S.items.find(x=>x.id===itemId))?.concluded!=1)await updateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d,status:'concluido'});
   await loadData();closeModal();toast('✅ Item concluído!');openActivity(secId);
 };
 // ── RENDER CADASTROS (LISTAGEM PLANA) ──
@@ -1154,9 +1154,15 @@ function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
 function onDrItemOver(ev){if(!_dragItemId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
 function onDrSubOver(ev,parentId){if(!_dragSubId||_dragSubParent!==parentId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
-function onDrLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function onDrLeave(ev){if(ev.currentTarget.contains(ev.relatedTarget))return;ev.currentTarget.classList.remove('drag-over');}
 function onDrItemDrop(ev,targetId,secId){ev.preventDefault();ev.currentTarget.classList.remove('drag-over');if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;}
-function onDrSubDrop(ev,targetId,parentId,secId){ev.preventDefault();ev.currentTarget.classList.remove('drag-over');ev.stopPropagation();if(!_dragSubId||_dragSubId===targetId||_dragSubParent!==parentId){_dragSubId=null;return;}window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;}
+function onDrSubDrop(ev,targetId,parentId,secId){
+  ev.currentTarget.classList.remove('drag-over');
+  if(!_dragSubId||_dragSubParent!==parentId){return;}
+  ev.preventDefault();ev.stopPropagation();
+  if(_dragSubId===targetId){_dragSubId=null;return;}
+  window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;
+}
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
   <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
