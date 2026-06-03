@@ -297,7 +297,7 @@ function renderItem(item,today){
   const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const subsHtml=pr.hasSubs?pr.subs.map(s=>{
     const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
-    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}',this)" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragend="onDrEnd(event)">
+    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
       <span>${sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
@@ -321,7 +321,7 @@ function renderItem(item,today){
     </div>`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}',this)" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')" ondragend="onDrEnd(event)">
+  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
@@ -374,6 +374,7 @@ function _restoreExpanded(){_expandedItems.forEach(id=>{const b=document.getElem
 window.toggleDone=async function(col,id,val){
   if(val===1){openConclusaoModal(col,id);return;}
   await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null,status:'pendente'});
+  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id&&s.auto_concluded===true);for(const sb of sbs)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});}
   await loadData();openActivity(curSecId);
 };
 window.openConclusaoModal=function(col,id){
@@ -395,7 +396,7 @@ window.openConclusaoModal=function(col,id){
 window.saveConclusao=async function(col,id){
   const d=document.getElementById('conc-date')?.value||new Date().toISOString().split('T')[0];
   await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'});
-  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido'});}
+  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});}
   await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.deleteSec=async function(id){
@@ -1149,41 +1150,13 @@ function confirmarGerarPdf(){
 }
 // ── DRAG & DROP ──
 let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
-function onDrItemStart(ev,id,el){
-  if(!ev.target.closest('.drag-handle')){ev.preventDefault();return;}
-  _dragItemId=id;_dragSubId=null;_dragSubParent=null;
-  ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);
-  setTimeout(()=>el.classList.add('dragging'),0);
-}
-function onDrSubStart(ev,id,parentId,el){
-  if(!ev.target.closest('.drag-handle')){ev.preventDefault();return;}
-  _dragSubId=id;_dragSubParent=parentId;_dragItemId=null;
-  ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',id);
-  ev.stopPropagation();
-  setTimeout(()=>el.classList.add('dragging'),0);
-}
-function onDrItemOver(ev){
-  if(!_dragItemId)return;
-  ev.preventDefault();ev.stopPropagation();
-  ev.currentTarget.classList.add('drag-over');
-}
-function onDrSubOver(ev,parentId){
-  if(!_dragSubId||_dragSubParent!==parentId)return;
-  ev.preventDefault();ev.stopPropagation();
-  ev.currentTarget.classList.add('drag-over');
-}
+function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;ev.dataTransfer.effectAllowed='move';}
+function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
+function onDrItemOver(ev){if(!_dragItemId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
+function onDrSubOver(ev,parentId){if(!_dragSubId||_dragSubParent!==parentId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
 function onDrLeave(ev){ev.currentTarget.classList.remove('drag-over');}
-function onDrEnd(ev){ev.currentTarget.classList.remove('dragging');}
-function onDrItemDrop(ev,targetId,secId){
-  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
-  if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
-  window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
-}
-function onDrSubDrop(ev,targetId,parentId,secId){
-  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');ev.stopPropagation();
-  if(!_dragSubId||_dragSubId===targetId||_dragSubParent!==parentId){_dragSubId=null;return;}
-  window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;
-}
+function onDrItemDrop(ev,targetId,secId){ev.preventDefault();ev.currentTarget.classList.remove('drag-over');if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;}
+function onDrSubDrop(ev,targetId,parentId,secId){ev.preventDefault();ev.currentTarget.classList.remove('drag-over');ev.stopPropagation();if(!_dragSubId||_dragSubId===targetId||_dragSubParent!==parentId){_dragSubId=null;return;}window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;}
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
   <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
