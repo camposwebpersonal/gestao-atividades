@@ -108,6 +108,10 @@ main{flex:1;overflow-y:auto}
 .spinner{width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:50px;color:var(--muted)}
+.item-row.drag-over{border-color:#0e7490!important;background:rgba(14,116,144,.07)!important;transform:scale(1.01)}
+.sub-row.drag-over{border:1px solid #0e7490!important;background:rgba(14,116,144,.12)!important}
+.drag-handle{cursor:grab;color:#334155;font-size:14px;user-select:none;flex-shrink:0;padding:0 2px}
+.drag-handle:active{cursor:grabbing}
 @media(max-width:768px){.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:1}.cards-grid{grid-template-columns:1fr}.stats-row{gap:8px}}
 @media(max-width:600px){.modal-overlay{padding:0;align-items:flex-end}.modal-box{border-radius:16px 16px 0 0;max-height:93vh;max-width:100%}}
 </style>
@@ -255,7 +259,7 @@ window.openActivity=function(secId){
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
-    <button class="btn-action" onclick="gerarPdf('${secId}')">📄 PDF</button>
+    <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;cursor:pointer;display:block;background:transparent" onclick="openGal('activity','${secId}','${esc(sec.name)}')" loading="lazy">`:''}
@@ -274,7 +278,8 @@ function renderItem(item,today){
   const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const subsHtml=pr.hasSubs?pr.subs.map(s=>{
     const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
-    return`<div class="sub-row">
+    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}')" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
+      <span class="drag-handle" title="Arraste para reordenar">⣿</span>
       <span>${sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
         ${s.responsaveis||s.observacao?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}</div>`:''}</div>
@@ -284,7 +289,7 @@ function renderItem(item,today){
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
     </div>`;
   }).join(''):'';
-  return`<div class="item-row" id="ir-${item.id}">
+  return`<div class="item-row" id="ir-${item.id}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
@@ -299,6 +304,7 @@ function renderItem(item,today){
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
       ${S.isAdmin?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
       ${S.isAdmin&&!pr.hasSubs?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',${done?0:1})">${done?'↺':'✓'}</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
     <div id="ib-${item.id}" style="padding:0 16px 14px;border-top:1px solid var(--border);display:none">
@@ -523,7 +529,8 @@ function renderAdmin(){
 }
 
 // ── PDF ──
-window.gerarPdf=async function(secId){
+window.gerarPdf=async function(secId,opts){
+  if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF\u2026','info',8000);
@@ -584,7 +591,9 @@ window.gerarPdf=async function(secId){
 
   // ── Cover image ──
   let covD=null;
-  if(sec.cover_url){try{covD=await loadB64(sec.cover_url,'jpeg',450);}catch(e){}}
+  if(opts.actCov&&sec.cover_url){try{covD=await loadB64(sec.cover_url,'jpeg',450);}catch(e){}}
+  let actRespD=null;
+  if(opts.actResp&&sec.resp_url){try{actRespD=await loadB64(sec.resp_url,'jpeg',120);}catch(e){}}
 
   // ── Title block ──
   doc.setFillColor(13,34,64);doc.rect(mx,y,cw,0.7,'F');y+=3;
@@ -607,6 +616,7 @@ window.gerarPdf=async function(secId){
     doc.setFillColor(99,102,241);doc.rect(mx,y,2.5,rH,'F');
     sf(7.5,true,[67,56,202]);doc.text('Responsaveis:',mx+5,y+5);
     sf(7.5,false,[30,30,80]);doc.text(rL,mx+36,y+5);
+    if(actRespD){const rs=Math.min(rH-2,9),rw=rs*(actRespD.w/actRespD.h);try{doc.addImage(actRespD.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}catch(e){}}
     y+=rH+2;
   }
 
@@ -699,8 +709,8 @@ window.gerarPdf=async function(secId){
     const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
     const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
     tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);
-    tblE.push({cu:item.cover_url,ru:item.resp_url});
-    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:null});}}
+    tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
   }
   const iDims=[];
   for(const e of tblE){
@@ -765,7 +775,77 @@ window.gerarPdf=async function(secId){
   toast('PDF gerado!');
 };
 
+window.reorderItems=async function(fromId,toId,secId){
+  const its=[...S.items.filter(i=>i.atividade_id===secId)];
+  const fi=its.findIndex(i=>i.id===fromId),ti=its.findIndex(i=>i.id===toId);
+  if(fi===-1||ti===-1||fi===ti)return;
+  const[m]=its.splice(fi,1);its.splice(ti,0,m);
+  for(let i=0;i<its.length;i++){const x=S.items.find(x=>x.id===its[i].id);if(x)x.order_num=i;await updateDoc(doc(db,'items',its[i].id),{order_num:i});}
+  openActivity(secId);
+};
+window.reorderSubitems=async function(fromId,toId,parentId,secId){
+  const sbs=[...S.subitems.filter(s=>s.item_id===parentId)];
+  const fi=sbs.findIndex(s=>s.id===fromId),ti=sbs.findIndex(s=>s.id===toId);
+  if(fi===-1||ti===-1||fi===ti)return;
+  const[m]=sbs.splice(fi,1);sbs.splice(ti,0,m);
+  for(let i=0;i<sbs.length;i++){const x=S.subitems.find(x=>x.id===sbs[i].id);if(x)x.order_num=i;await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});}
+  openActivity(secId);
+};
 window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
+</script>
+<div id="pdf-opts-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:24px;max-width:460px;width:100%;position:relative">
+    <button onclick="fecharPdfOpts()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer">✕</button>
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px">📄 Opções do PDF</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px">Escolha o que incluir no relatório</div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🖼️ Imagens</div>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-act-cov" checked style="accent-color:#10b981;width:15px;height:15px"> Imagem representativa da atividade</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-act-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Foto do responsável da atividade</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-item-cov" checked style="accent-color:#10b981;width:15px;height:15px"> Imagens representativas dos itens</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-item-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos itens</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-sub-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos subitens</label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="fecharPdfOpts()" style="padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button onclick="confirmarGerarPdf()" style="padding:10px 22px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _pdfOptsSecId=null;
+function abrirPdfOpts(secId){_pdfOptsSecId=secId;document.getElementById('pdf-opts-overlay').style.display='flex';}
+function fecharPdfOpts(){document.getElementById('pdf-opts-overlay').style.display='none';}
+function confirmarGerarPdf(){
+  fecharPdfOpts();
+  const opts={
+    actCov:document.getElementById('popt-act-cov').checked,
+    actResp:document.getElementById('popt-act-resp').checked,
+    itemCov:document.getElementById('popt-item-cov').checked,
+    itemResp:document.getElementById('popt-item-resp').checked,
+    subResp:document.getElementById('popt-sub-resp').checked
+  };
+  window.gerarPdf(_pdfOptsSecId,opts);
+}
+// ── DRAG & DROP ──
+let _dragItemId=null,_dragSubId=null;
+function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;ev.dataTransfer.effectAllowed='move';}
+function onDrSubStart(ev,id){_dragSubId=id;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
+function onDrOver(ev){ev.preventDefault();ev.currentTarget.classList.add('drag-over');}
+function onDrLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function onDrItemDrop(ev,targetId,secId){
+  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
+  if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
+  window.toast('Reordenando…','info',3000);
+  window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
+}
+function onDrSubDrop(ev,targetId,parentId,secId){
+  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');ev.stopPropagation();
+  if(!_dragSubId||_dragSubId===targetId){_dragSubId=null;return;}
+  window.toast('Reordenando…','info',3000);
+  window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;
+}
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
   <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
