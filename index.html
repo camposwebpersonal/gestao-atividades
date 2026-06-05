@@ -937,7 +937,7 @@ window.gerarPdf=async function(secId,opts){
   sf(10,true,[255,255,255]);doc.text('ITENS DA ATIVIDADE',mx+5,y+6.5);
   y+=13;
 
-  const tblH=[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']];
+  const tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
   const tblB=[];const tblE=[];
   let rowNum=0;
   for(let ii=0;ii<items.length;ii++){
@@ -951,9 +951,9 @@ window.gerarPdf=async function(secId,opts){
     if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
     const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
     const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
-    tblB.push([String(rowNum),cell1,_cp?subCnt:'\u2014',_cp?pct+'%':'\u2014',st,_cp&&item.deadline_date?fmtD(item.deadline_date):'\u2014']);
+    if(_cp){tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{tblB.push([String(rowNum),cell1]);}
     tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',_cp?(sD?'100%':'0%'):'\u2014',_cp?(sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente'):'\u2014',_cp&&s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
+    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
   }
   const iDims=[];
   for(const e of tblE){
@@ -967,7 +967,7 @@ window.gerarPdf=async function(secId,opts){
     styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},
     headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},
     alternateRowStyles:{fillColor:[248,252,248]},
-    columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}},
+    columnStyles:_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}},
     didParseCell:function(dat){
       if(dat.section!=='body')return;
       const isIt=dat.row.raw[0]!=='';
