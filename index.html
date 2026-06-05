@@ -293,12 +293,41 @@ window.openActivity=function(secId){
   ${_cp?`<div id="items-cnt">${itemsHtml}</div>`:`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:20px;text-align:center;color:#64748b;font-size:13px">📋 Controle de pendências desativado para esta atividade.<br><small>Ative em ✏️ Editar → Configurações.</small></div>`}`);_restoreExpanded();
 };
 
+function _renderSubSubs(parentSubId,item,today){
+  const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  if(!kids.length)return '';
+  const _sec=S.secs.find(s=>s.id===item.atividade_id);
+  return kids.map(c=>{
+    const cD=c.concluded==1,cL=!cD&&c.deadline_date&&new Date(c.deadline_date)<today;
+    const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
+    const ef=c.extra_fields||{};const tags=[];
+    Object.keys(ef).forEach(k=>tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(k)}:</strong> ${esc(ef[k])}</span>`));
+    if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
+    if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
+    if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
+    return`<div class="sub-row" style="padding-left:32px;border-left:3px solid #1e3a5f;background:#060c18">
+      <span style="color:#475569;font-size:12px;flex-shrink:0">└</span>
+      <span>${cD?'✅':cL?'🔴':'○'}</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}</div>
+        ${c.responsaveis||c.observacao?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}</div>`:''}
+        ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
+      </div>
+      <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
+      ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
+    </div>${_renderSubSubs(c.id,item,today)}`;
+  }).join('');
+}
+
 function renderItem(item,today){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
-  const subsHtml=pr.hasSubs?pr.subs.map(s=>{
+  const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem');
+  const subsHtml=_topSubs.length?_topSubs.map(s=>{
     const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
@@ -321,7 +350,8 @@ function renderItem(item,today){
       ${statusBadge(s.status,s.id,'subitem')}
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
-    </div>`;
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
+    </div>${_renderSubSubs(s.id,item,today)}`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
   return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
@@ -581,7 +611,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const colName=isSub?'subitems':'items';
   const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
-  else{data.item_id=parentId;data.atividade_id=secId;}
+  else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
   const ef={};
   document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();});
