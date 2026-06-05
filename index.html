@@ -252,7 +252,7 @@ function renderDash(){
         <div class="lr-icon">${s.cover_url?`<img src="${esc(s.cover_url)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px">`:`<img src="img/logo_sertania.png" style="width:36px;height:36px;object-fit:contain;border-radius:6px">`}</div>
         <div class="lr-body">
           <div class="lr-title">${esc(s.name)}</div>
-          <div class="lr-meta">${s.observacoes?esc(s.observacoes):'Sem descrição'}</div>
+          <div class="lr-meta">${s.observacoes?esc(s.observacoes):''}</div>
         </div>
         <div class="lr-prog">
           <div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div>
