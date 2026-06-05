@@ -276,6 +276,7 @@ window.openActivity=function(secId){
     <div style="flex:1"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${S.isAdmin&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
@@ -449,8 +450,15 @@ window.saveConclusao=async function(col,id){
   if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});}
   await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
+window.confirmarExcluirAtividade=function(id){
+  const sec=S.secs.find(s=>s.id===id);
+  const nItems=S.items.filter(i=>i.atividade_id===id).length;
+  const nSubs=S.subitems.filter(s=>S.items.some(i=>i.atividade_id===id&&i.id===s.item_id)).length;
+  openModal('🗑️ Excluir Atividade',esc(sec?.name||''),
+    `<div style="padding:4px 0"><div style="background:#1a0505;border:1px solid #b91c1c;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#fca5a5">⚠️ Esta ação <strong>NÃO pode ser desfeita</strong>.<br>Serão excluídos: <strong>${nItems} item(ns)</strong> e <strong>${nSubs} sub-item(ns)</strong> vinculados.</div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#b91c1c;color:#fef2f2" onclick="deleteSec('${id}')">🗑️ Confirmar Exclusão</button></div>`);
+};
 window.deleteSec=async function(id){
-  if(!confirm('Excluir esta atividade e todos os seus itens e sub-itens?\nEsta ação NÃO pode ser desfeita.'))return;
   const its=S.items.filter(i=>i.atividade_id===id);
   for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
   const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
