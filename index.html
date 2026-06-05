@@ -256,8 +256,9 @@ window.openActivity=function(secId){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const itemsHtml=items.map(item=>renderItem(item,today)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+  const _cp=sec.controle_pendencias!==0;
   const _ss=sec.show_stats!==0;
-  const statsHtml=_ss?(()=>{
+  const statsHtml=_cp&&_ss?(()=>{
     const total=items.length,conc=items.filter(i=>iProg(i).pct===100).length;
     const atras=items.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
     const pend=total-conc-atras;
@@ -271,12 +272,12 @@ window.openActivity=function(secId){
   setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
     <button class="btn-action" onclick="setView('dash')">← Voltar</button>
     <div style="flex:1"></div>
-    ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    ${S.isAdmin&&_cp?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${S.isAdmin&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
-    ${S.isAdmin&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
-    <button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>
+    ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
+    ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
+    ${S.isAdmin&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
+    ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
@@ -289,7 +290,7 @@ window.openActivity=function(secId){
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
   ${statsHtml}
-  <div id="items-cnt">${itemsHtml}</div>`);_restoreExpanded();
+  ${_cp?`<div id="items-cnt">${itemsHtml}</div>`:`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:20px;text-align:center;color:#64748b;font-size:13px">📋 Controle de pendências desativado para esta atividade.<br><small>Ative em ✏️ Editar → Configurações.</small></div>`}`);_restoreExpanded();
 };
 
 function renderItem(item,today){
@@ -452,6 +453,7 @@ window.openSecModal=function(id){
   <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
     <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
     <div style="display:flex;flex-direction:column;gap:6px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_pendencias!==0?'#38bdf8':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📋 Controle de Pendências <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita itens, sub-itens, status e prazos)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
         const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
@@ -488,7 +490,7 @@ window.saveSec=async function(id){
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:g('s-resp')?.value.trim()||'',start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:g('s-resp')?.value.trim()||'',start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
