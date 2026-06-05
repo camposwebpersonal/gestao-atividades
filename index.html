@@ -323,17 +323,18 @@ function _renderSubSubs(parentSubId,item,today){
 function renderItem(item,today){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
-  const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-  const badge=done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
+  const _nt=_sec?.controle_pendencias===0;
+  const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+  const badge=_nt?'':done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem');
   const subsHtml=_topSubs.length?_topSubs.map(s=>{
-    const sD=s.concluded==1,sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
+    const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
-      <span>${sD?'✅':sL?'🔴':'○'}</span>
+      <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
-        ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
+        ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef);
         const tags=[];
@@ -347,9 +348,9 @@ function renderItem(item,today){
       })()}</div>
       ${s.resp_url?`<img src="${esc(s.resp_url)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8" loading="lazy">`:''}
       ${s.cover_url?`<img src="${esc(s.cover_url)}" style="height:26px;border-radius:4px;object-fit:contain;background:transparent" loading="lazy">`:''}
-      ${statusBadge(s.status,s.id,'subitem')}
+      ${_nt?'':statusBadge(s.status,s.id,'subitem')}
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
+      ${S.isAdmin&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(s.id,item,today)}`;
   }).join(''):'';
@@ -360,19 +361,19 @@ function renderItem(item,today){
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
         <div class="item-name">${esc(item.description)} ${badge}
-          ${item.deadline_date?`<span style="font-size:11px;color:${late?'#f87171':'#64748b'}">📅 ${fmtD(item.deadline_date)}</span>`:''}
-          ${item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
+          ${!_nt&&item.deadline_date?`<span style="font-size:11px;color:${late?'#f87171':'#64748b'}">📅 ${fmtD(item.deadline_date)}</span>`:''}
+          ${!_nt&&item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
         </div>
         ${item.responsaveis?`<div class="item-meta">👤 ${esc(item.responsaveis)}</div>`:''}
       </div>
       ${item.resp_url?`<img src="${esc(item.resp_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #818cf8;flex-shrink:0" loading="lazy">`:''}
       ${item.cover_url?`<img src="${esc(item.cover_url)}" style="height:32px;max-width:48px;object-fit:contain;border-radius:5px;flex-shrink:0;background:transparent;cursor:pointer" onclick="event.stopPropagation();openGal('item','${item.id}','${esc(item.description)}')" loading="lazy">`:''}
-      ${statusBadge(item.status,item.id,'item')}
-      ${pRing(pr.pct)}
+      ${_nt?'':statusBadge(item.status,item.id,'item')}
+      ${_nt?'':pRing(pr.pct)}
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
       ${S.isAdmin?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
-      ${S.isAdmin&&done?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
-      ${S.isAdmin&&!done&&!pr.hasSubs?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
+      ${S.isAdmin&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
+      ${S.isAdmin&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
@@ -390,8 +391,8 @@ function renderItem(item,today){
         return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
       })()}
       ${subsHtml}
-      ${S.isAdmin&&pr.hasSubs?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
-      ${S.isAdmin&&pr.hasSubs?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
+      ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
+      ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
   </div>`;
@@ -872,7 +873,9 @@ window.gerarPdf=async function(secId,opts){
   }
 
   y+=2;
+  const _cp=sec.controle_pendencias!==0;
 
+  if(_cp){
   // ── Stats boxes ──
   chk(18);
   const cw4=(cw-9)/4;
@@ -926,6 +929,7 @@ window.gerarPdf=async function(secId,opts){
   }
 
   y+=3;
+  } // end _cp stats
 
   // ── Tabela de itens ──
   chk(12);
@@ -939,17 +943,17 @@ window.gerarPdf=async function(secId,opts){
   for(let ii=0;ii<items.length;ii++){
     const item=items[ii];const pr=itemProgs[ii].prog;
     const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
-    const late=!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-    const st=done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente';
+    const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+    const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
     rowNum++;
     let cell1=item.description;
     if(item.observacao)cell1+='\nObs: '+item.observacao;
     if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
     const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
     const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
-    tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);
+    tblB.push([String(rowNum),cell1,_cp?subCnt:'\u2014',_cp?pct+'%':'\u2014',st,_cp&&item.deadline_date?fmtD(item.deadline_date):'\u2014']);
     tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
+    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;tblB.push(['',sc,'',_cp?(sD?'100%':'0%'):'\u2014',_cp?(sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente'):'\u2014',_cp&&s.deadline_date?fmtD(s.deadline_date):'\u2014']);tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
   }
   const iDims=[];
   for(const e of tblE){
@@ -980,6 +984,7 @@ window.gerarPdf=async function(secId,opts){
     didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}
   });
 
+  if(_cp){
   // ── Prazos de entrega ──
   const dlE=[];
   itemProgs.forEach(({item,prog})=>{
@@ -1008,6 +1013,7 @@ window.gerarPdf=async function(secId,opts){
   sf(9,true,[255,255,255]);doc.text('PROGRESSO GERAL DA ATIVIDADE',mx+9,y+7);
   sf(7.5,false,[185,245,185]);doc.text(sec.name||'',mx+9,y+12.5);
   sf(16,true,pctGeral===100?[100,235,210]:[110,192,46]);doc.text(pctGeral+'%',W-mx,y+11,{align:'right'});
+  } // end _cp final
 
   // ── Numeração total (X/Y) ──
   rodape();
