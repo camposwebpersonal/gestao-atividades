@@ -272,7 +272,7 @@ window.openActivity=function(secId){
   setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
     <button class="btn-action" onclick="setView('dash')">← Voltar</button>
     <div style="flex:1"></div>
-    ${S.isAdmin&&_cp?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
@@ -290,7 +290,7 @@ window.openActivity=function(secId){
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
   ${statsHtml}
-  ${_cp?`<div id="items-cnt">${itemsHtml}</div>`:`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:20px;text-align:center;color:#64748b;font-size:13px">📋 Controle de pendências desativado para esta atividade.<br><small>Ative em ✏️ Editar → Configurações.</small></div>`}`);_restoreExpanded();
+  <div id="items-cnt">${itemsHtml}</div>`);_restoreExpanded();
 };
 
 function _renderSubSubs(parentSubId,item,today){
@@ -963,7 +963,14 @@ window.gerarPdf=async function(secId,opts){
     styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},
     headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},
     alternateRowStyles:{fillColor:[248,252,248]},
-    columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:20},5:{cellWidth:28}},
+    columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}},
+    didParseCell:function(dat){
+      if(dat.section!=='body')return;
+      const isIt=dat.row.raw[0]!=='';
+      if(isIt){dat.cell.styles.fillColor=[13,64,20];dat.cell.styles.textColor=[215,255,215];dat.cell.styles.fontStyle='bold';}
+      else{dat.cell.styles.textColor=[26,32,44];}
+      if(dat.column.index===1){const e=iDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}}
+    },
     didDrawCell:function(dat){
       if(dat.section!=='body'||dat.column.index!==1)return;
       const e=iDims[dat.row.index];if(!e)return;
@@ -1494,14 +1501,14 @@ async function gerarPdfBusca(){
     const pr=S.subitems.filter(s=>s.item_id===item.id);
     const pct=pr.length>0?Math.round(pr.filter(s=>s.concluded==1).length/pr.length*100):(isDone?100:0);
     let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
-    tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[20,45,95],textColor:[220,235,255]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[20,45,95],textColor:[220,235,255]}},{content:pct+'%',styles:{halign:'center',fillColor:[20,45,95],textColor:[220,235,255]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[20,45,95],textColor:isDone?[100,230,175]:[180,200,240]}},{content:item.observacao||'',styles:{fillColor:[20,45,95],textColor:[220,235,255],fontSize:7.5}}]);
+    tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:pct+'%',styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[13,64,20],textColor:isDone?[100,230,175]:[215,255,215]}},{content:item.observacao||'',styles:{fillColor:[13,64,20],textColor:[215,255,215],fontSize:7.5}}]);
     tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
-    subsToRender.forEach(s=>{const sD=s.concluded==1;let sc='  \u203a '+(s.description||'');if(s.responsaveis)sc+='\n  Resp: '+s.responsaveis;tblB.push(['',{content:sc,styles:{fontSize:7.5,textColor:[150,170,200]}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:[100,120,150]}},{content:sD?'\u2713 Conclu\u00eddo':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:[100,120,150]}},{content:s.observacao||'',styles:{fontSize:7,textColor:[100,120,150]}}]);tblE.push({cu:null,ru:chkImgSubResp?s.resp_url:null});});
+    subsToRender.forEach(s=>{const sD=s.concluded==1;let sc='  \u203a '+(s.description||'');if(s.responsaveis)sc+='\n  Resp: '+s.responsaveis;tblB.push(['',{content:sc,styles:{fontSize:7.5,textColor:[26,32,44]}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:[60,80,100]}},{content:sD?'\u2713 Conclu\u00eddo':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:[60,80,100]}},{content:s.observacao||'',styles:{fontSize:7,textColor:[60,80,100]}}]);tblE.push({cu:null,ru:chkImgSubResp?s.resp_url:null});});
   });
   // Load images sequentially
   const iDims=[];
   for(const e of tblE){const cd=e.cu?await window.loadB64(e.cu,'jpeg',150).catch(()=>null):null;const rd=e.ru?await window.loadB64(e.ru,'jpeg',120).catch(()=>null):null;iDims.push({cd,rd});}
-  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:22},4:{cellWidth:38}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:26},4:{cellWidth:34}},didParseCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
   rodape();
   const totalPages=doc.internal.getNumberOfPages();
   for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}
