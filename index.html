@@ -255,8 +255,10 @@ window.openActivity=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
-  const itemsHtml=items.map(item=>renderItem(item,today)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+  const itemsHtml=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
   const _cp=sec.controle_pendencias!==0;
+  const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
+  const _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
   const _ss=sec.show_stats!==0;
   const statsHtml=_cp&&_ss?(()=>{
     const total=items.length,conc=items.filter(i=>iProg(i).pct===100).length;
@@ -290,14 +292,14 @@ window.openActivity=function(secId){
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
   ${statsHtml}
-  <div id="items-cnt">${itemsHtml}</div>`);_restoreExpanded();
+  <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
 };
 
 function _renderSubSubs(parentSubId,item,today){
   const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!kids.length)return '';
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
-  return kids.map(c=>{
+  const _html=kids.map((c,_si)=>{
     const cD=c.concluded==1,cL=!cD&&c.deadline_date&&new Date(c.deadline_date)<today;
     const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
     const ef=c.extra_fields||{};const tags=[];
@@ -307,6 +309,7 @@ function _renderSubSubs(parentSubId,item,today){
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
     return`<div class="sub-row" style="padding-left:32px;border-left:3px solid #1e3a5f;background:#060c18">
       <span style="color:#475569;font-size:12px;flex-shrink:0">└</span>
+      <span style="color:#64748b;font-size:10px;font-weight:700;flex-shrink:0;min-width:14px;text-align:right">${_si+1}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}</div>
         ${c.responsaveis||c.observacao?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}</div>`:''}
@@ -318,9 +321,10 @@ function _renderSubSubs(parentSubId,item,today){
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(c.id,item,today)}`;
   }).join('');
+  return _html+`<div style="padding:2px 16px 2px 32px;font-size:10px;color:#475569;text-align:right;border-left:3px solid #1e3a5f">∑ Subtotal: ${kids.length} sub-item(ns)</div>`;
 }
 
-function renderItem(item,today){
+function renderItem(item,today,itemNum){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const _nt=_sec?.controle_pendencias===0;
@@ -328,10 +332,11 @@ function renderItem(item,today){
   const badge=_nt?'':done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem');
-  const subsHtml=_topSubs.length?_topSubs.map(s=>{
+  const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
+      <span style="color:#64748b;font-size:11px;font-weight:700;flex-shrink:0;min-width:20px;text-align:right">${_si+1}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
         ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
@@ -360,7 +365,7 @@ function renderItem(item,today){
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
-        <div class="item-name">${esc(item.description)} ${badge}
+        <div class="item-name"><span style="color:#64748b;font-weight:800;font-size:12px;margin-right:2px">${itemNum!=null?itemNum+'.':''}</span>${esc(item.description)} ${badge}
           ${!_nt&&item.deadline_date?`<span style="font-size:11px;color:${late?'#f87171':'#64748b'}">📅 ${fmtD(item.deadline_date)}</span>`:''}
           ${!_nt&&item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
         </div>
@@ -391,6 +396,7 @@ function renderItem(item,today){
         return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
       })()}
       ${subsHtml}
+      ${_topSubs.length?`<div style="padding:3px 8px;font-size:11px;color:#475569;text-align:right;border-top:1px dashed #1e3a5f;margin-top:2px">∑ Subtotal: ${_topSubs.length} sub-item(ns)</div>`:''}
       ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
       ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
@@ -953,8 +959,9 @@ window.gerarPdf=async function(secId,opts){
     const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
     if(_cp){tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{tblB.push([String(rowNum),cell1]);}
     tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-    if(pr.hasSubs){for(const s of pr.subs){const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}}
+    if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+_psi+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}if(_cp){tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)','','','','']);}else{tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)']);}tblE.push({cu:null,ru:null});}
   }
+  if(_cp){tblB.push(['\u03a3','Total: '+items.length+' item(ns)','','','','']);}else{tblB.push(['\u03a3','Total: '+items.length+' item(ns)']);}  tblE.push({cu:null,ru:null});
   const iDims=[];
   for(const e of tblE){
     const cd=e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null;
@@ -970,8 +977,12 @@ window.gerarPdf=async function(secId,opts){
     columnStyles:_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}},
     didParseCell:function(dat){
       if(dat.section!=='body')return;
-      const isIt=dat.row.raw[0]!=='';
+      const r0=dat.row.raw[0];
+      const isIt=r0!==''&&r0!=='\u2211'&&r0!=='\u03a3';
+      const isSub=r0==='\u2211';const isTot=r0==='\u03a3';
       if(isIt){dat.cell.styles.fillColor=[13,64,20];dat.cell.styles.textColor=[215,255,215];dat.cell.styles.fontStyle='bold';}
+      else if(isSub){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontSize=7;dat.cell.styles.fontStyle='italic';if(dat.column.index===0)dat.cell.text=[''];}
+      else if(isTot){dat.cell.styles.fillColor=[13,34,64];dat.cell.styles.textColor=[180,210,255];dat.cell.styles.fontStyle='bold';if(dat.column.index===0)dat.cell.text=[''];}
       else{dat.cell.styles.textColor=[26,32,44];}
       if(dat.column.index===1){const e=iDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}}
     },
