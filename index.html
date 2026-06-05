@@ -308,10 +308,10 @@ function renderItem(item,today){
         const ef=s.extra_fields||{};const ks=Object.keys(ef);
         const tags=[];
         if(ks.length)ks.forEach(k=>tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(k)}:</strong> ${esc(ef[k])}</span>`));
-        if(_sec?.show_verba&&_sec?.verba_on_subitems&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
-        if(_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
-        if(_sec?.show_documentacao&&_sec?.documentacao_on_subitems&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
-        if(_sec?.show_licitacao&&_sec?.licitacao_on_subitems&&s.licitacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${s.licitacao==1?'Concluída':'Pendente'}</span>`);
+        if((_sec?.show_verba&&_sec?.verba_on_subitems||s.item_show_verba)&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
+        if((_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems||s.item_show_verba)&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
+        if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||s.item_show_documentacao)&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
+        if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||s.item_show_licitacao)&&s.licitacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${s.licitacao==1?'Concluída':'Pendente'}</span>`);
         if(!tags.length)return '';
         return`<div style="font-size:10px;color:#94a3b8;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">${tags.join('')}</div>`;
       })()}</div>
@@ -351,10 +351,10 @@ function renderItem(item,today){
         const ef=item.extra_fields||{};const ks=Object.keys(ef);
         const tags=[];
         if(ks.length)ks.forEach(k=>tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(k)}:</strong> ${esc(ef[k])}</span>`));
-        if(_sec?.show_verba&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
-        if(_sec?.show_origem_verba&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
-        if(_sec?.show_documentacao&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
-        if(_sec?.show_licitacao&&item.licitacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.licitacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">⚖️ ${item.licitacao==1?'Lic. Concluída':'Lic. Pendente'}</span>`);
+        if((_sec?.show_verba||item.item_show_verba)&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
+        if((_sec?.show_origem_verba||item.item_show_verba)&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
+        if((_sec?.show_documentacao||item.item_show_documentacao)&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
+        if((_sec?.show_licitacao||item.item_show_licitacao)&&item.licitacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.licitacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">⚖️ ${item.licitacao==1?'Lic. Concluída':'Lic. Pendente'}</span>`);
         if(!tags.length)return '';
         return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
       })()}
@@ -513,6 +513,20 @@ window.openItemModal=function(id,secId,isSub,parentId){
     <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão ${isSub?'neste sub-item':'neste item'}</label></div>
   </div>
   ${(()=>{
+    const _s3=S.secs.find(s=>s.id===(secId||curSecId));
+    const _c3=(fl)=>isSub?(_s3?.['show_'+fl]&&_s3?.[fl+'_on_subitems']):_s3?.['show_'+fl];
+    const noV=!_c3('verba'),noD=!_c3('documentacao'),noL=!_c3('licitacao');
+    if(!noV&&!noD&&!noL)return '';
+    let p='';
+    if(noV){const vc=it?.item_show_verba?'checked':'',vs=it?.item_show_verba?'block':'none';
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sv" ${vc} onchange="document.getElementById('pit-vr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 💰 Habilitar Verba neste ${isSub?'sub-item':'item'}</label><div id="pit-vr" style="display:${vs};margin-top:6px;padding-left:22px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="number" id="pit-verba" step="0.01" placeholder="Valor R$" value="${esc(String(it?.verba??''))}" style="width:120px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" id="pit-vorig" placeholder="Origem da verba" value="${esc(it?.origem_verba||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"></div></div></div>`;}
+    if(noD){const dc=it?.item_show_documentacao?'checked':'',ds=it?.item_show_documentacao?'block':'none',dv=it?.documentacao;
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sd" ${dc} onchange="document.getElementById('pit-dr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 📁 Habilitar Documentação</label><div id="pit-dr" style="display:${ds};margin-top:6px;padding-left:22px"><select id="pit-doc" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${dv===0||dv==='0'?'selected':''}>Pendente</option><option value="1" ${dv===1||dv==='1'?'selected':''}>Concluída</option></select></div></div>`;}
+    if(noL){const lc=it?.item_show_licitacao?'checked':'',ls=it?.item_show_licitacao?'block':'none',lv2=it?.licitacao;
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sl" ${lc} onchange="document.getElementById('pit-lr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> ⚖️ Habilitar Licitação</label><div id="pit-lr" style="display:${ls};margin-top:6px;padding-left:22px"><select id="pit-lic" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${lv2===0||lv2==='0'?'selected':''}>Pendente</option><option value="1" ${lv2===1||lv2==='1'?'selected':''}>Concluída</option></select></div></div>`;}
+    return p?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:8px">✅ Campos deste ${isSub?'Sub-item':'Item'}</div>${p}</div>`:'';
+  })()}
+  ${(()=>{
     const effSec2=S.secs.find(s=>s.id===(secId||curSecId));
     if(!effSec2)return '';
     const chk=(fl)=>isSub?(effSec2['show_'+fl]&&effSec2[fl+'_on_subitems']):effSec2['show_'+fl];
@@ -577,6 +591,9 @@ window.saveItem=async function(id,secId,isSub,parentId){
   if(_chk('origem_verba')){data.origem_verba=document.getElementById('it-origem-verba')?.value||'';}
   if(_chk('documentacao')){const dv=document.getElementById('it-documentacao')?.value;data.documentacao=dv!==''&&dv!=null?parseInt(dv):null;if(effSec.documentacao_has_obs)data.documentacao_obs=document.getElementById('it-doc-obs')?.value||'';}
   if(_chk('licitacao')){const lv=document.getElementById('it-licitacao')?.value;data.licitacao=lv!==''&&lv!=null?parseInt(lv):null;if(effSec.licitacao_has_obs)data.licitacao_obs=document.getElementById('it-lic-obs')?.value||'';}
+  if(!_chk('verba')){const sv=document.getElementById('pit-sv')?.checked;data.item_show_verba=sv?1:0;if(sv){const pv=document.getElementById('pit-verba')?.value;data.verba=pv?parseFloat(pv):null;data.origem_verba=document.getElementById('pit-vorig')?.value||'';}}
+  if(!_chk('documentacao')){const sd=document.getElementById('pit-sd')?.checked;data.item_show_documentacao=sd?1:0;if(sd){const dv2=document.getElementById('pit-doc')?.value;data.documentacao=dv2!==''&&dv2!=null?parseInt(dv2):null;}}
+  if(!_chk('licitacao')){const sl=document.getElementById('pit-sl')?.checked;data.item_show_licitacao=sl?1:0;if(sl){const lv2=document.getElementById('pit-lic')?.value;data.licitacao=lv2!==''&&lv2!=null?parseInt(lv2):null;}}
   let did=id;
   if(id){await updateDoc(doc(db,colName,id),data);}
   else{data.order_num=isSub?S.subitems.length:S.items.length;data.concluded=0;data.created_at=serverTimestamp();const r=await addDoc(collection(db,colName),data);did=r.id;}
