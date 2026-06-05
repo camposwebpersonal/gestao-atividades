@@ -139,8 +139,7 @@ main{flex:1;overflow-y:auto}
     <button class="btn-logout" onclick="doLogout()">Sair</button>
   </nav>
   <div id="navmenu">
-    <button class="nav-btn active" id="nav-dash" onclick="setView('dash')">📊 Dashboard</button>
-    <button class="nav-btn" id="nav-ativ" onclick="setView('ativ')">📅 Atividades</button>
+    <button class="nav-btn active" id="nav-ativ" onclick="setView('ativ')">📅 Atividades</button>
     <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
   </div>
   <main><div id="content"><div class="loading"><div class="spinner"></div> Carregando…</div></div></main>
@@ -197,7 +196,7 @@ onAuthStateChanged(auth,async u=>{
   }catch(e){S.isAdmin=true;}
   if(S.isAdmin)document.getElementById('nav-adm').style.display='';
   await loadData();
-  setView('dash');
+  setView('ativ');
   const _sp=new URLSearchParams(location.search).get('setup');
   if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
 });
@@ -229,8 +228,8 @@ function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].s
 
 // ── NAV ──
 window.setView=function(v){
-  ['dash','ativ','adm'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
-  if(v==='dash'||v==='ativ')renderDash();
+  ['ativ','adm'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  if(v==='ativ')renderDash();
   else if(v==='adm')renderAdmin();
 };
 
@@ -250,7 +249,7 @@ function renderDash(){
     const p=prgs[i],col=pColor(p);
     if(view==='list'){
       return`<div class="list-row" onclick="openActivity('${s.id}')">
-        <div class="lr-icon">${s.cover_url?`<img src="${esc(s.cover_url)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px">`:'📅'}</div>
+        <div class="lr-icon">${s.cover_url?`<img src="${esc(s.cover_url)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px">`:`<img src="img/logo_sertania.png" style="width:36px;height:36px;object-fit:contain;border-radius:6px">`}</div>
         <div class="lr-body">
           <div class="lr-title">${esc(s.name)}</div>
           <div class="lr-meta">${s.observacoes?esc(s.observacoes):'Sem descrição'}</div>
@@ -266,7 +265,7 @@ function renderDash(){
       </div>`;
     }
     return`<div class="activity-card" onclick="openActivity('${s.id}')">
-      ${s.cover_url?`<img class="card-thumb" src="${esc(s.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph">📅</div>`}
+      ${s.cover_url?`<img class="card-thumb" src="${esc(s.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph"><img src="img/logo_sertania.png" style="width:64px;height:64px;object-fit:contain;opacity:.7"></div>`}
       <div class="card-title">${esc(s.name)}</div>
       ${s.observacoes?`<div class="card-obs">${esc(s.observacoes)}</div>`:''}
       <div class="card-foot">
@@ -278,14 +277,8 @@ function renderDash(){
       </div>
     </div>`;
   }).join('')||'<div class="empty">Nenhuma atividade cadastrada.</div>';
-  setC(`<div class="page-title">📊 Dashboard</div>
-    <div class="page-sub">Visão geral das atividades da Prefeitura</div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:#34d399">${done}</div><div class="stat-lbl">Concluídas</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${total-done}</div><div class="stat-lbl">Em andamento</div></div>
-      <div class="stat-card"><div class="stat-val" style="color:var(--accent)">${avg}%</div><div class="stat-lbl">Progresso geral</div></div>
-    </div>
+  setC(`<div class="page-title">📅 Atividades</div>
+    <div class="page-sub">Atividades da Prefeitura</div>
     ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openSecModal()">+ Nova Atividade</button></div>`:''}
     ${toggle}
     <div class="${view==='list'?'list-view':'cards-grid'}">${itemsHtml}</div>`);
