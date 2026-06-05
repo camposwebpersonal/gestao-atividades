@@ -1316,7 +1316,7 @@ window._setupBccs=async function(){
   const r=await addDoc(collection(db,'secretariats'),{name:'BCCS',observacoes:'Cadastro de Beneficiários BCCS',responsaveis:'',start_date:null,end_date:null,controle_pendencias:0,show_stats:0,show_verba:0,verba_on_subitems:0,verba_sum_subitems:0,verba_has_obs:0,show_origem_verba:0,origem_verba_on_subitems:0,origem_verba_has_obs:0,show_documentacao:0,documentacao_on_subitems:0,documentacao_has_obs:0,show_licitacao:0,licitacao_on_subitems:0,licitacao_has_obs:0,order_num:S.secs.length,created_at:serverTimestamp()});
   const actId=r.id;
   const flds=[{n:'Nome',t:'text'},{n:'Telefone',t:'text'},{n:'Função',t:'text'},{n:'Jornada',t:'combobox',o:['4 Horas','6 Horas']},{n:'Salário',t:'number'},{n:'Localização',t:'text'},{n:'Sede / Distrito',t:'combobox',o:['Sede','Distrito']},{n:'Secretaria',t:'text'},{n:'Data de Admissão',t:'date'},{n:'Situação',t:'combobox',o:['Ativo','Demitido']},{n:'Data de Demissão',t:'date'},{n:'Indicado por',t:'text'}];
-  for(let i=0;i<flds.length;i++){await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope:'item',field_name:flds[i].n,field_type:flds[i].t,options:flds[i].o||[],order_num:i,created_at:serverTimestamp()});}
+  for(let i=0;i<flds.length;i++){await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope:'subitem',field_name:flds[i].n,field_type:flds[i].t,options:flds[i].o||[],order_num:i,created_at:serverTimestamp()});}
   await loadData();toast('✅ Atividade BCCS criada com sucesso!');renderDash();
   history.replaceState(null,'',location.pathname);
 };
