@@ -1624,7 +1624,7 @@ function abrirBusca(secId){
   document.getElementById('busca-input').value='';
   document.getElementById('busca-resultados').innerHTML='';
   const optGrp=document.getElementById('busca-opts-custom');
-  if(optGrp){optGrp.innerHTML='';const tpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId);if(tpls.length){tpls.forEach(t=>{const o=document.createElement('option');o.value='ef:'+t.field_name;o.textContent=t.field_name;optGrp.appendChild(o);});}else{const o=document.createElement('option');o.value='';o.textContent='Nenhum campo personalizado';o.disabled=true;optGrp.appendChild(o);}}}
+  if(optGrp){optGrp.innerHTML='';const tpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId);if(tpls.length){tpls.forEach(t=>{const o=document.createElement('option');o.value='ef:'+t.field_name;o.textContent=t.field_name;optGrp.appendChild(o);});}else{const o=document.createElement('option');o.value='';o.textContent='Nenhum campo personalizado';o.disabled=true;optGrp.appendChild(o);}}
   document.getElementById('busca-overlay').style.display='block';
   setTimeout(()=>document.getElementById('busca-input').focus(),80);
 }
