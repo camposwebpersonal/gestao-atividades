@@ -6,39 +6,43 @@
  * INSTRUÇÕES:
  * 1. Acesse https://camposwebpersonal.github.io/gestao-atividades/
  * 2. Faça login como ADMIN (RCAMPOS/admin/camposweb)
- * 3. Aperte F12 → Console
- * 4. COLE TODO ESTE CÓDIGO e aperte ENTER
- * 5. Aguarde a mensagem "✅ IMPORTAÇÃO CONCLUÍDA!"
- *
- * O que o script faz:
- * • Cria as Secretarias no cadastro (se não existirem)
- * • Cria FieldTemplates (campos extras) na atividade BCCS:
- *   — Localidade, Telefone, Função, Remuneração, Data Início, Carga Horária
- * • Cria 1 Item por Secretaria (ex: "AGRICULTURA - TOINHO ALMEIDA")
- * • Cria 1 Sub-item por Pessoa (ex: "CARLOS HENRIQUE CANDIDO FERREIRA")
+ * 3. Aguarde o loading completar (aparecer as atividades)
+ * 4. Aperte F12 → Console
+ * 5. Digite: allow pasting  (e Enter)
+ * 6. Cole este script e aperte ENTER
  */
 
 (async () => {
-  const { addDoc, collection, doc, updateDoc, serverTimestamp } = window;
-  const db = window.db;
+  console.log("🚀 Iniciando importação BCC...");
 
+  // Carregar funções do Firebase dinamicamente
+  const fb = await import("https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js");
+  const { addDoc, collection, doc, updateDoc, serverTimestamp, getDocs, query, where } = fb;
+
+  const db = window.db;
   if (!db) {
-    console.error("❌ Firebase não está inicializado. Abra o site e faça login primeiro.");
+    console.error("❌ window.db não encontrado. Recarregue a página (F5) e tente novamente.");
     return;
   }
 
-  console.log("📥 Carregando dados do BCC...");
-  const res = await fetch('bcc_data.json');
-  const BCC_DATA = await res.json();
-  console.log("✅ Dados carregados:", BCC_DATA.length, "secretarias");
-
-  // 1. Encontrar atividade BCCS
   const S = window.S;
   if (!S || !S.secs) {
     console.error("❌ Dados do site não carregados. Aguarde o loading completar.");
     return;
   }
 
+  console.log("📥 Carregando dados BCC...");
+  let BCC_DATA = [];
+  try {
+    const res = await fetch('bcc_data.json');
+    BCC_DATA = await res.json();
+  } catch (e) {
+    console.error("❌ Erro ao carregar bcc_data.json:", e);
+    return;
+  }
+  console.log("✅ Dados carregados:", BCC_DATA.length, "secretarias");
+
+  // 1. Encontrar atividade BCCS
   let bccs = S.secs.find(s => s.name.toUpperCase().includes('BCC'));
   if (!bccs) {
     console.error("❌ Atividade BCCS não encontrada. Crie a atividade primeiro no site.");
@@ -47,9 +51,9 @@
   console.log("📌 Atividade BCCS encontrada:", bccs.name, "ID:", bccs.id);
 
   // 2. Criar Secretarias
-  console.log("🏛️ Criando secretarias...");
+  console.log("🏛️ Verificando secretarias...");
   const secNames = [...new Set(BCC_DATA.map(s => s.name))];
-  const secMap = {}; // name -> id
+  const secMap = {};
 
   for (const sn of secNames) {
     const existing = S.secretarias.find(s => s.name === sn);
@@ -62,29 +66,29 @@
         created_at: serverTimestamp()
       });
       secMap[sn] = r.id;
-      console.log("  ✚ Nova secretaria:", sn, "→", r.id);
+      console.log("  ✚ Nova secretaria:", sn);
     }
   }
 
-  // 3. Criar FieldTemplates na atividade BCCS (scope = subitem)
-  console.log("🗂️ Criando campos extras...");
+  // 3. Criar FieldTemplates (campos extras) na atividade BCCS
+  console.log("🗂️ Verificando campos extras...");
   const fieldDefs = [
-    { name: 'Localidade', type: 'text' },
-    { name: 'Telefone',   type: 'text' },
-    { name: 'Função',     type: 'text' },
-    { name: 'Remuneração',type: 'text' },
-    { name: 'Data Início',type: 'text' },
+    { name: 'Localidade',    type: 'text' },
+    { name: 'Telefone',      type: 'text' },
+    { name: 'Função',        type: 'text' },
+    { name: 'Remuneração',   type: 'text' },
+    { name: 'Data Início',   type: 'text' },
     { name: 'Carga Horária', type: 'text' }
   ];
 
-  const ftMap = {}; // field_name -> id
+  const ftMap = {};
   const existingFT = S.fieldTemplates.filter(t => t.atividade_id === bccs.id && t.scope === 'subitem');
 
   for (const fd of fieldDefs) {
     const ex = existingFT.find(t => t.field_name === fd.name);
     if (ex) {
       ftMap[fd.name] = ex.id;
-      console.log("  ↳ FieldTemplate já existe:", fd.name);
+      console.log("  ↳ Field já existe:", fd.name);
     } else {
       const r = await addDoc(collection(db, 'fieldTemplates'), {
         atividade_id: bccs.id,
@@ -95,13 +99,13 @@
         created_at: serverTimestamp()
       });
       ftMap[fd.name] = r.id;
-      console.log("  ✚ Novo FieldTemplate:", fd.name, "→", r.id);
+      console.log("  ✚ Novo field:", fd.name);
     }
   }
 
   // 4. Criar Items (1 por secretaria)
-  console.log("📋 Criando itens por secretaria...");
-  const itemMap = {}; // secName -> itemId
+  console.log("📋 Criando itens...");
+  const itemMap = {};
   const existingItems = S.items.filter(i => i.atividade_id === bccs.id);
 
   for (const sec of BCC_DATA) {
@@ -116,36 +120,37 @@
         secretaria_id: secMap[sec.name] || null,
         item_icon: '🏛️',
         item_color: '#3B82F6',
-        order_num: S.items.length + Object.keys(itemMap).length,
+        order_num: (S.items.length + Object.keys(itemMap).length),
         concluded: 0,
         created_at: serverTimestamp()
       });
       itemMap[sec.name] = r.id;
-      console.log("  ✚ Novo item:", sec.name, "→", r.id);
+      console.log("  ✚ Novo item:", sec.name);
     }
   }
 
   // 5. Criar Sub-items (1 por pessoa)
-  console.log("👤 Criando sub-itens por pessoa...");
+  console.log("👤 Criando sub-itens...");
   let subCount = 0;
+  const baseSubCount = S.subitems.length;
 
   for (const sec of BCC_DATA) {
     const itemId = itemMap[sec.name];
     for (const p of sec.people) {
       const ef = {};
-      if (p.localidade) ef['Localidade'] = p.localidade;
-      if (p.telefone)   ef['Telefone']   = p.telefone;
-      if (p.funcao)     ef['Função']     = p.funcao;
-      if (p.remuneracao) ef['Remuneração'] = 'R$ ' + p.remuneracao;
-      if (p.data_inicio) ef['Data Início'] = p.data_inicio;
-      if (p.carga_horaria) ef['Carga Horária'] = p.carga_horaria;
+      if (p.localidade)     ef['Localidade']    = p.localidade;
+      if (p.telefone)       ef['Telefone']      = p.telefone;
+      if (p.funcao)         ef['Função']        = p.funcao;
+      if (p.remuneracao)    ef['Remuneração']   = 'R$ ' + p.remuneracao;
+      if (p.data_inicio)    ef['Data Início']   = p.data_inicio;
+      if (p.carga_horaria)  ef['Carga Horária'] = p.carga_horaria;
 
       await addDoc(collection(db, 'subitems'), {
         atividade_id: bccs.id,
         item_id: itemId,
         description: p.nome,
         extra_fields: ef,
-        order_num: S.subitems.length + subCount,
+        order_num: (baseSubCount + subCount),
         concluded: 0,
         created_at: serverTimestamp()
       });

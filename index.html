@@ -170,7 +170,7 @@ import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,query,wher
 const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
 const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
-const db=getFirestore(fbApp);
+const db=getFirestore(fbApp);window.db=db;
 
 // ── IMGBB KEY (configure após receber) ──
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
