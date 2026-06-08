@@ -884,6 +884,7 @@ function renderImportar(){
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <button class="btn-action primary" onclick="executarImportacaoBCC()" ${_importando?'disabled style="opacity:.5;cursor:not-allowed"':''}>🚀 Importar BCC Maio 2026</button>
+      <button class="btn-action" style="background:#422006;color:#fcd34d;border:1px solid #f59e0b" onclick="atualizarStatusSaiu()" ${_importando?'disabled style="opacity:.5;cursor:not-allowed"':''}>🔄 Atualizar Status SAIU</button>
       <button class="btn-action" onclick="limparLogImportacao()">🧹 Limpar Log</button>
     </div>
     ${progress}
@@ -1015,6 +1016,67 @@ window.executarImportacaoBCC=async function(){
         <div style="font-size:13px;color:#fca5a5">${err.message}</div>
       </div>`;
     }
+    toast('Erro: '+err.message,'error');
+  }finally{
+    _importando=false;
+  }
+};
+
+window.atualizarStatusSaiu=async function(){
+  if(_importando){toast('Operação já em andamento','warn');return;}
+  _importando=true;renderImportar();
+  try{
+    logImp('Carregando bcc_data.json...');
+    const res=await fetch('bcc_data.json');
+    const BCC_DATA=await res.json();
+    logImp('Dados carregados: '+BCC_DATA.length+' secretarias');
+
+    const bccs=S.secs.find(s=>s.name.toUpperCase().includes('BCC'));
+    if(!bccs){throw new Error('Atividade BCCS não encontrada.');}
+    logImp('Atividade BCCS: '+bccs.name);
+
+    // Buscar todas as pessoas que saíram
+    const sairam=[];
+    for(const sec of BCC_DATA){
+      for(const p of sec.people){
+        if(p.status==='SAIU')sairam.push({...p,secName:sec.name});
+      }
+    }
+    if(!sairam.length){toast('Nenhuma pessoa com status SAIU encontrada.','info');return;}
+    logImp('Pessoas com SAIU: '+sairam.length);
+
+    // Mapear sub-itens existentes por nome
+    const subsMap={};
+    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{subsMap[s.description]=s;});
+
+    let atualizados=0,naoEncontrados=0;
+    for(const p of sairam){
+      const sub=subsMap[p.nome];
+      if(!sub){logImp('⚠️ Não encontrado: '+p.nome+' ('+p.secName+')');naoEncontrados++;continue;}
+      const ef={...(sub.extra_fields||{})};
+      ef['Status']='SAIU';
+      await updateDoc(doc(db,'subitems',sub.id),{extra_fields:ef,updated_at:serverTimestamp()});
+      logImp('✚ Status SAIU atualizado: '+p.nome);
+      atualizados++;
+    }
+
+    logImp('Recarregando dados...');
+    await loadData();
+
+    const resultEl=document.getElementById('imp-result');
+    if(resultEl){
+      resultEl.innerHTML=`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:16px;margin-top:12px">
+        <div style="font-size:15px;font-weight:700;color:#34d399;margin-bottom:8px">✅ Status SAIU Atualizado!</div>
+        <div style="font-size:13px;color:#94a3b8;line-height:1.8">
+          <strong>Atualizados:</strong> ${atualizados}<br>
+          <strong>Não encontrados:</strong> ${naoEncontrados}
+        </div>
+      </div>`;
+    }
+    toast('Status SAIU atualizado!','success');
+  }catch(err){
+    console.error(err);
+    logImp('❌ ERRO: '+err.message);
     toast('Erro: '+err.message,'error');
   }finally{
     _importando=false;
