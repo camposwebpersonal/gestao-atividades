@@ -1713,6 +1713,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📋 Campos Personalizados</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Marque os campos extras para exibir no PDF.</div>
       <div id="popt-ef-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-table-mode" style="accent-color:#f59e0b;width:15px;height:15px"> 🗂️ Formato de tabela (colunas)</label>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📊 Relatório por Campo</div>
@@ -1758,7 +1759,8 @@ function confirmarGerarPdf(){
     itemCov:document.getElementById('popt-item-cov').checked,
     itemResp:document.getElementById('popt-item-resp').checked,
     subResp:document.getElementById('popt-sub-resp').checked,
-    efFields:efFields
+    efFields:efFields,
+    tableMode:document.getElementById('popt-table-mode').checked
   };
   window.gerarPdf(_pdfOptsSecId,opts);
 }
@@ -1815,6 +1817,9 @@ function onDrSubDrop(ev,targetId,parentId,secId){
     </div>
     <div id="busca-pdf-custom" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
       <div style="font-size:11px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px">📋 Campos Personalizados no PDF:</div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-table-mode" style="accent-color:#f59e0b;width:14px;height:14px"><span><strong style="color:#fcd34d">🗂️ Formato de tabela (colunas)</strong></span></label>
     </div>
     <div id="busca-pdf-sum" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
       <div style="font-size:11px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px">📊 Somatórios (campos numéricos):</div>
