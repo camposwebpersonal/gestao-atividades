@@ -323,10 +323,51 @@ window.openActivity=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
-  const itemsHtml=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
   const _cp=sec.controle_pendencias!==0;
-  const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
-  const _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
+  const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked||false;
+  const ftSubs=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');
+  const useTableAtiv=tableModeAtiv&&ftSubs.length>0;
+  let itemsHtml,_totHtml;
+  if(useTableAtiv){
+    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];ftSubs.forEach(t=>th.push(t.field_name));if(_cp){th.push('Prog.');th.push('Status');}
+    let tbl='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden">';
+    tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
+    let allSubCnt=0;
+    items.forEach((item,itemNum)=>{
+      const pr=iProg(item);const done=pr.pct===100;const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+      tbl+=`<tr style="background:#0e1729">`;
+      tbl+=`<td style="padding:8px 10px;color:#38bdf8;font-weight:700;border-bottom:1px solid #1e293b">${itemNum+1}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#34d399;font-weight:700;border-bottom:1px solid #1e293b">Item</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${esc(item.description||'')}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(item.responsaveis||'')}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(item.observacao||'')}</td>`;
+      ftSubs.forEach(t=>{const v=(item.extra_fields||{})[t.field_name];tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(v||'')}</td>`;});
+      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td><td style="padding:8px 10px;color:${done?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${done?'✅ Concluído':late?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
+      tbl+='</tr>';
+      const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+      subs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
+        tbl+=`<tr style="background:#0a1222">`;
+        tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">${si+1}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">›</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(s.description||'')}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(s.responsaveis||'')}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(s.observacao||'')}</td>`;
+        ftSubs.forEach(t=>{const v=(s.extra_fields||{})[t.field_name];tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(v||'')}</td>`;});
+        if(_cp){tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;color:${sD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${sD?'✅ Concluído':sL?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
+        tbl+='</tr>';
+      });
+      allSubCnt+=subs.length;
+      if(subs.length){tbl+=`<tr style="background:#0e1729"><td style="padding:6px 10px;border-bottom:1px solid #1e293b"></td><td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b" colspan="${th.length-1}">∑ Subtotal: ${subs.length} sub-item(ns)</td></tr>`;}
+    });
+    tbl+=`<tr style="background:#0e1729"><td style="padding:8px 10px;color:#38bdf8;font-weight:700;border-bottom:1px solid #1e293b" colspan="${th.length}">Σ Total: ${items.length} item(ns) · ${allSubCnt} sub-item(ns)</td></tr>`;
+    tbl+='</tbody></table></div>';
+    itemsHtml=tbl;
+    _totHtml='';
+  }else{
+    itemsHtml=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+    const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
+    _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
+  }
   const _ss=sec.show_stats!==0;
   const statsHtml=_cp&&_ss?(()=>{
     const total=items.length,conc=items.filter(i=>iProg(i).pct===100).length;
