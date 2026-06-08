@@ -1210,6 +1210,17 @@ window.gerarPdf=async function(secId,opts){
   y+=3;
   } // end _cp stats
 
+  // ── Resumo por Campos Personalizados ──
+  if(opts.efFields&&opts.efFields.length){
+    const ftSubs=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');
+    const sumData={};opts.efFields.forEach(fn=>{let t=0,c=0;items.forEach(it=>{S.subitems.filter(s=>s.item_id===it.id).forEach(s=>{const v=parseFloat(String((s.extra_fields||{})[fn]||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});if(c>0)sumData[fn]={total:t,count:c};});
+    const qtFields=[];ftSubs.forEach(t=>{if(!opts.efFields.includes(t.field_name))return;const vals={};let vazio=0;items.forEach(it=>{S.subitems.filter(s=>s.item_id===it.id).forEach(s=>{const v=(s.extra_fields||{})[t.field_name];if(v&&String(v).trim()){const key=String(v).trim();vals[key]=(vals[key]||0)+1;}else{vazio++;}});});if(Object.keys(vals).length>0||vazio>0)qtFields.push({field:t.field_name,vals,vazio});});
+    const allCards=[];
+    Object.entries(sumData).forEach(([k,v])=>{allCards.push({v:'R$ '+v.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:'Soma '+k,c:[245,158,11]});});
+    qtFields.forEach(qt=>{Object.entries(qt.vals).forEach(([k,v])=>{allCards.push({v:String(v),l:qt.field+' = '+k,c:[56,189,248]});});if(qt.vazio)allCards.push({v:String(qt.vazio),l:qt.field+' (vazio)',c:[100,116,139]});});
+    if(allCards.length){const cW=allCards.length>0?(cw-(allCards.length-1)*3)/Math.min(allCards.length,2):cw;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)y+=17;const cx=mx+col*(cW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,y,cW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,y,cW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cW/2,y+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cW/2,y+13,{align:'center'});});y+=Math.ceil(allCards.length/2)*17+2;}
+  }
+
   // ── Tabela de itens ──
   chk(12);
   doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');
@@ -1228,11 +1239,12 @@ window.gerarPdf=async function(secId,opts){
     let cell1=item.description;
     if(item.observacao)cell1+='\nObs: '+item.observacao;
     if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
+    if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
     const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
     const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
     if(_cp){tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{tblB.push([String(rowNum),cell1]);}
     tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-    if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+_psi+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}if(_cp){tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)','','','','']);}else{tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)']);}tblE.push({cu:null,ru:null});}
+    if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+_psi+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}if(_cp){tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)','','','','']);}else{tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)']);}tblE.push({cu:null,ru:null});}
   }
   if(_cp){tblB.push(['\u03a3','Total: '+items.length+' item(ns)','','','','']);}else{tblB.push(['\u03a3','Total: '+items.length+' item(ns)']);}  tblE.push({cu:null,ru:null});
   const iDims=[];
@@ -1698,6 +1710,11 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-sub-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos subitens</label>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📋 Campos Personalizados</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:4px">Marque os campos extras para exibir no PDF.</div>
+      <div id="popt-ef-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📊 Relatório por Campo</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Gere um relatório agrupado por um campo personalizado existente.</div>
       <select id="popt-field" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
@@ -1725,17 +1742,23 @@ function abrirPdfOpts(secId){
     opts+=tpls.map(t=>'<option value="'+t.field_name+'">'+t.field_name+'</option>').join('');
     sel.innerHTML=opts;
   }
+  // Popular campos extras de subitem
+  const efList=document.getElementById('popt-ef-list');
+  if(efList){efList.innerHTML='';const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');if(subTpls.length){subTpls.forEach((t,i)=>{efList.innerHTML+='<label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-ef-'+i+'" data-ef="'+t.field_name+'" checked style="accent-color:#8b5cf6;width:15px;height:15px"> '+t.field_name+'</label>';});}else{efList.innerHTML='<span style="font-size:12px;color:#64748b">Nenhum campo personalizado</span>';}}
   document.getElementById('pdf-opts-overlay').style.display='flex';
 }
 function fecharPdfOpts(){document.getElementById('pdf-opts-overlay').style.display='none';}
 function confirmarGerarPdf(){
   fecharPdfOpts();
+  const efFields=[];
+  document.querySelectorAll('#popt-ef-list input[data-ef]').forEach(cb=>{if(cb.checked)efFields.push(cb.getAttribute('data-ef'));});
   const opts={
     actCov:document.getElementById('popt-act-cov').checked,
     actResp:document.getElementById('popt-act-resp').checked,
     itemCov:document.getElementById('popt-item-cov').checked,
     itemResp:document.getElementById('popt-item-resp').checked,
-    subResp:document.getElementById('popt-sub-resp').checked
+    subResp:document.getElementById('popt-sub-resp').checked,
+    efFields:efFields
   };
   window.gerarPdf(_pdfOptsSecId,opts);
 }
