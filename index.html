@@ -182,6 +182,8 @@ onAuthStateChanged(auth,async u=>{
   if(S.isAdmin)document.getElementById('nav-adm').style.display='';
   await loadData();
   setView('dash');
+  const _sp=new URLSearchParams(location.search).get('setup');
+  if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
 });
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
@@ -319,6 +321,7 @@ function _renderSubSubs(parentSubId,item,today){
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(c.id,item,today)}`;
   }).join('');
@@ -357,6 +360,7 @@ function renderItem(item,today,itemNum){
       ${_nt?'':statusBadge(s.status,s.id,'subitem')}
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
       ${S.isAdmin&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(s.id,item,today)}`;
   }).join(''):'';
@@ -380,6 +384,7 @@ function renderItem(item,today,itemNum){
       ${S.isAdmin?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
       ${S.isAdmin&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
       ${S.isAdmin&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
@@ -513,13 +518,13 @@ window.openSecModal=function(id){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:8px">📋 Campos dos Itens</div>
-        <div id="ftpl-item-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='item');return ts.length?ts.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type}</span><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div>
+        <div id="ftpl-item-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='item');return ts.length?ts.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type==='combobox'?'lista: '+(t.options||[]).join(' / '):t.field_type}</span><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-item').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px">📌 Campos dos Subitens</div>
-        <div id="ftpl-sub-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='subitem');return ts.length?ts.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type}</span><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div>
+        <div id="ftpl-sub-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='subitem');return ts.length?ts.map(t=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type==='combobox'?'lista: '+(t.options||[]).join(' / '):t.field_type}</span><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-subitem').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
     </div>
   </div>`:'<!-- sem id -->'}
@@ -604,8 +609,8 @@ window.openItemModal=function(id,secId,isSub,parentId){
     if(!tpls.length)return '';
     const ef=it?.extra_fields||{};
     return`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">🗂️ Campos Personalizados</div><div style="display:flex;flex-direction:column;gap:8px">${tpls.map(t=>{
-      const val=esc(ef[t.field_name]||'');
-      const inp=t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${val}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${val}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
+      const val=ef[t.field_name]||'';
+      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(t.options||[]).map(o=>`<option value="${esc(o)}"${val===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
       return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
@@ -1051,8 +1056,10 @@ window.saveFieldTpl=async function(actId,scope,nameEl,typeEl){
   const name=document.getElementById(nameEl)?.value.trim();
   if(!name){toast('Nome obrigatório','error');return;}
   const ftype=document.getElementById(typeEl)?.value||'text';
+  let opts=[];
+  if(ftype==='combobox'){const oel=document.getElementById('ftpl-opts-'+actId+'-'+scope);opts=(oel?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(!opts.length){toast('Adicione ao menos uma opção para o combobox','error');return;}}
   const ord=S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope).length;
-  await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope,field_name:name,field_type:ftype,order_num:ord,created_at:serverTimestamp()});
+  await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope,field_name:name,field_type:ftype,options:opts,order_num:ord,created_at:serverTimestamp()});
   await loadData();openSecModal(actId);
 };
 window.delFieldTpl=async function(id,actId){
@@ -1302,6 +1309,65 @@ window.reorderSubitems=async function(fromId,toId,parentId,secId){
   for(let i=0;i<sbs.length;i++)await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});
 };
 window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
+
+// ── BCCS SETUP ──
+window._setupBccs=async function(){
+  if(!S.isAdmin){toast('Apenas admins podem usar este setup','error');return;}
+  const ex=S.secs.find(s=>s.name==='BCCS');
+  if(ex){toast('Atividade BCCS já existe! Abrindo...','info');openActivity(ex.id);return;}
+  toast('Criando atividade BCCS...','info',5000);
+  const r=await addDoc(collection(db,'secretariats'),{name:'BCCS',observacoes:'Cadastro de Beneficiários BCCS',responsaveis:'',start_date:null,end_date:null,controle_pendencias:0,show_stats:0,show_verba:0,verba_on_subitems:0,verba_sum_subitems:0,verba_has_obs:0,show_origem_verba:0,origem_verba_on_subitems:0,origem_verba_has_obs:0,show_documentacao:0,documentacao_on_subitems:0,documentacao_has_obs:0,show_licitacao:0,licitacao_on_subitems:0,licitacao_has_obs:0,order_num:S.secs.length,created_at:serverTimestamp()});
+  const actId=r.id;
+  const flds=[{n:'Nome',t:'text'},{n:'Telefone',t:'text'},{n:'Função',t:'text'},{n:'Jornada',t:'combobox',o:['4 Horas','6 Horas']},{n:'Salário',t:'number'},{n:'Localização',t:'text'},{n:'Sede / Distrito',t:'combobox',o:['Sede','Distrito']},{n:'Secretaria',t:'text'},{n:'Data de Admissão',t:'date'},{n:'Situação',t:'combobox',o:['Ativo','Demitido']},{n:'Data de Demissão',t:'date'},{n:'Indicado por',t:'text'}];
+  for(let i=0;i<flds.length;i++){await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope:'item',field_name:flds[i].n,field_type:flds[i].t,options:flds[i].o||[],order_num:i,created_at:serverTimestamp()});}
+  await loadData();toast('✅ Atividade BCCS criada com sucesso!');renderDash();
+  history.replaceState(null,'',location.pathname);
+};
+
+// ── PDF RELATÓRIO POR CAMPO ──
+window.gerarPdfRelatorio=async function(secId,fieldName){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando relatório…','info',8000);
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=14,cw=W-mx*2;
+  const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const now=new Date().toLocaleDateString('pt-BR');
+  const lObj=await loadB64('img/logo_sertania.png','png',120);
+  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
+  function bgTextura(){doc.setFillColor(215,242,215);for(let gx=14;gx<=196;gx+=7)for(let gy=HDR_H+4;gy<=FTR_Y-2;gy+=7)doc.circle(gx,gy,0.22,'F');}
+  function cabecalho(){bgTextura();doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RELATÓRIO POR CAMPO',mx+10,14);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertânia — PE  •  Controle PMS  •  '+now,mx+10,23);}
+  function rodape(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');if(lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}sf(7,true,[185,245,185]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA — PE',mx+16,FTR_Y+7);sf(6.5,false,[180,240,180]);doc.text('Sertânia — PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});}
+  let y=BODY_TOP,pageNum=1;
+  const chk=n=>{if(y+n>BODY_BOT){rodape();doc.addPage();pageNum++;cabecalho();y=BODY_TOP;}};
+  cabecalho();
+  chk(18);doc.setFillColor(13,34,64);doc.roundedRect(mx,y,cw,14,2,2,'F');sf(12,true,[255,255,255]);doc.text(sec.name||'',mx+6,y+6);sf(8,false,[180,210,255]);doc.text('Relatório por: '+fieldName+'  •  '+now,mx+6,y+11.5);y+=18;
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const tpls=S.fieldTemplates.filter(t=>t.atividade_id===secId&&t.scope==='item');
+  const groups=new Map();
+  for(const item of items){const ef=item.extra_fields||{};const k=ef[fieldName]||'(Não informado)';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(item);}
+  if(!groups.size){chk(12);sf(10,false,[100,116,139]);doc.text('Nenhum item cadastrado nesta atividade.',mx,y+8);y+=14;}
+  let totalReg=0;
+  for(const[grpKey,grpItems]of groups){
+    chk(16);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,10,2,2,'F');sf(10,true,[255,255,255]);doc.text(grpKey+' — '+grpItems.length+' registro(s)',mx+5,y+7);y+=13;
+    const tblH=[['#','Nome / Descrição','Dados']];
+    const tblB=[];let rn=0;
+    for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+ef[t.field_name];}tblB.push([String(rn),item.description||'',dados]);}
+    tblB.push(['Σ','Subtotal: '+grpItems.length+' registro(s)','']);
+    totalReg+=grpItems.length;
+    doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:52}},didParseCell:function(dat){if(dat.section!=='body')return;const r0=dat.row.raw[0];if(r0!==''&&r0!=='Σ'){dat.cell.styles.fillColor=[13,64,20];dat.cell.styles.textColor=[215,255,215];dat.cell.styles.fontStyle='bold';}else if(r0==='Σ'){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontStyle='italic';dat.cell.styles.fontSize=7;if(dat.column.index===0)dat.cell.text=[];}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+    y=doc.lastAutoTable?doc.lastAutoTable.finalY+8:y+8;
+  }
+  chk(14);doc.setFillColor(13,34,64);doc.roundedRect(mx,y,cw,10,2,2,'F');sf(9,true,[180,210,255]);doc.text('Σ TOTAL GERAL: '+totalReg+' registro(s) em '+groups.size+' grupo(s)',mx+6,y+7);y+=14;
+  rodape();
+  const totalPages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}
+  const fClean=fieldName.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'_').trim().substring(0,15)||'CAMPO';
+  doc.save((sec.name||'relatorio').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_por_'+fClean+'_'+now.replace(/\//g,'-')+'.pdf');
+  toast('PDF gerado!');
+};
 </script>
 <div id="pdf-opts-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center;padding:16px">
   <div style="background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:24px;max-width:460px;width:100%;position:relative">
@@ -1316,8 +1382,16 @@ window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promi
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-item-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos itens</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-sub-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos subitens</label>
     </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📊 Relatório por Campo</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:4px">Gere um relatório agrupado por um campo personalizado existente.</div>
+      <select id="popt-field" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
+        <option value="">— Selecione um campo —</option>
+      </select>
+    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
       <button onclick="fecharPdfOpts()" style="padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button onclick="confirmarGerarRelatorio()" style="padding:10px 18px;background:#0d9488;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📊 Relatório</button>
       <button onclick="confirmarGerarPdf()" style="padding:10px 22px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
     </div>
   </div>
@@ -1325,7 +1399,15 @@ window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promi
 
 <script>
 let _pdfOptsSecId=null;
-function abrirPdfOpts(secId){_pdfOptsSecId=secId;document.getElementById('pdf-opts-overlay').style.display='flex';}
+function abrirPdfOpts(secId){
+  _pdfOptsSecId=secId;
+  const sel=document.getElementById('popt-field');
+  if(sel){
+    const tpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='item');
+    sel.innerHTML='<option value="">— Selecione um campo —</option>'+tpls.map(t=>'<option value="'+t.field_name+'">'+t.field_name+'</option>').join('');
+  }
+  document.getElementById('pdf-opts-overlay').style.display='flex';
+}
 function fecharPdfOpts(){document.getElementById('pdf-opts-overlay').style.display='none';}
 function confirmarGerarPdf(){
   fecharPdfOpts();
@@ -1337,6 +1419,12 @@ function confirmarGerarPdf(){
     subResp:document.getElementById('popt-sub-resp').checked
   };
   window.gerarPdf(_pdfOptsSecId,opts);
+}
+function confirmarGerarRelatorio(){
+  const field=document.getElementById('popt-field')?.value;
+  if(!field){toast('Selecione um campo para o relatório','error');return;}
+  fecharPdfOpts();
+  window.gerarPdfRelatorio(_pdfOptsSecId,field);
 }
 // ── DRAG & DROP ──
 let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
