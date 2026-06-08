@@ -315,6 +315,7 @@ window.openActivity=function(secId){
     ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${S.isAdmin&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Selecionados</button>`:''}
     ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
@@ -344,6 +345,7 @@ function _renderSubSubs(parentSubId,item,today){
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
     return`<div class="sub-row" style="padding-left:32px;border-left:3px solid #1e3a5f;background:#060c18">
+      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span style="color:#475569;font-size:12px;flex-shrink:0">└</span>
       <span style="color:#64748b;font-size:10px;font-weight:700;flex-shrink:0;min-width:14px;text-align:right">${_si+1}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
@@ -372,6 +374,7 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
+      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
       <span style="color:#64748b;font-size:11px;font-weight:700;flex-shrink:0;min-width:20px;text-align:right">${_si+1}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
@@ -400,6 +403,7 @@ function renderItem(item,today,itemNum){
   const iColor=item.item_color||'#3B82F6';
   return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
+      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
@@ -508,6 +512,19 @@ window.deleteItem=async function(id,isSub){
   if(!isSub){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
   await deleteDoc(doc(db,isSub?'subitems':'items',id));
   await loadData();closeModal();toast('Excluído!');openActivity(curSecId);
+};
+window.excluirSelecionados=async function(secId){
+  const checkboxes=document.querySelectorAll('.mass-sel:checked');
+  const sel=[];checkboxes.forEach(cb=>{sel.push({id:cb.dataset.id,isSub:cb.dataset.issub==='true'});});
+  if(!sel.length){toast('Nenhum item selecionado.','error');return;}
+  const items=sel.filter(s=>!s.isSub);const subs=sel.filter(s=>s.isSub);
+  const msg=[];if(items.length)msg.push(items.length+' item(s)');if(subs.length)msg.push(subs.length+' sub-item(s)');
+  if(!confirm('Excluir '+msg.join(' e ')+' selecionado(s)?'))return;
+  for(const s of sel){
+    if(!s.isSub){const sbs=S.subitems.filter(x=>x.item_id===s.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
+    await deleteDoc(doc(db,s.isSub?'subitems':'items',s.id));
+  }
+  await loadData();toast(`${sel.length} excluído(s)!`);openActivity(secId);
 };
 
 // ── MODAL ──
