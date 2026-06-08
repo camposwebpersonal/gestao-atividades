@@ -1218,7 +1218,7 @@ window.gerarPdf=async function(secId,opts){
     const allCards=[];
     Object.entries(sumData).forEach(([k,v])=>{allCards.push({v:'R$ '+v.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:'Soma '+k,c:[245,158,11]});});
     qtFields.forEach(qt=>{Object.entries(qt.vals).forEach(([k,v])=>{allCards.push({v:String(v),l:qt.field+' = '+k,c:[56,189,248]});});if(qt.vazio)allCards.push({v:String(qt.vazio),l:qt.field+' (vazio)',c:[100,116,139]});});
-    if(allCards.length){const cW=allCards.length>0?(cw-(allCards.length-1)*3)/Math.min(allCards.length,2):cw;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)y+=17;const cx=mx+col*(cW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,y,cW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,y,cW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cW/2,y+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cW/2,y+13,{align:'center'});});y+=Math.ceil(allCards.length/2)*17+2;}
+    if(allCards.length){const cW=allCards.length>0?(cw-(Math.min(allCards.length,2)-1)*3)/Math.min(allCards.length,2):cw;let cardY=y;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=17;const cx=mx+col*(cW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cW/2,cardY+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cW/2,cardY+13,{align:'center'});});y=cardY+17+2;}
   }
 
   // ── Tabela de itens ──
@@ -2020,9 +2020,10 @@ async function gerarPdfBusca(){
   else allStatCards.push({v:String(totalR),l:'Itens encontrados',c:[59,130,246]},{v:String(totalSR),l:'Sub-itens exibidos',c:[110,192,46]});
   Object.entries(sumData||{}).forEach(([k,v])=>{allStatCards.push({v:'R$ '+v.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:'Soma '+k,c:[245,158,11]});});
   (qtFields||[]).forEach(qt=>{Object.entries(qt.vals).forEach(([k,v])=>{allStatCards.push({v:String(v),l:qt.field+' = '+k,c:[56,189,248]});});if(qt.vazio)allStatCards.push({v:String(qt.vazio),l:qt.field+' (vazio)',c:[100,116,139]});});
-  const cardW=allStatCards.length>0?(cw-(allStatCards.length-1)*3)/Math.min(allStatCards.length,2):cw;
-  allStatCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)y+=17;const cx=mx+col*(cardW+3);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,y,cardW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,y,cardW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cardW/2,y+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cardW/2,y+13,{align:'center'});});
-  y+=Math.ceil(allStatCards.length/2)*17+2;
+  const cardW=allStatCards.length>0?(cw-(Math.min(allStatCards.length,2)-1)*3)/Math.min(allStatCards.length,2):cw;
+  let cardY=y;
+  allStatCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=17;const cx=mx+col*(cardW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cardW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cardW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cardW/2,cardY+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cardW/2,cardY+13,{align:'center'});});
+  y=cardY+17+2;
   // Table header
   chk(12);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');sf(10,true,[255,255,255]);doc.text('ITENS E SUBITENS ENCONTRADOS',mx+5,y+6.5);y+=13;
   // Build rows
