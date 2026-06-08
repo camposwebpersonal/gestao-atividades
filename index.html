@@ -877,9 +877,9 @@ function renderImportar(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
   const progress=_importando?`<div style="margin-top:16px;padding:12px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f"><div style="font-size:13px;color:#60a5fa;margin-bottom:8px">⏳ Importando... aguarde.</div><div id="imp-log" style="font-family:monospace;font-size:11px;color:#94a3b8;max-height:200px;overflow:auto"></div></div>`:'';
   setC(`<div class="page-title">📥 Importar Dados</div>
-    <div class="page-sub">Importe os dados BCC Maio 2026</div>
+    <div class="page-sub">Importe dados de qualquer atividade via JSON</div>
     <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13px;color:#fcd34d;line-height:1.6">
-      <strong>Atenção:</strong> A importação irá criar Secretarias, Itens e Sub-itens na atividade <strong>BCCS</strong>.<br>
+      <strong>Formato JSON:</strong> <code>{"atividade":"NOME","itens":[{"nome":"Item","pessoas":[{"nome":"João","Cargo":"Auxiliar"}]}]}</code><br>
       Dados existentes <strong>não serão duplicados</strong> (verificação por nome).
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
@@ -915,91 +915,100 @@ window.executarImportacaoJSON=async function(){
   try{
     logImp('Lendo arquivo: '+file.name+'...');
     const text=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsText(file);});
-    const BCC_DATA=JSON.parse(text);
-    logImp('Dados carregados: '+BCC_DATA.length+' secretarias');
+    const DATA=JSON.parse(text);
 
-    const bccs=S.secs.find(s=>s.name.toUpperCase().includes('BCC'));
-    if(!bccs){throw new Error('Atividade BCCS não encontrada. Crie a atividade primeiro.');}
-    logImp('Atividade BCCS: '+bccs.name+' (ID: '+bccs.id+')');
+    // Detectar formato
+    const atividadeNome=DATA.atividade||DATA.atividade_nome||'';
+    const itensArr=DATA.itens||DATA.dados||DATA;
+    if(!atividadeNome){throw new Error('JSON precisa ter campo "atividade" com o nome da atividade.');}
+    if(!Array.isArray(itensArr)){throw new Error('JSON precisa ter campo "itens" ou "dados" com array.');}
+    logImp('Atividade: '+atividadeNome);
+    logImp('Itens: '+itensArr.length);
 
-    // 1. Criar Secretarias
-    logImp('Verificando secretarias...');
-    const secNames=[...new Set(BCC_DATA.map(s=>s.name))];
-    const secMap={};
-    for(const sn of secNames){
-      const existing=S.secretarias.find(s=>s.name===sn);
-      if(existing){secMap[sn]=existing.id;logImp('Secretaria existente: '+sn);}
-      else{const r=await addDoc(collection(db,'secretarias'),{name:sn,created_at:serverTimestamp()});secMap[sn]=r.id;logImp('✚ Secretaria criada: '+sn);}
+    // 1. Encontrar ou criar atividade
+    let act=S.secs.find(s=>s.name.toUpperCase().trim()===atividadeNome.toUpperCase().trim());
+    if(!act){
+      logImp('Atividade não encontrada, criando...');
+      const r=await addDoc(collection(db,'secretariats'),{name:atividadeNome,description:'',observacao:'',show_conclusion_date:1,show_documentacao:0,show_licitacao:0,icon:'📋',color:'#3B82F6',concluded:0,created_at:serverTimestamp()});
+      act={id:r.id,name:atividadeNome};
+      logImp('✚ Atividade criada: '+atividadeNome);
+    }else{
+      logImp('Atividade existente: '+act.name+' (ID: '+act.id+')');
     }
 
-    // 2. Criar FieldTemplates
+    // 2. Detectar campos extras dinamicamente das pessoas
+    const extraFieldNames=new Set();
+    for(const item of itensArr){
+      for(const p of (item.pessoas||[])){
+        Object.keys(p).forEach(k=>{if(k!=='nome')extraFieldNames.add(k);});
+      }
+    }
+    logImp('Campos extras detectados: '+[...extraFieldNames].join(', '));
+
+    // 3. Criar FieldTemplates
     logImp('Verificando campos extras...');
-    const fieldDefs=[{name:'Localidade',type:'text'},{name:'Telefone',type:'text'},{name:'Função',type:'text'},{name:'Remuneração',type:'text'},{name:'Data Início',type:'text'},{name:'Carga Horária',type:'text'},{name:'Status',type:'text'}];
     const ftMap={};
-    const existingFT=S.fieldTemplates.filter(t=>t.atividade_id===bccs.id&&t.scope==='subitem');
-    for(const fd of fieldDefs){
-      const ex=existingFT.find(t=>t.field_name===fd.name);
-      if(ex){ftMap[fd.name]=ex.id;logImp('Field existente: '+fd.name);}
-      else{const r=await addDoc(collection(db,'fieldTemplates'),{atividade_id:bccs.id,scope:'subitem',field_name:fd.name,field_type:fd.type,order_num:Object.keys(ftMap).length,created_at:serverTimestamp()});ftMap[fd.name]=r.id;logImp('✚ Field criado: '+fd.name);}
+    const existingFT=S.fieldTemplates.filter(t=>t.atividade_id===act.id&&t.scope==='subitem');
+    for(const fn of [...extraFieldNames]){
+      const ex=existingFT.find(t=>t.field_name===fn);
+      if(ex){ftMap[fn]=ex.id;logImp('Field existente: '+fn);}
+      else{const r=await addDoc(collection(db,'fieldTemplates'),{atividade_id:act.id,scope:'subitem',field_name:fn,field_type:'text',order_num:Object.keys(ftMap).length,created_at:serverTimestamp()});ftMap[fn]=r.id;logImp('✚ Field criado: '+fn);}
     }
 
-    // 3. Criar Items
-    logImp('Criando itens por secretaria...');
+    // 4. Criar Items
+    logImp('Criando itens...');
     const itemMap={};
-    const existingItems=S.items.filter(i=>i.atividade_id===bccs.id);
-    for(const sec of BCC_DATA){
-      const ex=existingItems.find(i=>i.description===sec.name);
-      if(ex){itemMap[sec.name]=ex.id;logImp('Item existente: '+sec.name);}
-      else{const r=await addDoc(collection(db,'items'),{atividade_id:bccs.id,description:sec.name,secretaria_id:secMap[sec.name]||null,item_icon:'🏛️',item_color:'#3B82F6',order_num:(S.items.length+Object.keys(itemMap).length),concluded:0,created_at:serverTimestamp()});itemMap[sec.name]=r.id;logImp('✚ Item criado: '+sec.name);}
+    const existingItems=S.items.filter(i=>i.atividade_id===act.id);
+    for(const item of itensArr){
+      const itemName=item.nome||item.name||item.secao||'Item';
+      const ex=existingItems.find(i=>i.description===itemName);
+      if(ex){itemMap[itemName]=ex.id;logImp('Item existente: '+itemName);}
+      else{const r=await addDoc(collection(db,'items'),{atividade_id:act.id,description:itemName,item_icon:'📁',item_color:'#3B82F6',order_num:(S.items.length+Object.keys(itemMap).length),concluded:0,created_at:serverTimestamp()});itemMap[itemName]=r.id;logImp('✚ Item criado: '+itemName);}
     }
 
-    // 4. Criar Sub-items (com proteção contra duplicação)
-    logImp('Criando sub-itens por pessoa...');
-    let subCount=0,skipCount=0;
+    // 5. Criar Sub-items (com proteção contra duplicação)
+    logImp('Criando sub-itens...');
+    let subCount=0,skipCount=0,updStatus=0;
     const baseSubCount=S.subitems.length;
     const existingSubKeys=new Set();
-    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));});
-    for(const sec of BCC_DATA){
-      const itemId=itemMap[sec.name];
+    const existingSubs={};
+    S.subitems.filter(s=>s.atividade_id===act.id).forEach(s=>{
+      existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));
+      existingSubs[s.description]=s;
+    });
+    for(const item of itensArr){
+      const itemName=item.nome||item.name||item.secao||'Item';
+      const itemId=itemMap[itemName];
       let criados=0,pulados=0;
-      for(const p of sec.people){
-        const key=(itemId||'')+'::'+p.nome;
-        if(existingSubKeys.has(key)){pulados++;skipCount++;continue;}
+      for(const p of (item.pessoas||[])){
+        const nome=p.nome||p.name||'';
+        if(!nome){continue;}
+        const key=(itemId||'')+'::'+nome;
         const ef={};
-        if(p.localidade)    ef['Localidade']=p.localidade;
-        if(p.telefone)      ef['Telefone']=p.telefone;
-        if(p.funcao)        ef['Função']=p.funcao;
-        if(p.remuneracao)   ef['Remuneração']='R$ '+p.remuneracao;
-        if(p.data_inicio)   ef['Data Início']=p.data_inicio;
-        if(p.carga_horaria) ef['Carga Horária']=p.carga_horaria;
-        if(p.status)        ef['Status']=p.status;
-        await addDoc(collection(db,'subitems'),{atividade_id:bccs.id,item_id:itemId,description:p.nome,extra_fields:ef,order_num:(baseSubCount+subCount),concluded:0,created_at:serverTimestamp()});
+        Object.keys(p).forEach(k=>{if(k!=='nome'&&p[k])ef[k]=p[k];});
+
+        // Se já existe, só atualiza Status se houver
+        if(existingSubKeys.has(key)){
+          pulados++;
+          skipCount++;
+          const sub=existingSubs[nome];
+          if(sub&&ef['Status']&&(sub.extra_fields||{})['Status']!==ef['Status']){
+            const oldEF={...(sub.extra_fields||{})};
+            oldEF['Status']=ef['Status'];
+            await updateDoc(doc(db,'subitems',sub.id),{extra_fields:oldEF,updated_at:serverTimestamp()});
+            updStatus++;
+          }
+          continue;
+        }
+        await addDoc(collection(db,'subitems'),{atividade_id:act.id,item_id:itemId,description:nome,extra_fields:ef,order_num:(baseSubCount+subCount),concluded:0,created_at:serverTimestamp()});
         existingSubKeys.add(key);
         subCount++;criados++;
       }
-      if(pulados>0)logImp('↳ '+criados+' criados, '+pulados+' pulados (já existiam) para '+sec.name);
-      else logImp('✚ '+sec.people.length+' sub-itens criados para '+sec.name);
+      if(pulados>0)logImp('↳ '+criados+' criados, '+pulados+' pulados para '+itemName);
+      else logImp('✚ '+(item.pessoas||[]).length+' sub-itens criados para '+itemName);
     }
     if(skipCount>0)logImp('⚠️ Total pulados (já existiam): '+skipCount);
-
-    // 5. Atualizar Status SAIU nos existentes
-    logImp('Atualizando status SAIU nos existentes...');
-    let saiAtualizados=0;
-    const subsMap={};
-    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{subsMap[s.description]=s;});
-    for(const sec of BCC_DATA){
-      for(const p of sec.people){
-        if(p.status==='SAIU'){
-          const sub=subsMap[p.nome];
-          if(sub){
-            const ef={...(sub.extra_fields||{})};ef['Status']='SAIU';
-            await updateDoc(doc(db,'subitems',sub.id),{extra_fields:ef,updated_at:serverTimestamp()});
-            saiAtualizados++;
-          }
-        }
-      }
-    }
-    if(saiAtualizados>0)logImp('✚ '+saiAtualizados+' status SAIU atualizados');
+    if(updStatus>0)logImp('✚ '+updStatus+' status atualizados');
 
     // 6. Recarregar
     logImp('Recarregando dados...');
@@ -1010,11 +1019,11 @@ window.executarImportacaoJSON=async function(){
       resultEl.innerHTML=`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:16px;margin-top:12px">
         <div style="font-size:15px;font-weight:700;color:#34d399;margin-bottom:8px">✅ Importação Concluída!</div>
         <div style="font-size:13px;color:#94a3b8;line-height:1.8">
-          <strong>Secretarias:</strong> ${secNames.length}<br>
+          <strong>Atividade:</strong> ${act.name}<br>
           <strong>Itens:</strong> ${Object.keys(itemMap).length}<br>
           <strong>Sub-itens novos:</strong> ${subCount}<br>
           ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
-          ${saiAtualizados>0?`<strong>Status SAIU atualizados:</strong> ${saiAtualizados}<br>`:''}
+          ${updStatus>0?`<strong>Status atualizados:</strong> ${updStatus}<br>`:''}
         </div>
         <div style="margin-top:12px"><button class="btn-action" onclick="setView('ativ')">📅 Ver Atividades</button></div>
       </div>`;
