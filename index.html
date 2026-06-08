@@ -1054,7 +1054,7 @@ window.gerarPdf=async function(secId,opts){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF\u2026','info',8000);
   const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  let doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -1227,39 +1227,67 @@ window.gerarPdf=async function(secId,opts){
   sf(10,true,[255,255,255]);doc.text('ITENS DA ATIVIDADE',mx+5,y+6.5);
   y+=13;
 
-  const tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
-  const tblB=[];const tblE=[];
+  const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
+  const totalCols=(useTable?5:(_cp?6:2))+(opts.efFields?opts.efFields.length:0);
+  const useLandscape=totalCols>6;
+  if(useLandscape){doc.deletePage(doc.internal.getNumberOfPages());doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});}
+
+  let tblH,tblB=[],tblE=[];
   let rowNum=0;
-  for(let ii=0;ii<items.length;ii++){
-    const item=items[ii];const pr=itemProgs[ii].prog;
-    const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
-    const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-    const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
-    rowNum++;
-    let cell1=item.description;
-    if(item.observacao)cell1+='\nObs: '+item.observacao;
-    if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
-    if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
-    const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
-    const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
-    if(_cp){tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{tblB.push([String(rowNum),cell1]);}
-    tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-    if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+_psi+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}if(_cp){tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)','','','','']);}else{tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)']);}tblE.push({cu:null,ru:null});}
+  if(useTable){
+    const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];
+    (opts.efFields||[]).forEach(fn=>h.push(fn));
+    if(_cp){h.push('Subs');h.push('Prog.');h.push('Status');h.push('Prazo');}
+    tblH=[h];
+    for(let ii=0;ii<items.length;ii++){
+      const item=items[ii];const pr=itemProgs[ii].prog;
+      const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
+      const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+      const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
+      rowNum++;
+      const row=[String(rowNum),item.description||'',item.responsaveis||'',item.observacao||''];
+      (opts.efFields||[]).forEach(fn=>{const v=(item.extra_fields||{})[fn];row.push(v||'');});
+      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';row.push(subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014');}
+      tblB.push(row.map((v,i)=>({content:v,styles:{fontStyle:i<2?'bold':'normal',fillColor:[13,64,20],textColor:[215,255,215],fontSize:7.5}})));
+      tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+      if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const sr=['',String(_psi)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push('',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}tblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}const subR=['','','\u2211 Subtotal: '+pr.subs.length+' sub-item(ns)',''];(opts.efFields||[]).forEach(()=>subR.push(''));if(_cp){subR.push('');subR.push('');subR.push('');subR.push('');}tblB.push(subR.map(v=>({content:v,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}})));tblE.push({cu:null,ru:null});}
+    }
+    const totR=['','','\u03a3 Total: '+items.length+' item(ns)',''];(opts.efFields||[]).forEach(()=>totR.push(''));if(_cp){totR.push('');totR.push('');totR.push('');totR.push('');}tblB.push(totR.map(v=>({content:v,styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8}})));tblE.push({cu:null,ru:null});
+  }else{
+    tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
+    for(let ii=0;ii<items.length;ii++){
+      const item=items[ii];const pr=itemProgs[ii].prog;
+      const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
+      const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
+      const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
+      rowNum++;
+      let cell1=item.description;
+      if(item.observacao)cell1+='\nObs: '+item.observacao;
+      if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
+      if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
+      const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
+      const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
+      if(_cp){tblB.push([String(rowNum),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{tblB.push([String(rowNum),cell1]);}
+      tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+      if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+_psi+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}if(_cp){tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)','','','','']);}else{tblB.push(['\u2211','Subtotal: '+pr.subs.length+' sub-item(ns)']);}tblE.push({cu:null,ru:null});}
+    }
+    if(_cp){tblB.push(['\u03a3','Total: '+items.length+' item(ns)','','','','']);}else{tblB.push(['\u03a3','Total: '+items.length+' item(ns)']);}  tblE.push({cu:null,ru:null});
   }
-  if(_cp){tblB.push(['\u03a3','Total: '+items.length+' item(ns)','','','','']);}else{tblB.push(['\u03a3','Total: '+items.length+' item(ns)']);}  tblE.push({cu:null,ru:null});
   const iDims=[];
   for(const e of tblE){
     const cd=e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null;
     const rd=e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null;
     iDims.push({cd,rd});
   }
+  const colStyles=useTable?{}:(_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}});
+  if(useTable){colStyles[0]={cellWidth:8,halign:'center'};colStyles[1]={cellWidth:14,halign:'center'};colStyles[2]={cellWidth:42};colStyles[3]={cellWidth:26};colStyles[4]={cellWidth:30};}
   doc.autoTable({startY:y,head:tblH,body:tblB,
     margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},
     rowPageBreak:'avoid',
     styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},
     headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},
     alternateRowStyles:{fillColor:[248,252,248]},
-    columnStyles:_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}},
+    columnStyles:colStyles,
     didParseCell:function(dat){
       if(dat.section!=='body')return;
       const r0=dat.row.raw[0];
