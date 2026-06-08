@@ -1254,22 +1254,77 @@ window._doLimparItem=async function(itemId,secId){
 window.limparAtividade=function(secId){
   const sec=S.secs.find(s=>s.id===secId);
   const its=S.items.filter(i=>i.atividade_id===secId);
-  const tot=its.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
+  const subAll=S.subitems.filter(s=>its.some(it=>it.id===s.item_id));
+  const tot=subAll.length;
+
+  const hasObs=its.some(it=>it.observacao)||subAll.some(s=>s.observacao);
+  const hasVerba=its.some(it=>it.verba!=null)||subAll.some(s=>s.verba!=null);
+  const hasOrigem=its.some(it=>it.origem_verba)||subAll.some(s=>s.origem_verba);
+  const hasDoc=its.some(it=>it.documentacao!=null)||subAll.some(s=>s.documentacao!=null);
+  const hasLic=its.some(it=>it.licitacao!=null)||subAll.some(s=>s.licitacao!=null);
+
+  const efKeys=new Set();
+  [...its,...subAll].forEach(e=>{const ef=e.extra_fields||{};Object.keys(ef).forEach(k=>{if(ef[k]!==''&&ef[k]!=null)efKeys.add(k);});});
+
+  let extraChecks='';
+  if(hasVerba)extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-verba" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar Verba (valor)</label>`;
+  if(hasOrigem)extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-origem" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar Origem da Verba</label>`;
+  if(hasDoc)extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-doc" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar Documentação</label>`;
+  if(hasLic)extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-lic" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar Licitação</label>`;
+  efKeys.forEach(k=>{extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-ef-${esc(k)}" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar campo extra: ${esc(k)}</label>`;});
+
+  const obsHtml=hasObs?`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-obs" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar observações e anotações</label>`:'';
+  const extrasSection=extraChecks?`<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #78350f"><div style="font-size:11px;color:#fbbf24;font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">🧹 Campos Extras</div>${extraChecks}</div>`:'';
+
   openModal('🧹 Limpar Atividade',esc(sec?.name||''),
     `<div style="padding:4px 0"><div style="background:#1a1205;border:1px solid #78350f;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;color:#fbbf24">⚠️ Isso marcará ${its.length} item(ns) e ${tot} sub-item(ns) como Pendente.</div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="limpar-obs" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar também observações e anotações</label></div>
+    ${obsHtml}
+    ${extrasSection}</div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#78350f;color:#fbbf24" onclick="_doLimparAtividade('${secId}')">🧹 Confirmar</button></div>`);
 };
 window._doLimparAtividade=async function(secId){
-  const clr=document.getElementById('limpar-obs')?.checked;
-  const upd={concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false};
-  if(clr){upd.observacao='';upd.extra_fields={};}
+  const clrObs=document.getElementById('limpar-obs')?.checked;
+  const clrVerba=document.getElementById('limpar-verba')?.checked;
+  const clrOrigem=document.getElementById('limpar-origem')?.checked;
+  const clrDoc=document.getElementById('limpar-doc')?.checked;
+  const clrLic=document.getElementById('limpar-lic')?.checked;
+
+  const clrEfKeys=[];
+  const allEnts=[...S.items.filter(i=>i.atividade_id===secId),...S.subitems.filter(s=>S.items.some(it=>it.atividade_id===secId&&it.id===s.item_id))];
+  allEnts.forEach(e=>{const ef=e.extra_fields||{};Object.keys(ef).forEach(k=>{const el=document.getElementById(`limpar-ef-${k}`);if(el&&el.checked)clrEfKeys.push(k);});});
+  const uniqueEfKeys=[...new Set(clrEfKeys)];
+
+  const updBase={concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false};
   await updateDoc(doc(db,'secretariats',secId),{concluded:0,conclusion_date:null,status:'pendente'});
+
   const its=S.items.filter(i=>i.atividade_id===secId);
   for(const it of its){
+    const upd={...updBase};
+    if(clrObs)upd.observacao='';
+    if(clrVerba)upd.verba=null;
+    if(clrOrigem)upd.origem_verba='';
+    if(clrDoc)upd.documentacao=null;
+    if(clrLic)upd.licitacao=null;
+    if(uniqueEfKeys.length){
+      const ef={...(it.extra_fields||{})};uniqueEfKeys.forEach(k=>delete ef[k]);
+      if(Object.keys(ef).length===0)upd.extra_fields={};else upd.extra_fields=ef;
+    }
     await updateDoc(doc(db,'items',it.id),upd);
+
     const sbs=S.subitems.filter(s=>s.item_id===it.id);
-    for(const sb of sbs)await updateDoc(doc(db,'subitems',sb.id),upd);
+    for(const sb of sbs){
+      const upd2={...updBase};
+      if(clrObs)upd2.observacao='';
+      if(clrVerba)upd2.verba=null;
+      if(clrOrigem)upd2.origem_verba='';
+      if(clrDoc)upd2.documentacao=null;
+      if(clrLic)upd2.licitacao=null;
+      if(uniqueEfKeys.length){
+        const ef2={...(sb.extra_fields||{})};uniqueEfKeys.forEach(k=>delete ef2[k]);
+        if(Object.keys(ef2).length===0)upd2.extra_fields={};else upd2.extra_fields=ef2;
+      }
+      await updateDoc(doc(db,'subitems',sb.id),upd2);
+    }
   }
   await loadData();closeModal();toast('🧹 Atividade limpa!');openActivity(secId);
 };
