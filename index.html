@@ -140,6 +140,7 @@ main{flex:1;overflow-y:auto}
   </nav>
   <div id="navmenu">
     <button class="nav-btn active" id="nav-ativ" onclick="setView('ativ')">📅 Atividades</button>
+    <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
     <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
   </div>
   <main><div id="content"><div class="loading"><div class="spinner"></div> Carregando…</div></div></main>
@@ -175,7 +176,7 @@ const db=getFirestore(fbApp);
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,secs:[],items:[],subitems:[],fieldTemplates:[]};window.S=S;
+let S={user:null,isAdmin:false,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[]};window.S=S;
 const DASH_VIEW_KEY='gestao_dash_view';
 function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
 function setDashView(v){localStorage.setItem(DASH_VIEW_KEY,v);}
@@ -204,16 +205,18 @@ window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
 async function loadData(){
-  const[a,b,c,ft]=await Promise.all([
+  const[a,b,c,ft,se]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
-    getDocs(query(collection(db,'fieldTemplates'),orderBy('order_num','asc')))
+    getDocs(query(collection(db,'fieldTemplates'),orderBy('order_num','asc'))),
+    getDocs(query(collection(db,'secretarias'),orderBy('name','asc')))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
   S.subitems=c.docs.map(d=>({id:d.id,...d.data()}));
   S.fieldTemplates=ft.docs.map(d=>({id:d.id,...d.data()}));
+  S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 // ── UTILS ──
@@ -228,9 +231,36 @@ function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].s
 
 // ── NAV ──
 window.setView=function(v){
-  ['ativ','adm'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['ativ','adm','secr'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(v==='ativ')renderDash();
   else if(v==='adm')renderAdmin();
+  else if(v==='secr')renderSecretarias();
+};
+
+// ── SECRETARIAS ──
+window.renderSecretarias=function(){
+  const rows=S.secretarias.map(s=>`<tr><td>${esc(s.name)}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openSecretariaModal('${s.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteSecretaria('${s.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--muted)">Nenhuma secretaria cadastrada.</td></tr>';
+  setC(`<div class="page-title">🏛️ Secretarias</div><div class="page-sub">Cadastro de Secretarias Municipais</div>
+    ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openSecretariaModal()">+ Nova Secretaria</button></div>`:''}
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+};
+window.openSecretariaModal=function(id){
+  const s=id?S.secretarias.find(x=>x.id===id):null;
+  openModal(id?'✏️ Editar Secretaria':'➕ Nova Secretaria','',
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="secr-name" value="${esc(s?.name||'')}"></div></div>
+    <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteSecretaria('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveSecretaria('${id||''}')">💾 Salvar</button></div>`);
+};
+window.saveSecretaria=async function(id){
+  const name=document.getElementById('secr-name')?.value.trim();
+  if(!name){toast('Nome é obrigatório','error');return;}
+  if(id){await updateDoc(doc(db,'secretarias',id),{name,updated_at:serverTimestamp()});}
+  else{await addDoc(collection(db,'secretarias'),{name,created_at:serverTimestamp()});}
+  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderSecretarias();
+};
+window.deleteSecretaria=async function(id){
+  if(!confirm('Excluir esta secretaria?'))return;
+  await deleteDoc(doc(db,'secretarias',id));
+  await loadData();closeModal();toast('Excluído!');renderSecretarias();
 };
 
 // ── DASHBOARD ──
@@ -350,7 +380,7 @@ function _renderSubSubs(parentSubId,item,today){
       <span style="color:#64748b;font-size:10px;font-weight:700;flex-shrink:0;min-width:14px;text-align:right">${_si+1}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}</div>
-        ${c.responsaveis||c.observacao?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}</div>`:''}
+        ${c.responsaveis||c.observacao||c.secretaria_id?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id?' · ':''}${c.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
         ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
       </div>
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
@@ -379,7 +409,7 @@ function renderItem(item,today,itemNum){
       <span style="color:#64748b;font-size:11px;font-weight:700;flex-shrink:0;min-width:20px;text-align:right">${_si+1}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
-        ${(s.responsaveis||s.observacao||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
+        ${(s.responsaveis||s.observacao||s.secretaria_id||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id?' · ':''}${s.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef);
         const tags=[];
@@ -412,6 +442,7 @@ function renderItem(item,today,itemNum){
           ${!_nt&&item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
         </div>
         ${item.responsaveis?`<div class="item-meta">👤 ${esc(item.responsaveis)}</div>`:''}
+        ${item.secretaria_id?`<div class="item-meta" style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===item.secretaria_id)?.name||'')}</div>`:''}
       </div>
       ${item.resp_url?`<img src="${esc(item.resp_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #818cf8;flex-shrink:0" loading="lazy">`:''}
       ${item.cover_url?`<img src="${esc(item.cover_url)}" style="height:32px;max-width:48px;object-fit:contain;border-radius:5px;flex-shrink:0;background:transparent;cursor:pointer" onclick="event.stopPropagation();openGal('item','${item.id}','${esc(item.description)}')" loading="lazy">`:''}
@@ -609,6 +640,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
     <div class="form-group full"><label>Nome *</label><input id="it-name" value="${esc(it?.description||'')}"></div>
     <div class="form-group full"><label>Observação</label><textarea id="it-obs">${esc(it?.observacao||'')}</textarea></div>
     <div class="form-group full"><label>Responsáveis</label><input id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
+    <div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${it?.secretaria_id===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
     ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#0f172a;cursor:pointer"></div>`:''}
@@ -679,7 +711,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const name=document.getElementById('it-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
-  const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
+  const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
@@ -1459,7 +1491,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
     chk(16);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,10,2,2,'F');sf(10,true,[255,255,255]);doc.text(grpKey+' — '+grpItems.length+' registro(s)',mx+5,y+7);y+=13;
     const tblH=[['#','Nome / Descrição','Dados']];
     const tblB=[];let rn=0;
-    for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+ef[t.field_name];}tblB.push([String(rn),item.description||'',dados]);}
+    for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';if(item.secretaria_id){const secName=S.secretarias.find(s=>s.id===item.secretaria_id)?.name;if(secName)dados+='Secretaria: '+secName;}for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+ef[t.field_name];}tblB.push([String(rn),item.description||'',dados]);}
     tblB.push(['Σ','Subtotal: '+grpItems.length+' registro(s)','']);
     totalReg+=grpItems.length;
     doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:52}},didParseCell:function(dat){if(dat.section!=='body')return;const r0=dat.row.raw[0];if(r0!==''&&r0!=='Σ'){dat.cell.styles.fillColor=[13,64,20];dat.cell.styles.textColor=[215,255,215];dat.cell.styles.fontStyle='bold';}else if(r0==='Σ'){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontStyle='italic';dat.cell.styles.fontSize=7;if(dat.column.index===0)dat.cell.text=[];}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
@@ -1508,8 +1540,12 @@ function abrirPdfOpts(secId){
   _pdfOptsSecId=secId;
   const sel=document.getElementById('popt-field');
   if(sel){
+    const hasSec=S.items.some(i=>i.atividade_id===secId&&i.secretaria_id)||S.subitems.some(s=>{const it=S.items.find(i=>i.id===s.item_id);return it&&it.atividade_id===secId&&s.secretaria_id;});
     const tpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='item');
-    sel.innerHTML='<option value="">— Selecione um campo —</option>'+tpls.map(t=>'<option value="'+t.field_name+'">'+t.field_name+'</option>').join('');
+    let opts='<option value="">— Selecione um campo —</option>';
+    if(hasSec)opts+='<option value="secretaria_id">Secretaria</option>';
+    opts+=tpls.map(t=>'<option value="'+t.field_name+'">'+t.field_name+'</option>').join('');
+    sel.innerHTML=opts;
   }
   document.getElementById('pdf-opts-overlay').style.display='flex';
 }
@@ -1558,14 +1594,16 @@ function onDrSubDrop(ev,targetId,parentId,secId){
         <option value="nome">Nome / Descrição</option>
         <option value="resp">Responsáveis</option>
         <option value="obs">Observação</option>
+        <option value="secretaria">Secretaria</option>
+        <optgroup id="busca-opts-custom" label="Campos personalizados"></optgroup>
       </select>
       <button onclick="executarBusca()" style="padding:10px 18px;background:#0e7490;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔍 Buscar</button>
       <button onclick="limparBusca()" style="padding:10px 14px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;cursor:pointer">✕ Limpar</button>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-item" style="accent-color:#0e7490;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#60a5fa">Item encontrado</strong> → mostrar todos os subitens</span></label>
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-show-parent" style="accent-color:#8b5cf6;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#a78bfa">Subitem encontrado</strong> → exibir item pai</span></label>
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-sub" style="accent-color:#f59e0b;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#fcd34d">Subitem encontrado</strong> → mostrar subitens irmãos</span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-item" checked style="accent-color:#0e7490;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#60a5fa">Item encontrado</strong> → mostrar todos os subitens</span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-show-parent" checked style="accent-color:#8b5cf6;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#a78bfa">Subitem encontrado</strong> → exibir item pai</span></label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#94a3b8;cursor:pointer"><input type="checkbox" id="bchk-allsubs-sub" checked style="accent-color:#f59e0b;width:14px;height:14px" onchange="if(window._buscaRes)executarBusca()"><span><strong style="color:#fcd34d">Subitem encontrado</strong> → mostrar subitens irmãos</span></label>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
       <div style="font-size:11px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px">📷 Imagens no PDF:</div>
@@ -1585,6 +1623,8 @@ function abrirBusca(secId){
   window._buscaRes=null;
   document.getElementById('busca-input').value='';
   document.getElementById('busca-resultados').innerHTML='';
+  const optGrp=document.getElementById('busca-opts-custom');
+  if(optGrp){optGrp.innerHTML='';const tpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId);if(tpls.length){tpls.forEach(t=>{const o=document.createElement('option');o.value='ef:'+t.field_name;o.textContent=t.field_name;optGrp.appendChild(o);});}else{const o=document.createElement('option');o.value='';o.textContent='Nenhum campo personalizado';o.disabled=true;optGrp.appendChild(o);}}}
   document.getElementById('busca-overlay').style.display='block';
   setTimeout(()=>document.getElementById('busca-input').focus(),80);
 }
@@ -1601,10 +1641,12 @@ function executarBusca(){
   const items=S.items.filter(i=>i.atividade_id===secId);
   const _match=val=>val&&_norm(String(val)).includes(q);
   const _matchIt=(it)=>{
-    if(campo==='todos')return _match(it.description)||_match(it.observacao)||_match(it.responsaveis);
+    if(campo==='todos')return _match(it.description)||_match(it.observacao)||_match(it.responsaveis)||_match(S.secretarias.find(s=>s.id===it.secretaria_id)?.name);
     if(campo==='nome')return _match(it.description);
     if(campo==='resp')return _match(it.responsaveis);
     if(campo==='obs')return _match(it.observacao);
+    if(campo==='secretaria')return _match(S.secretarias.find(s=>s.id===it.secretaria_id)?.name);
+    if(campo.startsWith('ef:')){const ef=it.extra_fields||{};return _match(ef[campo.slice(3)]);}
     return false;
   };
   const hl=txt=>{if(!txt)return '';const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return String(txt).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])).replace(re,'<mark style="background:#f59e0b44;color:#fcd34d;border-radius:3px;padding:0 2px">$1</mark>');};
