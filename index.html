@@ -882,9 +882,11 @@ function renderImportar(){
       <strong>Atenção:</strong> A importação irá criar Secretarias, Itens e Sub-itens na atividade <strong>BCCS</strong>.<br>
       Dados existentes <strong>não serão duplicados</strong> (verificação por nome).
     </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <button class="btn-action primary" onclick="executarImportacaoBCC()" ${_importando?'disabled style="opacity:.5;cursor:not-allowed"':''}>🚀 Importar BCC Maio 2026</button>
-      <button class="btn-action" style="background:#422006;color:#fcd34d;border:1px solid #f59e0b" onclick="atualizarStatusSaiu()" ${_importando?'disabled style="opacity:.5;cursor:not-allowed"':''}>🔄 Atualizar Status SAIU</button>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <input type="file" id="imp-file" accept=".json" onchange="document.getElementById('imp-filename').textContent=this.files[0]?this.files[0].name:'Nenhum arquivo selecionado'" style="display:none">
+      <button class="btn-action" onclick="document.getElementById('imp-file').click()">📁 Selecionar JSON</button>
+      <span id="imp-filename" style="font-size:12px;color:#94a3b8">Nenhum arquivo selecionado</span>
+      <button class="btn-action primary" onclick="executarImportacaoJSON()" ${_importando?'disabled style="opacity:.5;cursor:not-allowed"':''}>📥 Importar</button>
       <button class="btn-action" onclick="limparLogImportacao()">🧹 Limpar Log</button>
     </div>
     ${progress}
@@ -903,17 +905,19 @@ function limparLogImportacao(){
   toast('Log limpo','info');
 }
 
-window.executarImportacaoBCC=async function(){
+window.executarImportacaoJSON=async function(){
   if(_importando){toast('Importação já em andamento','warn');return;}
+  const fileInput=document.getElementById('imp-file');
+  if(!fileInput||!fileInput.files||!fileInput.files[0]){toast('Selecione um arquivo JSON primeiro','warn');return;}
+  const file=fileInput.files[0];
   _importando=true;renderImportar();
 
   try{
-    logImp('Carregando bcc_data.json...');
-    const res=await fetch('bcc_data.json');
-    const BCC_DATA=await res.json();
+    logImp('Lendo arquivo: '+file.name+'...');
+    const text=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=e=>rej(e);r.readAsText(file);});
+    const BCC_DATA=JSON.parse(text);
     logImp('Dados carregados: '+BCC_DATA.length+' secretarias');
 
-    // Encontrar atividade BCCS
     const bccs=S.secs.find(s=>s.name.toUpperCase().includes('BCC'));
     if(!bccs){throw new Error('Atividade BCCS não encontrada. Crie a atividade primeiro.');}
     logImp('Atividade BCCS: '+bccs.name+' (ID: '+bccs.id+')');
@@ -951,24 +955,16 @@ window.executarImportacaoBCC=async function(){
 
     // 4. Criar Sub-items (com proteção contra duplicação)
     logImp('Criando sub-itens por pessoa...');
-    let subCount=0;
-    let skipCount=0;
+    let subCount=0,skipCount=0;
     const baseSubCount=S.subitems.length;
-    // Índice de sub-itens existentes para evitar duplicação
     const existingSubKeys=new Set();
-    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{
-      existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));
-    });
+    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));});
     for(const sec of BCC_DATA){
       const itemId=itemMap[sec.name];
       let criados=0,pulados=0;
       for(const p of sec.people){
         const key=(itemId||'')+'::'+p.nome;
-        if(existingSubKeys.has(key)){
-          pulados++;
-          skipCount++;
-          continue;
-        }
+        if(existingSubKeys.has(key)){pulados++;skipCount++;continue;}
         const ef={};
         if(p.localidade)    ef['Localidade']=p.localidade;
         if(p.telefone)      ef['Telefone']=p.telefone;
@@ -979,15 +975,33 @@ window.executarImportacaoBCC=async function(){
         if(p.status)        ef['Status']=p.status;
         await addDoc(collection(db,'subitems'),{atividade_id:bccs.id,item_id:itemId,description:p.nome,extra_fields:ef,order_num:(baseSubCount+subCount),concluded:0,created_at:serverTimestamp()});
         existingSubKeys.add(key);
-        subCount++;
-        criados++;
+        subCount++;criados++;
       }
       if(pulados>0)logImp('↳ '+criados+' criados, '+pulados+' pulados (já existiam) para '+sec.name);
       else logImp('✚ '+sec.people.length+' sub-itens criados para '+sec.name);
     }
     if(skipCount>0)logImp('⚠️ Total pulados (já existiam): '+skipCount);
 
-    // 5. Recarregar
+    // 5. Atualizar Status SAIU nos existentes
+    logImp('Atualizando status SAIU nos existentes...');
+    let saiAtualizados=0;
+    const subsMap={};
+    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{subsMap[s.description]=s;});
+    for(const sec of BCC_DATA){
+      for(const p of sec.people){
+        if(p.status==='SAIU'){
+          const sub=subsMap[p.nome];
+          if(sub){
+            const ef={...(sub.extra_fields||{})};ef['Status']='SAIU';
+            await updateDoc(doc(db,'subitems',sub.id),{extra_fields:ef,updated_at:serverTimestamp()});
+            saiAtualizados++;
+          }
+        }
+      }
+    }
+    if(saiAtualizados>0)logImp('✚ '+saiAtualizados+' status SAIU atualizados');
+
+    // 6. Recarregar
     logImp('Recarregando dados...');
     await loadData();
 
@@ -998,7 +1012,9 @@ window.executarImportacaoBCC=async function(){
         <div style="font-size:13px;color:#94a3b8;line-height:1.8">
           <strong>Secretarias:</strong> ${secNames.length}<br>
           <strong>Itens:</strong> ${Object.keys(itemMap).length}<br>
-          <strong>Sub-itens:</strong> ${subCount}
+          <strong>Sub-itens novos:</strong> ${subCount}<br>
+          ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
+          ${saiAtualizados>0?`<strong>Status SAIU atualizados:</strong> ${saiAtualizados}<br>`:''}
         </div>
         <div style="margin-top:12px"><button class="btn-action" onclick="setView('ativ')">📅 Ver Atividades</button></div>
       </div>`;
@@ -1016,67 +1032,6 @@ window.executarImportacaoBCC=async function(){
         <div style="font-size:13px;color:#fca5a5">${err.message}</div>
       </div>`;
     }
-    toast('Erro: '+err.message,'error');
-  }finally{
-    _importando=false;
-  }
-};
-
-window.atualizarStatusSaiu=async function(){
-  if(_importando){toast('Operação já em andamento','warn');return;}
-  _importando=true;renderImportar();
-  try{
-    logImp('Carregando bcc_data.json...');
-    const res=await fetch('bcc_data.json');
-    const BCC_DATA=await res.json();
-    logImp('Dados carregados: '+BCC_DATA.length+' secretarias');
-
-    const bccs=S.secs.find(s=>s.name.toUpperCase().includes('BCC'));
-    if(!bccs){throw new Error('Atividade BCCS não encontrada.');}
-    logImp('Atividade BCCS: '+bccs.name);
-
-    // Buscar todas as pessoas que saíram
-    const sairam=[];
-    for(const sec of BCC_DATA){
-      for(const p of sec.people){
-        if(p.status==='SAIU')sairam.push({...p,secName:sec.name});
-      }
-    }
-    if(!sairam.length){toast('Nenhuma pessoa com status SAIU encontrada.','info');return;}
-    logImp('Pessoas com SAIU: '+sairam.length);
-
-    // Mapear sub-itens existentes por nome
-    const subsMap={};
-    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{subsMap[s.description]=s;});
-
-    let atualizados=0,naoEncontrados=0;
-    for(const p of sairam){
-      const sub=subsMap[p.nome];
-      if(!sub){logImp('⚠️ Não encontrado: '+p.nome+' ('+p.secName+')');naoEncontrados++;continue;}
-      const ef={...(sub.extra_fields||{})};
-      ef['Status']='SAIU';
-      await updateDoc(doc(db,'subitems',sub.id),{extra_fields:ef,updated_at:serverTimestamp()});
-      logImp('✚ Status SAIU atualizado: '+p.nome);
-      atualizados++;
-    }
-
-    logImp('Recarregando dados...');
-    await loadData();
-
-    const resultEl=document.getElementById('imp-result');
-    if(resultEl){
-      resultEl.innerHTML=`<div style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:16px;margin-top:12px">
-        <div style="font-size:15px;font-weight:700;color:#34d399;margin-bottom:8px">✅ Status SAIU Atualizado!</div>
-        <div style="font-size:13px;color:#94a3b8;line-height:1.8">
-          <strong>Atualizados:</strong> ${atualizados}<br>
-          <strong>Não encontrados:</strong> ${naoEncontrados}
-        </div>
-      </div>`;
-    }
-    toast('Status SAIU atualizado!','success');
-  }catch(err){
-    console.error(err);
-    logImp('❌ ERRO: '+err.message);
     toast('Erro: '+err.message,'error');
   }finally{
     _importando=false;
