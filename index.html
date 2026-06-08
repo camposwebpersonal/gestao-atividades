@@ -948,13 +948,26 @@ window.executarImportacaoBCC=async function(){
       else{const r=await addDoc(collection(db,'items'),{atividade_id:bccs.id,description:sec.name,secretaria_id:secMap[sec.name]||null,item_icon:'🏛️',item_color:'#3B82F6',order_num:(S.items.length+Object.keys(itemMap).length),concluded:0,created_at:serverTimestamp()});itemMap[sec.name]=r.id;logImp('✚ Item criado: '+sec.name);}
     }
 
-    // 4. Criar Sub-items
+    // 4. Criar Sub-items (com proteção contra duplicação)
     logImp('Criando sub-itens por pessoa...');
     let subCount=0;
+    let skipCount=0;
     const baseSubCount=S.subitems.length;
+    // Índice de sub-itens existentes para evitar duplicação
+    const existingSubKeys=new Set();
+    S.subitems.filter(s=>s.atividade_id===bccs.id).forEach(s=>{
+      existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));
+    });
     for(const sec of BCC_DATA){
       const itemId=itemMap[sec.name];
+      let criados=0,pulados=0;
       for(const p of sec.people){
+        const key=(itemId||'')+'::'+p.nome;
+        if(existingSubKeys.has(key)){
+          pulados++;
+          skipCount++;
+          continue;
+        }
         const ef={};
         if(p.localidade)    ef['Localidade']=p.localidade;
         if(p.telefone)      ef['Telefone']=p.telefone;
@@ -964,10 +977,14 @@ window.executarImportacaoBCC=async function(){
         if(p.carga_horaria) ef['Carga Horária']=p.carga_horaria;
         if(p.status)        ef['Status']=p.status;
         await addDoc(collection(db,'subitems'),{atividade_id:bccs.id,item_id:itemId,description:p.nome,extra_fields:ef,order_num:(baseSubCount+subCount),concluded:0,created_at:serverTimestamp()});
+        existingSubKeys.add(key);
         subCount++;
+        criados++;
       }
-      logImp('✚ '+sec.people.length+' sub-itens criados para '+sec.name);
+      if(pulados>0)logImp('↳ '+criados+' criados, '+pulados+' pulados (já existiam) para '+sec.name);
+      else logImp('✚ '+sec.people.length+' sub-itens criados para '+sec.name);
     }
+    if(skipCount>0)logImp('⚠️ Total pulados (já existiam): '+skipCount);
 
     // 5. Recarregar
     logImp('Recarregando dados...');
