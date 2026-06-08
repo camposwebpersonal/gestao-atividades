@@ -674,7 +674,8 @@ window.saveSec=async function(id){
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
   await saveRT('activity',did);
-  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderDash();
+  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');
+  if(id&&curSecId===id){openActivity(id);}else{renderDash();}
 };
 
 // ── ITEM MODAL ──
