@@ -929,7 +929,7 @@ window.executarImportacaoBCC=async function(){
 
     // 2. Criar FieldTemplates
     logImp('Verificando campos extras...');
-    const fieldDefs=[{name:'Localidade',type:'text'},{name:'Telefone',type:'text'},{name:'Função',type:'text'},{name:'Remuneração',type:'text'},{name:'Data Início',type:'text'},{name:'Carga Horária',type:'text'}];
+    const fieldDefs=[{name:'Localidade',type:'text'},{name:'Telefone',type:'text'},{name:'Função',type:'text'},{name:'Remuneração',type:'text'},{name:'Data Início',type:'text'},{name:'Carga Horária',type:'text'},{name:'Status',type:'text'}];
     const ftMap={};
     const existingFT=S.fieldTemplates.filter(t=>t.atividade_id===bccs.id&&t.scope==='subitem');
     for(const fd of fieldDefs){
@@ -962,6 +962,7 @@ window.executarImportacaoBCC=async function(){
         if(p.remuneracao)   ef['Remuneração']='R$ '+p.remuneracao;
         if(p.data_inicio)   ef['Data Início']=p.data_inicio;
         if(p.carga_horaria) ef['Carga Horária']=p.carga_horaria;
+        if(p.status)        ef['Status']=p.status;
         await addDoc(collection(db,'subitems'),{atividade_id:bccs.id,item_id:itemId,description:p.nome,extra_fields:ef,order_num:(baseSubCount+subCount),concluded:0,created_at:serverTimestamp()});
         subCount++;
       }

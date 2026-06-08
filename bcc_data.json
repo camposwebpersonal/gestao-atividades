@@ -9,7 +9,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CLARELICE FERREIRA SILVA",
@@ -18,7 +19,8 @@
         "funcao": "ABASTEC. ÁGUA",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DAMIAO FAGNER DOS SANTOS SILVA",
@@ -27,7 +29,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DIEGO RAMON ALVES DO AMARAL",
@@ -36,7 +39,8 @@
         "funcao": "ABAST. ÁGUA",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ERIVALDO BARBOSA MONTEIRO",
@@ -45,7 +49,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ERIVALDO CAVALCANTI CARVALHO",
@@ -54,7 +59,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "EVANIA DA SILVA SANTOS FREIRE",
@@ -63,7 +69,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JANINE ARAGÃO VIEIRA",
@@ -72,7 +79,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JAQUELINE MARQUES DE MIRANDA",
@@ -81,7 +89,8 @@
         "funcao": "ABASTEC. ÁGUA",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ALCIDES NUNES DE FARIAS",
@@ -90,7 +99,8 @@
         "funcao": "ABASTEC. ÁGUA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSENILDA BARBOSA SERAFIM",
@@ -99,7 +109,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSILDO GOLVEIA DA SILVA",
@@ -108,7 +119,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSIVALDO ALVES DE SIQUEIRA",
@@ -117,7 +129,8 @@
         "funcao": "ABAST. ÁGUA",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARCELO CORDEIRO DE LIMA",
@@ -126,7 +139,8 @@
         "funcao": "VIGILANTE",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MANUEL FERREIRA DA SILVA FILHO",
@@ -135,7 +149,8 @@
         "funcao": "ABAST. ÁGUA",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES DOS SANTOS",
@@ -144,7 +159,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES DA SILVA XAVIER",
@@ -153,7 +169,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DO SOCORRO DA CONCEIÇÃO",
@@ -162,7 +179,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE FERREIRA DE MELO",
@@ -171,7 +189,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA SELMA MONTEIRO SILVA",
@@ -180,7 +199,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA SOLANGE BEZERRA DA SILVA",
@@ -189,7 +209,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIANA DA SILVA",
@@ -198,7 +219,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ORLANDO BATISTA DE LIMA",
@@ -207,7 +229,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SEVERINA BEZERRA DA SILVA",
@@ -216,7 +239,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SEVERINA RAMOS DA SILVA",
@@ -225,7 +249,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SIMONE TASLAINA CAMILO DA SILVA CORDEIRO",
@@ -234,7 +259,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "TATIANE DA SILVA CAMPOS",
@@ -243,7 +269,8 @@
         "funcao": "DESSALINIZADOR",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -257,7 +284,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -271,7 +299,8 @@
         "funcao": "TÉCNICO",
         "remuneracao": "825,00",
         "data_inicio": "10.06.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "EDUARDO SERGIO FERREIRA SILVA",
@@ -280,7 +309,8 @@
         "funcao": "TREINADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ILARE EDUARDA DE CARVALHO",
@@ -289,7 +319,8 @@
         "funcao": "TREINADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JEISIANE SALVADOR DE ALMEIDA",
@@ -298,7 +329,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ ADRIANO DA SILVA",
@@ -307,7 +339,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MANUEL MESSIAS DA SILVA SANTANA",
@@ -316,7 +349,8 @@
         "funcao": "PRF. DANÇA",
         "remuneracao": "550,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MIRIAN DE SOUSA SILVA",
@@ -325,7 +359,8 @@
         "funcao": "FUT. DE SALÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SAMARA LETICIA CARVALHO FELICIANO",
@@ -334,7 +369,8 @@
         "funcao": "LIMPEZA",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "TALISSON FERNANDO LEITE DE ANDRADE",
@@ -343,7 +379,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "03.11.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "THAMIRYRES VITORIA SILVA SABINO",
@@ -352,7 +389,8 @@
         "funcao": "PRF. DANÇA",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VICTOR MANOEL CORDEIRO DE SIQUEIRA",
@@ -361,7 +399,8 @@
         "funcao": "TENDAS",
         "remuneracao": "550,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "WALLEX VITTOR BEZERRA DA SILVA",
@@ -370,7 +409,8 @@
         "funcao": "TENDAS",
         "remuneracao": "550,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "WELTON CORDEIRO FERREIRA",
@@ -379,7 +419,8 @@
         "funcao": "87 99101- 2785",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUCIENE PEREIRA DA SILVA GERMANO",
@@ -388,7 +429,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "RUBEVÂNIA DE SIQUEIRA TELES",
@@ -397,7 +439,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "WANDSON MELO DOS SANTOS",
@@ -406,7 +449,8 @@
         "funcao": "PRE. GOLEIRAS",
         "remuneracao": "550,00",
         "data_inicio": "10.06.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MÔNICA OLIVEIRA DE CARVALHO",
@@ -415,7 +459,8 @@
         "funcao": "LIMPEZA",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       },
       {
         "nome": "JOSÉ FILHO FABRICIO DO NASCIMENTO",
@@ -424,7 +469,8 @@
         "funcao": "87 9.9112-",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUCAS LEANDRO DE MORAIS NETO",
@@ -433,7 +479,8 @@
         "funcao": "SEL. HANDEBOL",
         "remuneracao": "550,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -447,7 +494,8 @@
         "funcao": "AUX. CUIDADORA",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CHRISTIANE MARIA SOARES BEZERRA",
@@ -456,7 +504,8 @@
         "funcao": "AUX. CUIDADORA",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CARLA",
@@ -465,7 +514,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ LUCENILDO DA SILVA",
@@ -474,7 +524,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES MARIANO FERREIRA",
@@ -483,7 +534,8 @@
         "funcao": "CUIDADORA",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA APARECIDA RUFINO SOUSA",
@@ -492,7 +544,8 @@
         "funcao": "AUX. CUIDADORA",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA ROZILENE ROQUE DA SILVA",
@@ -501,7 +554,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VERA LÚCIA ARRUDA DE SOUSA",
@@ -510,7 +564,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GABRIELLA PATRIOTA PATU",
@@ -519,7 +574,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CRISTIANE MARIA SOARES BEZERRA",
@@ -528,7 +584,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "IRANY GONÇALVES DA SILVA",
@@ -537,7 +594,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VALDEMERI LINS DA SILVA",
@@ -546,7 +604,8 @@
         "funcao": "AUX. COZINHA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "WELLISON LEANDRO DE LIMA",
@@ -555,7 +614,8 @@
         "funcao": "AUX. COZINHA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA AÇUCENA FERREIRA DA SILVA",
@@ -564,7 +624,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GABRIELLY FEITOSADE ARAÚJO",
@@ -573,7 +634,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ALCILENE DOS SANTOS SILVA",
@@ -582,7 +644,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JULIANA DEODATO NUNES",
@@ -591,7 +654,8 @@
         "funcao": "COZINHEIRA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIVANIA FERREIRA DE LIMA",
@@ -600,7 +664,8 @@
         "funcao": "DISTRI. DE LEITE",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARITANIA LIMA DA SILVA",
@@ -609,7 +674,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GILCIENE CRISTINA AMARAL",
@@ -618,7 +684,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.10.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "PAULO VINICIUS ROQUE",
@@ -627,7 +694,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ISRAEL SOARES DA SILVA",
@@ -636,7 +704,8 @@
         "funcao": "COZINHEIRO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       }
     ]
   },
@@ -650,7 +719,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "CARLOS VINICIUS FERREIRA DA SILVA",
@@ -659,7 +729,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "CICERA XAVIER DA SILVA",
@@ -668,7 +739,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EDIVANIA AVELINO DA SILVA SANTOS",
@@ -677,7 +749,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EDIVANEIDE BRITO DOS SANTOS",
@@ -686,7 +759,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "HILDIELE DA SILVA",
@@ -695,7 +769,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUCINEIDE RICARDO DA SILVA PEREIRA",
@@ -704,7 +779,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DAS DORES NUNES DE SOUSA",
@@ -713,7 +789,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA EDNA LEITE DA SILVA",
@@ -722,7 +799,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MICAELE DE SOUZA DUARTE",
@@ -731,7 +809,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA CARLA DOMINGOS DA SILVA",
@@ -740,7 +819,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA CLAUDIA DOMINGOS DA SILVA",
@@ -749,7 +829,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CICERA NOEMIA PINHEIRO LIMA",
@@ -758,7 +839,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ERICA RAFAELA DE MELO ALVES",
@@ -767,7 +849,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GISELE RAQUEL MARIA DOS SANTOS FEITOSA",
@@ -776,7 +859,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JAILDA NUNES DE LIMA",
@@ -785,7 +869,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JOSIVANIA DE BRITO ALVES",
@@ -794,7 +879,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JUSSARA VIRGINIO DE SIQUEIRA",
@@ -803,7 +889,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DO CARMO PEREIRA",
@@ -812,7 +899,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JAIANE BARBOZA DE CARVALHO",
@@ -821,7 +909,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE FERREIRA DE MELO DO NASCIMENTO",
@@ -830,7 +919,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RENATA MICAELE BEZERRA DA SILVA",
@@ -839,7 +929,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROBERTA MARIA DE SIQUEIRA GOMES",
@@ -848,7 +939,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "AMANDA LOPES CORDEIRO GUEDES MORERIA",
@@ -857,7 +949,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "DANIELA MARIA PESSOA DA SILVA",
@@ -866,7 +959,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "KAROLAYNE CARVALHO SILVA",
@@ -875,7 +969,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JEANE CORDEIRO DA SILVA",
@@ -884,7 +979,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA LUCENI AZEVEDO DE LIMA",
@@ -893,7 +989,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA SUELI DOS SANTOS ARRUDA",
@@ -902,7 +999,8 @@
         "funcao": "",
         "remuneracao": "1.100,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROSEANE DA SILVA",
@@ -911,7 +1009,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JAQUELINE BARROS SIQUEIRA",
@@ -920,7 +1019,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JOELMA BEZERRA FERREIRA RAFAEL",
@@ -929,7 +1029,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ESTEFFANE GOUVEIA DOS SANTOS",
@@ -938,7 +1039,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA VITORIA BARBOSA COSTA DE MEZES",
@@ -947,7 +1049,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JANCIA DE SOUSA MELO",
@@ -956,7 +1059,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA APARECIDA DE SOUZA FLORENCIO",
@@ -965,7 +1069,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DA CONCEIÇÃO ALVES DE MELO",
@@ -974,7 +1079,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA GABRIELA ALVES ALEIXO",
@@ -983,7 +1089,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "PATRICIA TENORIO DA SILVA",
@@ -992,7 +1099,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "QUITERIA ALVES DE MELO",
@@ -1001,7 +1109,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ISABELY MONTEIRO DOS SANTOS",
@@ -1010,7 +1119,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALEXANDRA SIMOES DA SILVA",
@@ -1019,7 +1129,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA KERLY DOS SANTOS DE LIMA",
@@ -1028,7 +1139,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GABRIELA RODRIGUES NORONHA",
@@ -1037,7 +1149,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA TULIANA CARVALHO SILVA",
@@ -1046,7 +1159,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARLENE MARIA DOS SANTOS SILVA",
@@ -1055,7 +1169,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALESSANDRA DA SILVA OLIVEIRA GOMES",
@@ -1064,7 +1179,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ELENILDA BEZERRA DE MORAIS",
@@ -1073,7 +1189,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JULIANA GONÇALVES DE SILVA",
@@ -1082,7 +1199,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "POLIANA GUILHERME DA SILVA",
@@ -1091,7 +1209,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROZINEIDE PEREIRA DA SILVA",
@@ -1100,7 +1219,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ACIBELA BEZERRA DA SILVA",
@@ -1109,7 +1229,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALDERLANE DOS SANTOS",
@@ -1118,7 +1239,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ERICA FERNANDA PEREIRA FIGUEIREDO",
@@ -1127,7 +1249,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "IARA LORENA SOUSA SIQUEIRA",
@@ -1136,7 +1259,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "KAWANY RAMOS DE ALENCAR",
@@ -1145,7 +1269,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUCIANA NUNES DO AMARAL",
@@ -1154,7 +1279,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUCIANO FERREIRA DE LIMA",
@@ -1163,7 +1289,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA AUDIANE DE MEDEIROS SILVA",
@@ -1172,7 +1299,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DO CARMO DA SILVA LIMA",
@@ -1181,7 +1309,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA IRIS SANTOS DE SIQUEIRA",
@@ -1190,7 +1319,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MERCIA RICKELY GOMES DO AMARAL",
@@ -1199,7 +1329,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MYKAELE RAIANE SILVA CACHOEIRA",
@@ -1208,7 +1339,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RAFAELA GOMES ALVES",
@@ -1217,7 +1349,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "THAIANE DOS SANTOS ARAUJO",
@@ -1226,7 +1359,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "VITORIA ELIANE CARVALHO DE MEDEIROS",
@@ -1235,7 +1369,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALECIANA VILELA DE ALMEIDA",
@@ -1244,7 +1379,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JAIANE NUNES TORRES",
@@ -1253,7 +1389,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE FERREIRA DA CONCEIÇÃO",
@@ -1262,7 +1399,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA LUCIA DE BRITO",
@@ -1271,7 +1409,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA PAULA BARBOSA DE MELO",
@@ -1280,7 +1419,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ELISANGELA RAMOS NUNES",
@@ -1289,7 +1429,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JEANE DARK DA SILVA",
@@ -1298,7 +1439,8 @@
         "funcao": "",
         "remuneracao": "1.100,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JUCILEIDE DE CARVALHO SILVA",
@@ -1307,7 +1449,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ELIANA RUFINO DA SILVA",
@@ -1316,7 +1459,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE DE ALMEIDA BEZERRA",
@@ -1325,7 +1469,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA SABRINA PEREIRA DE FREITAS",
@@ -1334,7 +1479,8 @@
         "funcao": "",
         "remuneracao": "1.100,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "QUITERIA VITORIA MELO ALVES",
@@ -1343,7 +1489,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RAFAELA KALINE PEREIRA GERMANO",
@@ -1352,7 +1499,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CICERA MARIA DA SILVA",
@@ -1361,7 +1509,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "FABIANE BEZERRA ARAUJO",
@@ -1370,7 +1519,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ADRIANA DA SILVA",
@@ -1379,7 +1529,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIANA FABRICIA ALEIXO DOS SANTOS",
@@ -1388,7 +1539,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RAFAELA FIRMINO BEZERRA",
@@ -1397,7 +1549,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "VATUSE JANUARIO DA SILVA",
@@ -1406,7 +1559,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "IZONEIDE BEZERRA",
@@ -1415,7 +1569,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JOSILENE DA SILVA BEZERRA",
@@ -1424,7 +1579,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIZA MARIA ALEXANDRINO",
@@ -1433,7 +1589,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "IRANY BATISTA DOS SANTOS",
@@ -1442,7 +1599,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CELIA GOMES FEITOSA",
@@ -1451,7 +1609,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA IRANEIDE BEZERRA DE SOUZA",
@@ -1460,7 +1619,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROSELY BEZERRA DA SILVA",
@@ -1469,7 +1629,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROSIMERE BEZERRA DA SILVA",
@@ -1478,7 +1639,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "SILEIDE SILVA DE MOURA",
@@ -1487,7 +1649,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "VANESSA ANDRADE DOS SANTOS",
@@ -1496,7 +1659,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALBA REJANE DA SILVA",
@@ -1505,7 +1669,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EDINAIRAN LOEDJA PEREIRA DA SILVA",
@@ -1514,7 +1679,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GILCIENE BERNARDO NOGUEIRA",
@@ -1523,7 +1689,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JANAINA DE LIMA FREIRE ALVES",
@@ -1532,7 +1699,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUZINETE FRANCISCA DE SOUZA IZIDRO",
@@ -1541,7 +1709,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES BATISTA PEREIRA",
@@ -1550,7 +1719,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES DE LIMA FREIRE",
@@ -1559,7 +1729,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA LEONICE TAVARES DOS SANTOS",
@@ -1568,7 +1739,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ROGELMA BEZERRA MONTEIRO",
@@ -1577,7 +1749,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALINE MARIA DE GOIS SILVA",
@@ -1586,7 +1759,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANDREIA CLARA DOS SANTOS SILVA",
@@ -1595,7 +1769,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CICERA BATISTA DOS SANTOS MELO",
@@ -1604,7 +1779,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ERICA FRANCISCA BATISTA DE MELO",
@@ -1613,7 +1789,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GABRIELE ALEIXO DOS SANTOS",
@@ -1622,7 +1799,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "KASSIA MARILIA BATISTA DE SOUZA",
@@ -1631,7 +1809,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARTA MARIA SOUZA GOMES",
@@ -1640,7 +1819,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ADRIANA DE SOUZA",
@@ -1649,7 +1829,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GENILMA FRAZAO DA SILVA",
@@ -1658,7 +1839,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE DE SANTANA SILVA",
@@ -1667,7 +1849,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA VIVIANE SANTANA FREITAS",
@@ -1676,7 +1859,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RAFAELA RODRIGUES SOARES",
@@ -1685,7 +1869,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "ADEILZA DE SOUSA PEREIRA AMARAL",
@@ -1694,7 +1879,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CALINE BRASILIANO DE SIQUEIRA",
@@ -1703,7 +1889,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EDNALDA FERREIRA DA COSTA",
@@ -1712,7 +1899,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ELIANE DE SIQUEIRA LEITE",
@@ -1721,7 +1909,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "HELIA ALVES RODRIGUES SOUZA",
@@ -1730,7 +1919,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "IRIS BEZERRA DA SILVA",
@@ -1739,7 +1929,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DAIANE BEZERRA VIDAL DA SILVA",
@@ -1748,7 +1939,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JAILDA NUNES BEZERRA",
@@ -1757,7 +1949,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RITA DE CASSIA DE LIMA BEZERRA",
@@ -1766,7 +1959,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "BEATRIZ CARDOSO FREIRE",
@@ -1775,7 +1969,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUANA ELIAS FREIRE",
@@ -1784,7 +1979,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MANUELA FREIRE FERREIRA",
@@ -1793,7 +1989,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EUDEZANGELA MALAQUEIAS DA SILVA",
@@ -1802,7 +1999,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "VANUSIA MARIA DA SILVA",
@@ -1811,7 +2009,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "AILA MARIA DA SILVA SANTOS",
@@ -1820,7 +2019,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "GILVANIA MARIA DA SILVA",
@@ -1829,7 +2029,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LILIAN APARECIDA DE LIMA",
@@ -1838,7 +2039,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA BETANIA SOARES MARQUES",
@@ -1847,7 +2049,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES MOREIRA DA SILVA",
@@ -1856,7 +2059,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA VANESSA CAMPOS GOMES",
@@ -1865,7 +2069,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA CLAUDIA DA SILVA",
@@ -1874,7 +2079,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "INA IRANIANA CHAVES DE OLIVEIRA DA SILVA",
@@ -1883,7 +2089,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUCIANA HENRIQUE DE MELO MAGALHAES",
@@ -1892,7 +2099,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALINE PATRICIA ALVES AMARAL",
@@ -1901,7 +2109,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANE RUSE RODRIGUES SIMOES",
@@ -1910,7 +2119,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "CAUAN BARBOSA NASCIMENTO",
@@ -1919,7 +2129,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CLEIDIANE MARTINS DOS SANTOS",
@@ -1928,7 +2139,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "DAMIAO DOUGLAS DA SILVA",
@@ -1937,7 +2149,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "DAYANE LEAL FERREIRA",
@@ -1946,7 +2159,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "EDUARDA JULIANA IZIDIO RODRIGUES",
@@ -1955,7 +2169,8 @@
         "funcao": "CUIDADOR",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JAQUELINE DE SIQUEIRA RODRIGUES DE QUEIROZ",
@@ -1964,7 +2179,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JESSICA RAYANE DA SILVA",
@@ -1973,7 +2189,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JOSE MARCIO FERREIRA BEZERRA",
@@ -1982,7 +2199,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JOSENILDO IZIDIO DA SILVA",
@@ -1991,7 +2209,8 @@
         "funcao": "CUIDADOR",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "LAUDJANE CECILIA TAVARES",
@@ -2000,7 +2219,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "LINDOMARCIO HENRIQUE DA SILVA",
@@ -2009,7 +2229,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "LUCINEIDE RUFINO DA SILVA",
@@ -2018,7 +2239,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "MARIA JULIANA MARINHEIRO DOS SANTOS",
@@ -2027,7 +2249,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "SILVANIA MARTINS DE SOUSA",
@@ -2036,7 +2259,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "TANIA MARIA LIMA DE SOUZA",
@@ -2045,7 +2269,8 @@
         "funcao": "CUIDADOR",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "ADRIENE GOUVEIA DE SOUZA",
@@ -2054,7 +2279,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ALINE MARTINS RODRIGUES",
@@ -2063,7 +2289,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA PAULA DA SILVA",
@@ -2072,7 +2299,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANGELICA MARIA DA SILVA",
@@ -2081,7 +2309,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "AVIANY DOS SANTOS CALADO",
@@ -2090,7 +2319,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CATARINA NUNES VILELA",
@@ -2099,7 +2329,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CLEONICE BANDEIRA DA SILVA",
@@ -2108,7 +2339,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "FABIANA FERREIRA DA SILVA",
@@ -2117,7 +2349,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JEISIANE ANTUNINO FERREIRA",
@@ -2126,7 +2359,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "JESSICA RAYANE PINHEIRO GOMES",
@@ -2135,7 +2369,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MACIANA SILVA MELO",
@@ -2144,7 +2379,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARCIA VALEIRA ALVES DA SILVA",
@@ -2153,7 +2389,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA CLARA FERREIRA FREIRE",
@@ -2162,7 +2399,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA EDUARDA MONTEIRO ALVES",
@@ -2171,7 +2409,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA ERIKA FERREIRA DA SILVA",
@@ -2180,7 +2419,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA JAICE BEZERRA DE SIQUEIRA",
@@ -2189,7 +2429,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MERCIA PEDRO DA SILVA",
@@ -2198,7 +2439,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "RAYANE DINIZ DA SILVA",
@@ -2207,7 +2449,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "SIDINEY MARTINS BATISTA",
@@ -2216,7 +2459,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "THAIS MARQUES BRITO",
@@ -2225,7 +2469,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "WANESSA MOURA FREIRE DE SIQUEIRA",
@@ -2234,7 +2479,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ADRIANA GOUVEIA DA SILVA",
@@ -2243,7 +2489,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": "SAIU"
       },
       {
         "nome": "ALANE LIMA XAVIER",
@@ -2252,7 +2499,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA PAULA BRASILIANO DE MELO",
@@ -2261,7 +2509,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ANA PAULA MARTINS DA SILVA",
@@ -2270,7 +2519,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "CINTYA DE SOUSA MATOS CARNEIRO",
@@ -2279,7 +2529,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "EDLEUZA GOMES DA SILVA",
@@ -2288,7 +2539,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ELIANE VIDAL DA SILVA",
@@ -2297,7 +2549,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "FRANCYANE ALVES DA SILVA",
@@ -2306,7 +2559,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "",
-        "carga_horaria": "6H"
+        "carga_horaria": "6H",
+        "status": ""
       },
       {
         "nome": "JADDY LUISE MARTINS DO AMARAL",
@@ -2315,7 +2569,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "LUCINEIDE FRANCISCA DA SILVA",
@@ -2324,7 +2579,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARIA LAISA GOMES BEZERRA",
@@ -2333,7 +2589,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "MARTA RAQUEL CAETANO DE LIRA",
@@ -2342,7 +2599,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "RAISSA GABRIELA FIRMINO DA SILVA",
@@ -2351,7 +2609,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "SABRINA SILVA NUNES",
@@ -2360,7 +2619,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       },
       {
         "nome": "ZENILDA RODRIGUES DA SILVA",
@@ -2369,7 +2629,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "",
-        "carga_horaria": "4H"
+        "carga_horaria": "4H",
+        "status": ""
       }
     ]
   },
@@ -2383,7 +2644,8 @@
         "funcao": "PORTEIRO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "IANY NATALLY TORRES DE ALMEIDA",
@@ -2392,7 +2654,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.06.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "YASMIM JULLY PEREIRA ALBUQUERQUE",
@@ -2401,7 +2664,8 @@
         "funcao": "MAIO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIANA LOPES DA SILVA",
@@ -2410,7 +2674,8 @@
         "funcao": "LIMPEZA",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DAIANE ROLIM DE SIQUEIRA - PITU",
@@ -2419,7 +2684,8 @@
         "funcao": "CORREIOS",
         "remuneracao": "825,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JADLA MANUELLA NEVES - SÓ ESSE MÊS LIVIA JUR.",
@@ -2428,7 +2694,8 @@
         "funcao": "",
         "remuneracao": "550,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       }
     ]
   },
@@ -2442,7 +2709,8 @@
         "funcao": "AUX. ADMINIST.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -2456,7 +2724,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOAO BATISTA TAVARES DOS SANTOS",
@@ -2465,7 +2734,8 @@
         "funcao": "COLETA LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ OSMAR DA SILVA",
@@ -2474,7 +2744,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARINEZ RODRIGUES DA SILVA",
@@ -2483,7 +2754,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "AMAURI CAMPOS DOS SANTOS",
@@ -2492,7 +2764,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DAIANE GOMES DOS SANTOS",
@@ -2501,7 +2774,8 @@
         "funcao": "POSTO/AÇ/CLUBE",
         "remuneracao": "1.100,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ERIVALDO ALVES DE SIQUEIRA",
@@ -2510,7 +2784,8 @@
         "funcao": "RECOLHE LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOACÍ MARINHO DO NASCIMENTO",
@@ -2519,7 +2794,8 @@
         "funcao": "DIST. ÁGUA",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ADRIANO SALES",
@@ -2528,7 +2804,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "FERNANDO CAMILO DOS SANTOS",
@@ -2537,7 +2814,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ADERVAL FREIRE DA SILVA",
@@ -2546,7 +2824,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSEFA FREIRE DE LIMA",
@@ -2555,7 +2834,8 @@
         "funcao": "RECOLHE LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "PRESLEY YOHAN FREITAS ARAUJO",
@@ -2564,7 +2844,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ANTONIO BEZERRA DA SILVA",
@@ -2573,7 +2854,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CARLOS LUCAS PEREIRA DA SILVA",
@@ -2582,7 +2864,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.06.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "EDIVALDO DA SILVA LACERDA",
@@ -2591,7 +2874,8 @@
         "funcao": "CEMITÉRIO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ JARBAS FERREIRA DE MELO",
@@ -2600,7 +2884,8 @@
         "funcao": "C. LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARCOS PAULO DE BRITO SIMOES",
@@ -2609,7 +2894,8 @@
         "funcao": "ENCANADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MICAEL FREIRE DE ALBUQUERQUE",
@@ -2618,7 +2904,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CLAUDIVAN LEITE DA SILVA",
@@ -2627,7 +2914,8 @@
         "funcao": "GARI",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ BRUNO BEZERRA MAGALHÃES",
@@ -2636,7 +2924,8 @@
         "funcao": "GARI",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ VANDERLAN DE SANTANA",
@@ -2645,7 +2934,8 @@
         "funcao": "RECOLHE LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "PRISCILA JESUS DOS SANTOS",
@@ -2654,7 +2944,8 @@
         "funcao": "BANHEIRO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CARLOS ANTÔNIO BEZERRA JUREMA",
@@ -2663,7 +2954,8 @@
         "funcao": "GARI",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUIZ GONZAGA DE SIQUEIRA",
@@ -2672,7 +2964,8 @@
         "funcao": "RECOLHE LIXO",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA FRANCISCA DA SILVA",
@@ -2681,7 +2974,8 @@
         "funcao": "DESSANILIZADOR",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA ROSA DA SILVA",
@@ -2690,7 +2984,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GUILHERME ANTÔNIO ANDRADE NUNES",
@@ -2699,7 +2994,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VERÔNICA OTACILIA DA SILVA",
@@ -2708,7 +3004,8 @@
         "funcao": "CEMIT./C. LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ADILIO CLEMENTINO LEITE",
@@ -2717,7 +3014,8 @@
         "funcao": "GARI",
         "remuneracao": "825,00",
         "data_inicio": "01.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DAYSE MARIA RODRIGUES SALVADOR",
@@ -2726,7 +3024,8 @@
         "funcao": "ÁGUA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DOUGLAS RODRIGUES DE AQUINO",
@@ -2735,7 +3034,8 @@
         "funcao": "LIM. PRAÇAS",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CLAUDIANO DA PAZ SILVA",
@@ -2744,7 +3044,8 @@
         "funcao": "COVEIRO",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOAO VITOR RODRIGUES DE LIMA",
@@ -2753,7 +3054,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JENILSON ROQUE FLORENCIO",
@@ -2762,7 +3064,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GILSON ANTUNINO DA SILVA",
@@ -2771,7 +3074,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.07.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROBERTO CARLOS DA SILVA",
@@ -2780,7 +3084,8 @@
         "funcao": "GARI/CEMITÉRIO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VENICIO JOSE DA SILVA",
@@ -2789,7 +3094,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.06.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SUITIBERTO GOMES PATRIOTA",
@@ -2798,7 +3104,8 @@
         "funcao": "DISTRITAL",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MAURILIO PINHEIRO MAGALHÃES",
@@ -2807,7 +3114,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "RAFAELA PAULINA DE OLIVEIRA",
@@ -2816,7 +3124,8 @@
         "funcao": "COLETA DE LIXO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       }
     ]
   },
@@ -2830,7 +3139,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CICERA BEZERRA DA SILVA",
@@ -2839,7 +3149,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CREMILDA NUNES DOS SANTOS",
@@ -2848,7 +3159,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DAMIAO DE SOUZA E SILVA",
@@ -2857,7 +3169,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GERLANDIA ALVES DA SILVA",
@@ -2866,7 +3179,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "IRENE TAVARES DA SILVA",
@@ -2875,7 +3189,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JANAINA DA SILVA LIMA",
@@ -2884,7 +3199,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUCIANA CALISTA DA SILVA",
@@ -2893,7 +3209,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA ALICE BATISTA RAMOS",
@@ -2902,7 +3219,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DA CONCEICAO PEREIRA SILVA",
@@ -2911,7 +3229,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE FATIMA DA SILVA",
@@ -2920,7 +3239,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE DE LIMA SILVA",
@@ -2929,7 +3249,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE FERREIRA DA SILVA",
@@ -2938,7 +3259,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA LAUDINEIDE FERREIRA DOS SANTOS",
@@ -2947,7 +3269,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA RITA DE CASSIA LIMA",
@@ -2956,7 +3279,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA TALUANA GOUVEIA DE SOUSA",
@@ -2965,7 +3289,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MIDIAN LEANDRO SANTOS",
@@ -2974,7 +3299,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "NAIARA LEITE FERREIRA",
@@ -2983,7 +3309,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROSANGELA DA SILVA GOUVEIA",
@@ -2992,7 +3319,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROSILDA DOS SANTOS",
@@ -3001,7 +3329,8 @@
         "funcao": "VARRIÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ADRIANO FRANCISCO DA SILVA",
@@ -3010,7 +3339,8 @@
         "funcao": "ROÇADEIRA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROSILENE DE OLIVEIRA SILVA",
@@ -3019,7 +3349,8 @@
         "funcao": "ROÇADEIRA",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ANDERSON MARINHO DO NASCIMENTO",
@@ -3028,7 +3359,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "AUGUSTO ALVES SANTANA",
@@ -3037,7 +3369,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ERIVALDO FRANCISCO DE SOUSA",
@@ -3046,7 +3379,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "FABIO JUNIOR DA SILVA",
@@ -3055,7 +3389,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GENIVAL DOS SANTOS",
@@ -3064,7 +3399,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "HELIOMAR DOS REIS BARBOSA",
@@ -3073,7 +3409,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ABDIAS GOMES DA SILVA",
@@ -3082,7 +3419,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE WELLINGTON AMARAL LACERDA",
@@ -3091,7 +3429,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUCIO FLAVIO PATU SEVERINO",
@@ -3100,7 +3439,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "PAULO FERNANDO NUNES DA SILVA",
@@ -3109,7 +3449,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "WELLINGTON LEANDRO DE LIMA",
@@ -3118,7 +3459,8 @@
         "funcao": "CAPINAÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ANDREA DE ARAÚJO MARQUE SILVA",
@@ -3127,7 +3469,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CARLOS AUGUSTO PINHEIRO",
@@ -3136,7 +3479,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE WESLEY PEREIRA DA SILVA",
@@ -3145,7 +3489,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GERCINO BATISTA DA SILVA",
@@ -3154,7 +3499,8 @@
         "funcao": "COLETA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE DE MELO BARBOSA",
@@ -3163,7 +3509,8 @@
         "funcao": "COLETA",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA EDUARDA ALVES DE SIQUEIRA",
@@ -3172,7 +3519,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ROBERTO DOS SANTOS BEZERRA",
@@ -3181,7 +3529,8 @@
         "funcao": "APREENÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE FRANCINALDO BARBOSA PEREIRA",
@@ -3190,7 +3539,8 @@
         "funcao": "SANEAMENTO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIO MAGNO TAVARES SOUSA",
@@ -3199,7 +3549,8 @@
         "funcao": "VIGIA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CARLOS EDUARDO PEREIRA SILVA",
@@ -3208,7 +3559,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DIEGO PEREIRA BOTO PORTO",
@@ -3217,7 +3569,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ERENILDO DA SILVA CALISTA",
@@ -3226,7 +3579,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GEOVANE DOS SANTOS SEVERO",
@@ -3235,7 +3589,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JACKSON HENRIQUE FREIRE SILVA",
@@ -3244,7 +3599,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOCELIO BEZERRA DE GOIS",
@@ -3253,7 +3609,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JURANDIR HENRIQUE DA SILVA",
@@ -3262,7 +3619,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VIVIANE BANDEIRA DE SOUSA",
@@ -3271,7 +3629,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JAIRO FERNADES SIMOES AZEVEDO",
@@ -3280,7 +3639,8 @@
         "funcao": "JARDINAGEM",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES SILVA",
@@ -3289,21 +3649,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
-      }
-    ]
-  },
-  {
-    "name": "LICITAÇÃO - PRISCILA",
-    "people": [
-      {
-        "nome": "PABLO HENRIQUE DE BRITO SILVA",
-        "localidade": "LICITAÇÃO",
-        "telefone": "",
-        "funcao": "",
-        "remuneracao": "825,00",
-        "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       }
     ]
   },
@@ -3317,7 +3664,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -3331,7 +3679,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "DENILSON RODRIGUES DE MIRANDA",
@@ -3340,7 +3689,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.11.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "EDILMA MOREIRA DA SILVA",
@@ -3349,7 +3699,8 @@
         "funcao": "COZINHA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GENILDA MARTINS VIANA FEITOSA",
@@ -3358,7 +3709,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JEFFERSON ALMEIDA SEVERO",
@@ -3367,7 +3719,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOAO MANOEL LEITE DE SOUZA",
@@ -3376,7 +3729,8 @@
         "funcao": "PORTARIA",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE ADELMO DA SILVA",
@@ -3385,7 +3739,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSEFA CRISTINA GREGORIO DA SILVA",
@@ -3394,7 +3749,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LEIDIANE MARIA DA CONCEIÇÃO",
@@ -3403,7 +3759,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA APARECIDA CAETANO DE LIRA",
@@ -3412,7 +3769,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DARLANIA RODRIGUES SOBRAL",
@@ -3421,7 +3779,8 @@
         "funcao": "ADMINIST.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSÉ FERREIRA DE ANDRADE",
@@ -3430,7 +3789,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE GOMES DA SILVA",
@@ -3439,7 +3799,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JOSE SILVA SANTOS",
@@ -3448,7 +3809,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA LUISA PEREIRA SOUZA",
@@ -3457,7 +3819,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MICHELE DA SILVA RODRIGUES",
@@ -3466,7 +3829,8 @@
         "funcao": "LAVANDERIA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MONIQUE IACHISLIS CORD. DOS SANTOS",
@@ -3475,7 +3839,8 @@
         "funcao": "RECEPCAO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROBERVANIA CANDIDO DA SILVA",
@@ -3484,7 +3849,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROSA MARIA DA SILVA",
@@ -3493,7 +3859,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ROZEANE DOS SANTOS",
@@ -3502,7 +3869,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CAMILA VITORIA SILVA BRITO",
@@ -3511,7 +3879,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ELIANE APARECIDA DE SOUSA SANTOS",
@@ -3520,7 +3889,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.10.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "BARBARA SOFIA SILVA ALVES GOIS",
@@ -3529,7 +3899,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.07.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "RAFAELA SANTOS LEAL",
@@ -3538,7 +3909,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.04.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JANAINA PEREIRA DOS SANTOS",
@@ -3547,7 +3919,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CATARINA DOS SANTOS FEITOSA",
@@ -3556,7 +3929,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "LUANA PATRIOTA GUSTAVO",
@@ -3565,7 +3939,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JESSÍCA PERREIRA DA SILVA",
@@ -3574,7 +3949,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SIMONE BATISTA SILVA",
@@ -3583,7 +3959,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.11.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JULIANA SILVA DE LIMA",
@@ -3592,7 +3969,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSEFA DA SILVA",
@@ -3601,7 +3979,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "HELENA TAYNÁ DOS SANTOS SEVERO",
@@ -3610,7 +3989,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SAWANY KARLA CARVALHO FELICIANO",
@@ -3619,7 +3999,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JULIANA LEONARDO DA SILVA",
@@ -3628,7 +4009,8 @@
         "funcao": "A.S.G",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JAQUELINE DE LIMA FREIRE VIEIRA",
@@ -3637,7 +4019,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JULIANA RODRIGUES CHAVES",
@@ -3646,7 +4029,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA CRISTINA DE SIQUEIRA LEITE",
@@ -3655,7 +4039,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GHEYZA THAMARA MARCELINO N. SILVA",
@@ -3664,7 +4049,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SUNAMITA SANTOS B. DA SILVA",
@@ -3673,7 +4059,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ADRIANA SILVA GUIMARÃES AMORIM",
@@ -3682,7 +4069,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MÉRCIA FEITOSA E SILVA",
@@ -3691,7 +4079,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA RAISSA BATISTA DE MELO",
@@ -3700,7 +4089,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DE LOURDES B. DOS SANTOS",
@@ -3709,7 +4099,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARILIA ALVES PINHEIRO MAGALHÃES",
@@ -3718,7 +4109,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA ANGELICA DA SILVA MARIANO",
@@ -3727,7 +4119,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DO CARMO SIMÕES",
@@ -3736,7 +4129,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ALINE SANTANA TEXEIRA",
@@ -3745,7 +4139,8 @@
         "funcao": "REC./LIM.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "CICERA GISELDA PEREIRA",
@@ -3754,7 +4149,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JAINE VITORIA CORDEIRO LIMA",
@@ -3763,7 +4159,8 @@
         "funcao": "RECPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "VANESSA PEREIRA SILVA",
@@ -3772,7 +4169,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.11.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA FERREIRA DA SILVA SAMPAIO",
@@ -3781,7 +4179,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA JANAINA NEVES DA SILVA",
@@ -3790,7 +4189,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.05.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "AYLA GISELE PEREIRA DOS SANTOS",
@@ -3799,7 +4199,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "IDAIANE",
@@ -3808,7 +4209,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.07.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JACILENE NOGUEIRA DE MELO",
@@ -3817,7 +4219,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "10.05.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "EDNA MARIA DE ALMEIDA SOARES",
@@ -3826,7 +4229,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.12.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "GILVANIA RODRIGUES DE SOUSA",
@@ -3835,35 +4239,14 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
-      },
-      {
-        "nome": "EMANUELLY LUCIANA DE OLIVEIRA LOPES",
-        "localidade": "S. DE SAÚDE",
-        "telefone": "",
-        "funcao": "REC. LAB.",
-        "remuneracao": "825,00",
-        "data_inicio": "10.02.2025",
-        "carga_horaria": ""
-      },
-      {
-        "nome": "EYMME CAROLINE PEREIRA BRITO DOS SANTOS",
-        "localidade": "S. DE SAÚDE",
-        "telefone": "87 9.9803-8063",
-        "funcao": "RECEPÇÃO",
-        "remuneracao": "825,00",
-        "data_inicio": "10.02.2025",
-        "carga_horaria": ""
-      },
-      {
-        "nome": "IANNY INGRIDY PORFIRIO PENA",
-        "localidade": "S. DE SAÚDE",
-        "telefone": "",
-        "funcao": "",
-        "remuneracao": "825,00",
-        "data_inicio": "10.01.2026",
-        "carga_horaria": ""
-      },
+        "carga_horaria": "",
+        "status": ""
+      }
+    ]
+  },
+  {
+    "name": "IANNY INGRIDY PORFIRIO PENA S. DE SAÚDE R$ 825,00",
+    "people": [
       {
         "nome": "LORRANY VITORIA MARQUES MENDES",
         "localidade": "HOSPITAL",
@@ -3871,7 +4254,8 @@
         "funcao": "RECEPÇÃO",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": "SAIU"
       },
       {
         "nome": "MARYANNA THAIS PAULINO NOGUEIRA NUNES",
@@ -3880,7 +4264,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "SERGIO HENRIQUE MOREIRA DE FARIAS",
@@ -3889,7 +4274,8 @@
         "funcao": "PORTARIA",
         "remuneracao": "825,00",
         "data_inicio": "10.08.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ANA CLAUDIA DE SIQUEIRA SILVA - PITU",
@@ -3898,7 +4284,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "10.09.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   },
@@ -3912,7 +4299,8 @@
         "funcao": "PINTURA",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "ADILSON ALVES FEITOSA",
@@ -3921,7 +4309,8 @@
         "funcao": "PINTURA",
         "remuneracao": "825,00",
         "data_inicio": "10.01.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "AILSON ALVES FEITOSA",
@@ -3930,7 +4319,8 @@
         "funcao": "PINTURA",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSÉ ADILSON DA SILVA",
@@ -3939,7 +4329,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "825,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "JOSE CARLOS DA SILVA",
@@ -3948,7 +4339,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.10.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA DAS NEVES PEREIRA CHAVES PEDROZA",
@@ -3957,7 +4349,8 @@
         "funcao": "",
         "remuneracao": "825,00",
         "data_inicio": "10.03.2026",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA APARECIDA DA SILVA",
@@ -3966,7 +4359,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "10.02.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       },
       {
         "nome": "MARIA ENILDA DE SOUSA",
@@ -3975,7 +4369,8 @@
         "funcao": "A.S.G.",
         "remuneracao": "550,00",
         "data_inicio": "10.01.2025",
-        "carga_horaria": ""
+        "carga_horaria": "",
+        "status": ""
       }
     ]
   }
