@@ -1696,12 +1696,12 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
   toast('PDF gerado!');
 };
 </script>
-<div id="pdf-opts-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center;padding:16px">
-  <div style="background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:24px;max-width:460px;width:100%;position:relative">
-    <button onclick="fecharPdfOpts()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer">✕</button>
-    <div style="font-size:16px;font-weight:800;margin-bottom:6px">📄 Opções do PDF</div>
-    <div style="font-size:12px;color:#64748b;margin-bottom:16px">Escolha o que incluir no relatório</div>
-    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+<div id="pdf-opts-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:24px;max-width:460px;width:100%;position:relative;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column">
+    <button onclick="fecharPdfOpts()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;z-index:10">✕</button>
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px;flex-shrink:0">📄 Opções do PDF</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;flex-shrink:0">Escolha o que incluir no relatório</div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px;flex-shrink:0">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🖼️ Imagens</div>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-act-cov" checked style="accent-color:#10b981;width:15px;height:15px"> Imagem representativa da atividade</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-act-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Foto do responsável da atividade</label>
@@ -1709,7 +1709,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-item-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos itens</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-sub-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos subitens</label>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px;flex-shrink:0">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📋 Campos Personalizados</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Marque os campos extras para exibir no PDF.</div>
       <div id="popt-ef-list" style="display:flex;flex-direction:column;gap:6px"></div>
