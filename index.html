@@ -361,8 +361,12 @@ window.openActivity=function(secId){
       ${sec.resp_url?`<img src="${esc(sec.resp_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #818cf8">`:''}
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
+  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+    <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
+  </div>
   ${statsHtml}
   <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
+  window._refreshAtivTable=()=>openActivity(secId);
 };
 
 function _renderSubSubs(parentSubId,item,today){
