@@ -1430,7 +1430,7 @@ window.gerarPdf=async function(secId,opts){
       if(sepSubs.length>0)sepItems.push({item,pr,sepSubs});
     });
     if(sepItems.length>0){
-      y=doc.lastAutoTable.finalY+5;chk(12);
+      y=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+5;chk(12);
       doc.setFillColor(13,64,20);doc.roundedRect(mx,y,cw,9,2,2,'F');
       sf(10,true,[255,255,255]);doc.text(opts.sepField.toUpperCase()+': '+opts.sepVal,mx+5,y+6.5);y+=13;
       let sTblH,sTblB=[],sTblE=[];
