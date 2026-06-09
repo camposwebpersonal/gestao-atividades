@@ -215,12 +215,17 @@ td input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.
 </div>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import{getFirestore,collection,doc,setDoc,getDoc}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
 const fbApp=initializeApp(FB);
+const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);
+let currentUser=null;
 
-function checkPass(){const p=document.getElementById('passInput').value;if(p==='ZXY88'){document.getElementById('loginScreen').style.display='none';document.getElementById('examesScreen').classList.add('active');loadFromFirebase();}else{document.getElementById('passErr').textContent='Senha incorreta';}}
+onAuthStateChanged(auth,u=>{currentUser=u;});
+
+function checkPass(){const p=document.getElementById('passInput').value;if(p==='ZXY88'){if(!currentUser){document.getElementById('passErr').textContent='Faça login no Gestão primeiro';setTimeout(()=>window.location.href='index.html',1500);return;}document.getElementById('loginScreen').style.display='none';document.getElementById('examesScreen').classList.add('active');loadFromFirebase();}else{document.getElementById('passErr').textContent='Senha incorreta';}}
 window.checkPass=checkPass;
 function esc(t){return(t||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
 window.esc=esc;
