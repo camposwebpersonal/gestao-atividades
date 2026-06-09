@@ -1371,6 +1371,52 @@ window.gerarPdf=async function(secId,opts){
     didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}
   });
 
+  // ── Sub-itens separados ──
+  if(opts.sepField&&opts.sepVal){
+    const sepItems=[];
+    items.forEach((item,ii)=>{
+      const pr=itemProgs[ii].prog;
+      if(!pr.hasSubs)return;
+      const sepSubs=pr.subs.filter(s=>{const v=(s.extra_fields||{})[opts.sepField];return v&&String(v).trim()===opts.sepVal;});
+      if(sepSubs.length>0)sepItems.push({item,pr,sepSubs});
+    });
+    if(sepItems.length>0){
+      y=doc.lastAutoTable.finalY+5;chk(12);
+      doc.setFillColor(13,64,20);doc.roundedRect(mx,y,cw,9,2,2,'F');
+      sf(10,true,[255,255,255]);doc.text(opts.sepField.toUpperCase()+': '+opts.sepVal,mx+5,y+6.5);y+=13;
+      let sTblH,sTblB=[],sTblE=[];
+      if(useTable){
+        const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];(opts.efFields||[]).forEach(fn=>h.push(fn));if(_cp){h.push('Subs');h.push('Prog.');h.push('Status');h.push('Prazo');}sTblH=[h];const totalCols=h.length;
+        sepItems.forEach(({item,pr,sepSubs},sii)=>{
+          const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
+          let itemContent=item.description||'';if(item.responsaveis)itemContent+='\nResp: '+item.responsaveis;if(item.observacao)itemContent+='\nObs: '+item.observacao;
+          if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+ef[fn];});}
+          if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';itemContent+='\nSubs: '+subCnt+'  |  Prog: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
+          sTblB.push([{content:String(sii+1),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},{content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}]);sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const sr=['',String(si+1)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push('',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}sTblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
+          sTblB.push([{content:'',styles:{fontSize:7.5}},{content:'\u2211 Subtotal: '+sepSubs.length+' sub-item(ns)',colSpan:totalCols-1,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}}]);sTblE.push({cu:null,ru:null});
+        });
+        sTblB.push([{content:'',styles:{}},{content:'\u03a3 Total: '+sepItems.length+' item(ns)',colSpan:totalCols-1,styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8}}]);sTblE.push({cu:null,ru:null});
+      }else{
+        sTblH=_cp?[['#','Item / Sub-item / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Sub-item / Respons\u00e1veis']];
+        sepItems.forEach(({item,pr,sepSubs},sii)=>{
+          const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
+          let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;if(item.observacao)cell1+='\nObs: '+item.observacao;
+          if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
+          const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
+          if(_cp){sTblB.push([String(sii+1),cell1,subCnt,pct+'%',st,item.deadline_date?fmtD(item.deadline_date):'\u2014']);}else{sTblB.push([String(sii+1),cell1]);}
+          sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){sTblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
+          if(_cp){sTblB.push(['\u2211','Subtotal: '+sepSubs.length+' sub-item(ns)','','','','']);}else{sTblB.push(['\u2211','Subtotal: '+sepSubs.length+' sub-item(ns)']);}sTblE.push({cu:null,ru:null});
+        });
+        if(_cp){sTblB.push(['\u03a3','Total: '+sepItems.length+' item(ns)','','','','']);}else{sTblB.push(['\u03a3','Total: '+sepItems.length+' item(ns)']);}sTblE.push({cu:null,ru:null});
+      }
+      const sDims=[];
+      for(const e of sTblE){const cd=e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null;const rd=e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null;sDims.push({cd,rd});}
+      doc.autoTable({startY:y,head:sTblH,body:sTblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:colStyles,didParseCell:function(dat){if(dat.section!=='body')return;if(dat.cell.styles&&dat.cell.styles.fillColor)return;const r0=dat.row.raw[0];const c0=typeof r0==='object'?(r0.content||r0):r0;const isSub=String(c0).startsWith('\u2211');const isTot=String(c0).startsWith('\u03a3');if(isSub){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontSize=7;dat.cell.styles.fontStyle='italic';}else if(isTot){dat.cell.styles.fillColor=[13,34,64];dat.cell.styles.textColor=[180,210,255];dat.cell.styles.fontStyle='bold';}else{dat.cell.styles.textColor=[26,32,44];}if(dat.column.index===1){const e=sDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=sDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+    }
+  }
+
   if(_cp){
   // ── Prazos de entrega ──
   const dlE=[];
@@ -1826,6 +1872,16 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-table-mode" style="accent-color:#f59e0b;width:15px;height:15px"> 🗂️ Formato de tabela (colunas)</label>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🔀 Separar no PDF</div>
+      <div style="font-size:12px;color:#64748b;margin-bottom:4px">Separe sub-itens com determinado valor de campo no final do PDF (ex: Status = SAIU).</div>
+      <select id="popt-sep-field" onchange="atualizarSepValues()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
+        <option value="">— Sem separação —</option>
+      </select>
+      <select id="popt-sep-val" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px;margin-top:4px;display:none">
+        <option value="">— Qualquer valor —</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📊 Relatório por Campo</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Gere um relatório agrupado por um campo personalizado existente.</div>
       <select id="popt-field" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
@@ -1856,9 +1912,23 @@ function abrirPdfOpts(secId){
   // Popular campos extras de subitem
   const efList=document.getElementById('popt-ef-list');
   if(efList){efList.innerHTML='';const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');if(subTpls.length){subTpls.forEach((t,i)=>{efList.innerHTML+='<label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-ef-'+i+'" data-ef="'+t.field_name+'" style="accent-color:#8b5cf6;width:15px;height:15px"> '+t.field_name+'</label>';});}else{efList.innerHTML='<span style="font-size:12px;color:#64748b">Nenhum campo personalizado</span>';}}
+  // Popular separação por campo
+  const sepField=document.getElementById('popt-sep-field');
+  if(sepField){const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');let opts='<option value="">— Sem separação —</option>';if(subTpls.length){subTpls.forEach(t=>{opts+='<option value="'+t.field_name+'">'+t.field_name+'</option>';});}sepField.innerHTML=opts;}
+  const sepVal=document.getElementById('popt-sep-val');if(sepVal){sepVal.style.display='none';sepVal.innerHTML='<option value="">— Qualquer valor —</option>';}
   document.getElementById('pdf-opts-overlay').style.display='flex';
 }
 function fecharPdfOpts(){document.getElementById('pdf-opts-overlay').style.display='none';}
+window.atualizarSepValues=function(){
+  const field=document.getElementById('popt-sep-field')?.value||'';
+  const valSel=document.getElementById('popt-sep-val');
+  if(!field||!valSel){valSel&&(valSel.style.display='none');return;}
+  const vals=new Set();
+  S.subitems.forEach(s=>{const v=(s.extra_fields||{})[field];if(v&&String(v).trim())vals.add(String(v).trim());});
+  let opts='<option value="">— Qualquer valor —</option>';
+  [...vals].sort().forEach(v=>{opts+='<option value="'+v+'">'+v+'</option>';});
+  valSel.innerHTML=opts;valSel.style.display='block';
+};
 function confirmarGerarPdf(){
   fecharPdfOpts();
   const efFields=[];
@@ -1870,7 +1940,9 @@ function confirmarGerarPdf(){
     itemResp:document.getElementById('popt-item-resp').checked,
     subResp:document.getElementById('popt-sub-resp').checked,
     efFields:efFields,
-    tableMode:document.getElementById('popt-table-mode').checked
+    tableMode:document.getElementById('popt-table-mode').checked,
+    sepField:document.getElementById('popt-sep-field')?.value||'',
+    sepVal:document.getElementById('popt-sep-val')?.value||''
   };
   window.gerarPdf(_pdfOptsSecId,opts);
 }
