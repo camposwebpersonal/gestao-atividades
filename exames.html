@@ -45,8 +45,11 @@ table{width:100%;border-collapse:collapse;font-size:.85rem}
 th{background:#1e3a5f;color:#fff;padding:12px 10px;text-align:left;font-weight:600;position:sticky;top:0}
 td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
 tr:hover td{background:#0a1222}
-td input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-size:.85rem;background:#0f172a;color:var(--text);outline:none;transition:all .2s}
+td input{width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:4px;font-size:.85rem;background:#0f172a;color:var(--text);outline:none;transition:all .2s;min-width:80px;min-height:34px}
 td input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:8px}
+.table-wrap table{min-width:1100px}
+@media(max-width:768px){.head h1{font-size:13px}.main{padding:10px}.container{padding:12px}.toolbar{gap:6px}.toolbar button,.relatorio-toolbar button{padding:8px 12px;font-size:.8rem}td input{min-height:40px;font-size:16px;padding:8px 10px}th{padding:10px 8px;font-size:.8rem}td{padding:6px 8px}.table-wrap table{min-width:950px}}
 .row-num{width:40px;text-align:center;color:var(--muted);font-weight:600}
 .cpf-col{width:120px;text-align:center}
 .ano-col{width:50px;text-align:center}
@@ -105,6 +108,7 @@ td input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.
 <input type="text" class="search-box" id="searchBox" placeholder="🔍 Buscar por nome, SUS, exame, ano..." onkeyup="filtrar()">
 </div>
 <div id="pdfArea">
+<div class="table-wrap">
 <table id="tabela">
 <thead><tr><th style="width:40px">#</th><th>NOME</th><th style="width:130px">SUS</th><th style="width:130px">CPF</th><th style="width:100px">DATA NASC.</th><th>NOME DA MÃE</th><th style="width:120px">TELEFONE</th><th style="width:100px">DATA SOLIC.</th><th style="width:50px">ANO</th><th>EXAME SOLICITADO</th><th style="width:80px" class="actions"></th></tr></thead>
 <tbody id="tbody"><tr class=""><td class="row-num">1</td><td><input value="WALESK PRICYLLA SOARES DA SILVA" placeholder="Nome"></td><td><input value="704000874642768" placeholder="SUS"></td><td class="cpf-col"><input value="" placeholder="CPF"></td><td><input value="14/11/1991" placeholder="DD/MM/AAAA"></td><td><input value="ANA ROSILDA MARIANO DA SILVA" placeholder="Mãe"></td><td><input value="" placeholder="Telefone"></td><td><input value="05/05/2026" placeholder="DD/MM/AAAA" oninput="updateAno(this)"></td><td class="ano-col"><input value="2026" placeholder="Ano" readonly></td><td><input value="ULTRASSONOGRAFIA OBSTETRICA" placeholder="Exame"></td><td class="actions"><button class="btn-add" onclick="insertRowBefore(this)">+</button><button onclick="removeRow(this)">✕</button></td></tr>
@@ -194,6 +198,7 @@ td input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.
 <tr class=""><td class="row-num">85</td><td><input value="EDNALVA AZEVEDO NASCIMENTO DA SILVA (VERIFICAR)" placeholder="Nome"></td><td><input value="702000312772085" placeholder="SUS"></td><td class="cpf-col"><input value="" placeholder="CPF"></td><td><input value="17/05/1977" placeholder="DD/MM/AAAA"></td><td><input value="CREUSA DE AZEVEDO NASCIMENTO" placeholder="Mãe"></td><td><input value="(87)99243-3897" placeholder="Telefone"></td><td><input value="15/05/2026" placeholder="DD/MM/AAAA" oninput="updateAno(this)"></td><td class="ano-col"><input value="2026" placeholder="Ano" readonly></td><td><input value="ULTRASSONOGRAFIA TRANSVAGINAL" placeholder="Exame"></td><td class="actions"><button class="btn-add" onclick="insertRowBefore(this)">+</button><button onclick="removeRow(this)">✕</button></td></tr>
 </tbody>
 </table>
+</div>
 </div>
 <div class="stats" id="stats"></div>
 </div>
