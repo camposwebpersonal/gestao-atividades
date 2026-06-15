@@ -20,6 +20,7 @@
 
 import os
 import sys
+import argparse
 import ftplib
 import subprocess
 
@@ -176,6 +177,33 @@ def ensure_local_dirs():
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Setup de Recuperação — Restaura tudo após formatação",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Modos:
+  (sem flag)          Pergunta interativamente o que fazer
+  --auto              Baixa se não existir, pula se existir (sem perguntar)
+  --force-download    Baixa TUDO de novo, mesmo se já existir
+  --skip-download     Não baixa nada, só testa conexões
+  --yes / -y          Mesmo que --auto
+
+Exemplos:
+  python setup_recuperacao.py --auto
+  python setup_recuperacao.py --force-download
+  python setup_recuperacao.py --skip-download
+        """
+    )
+    parser.add_argument("--auto", action="store_true", help="Modo automatico: baixa se nao existir, pula se existir")
+    parser.add_argument("--force-download", action="store_true", help="Forca download de TUDO")
+    parser.add_argument("--skip-download", action="store_true", help="Pula download, so testa conexoes")
+    parser.add_argument("--yes", "-y", action="store_true", help="Mesmo que --auto")
+    args = parser.parse_args()
+
+    auto = args.auto or args.yes
+    force = args.force_download
+    skip = args.skip_download
+
     print()
     print("╔════════════════════════════════════════════════════════════════════╗")
     print("║     SETUP DE RECUPERAÇÃO — RESTAURA TUDO APÓS FORMATAÇÃO          ║")
@@ -195,29 +223,41 @@ def main():
     # 3. Verifica/cria pastas locais
     ensure_local_dirs()
 
-    # 4. Pergunta se quer baixar do FTP
-    _banner("3. Download dos sites FTP")
-    for key, cfg in SITES_FTP.items():
-        local = os.path.join(ROOT, key)
-        if os.path.isdir(local) and any(os.scandir(local)):
-            _log(f"{cfg['nome']}: pasta ja existe com arquivos. Pular download?")
-            resp = input("    (s = sim, n = nao, q = sair) [s]: ").strip().lower()
-            if resp == "q":
-                print("\n  Cancelado.")
-                return
-            if resp == "n":
-                _log(f"  Baixando {cfg['nome']}...")
-                download_all_from_ftp(key, cfg)
-            else:
-                _log(f"  Pulando {cfg['nome']}")
-        else:
-            _log(f"{cfg['nome']}: pasta vazia/inexistente. Baixando...")
+    # 4. Download dos sites FTP
+    if skip:
+        _banner("3. Download dos sites FTP")
+        _log("⏭️  Pulando download (--skip-download)")
+    else:
+        _banner("3. Download dos sites FTP")
+        for key, cfg in SITES_FTP.items():
+            local = os.path.join(ROOT, key)
+            has_files = os.path.isdir(local) and any(os.scandir(local))
+
+            if has_files and not force:
+                if auto:
+                    _log(f"{cfg['nome']}: pasta ja existe. Pulando (--auto)")
+                else:
+                    _log(f"{cfg['nome']}: pasta ja existe com arquivos. Pular download?")
+                    resp = input("    (s = sim, n = nao, q = sair) [s]: ").strip().lower()
+                    if resp == "q":
+                        print("\n  Cancelado.")
+                        return
+                    if resp == "n":
+                        _log(f"  Baixando {cfg['nome']}...")
+                        download_all_from_ftp(key, cfg)
+                    else:
+                        _log(f"  Pulando {cfg['nome']}")
+                    print()
+                    continue
+                print()
+                continue
+
+            _log(f"Baixando {cfg['nome']}...")
             download_all_from_ftp(key, cfg)
-        print()
+            print()
 
     # 5. Testa conexões
     _banner("4. Testando conexões em todos os sites")
-    import importlib.util
     deploy_path = os.path.join(ROOT, "deploy.py")
     if os.path.exists(deploy_path):
         _log("✅ deploy.py encontrado")
