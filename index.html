@@ -396,7 +396,7 @@ onAuthStateChanged(auth,async u=>{
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
-async function loadData(){
+window.loadData=async function loadData(){
   const[a,b,c,ft,se,resp,usr,ch,gal,cont]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
