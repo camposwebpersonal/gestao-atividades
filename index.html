@@ -201,6 +201,7 @@ main{flex:1;overflow-y:auto}
     <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
     <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
     <button class="nav-btn" id="nav-cham" onclick="setView('cham')">🎫 Chamados</button>
+    <button class="nav-btn" id="nav-gal" onclick="setView('gal')">🖼️ Galeria</button>
     <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
     <button class="nav-btn" id="nav-imp" style="display:none" onclick="setView('imp')">📥 Importar</button>
   </div>
@@ -237,7 +238,7 @@ const db=getFirestore(fbApp);window.db=db;
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[]};window.S=S;
+let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[]};window.S=S;
 let _importando=false;
 const DASH_VIEW_KEY='gestao_dash_view';
 function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
@@ -267,7 +268,7 @@ window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
 async function loadData(){
-  const[a,b,c,ft,se,resp,usr,ch]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,ch,gal]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
@@ -275,7 +276,8 @@ async function loadData(){
     getDocs(query(collection(db,'secretarias'),orderBy('name','asc'))),
     getDocs(query(collection(db,'responsaveis'),orderBy('name','asc'))),
     getDocs(query(collection(db,'users'),orderBy('displayName','asc'))),
-    getDocs(query(collection(db,'chamados'),orderBy('created_at','desc')))
+    getDocs(query(collection(db,'chamados'),orderBy('created_at','desc'))),
+    getDocs(query(collection(db,'galeria'),orderBy('created_at','desc')))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -285,6 +287,7 @@ async function loadData(){
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
   S.chamados=ch.docs.map(d=>({id:d.id,...d.data()}));
+  S.galeria=gal.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 // ── UTILS ──
@@ -299,13 +302,14 @@ function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].s
 
 // ── NAV ──
 window.setView=function(v){
-  ['ativ','adm','secr','imp','resp','cham'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['ativ','adm','secr','imp','resp','cham','gal'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(v==='ativ')renderDash();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
   else if(v==='imp')renderImportar();
   else if(v==='resp')renderResponsaveis();
   else if(v==='cham')renderChamados();
+  else if(v==='gal')renderGaleria();
 };
 
 // ── SECRETARIAS ──
@@ -417,6 +421,120 @@ window.deleteChamado=async function(id){
   if(!confirm('Excluir este chamado?'))return;
   await deleteDoc(doc(db,'chamados',id));
   await loadData();closeModal();toast('Excluído!');renderChamados();
+};
+
+// ── GALERIA ──
+window.renderGaleria=function(){
+  const _filtroAtiv=document.getElementById('gal-filtro-ativ')?.value||'';
+  let fotos=S.galeria;
+  if(_filtroAtiv){fotos=fotos.filter(g=>g.atividade_id===_filtroAtiv);}
+  const grid=fotos.map(g=>`<div style="background:#0e1729;border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer" onclick="openFotoModal('${g.id}')">
+    <div style="height:160px;background:url('${esc(g.url)}') center/cover no-repeat"></div>
+    <div style="padding:10px"><div style="font-size:12px;font-weight:700;color:#e2e8f0">${esc(g.titulo||'Sem título')}</div><div style="font-size:11px;color:#64748b;margin-top:3px">${esc(g.local||'')} · ${g.data?fmtD(g.data):''}</div></div>
+  </div>`).join('')||'<div style="color:var(--muted);text-align:center;padding:40px">Nenhuma foto na galeria.</div>';
+  const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}" ${_filtroAtiv===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  setC(`<div class="page-title">🖼️ Galeria de Imagens</div><div class="page-sub">Registro fotográfico das atividades</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
+      <button class="btn-action primary" onclick="openFotoUploadModal()">+ Adicionar Foto</button>
+      <button class="btn-action" onclick="gerarPDFGaleria()">📄 PDF Fotográfico</button>
+      <select id="gal-filtro-ativ" onchange="renderGaleria()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text)"><option value="">Todas as atividades</option>${ativOpts}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${grid}</div>`);
+};
+window.openFotoUploadModal=function(){
+  const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
+  openModal('📷 Nova Foto','',
+    `<div class="form-grid"><div class="form-group full"><label>Imagem *</label><input type="file" id="gal-file" accept="image/*" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;width:100%"></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título da foto"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="salvarFoto()">💾 Salvar</button></div>`);
+};
+window.salvarFoto=async function(){
+  const file=document.getElementById('gal-file')?.files[0];
+  if(!file){toast('Selecione uma imagem','error');return;}
+  const titulo=document.getElementById('gal-titulo')?.value.trim()||'';
+  const atividade_id=document.getElementById('gal-atividade')?.value||'';
+  const data=document.getElementById('gal-data')?.value||'';
+  const local=document.getElementById('gal-local')?.value.trim()||'';
+  const notas=document.getElementById('gal-notas')?.value.trim()||'';
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    const url=await uploadImgBB(e.target.result);
+    if(!url){toast('Erro ao fazer upload da imagem','error');return;}
+    await addDoc(collection(db,'galeria'),{url,titulo,atividade_id,data,local,notas,created_at:serverTimestamp()});
+    await loadData();closeModal();toast('Foto adicionada!');renderGaleria();
+  };
+  reader.readAsDataURL(file);
+};
+window.deleteFoto=async function(id){
+  if(!confirm('Excluir esta foto?'))return;
+  await deleteDoc(doc(db,'galeria',id));
+  await loadData();closeModal();toast('Excluída!');renderGaleria();
+};
+window.openFotoModal=function(id){
+  const g=S.galeria.find(x=>x.id===id);if(!g)return;
+  const ativName=S.secs.find(s=>s.id===g.atividade_id)?.name||'—';
+  openModal('📷 '+esc(g.titulo||'Foto'),'',
+    `<div style="text-align:center"><img src="${esc(g.url)}" style="max-width:100%;max-height:400px;border-radius:10px;border:1px solid var(--border)"></div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:#94a3b8">
+      <div><strong style="color:#60a5fa">Atividade:</strong> ${esc(ativName)}</div>
+      <div><strong style="color:#60a5fa">Data:</strong> ${g.data?fmtD(g.data):'—'}</div>
+      <div><strong style="color:#60a5fa">Local:</strong> ${esc(g.local||'—')}</div>
+      <div><strong style="color:#60a5fa">Notas:</strong> ${esc(g.notas||'—')}</div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteFoto('${id}')">🗑️ Excluir</button><button class="btn-cancel" onclick="closeModal()">Fechar</button></div>`);
+};
+window.gerarPDFGaleria=async function(){
+  if(!S.galeria.length){toast('Galeria vazia. Adicione fotos primeiro.','error');return;}
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando PDF fotográfico…','info',8000);
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=14,cw=W-mx*2;
+  const HDR_H=28,FTR_Y=274,FTR_H=14;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const now=new Date().toLocaleDateString('pt-BR');
+  const lObj=await loadB64('img/logo_sertania.png','png',120);
+  const logo=lObj?lObj.d:null;
+  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
+  function cabecalho(){
+    doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');
+    doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');
+    doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');
+    if(logo&&lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}
+    sf(13,true,[20,82,20]);doc.text('RELATORIO FOTOGRAFICO',mx+10,14);
+    sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania — PE  •  '+now,mx+10,23);
+  }
+  function rodape(){
+    doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');
+    doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');
+    if(logo&&lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}
+    sf(7,true,[185,245,185]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA — PE',mx+16,FTR_Y+7);
+    sf(6.5,false,[180,240,180]);doc.text('Sertania — PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});
+  }
+  cabecalho();rodape();
+  let y=HDR_H+8;
+  sf(11,true,[13,34,64]);doc.text('REGISTRO FOTOGRAFICO DAS ATIVIDADES',mx,y);y+=6;
+  sf(8,false,[100,116,139]);doc.text('Total de '+S.galeria.length+' foto(s) registrada(s)',mx,y);y+=8;
+  const _filtroAtiv=document.getElementById('gal-filtro-ativ')?.value||'';
+  const fotos=_filtroAtiv?S.galeria.filter(g=>g.atividade_id===_filtroAtiv):S.galeria;
+  for(const g of fotos){
+    if(y+70>FTR_Y-4){doc.addPage();cabecalho();rodape();y=HDR_H+8;}
+    const imgData=await loadB64(g.url,'jpeg',800);
+    if(imgData){
+      const maxW=cw-10,maxH=65;
+      let iw=maxW,ih=iw*(imgData.h/imgData.w);
+      if(ih>maxH){ih=maxH;iw=maxH*(imgData.w/imgData.h);}
+      doc.addImage(imgData.d,'JPEG',mx+(cw-iw)/2,y,iw,ih);
+      y+=ih+3;
+    }
+    sf(9,true,[20,82,20]);doc.text(esc(g.titulo||'Sem titulo'),mx,y+4);
+    sf(7,false,[100,116,139]);
+    const meta=(g.local?g.local+' · ':'')+(g.data?fmtD(g.data):'')+(g.notas?' · '+g.notas:'');
+    const metaLines=doc.splitTextToSize(esc(meta||''),cw-10);
+    doc.text(metaLines,mx,y+9);
+    y+=9+(metaLines.length*3.5)+6;
+  }
+  doc.save('relatorio-fotografico-'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF gerado!','success');
 };
 
 // ── DASHBOARD ──
