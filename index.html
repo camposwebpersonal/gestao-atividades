@@ -286,6 +286,10 @@ main{flex:1;overflow-y:auto}
 .system-ano-header{background:#0a1222;font-weight:700;color:#60a5fa;font-size:1.05rem}
 .system-ano-header td{padding:12px 10px;border-bottom:2px solid #1e3a5f}
 .system-warning{background:#fff8e1;border-left:4px solid #ffa000;padding:12px 16px;margin-bottom:20px;border-radius:0 8px 8px 0;font-size:.9rem;color:#665c00}
+.resp-checks{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#0f172a;border:1px solid var(--border);border-radius:8px;max-height:140px;overflow-y:auto}
+.resp-checks label{display:flex;align-items:center;gap:5px;font-size:12px;background:#0a1222;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;cursor:pointer;white-space:nowrap}
+.resp-checks label input{width:13px;height:13px;accent-color:#3b82f6;cursor:pointer}
+.resp-checks label.checked{background:rgba(59,130,246,.15);border-color:#3b82f6}
 </style>
 </head>
 <body>
@@ -1107,6 +1111,23 @@ window.openModal=function(title,sub,html){
 }
 window.closeModal=function(){document.getElementById('modal-ov').style.display='none';_pRT={};};
 
+// ── RESPONSÁVEIS HELPERS ──
+function _respCheckboxesHtml(currentStr,containerId){
+  const currentSet=new Set((currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim().toUpperCase()).filter(Boolean));
+  const opts=S.responsaveis.map(r=>{
+    const checked=currentSet.has(r.name.trim().toUpperCase())?'checked':'';
+    return`<label class="${checked?'checked':''}"><input type="checkbox" value="${esc(r.name)}" data-resp-name="${esc(r.name)}" ${checked} onchange="this.parentElement.classList.toggle('checked',this.checked)"> ${esc(r.name)}</label>`;
+  }).join('')||'<span style="font-size:12px;color:var(--muted);padding:4px">Nenhum responsável cadastrado. Vá em Responsáveis para adicionar.</span>';
+  return`<div id="${containerId}" class="resp-checks">${opts}</div>`;
+}
+function _getRespFromChecks(containerId){
+  const checks=document.querySelectorAll('#'+containerId+' input[type="checkbox"]:checked');
+  return Array.from(checks).map(c=>c.value.trim()).filter(Boolean).join(' / ');
+}
+function _usedRespIds(){
+  return new Set(S.users.map(u=>u.responsavel_id).filter(Boolean));
+}
+
 // ── SEC MODAL ──
 window.openSecModal=function(id){
   const s=id?S.secs.find(x=>x.id===id):null;
@@ -1115,7 +1136,7 @@ window.openSecModal=function(id){
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="s-name" value="${esc(s?.name||'')}"></div>
     <div class="form-group full"><label>Observações</label><textarea id="s-obs">${esc(s?.observacoes||'')}</textarea></div>
-    <div class="form-group full"><label>Responsáveis</label><input id="s-resp" value="${esc(s?.responsaveis||'')}" placeholder="Ex: João, Maria…"></div>
+    <div class="form-group full"><label>Responsáveis</label>${_respCheckboxesHtml(s?.responsaveis||'','s-resp-wrap')}<input type="hidden" id="s-resp" value="${esc(s?.responsaveis||'')}"></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="s-start" value="${esc(s?.start_date||'')}"></div>
     <div class="form-group"><label>Data Término</label><input type="date" id="s-end" value="${esc(s?.end_date||'')}"></div>
   </div>
@@ -1161,7 +1182,8 @@ window.saveSec=async function(id){
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:g('s-resp')?.value.trim()||'',start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const respStr=_getRespFromChecks('s-resp-wrap');
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
@@ -1180,7 +1202,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="it-name" value="${esc(it?.description||'')}"></div>
     <div class="form-group full"><label>Observação</label><textarea id="it-obs">${esc(it?.observacao||'')}</textarea></div>
-    <div class="form-group full"><label>Responsáveis</label><input id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
+    <div class="form-group full"><label>Responsáveis</label>${_respCheckboxesHtml(it?.responsaveis||'','it-resp-wrap')}<input type="hidden" id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
     <div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${it?.secretaria_id===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
@@ -1252,7 +1274,8 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const name=document.getElementById('it-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
-  const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:document.getElementById('it-resp')?.value.trim()||'',secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
+  const respStr=_getRespFromChecks('it-resp-wrap');
+  const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
@@ -1400,12 +1423,13 @@ function renderAdmin(){
   const rows=S.users.map(u=>{
     const roleLbl={admin:'👑 Admin',gestor:'📋 Gestor',usuario:'👤 Usuário'}[u.role]||u.role;
     const setorName=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'—';
-    return`<tr><td>${esc(u.displayName||u.name||u.email||'')}</td><td>${esc(u.email||'')}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
-  }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
+    const respName=S.responsaveis.find(r=>r.id===u.responsavel_id)?.name||'—';
+    return`<tr><td>${esc(u.displayName||u.name||u.email||'')}</td><td>${esc(u.email||'')}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
+  }).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
   setC(`<div class="page-title">⚙️ Administração</div>
     <div class="page-sub">Gerencie usuários e níveis de acesso</div>
     <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Setor</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Setor</th><th>Responsável</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="margin-top:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;font-size:13px;color:#93c5fd;line-height:1.6">
       <strong>Níveis de acesso:</strong><br>
       👑 <strong>Admin</strong> — acesso total<br>
@@ -1416,8 +1440,15 @@ function renderAdmin(){
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
   const secOpts=S.secretarias.map(s=>`<option value="${esc(s.id)}" ${u?.setor_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  const usedIds=_usedRespIds();
+  const respOpts=S.responsaveis.map(r=>{
+    const isUsed=usedIds.has(r.id);
+    const isCurrent=u?.responsavel_id===r.id;
+    if(isUsed&&!isCurrent)return '';
+    return`<option value="${esc(r.id)}" ${isCurrent?'selected':''}>${esc(r.name)}</option>`;
+  }).join('');
   openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
-    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email *</label><input id="usr-email" type="email" value="${esc(u?.email||'')}" ${id?'disabled style="background:#0a1222;color:#64748b"':''}></div><div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email *</label><input id="usr-email" type="email" value="${esc(u?.email||'')}" ${id?'disabled style="background:#0a1222;color:#64748b"':''}></div><div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div></div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveUser=async function(id){
@@ -1425,11 +1456,12 @@ window.saveUser=async function(id){
   const email=document.getElementById('usr-email')?.value.trim().toLowerCase();
   const role=document.getElementById('usr-role')?.value||'usuario';
   const setor_id=document.getElementById('usr-setor')?.value||'';
+  const responsavel_id=document.getElementById('usr-resp')?.value||'';
   if(!name||!email){toast('Nome e email são obrigatórios','error');return;}
   if(id){
-    await updateDoc(doc(db,'users',id),{displayName:name,email,role,setor_id,updated_at:serverTimestamp()});
+    await updateDoc(doc(db,'users',id),{displayName:name,email,role,setor_id,responsavel_id,updated_at:serverTimestamp()});
   }else{
-    await setDoc(doc(db,'users',email.replace(/[^a-z0-9]/g,'_')),{displayName:name,email,role,setor_id,created_at:serverTimestamp()});
+    await setDoc(doc(db,'users',email.replace(/[^a-z0-9]/g,'_')),{displayName:name,email,role,setor_id,responsavel_id,created_at:serverTimestamp()});
   }
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderAdmin();
 };
@@ -2983,6 +3015,28 @@ window.openInstalarModal=function(){
     </div>`;
   }
   openModal('📱 Instalar no Celular','',html+`<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Fechar</button></div>`);
+};
+
+// ── IMPORTAR RESPONSÁVEIS EXPOCOSE 52 ──
+window.importarResponsaveisExpocose52=async function(){
+  const lista=[
+    {name:'Adagro'},{name:'Adalto Junior'},{name:'Adauto Jr'},
+    {name:'Anderson Cordeiro'},{name:'Andre Gigio'},{name:'Antonio Almeida'},
+    {name:'Antonio Mendes'},{name:'Babal'},{name:'Celino / Dual'},
+    {name:'Cristiano'},{name:'Diogo E Jonathan'},{name:'Diogo Freire'},
+    {name:'Eduardo'},{name:'Erasmo'},{name:'Fabio Santos'},
+    {name:'Jonathan Silva'},{name:'João De Adauto'},{name:'Livio Chaves'},
+    {name:'Lucas'},{name:'Lucas De Cassimiro'},{name:'Marcio'},
+    {name:'Rosa Abreu'}
+  ];
+  let criados=0;
+  for(const r of lista){
+    const jaExiste=S.responsaveis.some(x=>x.name.trim().toUpperCase()===r.name.trim().toUpperCase());
+    if(!jaExiste){await addDoc(collection(db,'responsaveis'),{...r,cargo:'',setor:'',contato:'',created_at:serverTimestamp()});criados++;}
+  }
+  await loadData();
+  toast(`Importados ${criados} responsáveis da EXPOCOSE 52!`,'success');
+  return criados;
 };
 </script>
 </body>
