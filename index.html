@@ -167,10 +167,11 @@ main{flex:1;overflow-y:auto}
   .modal-head{padding:14px 16px}
   .modal-body{padding:14px 16px}
   .modal-title{font-size:15px}
-  .item-header{padding:10px 12px;gap:8px}
-  .item-name{font-size:13px}
+  .item-header{padding:10px 12px;gap:8px;flex-wrap:wrap}
+  .item-name{font-size:13px;word-break:break-word;overflow-wrap:anywhere;min-width:0}
+  .item-info{min-width:0;flex:1}
   .item-meta{font-size:10px}
-  .sub-row{padding:6px 8px;gap:6px}
+  .sub-row{padding:6px 8px;gap:6px;flex-wrap:wrap}
   .sub-name{font-size:12px}
   .resp-section{padding:10px}
   .img-section{padding:10px}
@@ -200,9 +201,17 @@ main{flex:1;overflow-y:auto}
   .card-foot{flex-wrap:wrap;gap:6px}
   .card-btns{margin-left:auto}
   .activity-card{padding:12px}
-  .item-header{flex-wrap:wrap;gap:6px}
-  .item-info{min-width:100%}
-  .item-name{font-size:12px}
+  .item-header{flex-wrap:wrap;gap:5px;padding:8px 10px}
+  .item-info{min-width:0;flex:1;width:100%}
+  .item-name{font-size:12px;word-break:break-word;overflow-wrap:anywhere;min-width:0}
+  .sub-row{flex-wrap:wrap;gap:5px;padding:5px 7px}
+  .sub-row>div{min-width:0}
+  .card-btns{margin-left:0;width:100%;justify-content:flex-end}
+  .cards-grid{grid-template-columns:1fr!important}
+  .activity-card{overflow:hidden}
+  .gal-grid{grid-template-columns:repeat(2,1fr)!important}
+  .gal-grid>div{height:auto!important}
+  .gal-grid>div>div:first-child{height:100px!important}
   .pring svg{width:28px;height:28px}
   .pring-txt{font-size:8px}
   .page-title{font-size:16px}
@@ -627,7 +636,7 @@ window.renderGaleria=function(){
       <button class="btn-action" onclick="gerarPDFGaleria()">📄 PDF Fotográfico</button>
       <select id="gal-filtro-ativ" onchange="renderGaleria()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text)"><option value="">Todas as atividades</option>${ativOpts}</select>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${grid}</div>`);
+    <div class="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${grid}</div>`);
 };
 window.openFotoUploadModal=function(){
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
@@ -858,16 +867,16 @@ window.openActivity=function(secId){
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
     </div>`;
   })():'';
-  setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+  setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="setView('ativ')">← Voltar</button>
-    <div style="flex:1"></div>
+    <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${S.isAdmin&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Selecionados</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
     ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
