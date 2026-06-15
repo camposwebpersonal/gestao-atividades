@@ -2,7 +2,7 @@
   "name": "Gestão PMS",
   "short_name": "GestãoPMS",
   "description": "Sistema de Gestão de Atividades da Prefeitura de Sertânia",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#080f1e",
   "theme_color": "#3b82f6",
@@ -57,7 +57,7 @@
       "purpose": "any maskable"
     }
   ],
-  "scope": "/",
+  "scope": "./",
   "lang": "pt-BR",
   "categories": ["productivity", "government"]
 }

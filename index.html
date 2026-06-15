@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#3b82f6">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão PMS">
@@ -256,7 +257,8 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js').then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js';
+  navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
 
@@ -1003,7 +1005,7 @@ window.excluirSelecionados=async function(secId){
 };
 
 // ── MODAL ──
-function openModal(title,sub,html){
+window.openModal=function(title,sub,html){
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-body').innerHTML=html;
