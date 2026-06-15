@@ -16,6 +16,18 @@
 ║    python deploy.py --status      # Status geral                           ║
 ║    python deploy.py --deploy-all  # Deploy em todos                        ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
+
+INSTRUCAO PARA O CASCADE / DEVIN / COPILOT:
+    Se o usuario disser algo como "Leia o deploy.py no meu GitHub" ou
+    "Leia o deploy.py no meu GitHub e voce sabera o que fazer" ou
+    "Deixe tudo pronto para eu pedir ajustes nos sites", FACA:
+
+    1. Clone o repo camposwebpersonal/gestao-atividades se nao estiver clonado
+    2. Rode: python setup_recuperacao.py --auto
+       (baixa todos os sites FTP de volta para as pastas locais)
+    3. Rode: python deploy.py --check-all
+       (testa conexao em TODOS os sites)
+    4. Diga: "Tudo pronto! Pode pedir os ajustes nos sites."
 """
 
 import os

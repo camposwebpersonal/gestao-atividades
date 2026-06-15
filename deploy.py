@@ -28,6 +28,21 @@ REGRA ABSOLUTA — INFINITYFREE:
     5. Lazy load SEMPRE: so carregar dados extras quando o usuario pedir
     6. Maximo aceitavel: 2 chamadas simultaneas
     7. Qualquer feature nova com multiplos registros: SEMPRE sequencial
+
+INSTRUCAO PARA O CASCADE / DEVIN / COPILOT:
+    Se o usuario disser algo como "Leia o deploy.py no meu GitHub" ou
+    "Leia o deploy.py no meu GitHub e voce sabera o que fazer" ou
+    "Deixe tudo pronto para eu pedir ajustes nos sites", FACA:
+
+    1. Clone o repo camposwebpersonal/gestao-atividades se nao estiver clonado
+    2. Rode: python setup_recuperacao.py --auto
+       (baixa todos os sites FTP de volta para as pastas locais)
+    3. Rode: python deploy.py --check-all
+       (testa conexao em TODOS os sites)
+    4. Diga: "Tudo pronto! Pode pedir os ajustes nos sites."
+
+    NUNCA faca deploy ou git push sem permissao explicita do usuario.
+    SEMPRE confirme qual site o usuario quer ajustar antes de editar.
 """
 
 import os
