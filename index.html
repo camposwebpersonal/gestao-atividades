@@ -379,6 +379,19 @@ onAuthStateChanged(auth,async u=>{
   setView('ativ');
   const _sp=new URLSearchParams(location.search).get('setup');
   if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
+  const _imp=new URLSearchParams(location.search).get('importar');
+  if(_imp==='expocose52'&&S.isAdmin){
+    setTimeout(async()=>{
+      toast('Iniciando importação EXPOCOSE 52…','info',3000);
+      try{
+        const r1=await window.importarResponsaveisExpocose52();
+        const r2=await window.importarContatosExpocose52();
+        toast(`Importação concluída! ${r1} responsáveis e ${r2} contatos.`,'success',5000);
+        history.replaceState(null,'',location.pathname);
+        setView('cont');
+      }catch(e){console.error(e);toast('Erro na importação: '+e.message,'error');}
+    },800);
+  }
 });
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
