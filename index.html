@@ -202,6 +202,7 @@ main{flex:1;overflow-y:auto}
     <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
     <button class="nav-btn" id="nav-cham" onclick="setView('cham')">🎫 Chamados</button>
     <button class="nav-btn" id="nav-gal" onclick="setView('gal')">🖼️ Galeria</button>
+    <button class="nav-btn" id="nav-cont" onclick="setView('cont')">📇 Contatos</button>
     <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
     <button class="nav-btn" id="nav-imp" style="display:none" onclick="setView('imp')">📥 Importar</button>
   </div>
@@ -238,7 +239,7 @@ const db=getFirestore(fbApp);window.db=db;
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[]};window.S=S;
+let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[]};window.S=S;
 let _importando=false;
 const DASH_VIEW_KEY='gestao_dash_view';
 function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
@@ -268,7 +269,7 @@ window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
 async function loadData(){
-  const[a,b,c,ft,se,resp,usr,ch,gal]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,ch,gal,cont]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
@@ -277,7 +278,8 @@ async function loadData(){
     getDocs(query(collection(db,'responsaveis'),orderBy('name','asc'))),
     getDocs(query(collection(db,'users'),orderBy('displayName','asc'))),
     getDocs(query(collection(db,'chamados'),orderBy('created_at','desc'))),
-    getDocs(query(collection(db,'galeria'),orderBy('created_at','desc')))
+    getDocs(query(collection(db,'galeria'),orderBy('created_at','desc'))),
+    getDocs(query(collection(db,'contatos'),orderBy('nome','asc')))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -288,6 +290,7 @@ async function loadData(){
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
   S.chamados=ch.docs.map(d=>({id:d.id,...d.data()}));
   S.galeria=gal.docs.map(d=>({id:d.id,...d.data()}));
+  S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 // ── UTILS ──
@@ -302,7 +305,7 @@ function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].s
 
 // ── NAV ──
 window.setView=function(v){
-  ['ativ','adm','secr','imp','resp','cham','gal'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['ativ','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(v==='ativ')renderDash();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
@@ -310,6 +313,7 @@ window.setView=function(v){
   else if(v==='resp')renderResponsaveis();
   else if(v==='cham')renderChamados();
   else if(v==='gal')renderGaleria();
+  else if(v==='cont')renderContatos();
 };
 
 // ── SECRETARIAS ──
@@ -421,6 +425,90 @@ window.deleteChamado=async function(id){
   if(!confirm('Excluir este chamado?'))return;
   await deleteDoc(doc(db,'chamados',id));
   await loadData();closeModal();toast('Excluído!');renderChamados();
+};
+
+// ── CONTATOS ──
+window.renderContatos=function(){
+  const _filtro=document.getElementById('cont-filtro')?.value||'';
+  let contatos=S.contatos;
+  if(_filtro){contatos=contatos.filter(c=>String(c.nome).toLowerCase().includes(_filtro.toLowerCase())||String(c.cargo).toLowerCase().includes(_filtro.toLowerCase())||String(c.setor).toLowerCase().includes(_filtro.toLowerCase()));}
+  const rows=contatos.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.cargo||'')}</td><td>${esc(c.setor||'')}</td><td>${esc(c.telefone||'')}</td><td>${esc(c.email||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteContato('${c.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum contato cadastrado.</td></tr>';
+  setC(`<div class="page-title">📇 Cartilha de Contatos</div><div class="page-sub">Agenda de contatos municipais</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
+      ${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">+ Novo Contato</button>`:''}
+      <button class="btn-action" onclick="gerarPDFContatos()">📄 PDF A4</button>
+      <input id="cont-filtro" placeholder="🔍 Buscar contato..." oninput="renderContatos()" value="${_filtro}" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);min-width:200px">
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>Email</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+};
+window.openContatoModal=function(id){
+  const c=id?S.contatos.find(x=>x.id===id):null;
+  openModal(id?'✏️ Editar Contato':'➕ Novo Contato','',
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="cont-nome" value="${esc(c?.nome||'')}"></div><div class="form-group"><label>Cargo</label><input id="cont-cargo" value="${esc(c?.cargo||'')}"></div><div class="form-group"><label>Setor</label><input id="cont-setor" value="${esc(c?.setor||'')}"></div><div class="form-group"><label>Telefone</label><input id="cont-tel" value="${esc(c?.telefone||'')}" placeholder="(87) 99999-9999"></div><div class="form-group full"><label>Email</label><input id="cont-email" type="email" value="${esc(c?.email||'')}"></div><div class="form-group full"><label>Endereço</label><input id="cont-endereco" value="${esc(c?.endereco||'')}"></div></div>
+    <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteContato('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveContato('${id||''}')">💾 Salvar</button></div>`);
+};
+window.saveContato=async function(id){
+  const nome=document.getElementById('cont-nome')?.value.trim();
+  if(!nome){toast('Nome é obrigatório','error');return;}
+  const cargo=document.getElementById('cont-cargo')?.value.trim()||'';
+  const setor=document.getElementById('cont-setor')?.value.trim()||'';
+  const telefone=document.getElementById('cont-tel')?.value.trim()||'';
+  const email=document.getElementById('cont-email')?.value.trim()||'';
+  const endereco=document.getElementById('cont-endereco')?.value.trim()||'';
+  if(id){await updateDoc(doc(db,'contatos',id),{nome,cargo,setor,telefone,email,endereco,updated_at:serverTimestamp()});}
+  else{await addDoc(collection(db,'contatos'),{nome,cargo,setor,telefone,email,endereco,created_at:serverTimestamp()});}
+  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderContatos();
+};
+window.deleteContato=async function(id){
+  if(!confirm('Excluir este contato?'))return;
+  await deleteDoc(doc(db,'contatos',id));
+  await loadData();closeModal();toast('Excluído!');renderContatos();
+};
+window.gerarPDFContatos=async function(){
+  if(!S.contatos.length){toast('Nenhum contato para gerar PDF.','error');return;}
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando PDF da cartilha…','info',8000);
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=14,cw=W-mx*2;
+  const HDR_H=30,FTR_Y=280,FTR_H=12;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const now=new Date().toLocaleDateString('pt-BR');
+  const lObj=await loadB64('img/logo_sertania.png','png',120);
+  const logo=lObj?lObj.d:null;
+  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
+  function cabecalho(){
+    doc.setFillColor(13,34,64);doc.rect(0,0,W,HDR_H,'F');
+    doc.setFillColor(59,130,246);doc.rect(0,HDR_H-2,W,2,'F');
+    if(logo&&lObj){const ls=lSize(lObj,20,22);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,4+(22-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}
+    sf(14,true,[255,255,255]);doc.text('CARTILHA DE CONTATOS',mx+8,14);
+    sf(8,false,[180,210,255]);doc.text('Prefeitura de Sertania — PE  •  '+now,mx+8,22);
+  }
+  function rodape(){
+    doc.setFillColor(13,34,64);doc.rect(0,FTR_Y,W,FTR_H,'F');
+    sf(7,true,[180,210,255]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA — PE  |  (87) 3841-1156',W/2,FTR_Y+8,{align:'center'});
+  }
+  cabecalho();rodape();
+  let y=HDR_H+10;
+  sf(10,true,[13,34,64]);doc.text('CONTATOS MUNICIPAIS',mx,y);y+=6;
+  sf(7,false,[100,116,139]);doc.text('Total de '+S.contatos.length+' contato(s) cadastrado(s)',mx,y);y+=8;
+  const cols=['Nome','Cargo / Setor','Telefone','Email'];
+  const cw4=cw/4;
+  doc.setFillColor(13,34,64);doc.rect(mx,y-4,cw,7,'F');
+  sf(8,true,[255,255,255]);
+  cols.forEach((h,i)=>doc.text(h,mx+i*cw4+2,y));
+  y+=4;
+  S.contatos.forEach((c,idx)=>{
+    if(y+12>FTR_Y-6){doc.addPage();cabecalho();rodape();y=HDR_H+10;}
+    if(idx%2===0){doc.setFillColor(248,250,252);doc.rect(mx,y-2,cw,10,'F');}
+    sf(8,false,[26,32,44]);doc.text(esc(c.nome).substring(0,28),mx+2,y+4);
+    sf(7,false,[100,116,139]);doc.text(esc((c.cargo||'')+' / '+(c.setor||'')).substring(0,30),mx+cw4+2,y+4);
+    sf(7,false,[26,32,44]);doc.text(esc(c.telefone||'—').substring(0,20),mx+2*cw4+2,y+4);
+    sf(7,false,[59,130,246]);doc.text(esc(c.email||'—').substring(0,30),mx+3*cw4+2,y+4);
+    y+=10;
+  });
+  doc.save('cartilha-contatos-'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF gerado!','success');
 };
 
 // ── GALERIA ──
