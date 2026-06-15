@@ -57,3 +57,23 @@ python deploy.py               # menu interativo
 - O `deploy.py` tem **todas as credenciais embutidas** — não precisa de arquivos externos.
 - Se a senha do **Pra Cima Sertânia** mudar, atualize no `deploy.py` e no `setup_recuperacao.py`.
 - O `gestaoatividades/` já vem do GitHub. Os outros 3 sites vêm do FTP.
+
+## Como pedir no Devin (Cascade) após formatar
+
+Depois que o VS Code abrir e o Devin estiver ativo, cole isso no prompt:
+
+```
+Leia o deploy.py no meu GitHub (repo camposwebpersonal/gestao-atividades) e conecte em todos os meus sites. Rode o setup_recuperacao.py --auto para baixar tudo e depois teste as conexoes com deploy.py --check-all.
+```
+
+Ou de forma ainda mais simples:
+
+```
+Leia o deploy.py no meu GitHub e siga as instrucoes de recuperacao. Deixe tudo pronto para eu pedir ajustes nos sites.
+```
+
+Ele vai:
+1. Clonar o repo (se necessario)
+2. Rodar `setup_recuperacao.py --auto`
+3. Testar todas as conexoes
+4. Dizer que esta pronto para os ajustes
