@@ -3,8 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gestão PMS">
+<link rel="manifest" href="manifest.json">
 <title>Gestão de Atividades — PMS</title>
 <link rel="icon" href="img/logo_sertania.png">
+<link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
@@ -245,6 +251,13 @@ const DASH_VIEW_KEY='gestao_dash_view';
 function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
 function setDashView(v){localStorage.setItem(DASH_VIEW_KEY,v);}
 let curSecId=null,_pRT={};
+
+// ── PWA SERVICE WORKER ──
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
+  });
+}
 
 // ── AUTH ──
 onAuthStateChanged(auth,async u=>{
