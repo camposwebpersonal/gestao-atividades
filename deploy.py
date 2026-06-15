@@ -30,9 +30,12 @@ REGRA ABSOLUTA — INFINITYFREE:
     7. Qualquer feature nova com multiplos registros: SEMPRE sequencial
 
 INSTRUCAO PARA O CASCADE / DEVIN / COPILOT:
-    Se o usuario disser algo como "Leia o deploy.py no meu GitHub" ou
-    "Leia o deploy.py no meu GitHub e voce sabera o que fazer" ou
-    "Deixe tudo pronto para eu pedir ajustes nos sites", FACA:
+    SE O USUARIO PEDIR QUALQUER COISA RELACIONADA A:
+      - "ler", "consultar", "ver" o deploy.py
+      - "conectar", "preparar", "deixar pronto" os sites
+      - "recuperar", "restaurar", "formatar"
+    ...OU SEJA, SE O USUARIO MENCIONAR O DEPLOY.PY OU OS SITES DE QUALQUER FORMA,
+    FACA IMEDIATAMENTE (SEM PERGUNTAR):
 
     1. Clone o repo camposwebpersonal/gestao-atividades se nao estiver clonado
     2. Rode: python setup_recuperacao.py --auto

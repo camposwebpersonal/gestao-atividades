@@ -1,10 +1,10 @@
 # Instrucoes para o Cascade / Devin / Copilot
 
-## Se o usuario disser algo como:
-- "Leia o deploy.py no meu GitHub"
-- "Leia o deploy.py no meu GitHub e voce sabera o que fazer"
-- "Conecte em todos os meus sites"
-- "Deixe tudo pronto para eu pedir ajustes"
+## SE O USUARIO PEDIR QUALQUER COISA RELACIONADA A:
+- "ler", "consultar", "ver" o deploy.py
+- "conectar", "preparar", "deixar pronto" os sites
+- "recuperar", "restaurar", "formatar"
+- Ou seja: QUALQUER MENCAO ao deploy.py ou aos sites de qualquer forma
 
 ## FACA Imediatamente (sem perguntar confirmacao):
 

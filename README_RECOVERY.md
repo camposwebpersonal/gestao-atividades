@@ -60,17 +60,29 @@ python deploy.py               # menu interativo
 
 ## Como pedir no Devin (Cascade) após formatar
 
-Depois que o VS Code abrir e o Devin estiver ativo, cole isso no prompt:
+Depois que o VS Code abrir e o Devin estiver ativo, **QUALQUER uma dessas frases funciona**:
 
 ```
-Leia o deploy.py no meu GitHub (repo camposwebpersonal/gestao-atividades) e conecte em todos os meus sites. Rode o setup_recuperacao.py --auto para baixar tudo e depois teste as conexoes com deploy.py --check-all.
+Leia o deploy.py
 ```
 
-Ou de forma ainda mais simples:
+```
+Leia o deploy.py no meu GitHub
+```
 
 ```
-Leia o deploy.py no meu GitHub e siga as instrucoes de recuperacao. Deixe tudo pronto para eu pedir ajustes nos sites.
+Leia o deploy.py no meu GitHub e voce sabera o que fazer
 ```
+
+```
+Conecte em todos os meus sites
+```
+
+```
+Deixe tudo pronto para eu pedir ajustes nos sites
+```
+
+Todas fazem a mesma coisa. O deploy.py contém instruções para o próprio Devin.
 
 Ele vai:
 1. Clonar o repo (se necessario)
