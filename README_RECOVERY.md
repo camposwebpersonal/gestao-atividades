@@ -9,9 +9,18 @@ Depois de formatar o Linux e instalar o VS Code / Devin:
 git clone https://github.com/camposwebpersonal/gestao-atividades.git
 cd gestao-atividades
 
-# Rode o setup — baixa todos os sites FTP de volta
-python setup_recuperacao.py
+# Modo automatico: baixa se nao existir, pula se existir (sem perguntar)
+python setup_recuperacao.py --auto
 ```
+
+## Modos do setup_recuperacao.py
+
+| Flag | O que faz |
+|------|-----------|
+| `--auto` ou `-y` | Baixa se não existir, pula se existir. **Recomendado.** |
+| `--force-download` | Baixa TUDO de novo, mesmo se já existir. |
+| `--skip-download` | Não baixa nada, só testa conexões. |
+| (sem flag) | Pergunta interativamente o que fazer. |
 
 ## O que acontece
 
