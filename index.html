@@ -3038,6 +3038,65 @@ window.importarResponsaveisExpocose52=async function(){
   toast(`Importados ${criados} responsáveis da EXPOCOSE 52!`,'success');
   return criados;
 };
+
+// ── IMPORTAR CARTILHA DE CONTATOS EXPOCOSE 52 ──
+window.importarContatosExpocose52=async function(){
+  const lista=[
+    {nome:'Galba',cargo:'',setor:'Secretaria da Mulher',telefone:'87 9 9173-4038',obs:''},
+    {nome:'Fernando Noremberg',cargo:'',setor:'Tributos',telefone:'87 9 9124-0285',obs:''},
+    {nome:'Rodrigo',cargo:'',setor:'Tributos',telefone:'81 9 8975-1475',obs:''},
+    {nome:'Josimery',cargo:'',setor:'Bombeiros',telefone:'88 9 9234-9665',obs:'Bombeiros (193)'},
+    {nome:'Josimery',cargo:'',setor:'Defesa Civil',telefone:'88 9 9234-9665',obs:'Defesa Civil (199)'},
+    {nome:'Erasmo',cargo:'',setor:'Secretaria de Agricultura',telefone:'87 9 9148-5381',obs:''},
+    {nome:'João Neto Canil',cargo:'',setor:'Adagro',telefone:'87 9 9205-9858',obs:''},
+    {nome:'Danilo',cargo:'',setor:'Estrutura Elétrica',telefone:'87 9 9114-2785',obs:''},
+    {nome:'Jandson',cargo:'',setor:'Limpeza e Coleta em Geral / WC',telefone:'87 9 9142-6778',obs:''},
+    {nome:'Adalto Jr',cargo:'',setor:'Limpeza e Coleta em Geral / WC',telefone:'87 9 9121-6680',obs:''},
+    {nome:'Celino / Lucas',cargo:'',setor:'Estruturas',telefone:'',obs:'Verificar número'},
+    {nome:'',cargo:'',setor:'Ponto de Internet',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Ponto de Apoio ao Patrocinador',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Ponto de Apoio ao Expositor (Artesão)',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'Eduardo Aquino',cargo:'',setor:'Achados e Perdidos',telefone:'81 9 9134-4560',obs:''},
+    {nome:'',cargo:'',setor:'Credenciamento',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Transmissão ao Vivo',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'TV do Evento',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Publicidade',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Redes Sociais',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Comunicação',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'Jonathan',cargo:'',setor:'Suporte TI',telefone:'87 9 9181-6818',obs:''},
+    {nome:'Fernanda',cargo:'',setor:'SAMU',telefone:'87 9 9632-3446',obs:'SAMU (192)'},
+    {nome:'',cargo:'',setor:'Delegacia e Policiamento',telefone:'',obs:'Policia (190) — Confirmar responsável com Babal'},
+    {nome:'Dual',cargo:'',setor:'Segurança Privada do Evento',telefone:'87 9 9963-7532',obs:''},
+    {nome:'Lívio Chaves',cargo:'Coordenação da Área Animal',setor:'Programação e Evento do Agronegócio',telefone:'87 9 9606-7937',obs:''},
+    {nome:'Erasmo',cargo:'Coordenação da Área Animal',setor:'Programação e Evento do Agronegócio',telefone:'87 9 9148-5381',obs:''},
+    {nome:'',cargo:'',setor:'Estacionamento',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Controle de Acesso',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'',cargo:'',setor:'Trânsito Interno e Externo',telefone:'',obs:'Verificar responsável e número'},
+    {nome:'Babal',cargo:'',setor:'Fiscalização de Equipes e Animais',telefone:'87 9 9933-7799',obs:''},
+    {nome:'Lorena',cargo:'',setor:'Jurídico',telefone:'87 9 9139-5906',obs:''},
+    {nome:'Adalto Jr',cargo:'',setor:'Infraestrutura',telefone:'87 9 9121-6680',obs:''},
+    {nome:'Audo João de Nilo',cargo:'',setor:'Secretaria de Meio Ambiente',telefone:'87 9 9139-0806',obs:''},
+    {nome:'Janaide',cargo:'',setor:'Administração / Gabinete',telefone:'87 9 9123-0035',obs:''},
+    {nome:'Teresa Raquel',cargo:'',setor:'Secretaria de Desenvolvimento Social',telefone:'',obs:'Verificar número e pessoa indicada'},
+    {nome:'Tiago Medeiros',cargo:'',setor:'Conselho Tutelar',telefone:'87 9 9100-8578',obs:''}
+  ];
+  let criados=0;
+  for(const c of lista){
+    if(!c.nome&&!c.telefone)continue;
+    const jaExiste=S.contatos.some(x=>{
+      const sameNome=String(x.nome||'').trim().toUpperCase()===String(c.nome||'').trim().toUpperCase();
+      const sameSetor=String(x.setor||'').trim().toUpperCase()===String(c.setor||'').trim().toUpperCase();
+      return sameNome&&sameSetor;
+    });
+    if(!jaExiste){
+      await addDoc(collection(db,'contatos'),{nome:c.nome||'A definir',cargo:c.cargo||'',setor:c.setor||'',telefone:c.telefone||'',email:'',endereco:c.obs||'',created_at:serverTimestamp()});
+      criados++;
+    }
+  }
+  await loadData();
+  toast(`Importados ${criados} contatos da Cartilha EXPOCOSE 52!`,'success');
+  return criados;
+};
 </script>
 </body>
 </html>
