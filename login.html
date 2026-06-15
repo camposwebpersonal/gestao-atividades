@@ -47,13 +47,14 @@ h2{text-align:center;font-size:21px;font-weight:800;color:#f1f5f9;margin-bottom:
     <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
   </div>
   <button class="btn" id="btn" onclick="doLogin()">Entrar</button>
+  <div style="text-align:center;margin-top:12px"><a href="#" onclick="recuperarSenha();return false;" style="color:#3b82f6;font-size:13px;text-decoration:none">🔑 Esqueci minha senha</a></div>
   <div class="err" id="err"></div>
   <div class="footer">Gestão de Atividades PMS &copy; 2026</div>
 </div>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import{getAuth,signInWithEmailAndPassword,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,sendPasswordResetEmail}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 
 const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
 const auth=getAuth(initializeApp(FB));
@@ -88,6 +89,19 @@ window.doLogin=async function(){
   }
 };
 
+window.recuperarSenha=async function(){
+  const user=document.getElementById('usuario').value.trim();
+  const err=document.getElementById('err');
+  if(!user){showErr('Digite seu usuário para recuperar a senha.');return;}
+  try{
+    await sendPasswordResetEmail(auth,toEmail(user));
+    err.style.color='#34d399';err.style.borderColor='rgba(16,185,129,.3)';err.style.background='rgba(16,185,129,.1)';
+    showErr('✅ E-mail de recuperação enviado! Verifique sua caixa de entrada.');
+  }catch(e){
+    const msgs={'auth/user-not-found':'Usuário não encontrado.','auth/invalid-email':'Usuário inválido.','auth/too-many-requests':'Muitas tentativas. Aguarde.'};
+    showErr(msgs[e.code]||'Erro ao enviar e-mail. ('+e.code+')');
+  }
+};
 function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
 document.getElementById('senha').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 document.getElementById('usuario').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('senha').focus();});

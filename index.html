@@ -236,7 +236,7 @@ const db=getFirestore(fbApp);window.db=db;
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[]};window.S=S;
+let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[]};window.S=S;
 let _importando=false;
 const DASH_VIEW_KEY='gestao_dash_view';
 function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
@@ -253,9 +253,9 @@ onAuthStateChanged(auth,async u=>{
   try{
     const {getDoc}=await import("https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js");
     const ud=await getDoc(doc(db,'users',u.uid));
-    if(ud.exists()){S.isAdmin=ud.data().role==='admin'||ud.data().isAdmin===true;}
-    else{S.isAdmin=true;} // primeiro usuário = admin
-  }catch(e){S.isAdmin=true;}
+    if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
+    else{S.isAdmin=true;S.userRole='admin';S.userSetor=null;} // primeiro usuário = admin
+  }catch(e){S.isAdmin=true;S.userRole='admin';S.userSetor=null;}
   if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-imp').style.display='';}
   await loadData();
   setView('ativ');
@@ -266,13 +266,14 @@ window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
 async function loadData(){
-  const[a,b,c,ft,se,resp]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'fieldTemplates'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'secretarias'),orderBy('name','asc'))),
-    getDocs(query(collection(db,'responsaveis'),orderBy('name','asc')))
+    getDocs(query(collection(db,'responsaveis'),orderBy('name','asc'))),
+    getDocs(query(collection(db,'users'),orderBy('displayName','asc')))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -280,6 +281,7 @@ async function loadData(){
   S.fieldTemplates=ft.docs.map(d=>({id:d.id,...d.data()}));
   S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
+  S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 // ── UTILS ──
@@ -1019,18 +1021,47 @@ async function mkThumb(dataUrl,w,h,q){return new Promise(res=>{const img=new Ima
 // ── ADMIN ──
 function renderAdmin(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
+  const rows=S.users.map(u=>{
+    const roleLbl={admin:'👑 Admin',gestor:'📋 Gestor',usuario:'👤 Usuário'}[u.role]||u.role;
+    const setorName=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'—';
+    return`<tr><td>${esc(u.displayName||u.name||u.email||'')}</td><td>${esc(u.email||'')}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
+  }).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
   setC(`<div class="page-title">⚙️ Administração</div>
-    <div class="page-sub">Gerencie usuários do sistema</div>
-    <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;margin-bottom:20px;font-size:13px;color:#93c5fd;line-height:1.6">
-      <strong>Para criar usuários:</strong><br>
-      1. Acesse <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">Firebase Console</a> → Authentication → Add user<br>
-      2. Adicione o UID na coleção <code>/users</code> com campos: <code>email</code>, <code>displayName</code>, <code>role</code> (admin ou user)
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <a href="https://console.firebase.google.com/project/gestao-atividades-26257/authentication/users" target="_blank" class="btn-action primary">🔗 Abrir Firebase Auth</a>
-      <a href="https://console.firebase.google.com/project/gestao-atividades-26257/firestore" target="_blank" class="btn-action">📦 Abrir Firestore</a>
+    <div class="page-sub">Gerencie usuários e níveis de acesso</div>
+    <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Email</th><th>Nível</th><th>Setor</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="margin-top:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;font-size:13px;color:#93c5fd;line-height:1.6">
+      <strong>Níveis de acesso:</strong><br>
+      👑 <strong>Admin</strong> — acesso total<br>
+      📋 <strong>Gestor</strong> — pode criar/editar itens e gerenciar sua secretaria<br>
+      👤 <strong>Usuário</strong> — apenas visualizar e adicionar chamados
     </div>`);
 }
+window.openUserModal=function(id){
+  const u=id?S.users.find(x=>x.id===id):null;
+  const secOpts=S.secretarias.map(s=>`<option value="${esc(s.id)}" ${u?.setor_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
+  openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email *</label><input id="usr-email" type="email" value="${esc(u?.email||'')}" ${id?'disabled style="background:#0a1222;color:#64748b"':''}></div><div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div></div>
+    <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
+};
+window.saveUser=async function(id){
+  const name=document.getElementById('usr-name')?.value.trim();
+  const email=document.getElementById('usr-email')?.value.trim().toLowerCase();
+  const role=document.getElementById('usr-role')?.value||'usuario';
+  const setor_id=document.getElementById('usr-setor')?.value||'';
+  if(!name||!email){toast('Nome e email são obrigatórios','error');return;}
+  if(id){
+    await updateDoc(doc(db,'users',id),{displayName:name,email,role,setor_id,updated_at:serverTimestamp()});
+  }else{
+    await setDoc(doc(db,'users',email.replace(/[^a-z0-9]/g,'_')),{displayName:name,email,role,setor_id,created_at:serverTimestamp()});
+  }
+  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderAdmin();
+};
+window.deleteUser=async function(id){
+  if(!confirm('Excluir este usuário?'))return;
+  await deleteDoc(doc(db,'users',id));
+  await loadData();closeModal();toast('Excluído!');renderAdmin();
+};
 
 // ── IMPORTAR ──
 function renderImportar(){
