@@ -199,6 +199,7 @@ main{flex:1;overflow-y:auto}
     <div class="brand"><img src="img/logo_sertania.png" alt=""> <span>GESTÃO PMS</span></div>
     <div class="spacer"></div>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
+    <button class="btn-system" style="font-size:12px;padding:6px 12px" onclick="openInstalarModal()">📱 Instalar</button>
     <button class="btn-system" onclick="window.location.href='exames.html'">SYSTEM</button>
     <button class="btn-logout" onclick="doLogout()">Sair</button>
   </nav>
@@ -2847,6 +2848,46 @@ async function gerarPdfBusca(){
   doc.save((sec.name||'atividade').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_'+qClean+'.pdf');
   window.toast('PDF gerado!','success');
 }
+
+// ── INSTALAÇÃO PWA ──
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const btn=document.getElementById('btn-install-pwa');
+  if(btn)btn.style.display='';
+});
+window.openInstalarModal=function(){
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid=/Android/.test(navigator.userAgent);
+  let html='';
+  if(isAndroid){
+    html=`<div style="font-size:14px;color:var(--muted);margin-bottom:12px"><strong style="color:#e2e8f0">Android:</strong></div>
+    <ol style="font-size:13px;color:#94a3b8;margin-left:18px;line-height:1.8">
+      <li>Abra o <strong>Chrome</strong> e acesse o site</li>
+      <li>Toque nos <strong>3 pontinhos</strong> (⋮) no canto superior direito</li>
+      <li>Toque em <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar app"</strong></li>
+      <li>Toque em <strong>"Adicionar"</strong></li>
+    </ol>
+    <div style="margin-top:10px;font-size:12px;color:#64748b">O ícone aparecerá na tela inicial como um app normal.</div>`;
+  }else if(isIOS){
+    html=`<div style="font-size:14px;color:var(--muted);margin-bottom:12px"><strong style="color:#e2e8f0">iPhone / iPad:</strong></div>
+    <ol style="font-size:13px;color:#94a3b8;margin-left:18px;line-height:1.8">
+      <li>Abra o <strong>Safari</strong> e acesse o site</li>
+      <li>Toque no botão <strong>Compartilhar</strong> (📤) na barra inferior</li>
+      <li>Role para baixo e toque em <strong>"Adicionar à Tela de Início"</strong></li>
+      <li>Toque em <strong>"Adicionar"</strong></li>
+    </ol>
+    <div style="margin-top:10px;font-size:12px;color:#64748b">⚠️ Use obrigatoriamente o Safari. O Chrome no iOS não permite instalar PWAs.</div>`;
+  }else{
+    html=`<div style="font-size:13px;color:#94a3b8;line-height:1.7">
+      <p><strong>Android:</strong> Chrome → 3 pontinhos (⋮) → "Adicionar à tela inicial"</p>
+      <p><strong>iPhone/iPad:</strong> Safari → Compartilhar (📤) → "Adicionar à Tela de Início"</p>
+      <p style="margin-top:10px;font-size:12px;color:#64748b">O app funciona offline e se atualiza automaticamente.</p>
+    </div>`;
+  }
+  openModal('📱 Instalar no Celular','',html+`<div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Fechar</button></div>`);
+};
 </script>
 </body>
 </html>
