@@ -97,6 +97,14 @@ main{flex:1;overflow-y:auto}
 .item-meta{font-size:11px;color:var(--muted);margin-top:2px}
 .item-body{padding:0 16px 14px;border-top:1px solid var(--border)}
 .sub-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:#0a1222;margin-bottom:6px}
+.sub-row.lvl-1{border-left:3px solid #3b82f6;background:#0a1222}
+.sub-row.lvl-2{border-left:3px solid #10b981;background:#060e1a}
+.sub-row.lvl-3{border-left:3px solid #f59e0b;background:#0a0f1a}
+.sub-row.lvl-4{border-left:3px solid #a855f7;background:#0a0f1a}
+.sub-row.lvl-5{border-left:3px solid #ec4899;background:#0a0f1a}
+.hier-arrow{color:#64748b;font-size:10px;flex-shrink:0}
+.hier-num{font-size:10px;font-weight:700;flex-shrink:0;min-width:22px;text-align:right;color:#94a3b8}
+.hier-branch{color:#475569;font-size:10px;flex-shrink:0}
 .badge{font-size:11px;border-radius:6px;padding:2px 7px;font-weight:600}
 .badge-green{background:rgba(16,185,129,.12);color:#34d399}
 .badge-blue{background:rgba(59,130,246,.12);color:#60a5fa}
@@ -430,6 +438,27 @@ const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
   return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
 function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:item.concluded==1?100:0,total:0,subs:[]};if(item.concluded==1)return{hasSubs:true,total:subs.length,concluded:subs.length,pct:100,subs};const done=subs.filter(s=>s.concluded==1).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs};}
+
+// ── HIERARQUIA DE SUBITENS ──
+function getSubTree(itemId){
+  const all=[...S.subitems.filter(s=>s.item_id===itemId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const top=all.filter(s=>s.parent_type!=='subitem');
+  const nested=all.filter(s=>s.parent_type==='subitem');
+  function buildChildren(parentId,level){
+    const kids=nested.filter(s=>s.parent_id===parentId).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    return kids.map((k,idx)=>({...k,_level:level,_index:idx,children:buildChildren(k.id,level+1)}));
+  }
+  return top.map((s,idx)=>({...s,_level:0,_index:idx,children:buildChildren(s.id,1)}));
+}
+function flattenSubTree(tree,levelPrefix,out){
+  if(!out)out=[];
+  tree.forEach((node,idx)=>{
+    const num=levelPrefix?levelPrefix+'.'+(idx+1):''+(idx+1);
+    out.push({...node,_hierNum:num});
+    if(node.children&&node.children.length)flattenSubTree(node.children,num,out);
+  });
+  return out;
+}
 
 // ── NAV ──
 window.setView=function(v){
@@ -916,10 +945,15 @@ window.openActivity=function(secId){
   window._refreshAtivTable=()=>openActivity(secId);
 };
 
-function _renderSubSubs(parentSubId,item,today,prefix){
+function _renderSubSubs(parentSubId,item,today,prefix,level){
+  const lvl=(level||0)+1;
   const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!kids.length)return '';
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
+  const lvlClass='lvl-'+Math.min(lvl,5);
+  const indent=Math.min(lvl,5)*18;
+  const branchIcon=lvl===1?'└─▸':lvl===2?'  └─▸':lvl===3?'    └─▸':lvl===4?'      └─▸':'        └─▸';
+  const branchColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
   const _html=kids.map((c,_si)=>{
     const cD=c.concluded==1,cL=!cD&&c.deadline_date&&new Date(c.deadline_date)<today;
     const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
@@ -929,11 +963,11 @@ function _renderSubSubs(parentSubId,item,today,prefix){
     if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
-    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${parentSubId}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:32px;border-left:3px solid #1e3a5f;background:#060c18">
+    return`<div class="sub-row ${lvlClass}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${parentSubId}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
-      <span style="color:#475569;font-size:12px;flex-shrink:0">└</span>
-      <span style="color:#64748b;font-size:10px;font-weight:700;flex-shrink:0;min-width:14px;text-align:right">${num}.</span>
+      <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
+      <span class="hier-num">${num}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}</div>
         ${c.responsaveis||c.observacao||c.secretaria_id?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id?' · ':''}${c.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
@@ -944,9 +978,10 @@ function _renderSubSubs(parentSubId,item,today,prefix){
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
-    </div>${_renderSubSubs(c.id,item,today,num)}`;
+    </div>${_renderSubSubs(c.id,item,today,num,lvl)}`;
   }).join('');
-  return _html+`<div style="padding:2px 16px 2px 32px;font-size:10px;color:#475569;text-align:right;border-left:3px solid #1e3a5f">∑ Subtotal: ${kids.length} sub-item(ns)</div>`;
+  const subTotColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
+  return _html+`<div style="padding:2px 16px 2px ${14+indent}px;font-size:10px;color:${subTotColor};font-weight:600;text-align:right;border-left:3px solid ${subTotColor};opacity:.7">∑ Subtotal nível ${lvl}: ${kids.length} sub-item(ns)</div>`;
 }
 
 function renderItem(item,today,itemNum){
@@ -961,10 +996,11 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="sub-row" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')">
+    return`<div class="sub-row lvl-1" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
-      <span style="color:#64748b;font-size:11px;font-weight:700;flex-shrink:0;min-width:20px;text-align:right">${subNum}.</span>
+      <span class="hier-branch" style="color:#3b82f6">└─▸</span>
+      <span class="hier-num">${subNum}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
         ${(s.responsaveis||s.observacao||s.secretaria_id||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id?' · ':''}${s.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
@@ -1660,6 +1696,47 @@ window.executarImportacaoJSON=async function(){
   }
 };
 
+// ── PDF HELPERS ──
+function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
+  const tree=getSubTree(item.id);
+  const flat=flattenSubTree(tree,String(rowNum));
+  const lvlColors=[[230,240,250],[240,250,240],[250,250,230],[250,240,250],[250,230,240]];
+  const lvlTextColors=[[80,100,140],[60,120,60],[120,100,40],[100,60,140],[140,60,100]];
+  const rows=[];
+  const imgs=[];
+  for(const s of flat){
+    const sD=s.concluded==1;
+    const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<new Date();
+    const lvl=(s._level||0);
+    const indent='  '.repeat(lvl);
+    const branch=lvl===0?'└─▸ ':lvl===1?'  └─▸ ':lvl===2?'    └─▸ ':lvl===3?'      └─▸ ':'        └─▸ ';
+    let sc=indent+branch+s._hierNum+'. '+s.description;
+    if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
+    if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
+    const fill=lvlColors[Math.min(lvl,4)];
+    const txt=lvlTextColors[Math.min(lvl,4)];
+    if(_cp){
+      rows.push([
+        {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
+        {content:sc,styles:{fillColor:fill,textColor:txt,fontSize:7.5}},
+        {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
+        {content:sD?'100%':'0%',styles:{halign:'center',fillColor:fill,textColor:txt,fontSize:7.5}},
+        {content:sD?'✓ Concluído':sL?'⚠ Atrasado':'Pendente',styles:{fillColor:fill,textColor:txt,fontSize:7}},
+        {content:s.deadline_date?fmtD(s.deadline_date):'—',styles:{fillColor:fill,textColor:txt,fontSize:7}}
+      ]);
+    }else{
+      rows.push([
+        {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
+        {content:sc,styles:{fillColor:fill,textColor:txt,fontSize:7.5}}
+      ]);
+    }
+    imgs.push({cu:null,ru:opts.subResp?s.resp_url:null});
+  }
+  const _itemSums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
+  const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
+  return{rows,imgs,subSumTxt:_subSumTxt,count:flat.length};
+}
+
 // ── PDF ──
 window.gerarPdf=async function(secId,opts){
   if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
@@ -1881,8 +1958,8 @@ window.gerarPdf=async function(secId,opts){
         {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-      if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const subNum=rowNum+'.'+_psi;const sr=['',String(subNum)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push('',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}tblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}
-        const subRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}));subRow[0]={content:'\u2211',styles:{fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'center'}};subRow[1]={content:'Subtotal: '+pr.subs.length+' sub-item(ns)',styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}};numFields.forEach(fn=>{const v=pr.subs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);subRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'right'}};}});tblB.push(subRow);tblE.push({cu:null,ru:null});
+      if(pr.hasSubs){const subR=_pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal);subR.rows.forEach(r=>tblB.push(r));subR.imgs.forEach(e=>tblE.push(e));
+        const subRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}));subRow[0]={content:'\u2211',styles:{fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'center'}};subRow[1]={content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}};numFields.forEach(fn=>{const v=flattenSubTree(getSubTree(item.id),String(rowNum)).reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);subRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'right'}};}});tblB.push(subRow);tblE.push({cu:null,ru:null});
         if(ii<items.length-1){tblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);tblE.push({cu:null,ru:null});}
       }else if(ii<items.length-1){tblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);tblE.push({cu:null,ru:null});}
     }
@@ -1915,16 +1992,17 @@ window.gerarPdf=async function(secId,opts){
       ];
       tblB.push(itemRow);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-      if(pr.hasSubs){let _psi=0;for(const s of pr.subs){_psi++;const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const subNum=rowNum+'.'+_psi;let sc='\u203a '+subNum+'. '+s.description;if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){tblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{tblB.push(['',sc]);}tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});}const _itemSums=numFields.map(fn=>pr.subs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const subRow=_cp?[
+      if(pr.hasSubs){const subR=_pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal);subR.rows.forEach(r=>tblB.push(r));subR.imgs.forEach(e=>tblE.push(e));
+        const subRow=_cp?[
           {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
-          {content:'Subtotal: '+pr.subs.length+' sub-item(ns)'+_subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
+          {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}
         ]:[
           {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
-          {content:'Subtotal: '+pr.subs.length+' sub-item(ns)'+_subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}}
+          {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}}
         ];
         tblB.push(subRow);tblE.push({cu:null,ru:null});
         if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
@@ -2844,6 +2922,32 @@ function executarBusca(){
   window._buscaRes={results,query:q,campo,secId,sumData,qtFields,filterField,filterVal};
   document.getElementById('busca-resultados').innerHTML=html;
 }
+function _pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,rowPrefix){
+  const idToSub={};subsToRender.forEach(s=>idToSub[s.id]=s);
+  const getLevel=s=>{if(s.parent_type!=='subitem')return 0;const p=idToSub[s.parent_id];return p?getLevel(p)+1:1;};
+  const lvlColors=[[230,240,250],[240,250,240],[250,250,230],[250,240,250],[250,230,240]];
+  const lvlTextColors=[[80,100,140],[60,120,60],[120,100,40],[100,60,140],[140,60,100]];
+  const rows=[],imgs=[];
+  subsToRender.forEach((s,si)=>{
+    const sD=s.concluded==1;
+    const lvl=getLevel(s);
+    const indent='  '.repeat(lvl);
+    const branch=lvl===0?'└─▸ ':lvl===1?'  └─▸ ':lvl===2?'    └─▸ ':lvl===3?'      └─▸ ':'        └─▸ ';
+    let sc=indent+branch+(rowPrefix?rowPrefix+'.':'')+(si+1)+'. '+s.description;
+    if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
+    if(efFields&&efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
+    const fill=lvlColors[Math.min(lvl,4)];
+    const txt=lvlTextColors[Math.min(lvl,4)];
+    if(_cp){
+      rows.push(['',{content:sc,styles:{fontSize:7.5,textColor:txt,fillColor:fill}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:sD?'✓ Concluído':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
+    }else{
+      rows.push(['',{content:sc,styles:{fontSize:7.5,textColor:txt,fillColor:fill}},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
+    }
+    imgs.push({cu:null,ru:chkImgSubResp?s.resp_url:null});
+  });
+  return{rows,imgs};
+}
+
 async function gerarPdfBusca(){
   if(!window._buscaRes)return;
   const {results,query,campo,secId,sumData,qtFields}=window._buscaRes;
@@ -2932,7 +3036,7 @@ async function gerarPdfBusca(){
         {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
-      subsToRender.forEach((s,si)=>{const sD=s.concluded==1;const sr=['',String(si+1)+'.',s.description||'',s.responsaveis||'',s.observacao||''];efFields.forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push(sD?'100%':'0%');sr.push(sD?'\u2713 Conclu\u00eddo':'Pendente');}tblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));tblE.push({cu:null,ru:chkImgSubResp?s.resp_url:null});});
+      const busR=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR.rows.forEach(r=>tblB.push(r));busR.imgs.forEach(e=>tblE.push(e));
       tblB.push([
         {content:'',styles:{fontSize:7.5}},
         {content:'\u2211 Subtotal: '+subsToRender.length+' sub-item(ns)',colSpan:totalCols-1,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}}
@@ -2961,14 +3065,7 @@ async function gerarPdfBusca(){
         tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:item.observacao||'',styles:{fillColor:[13,64,20],textColor:[215,255,215],fontSize:7.5}}]);
       }
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
-      subsToRender.forEach((s,si)=>{const sD=s.concluded==1;let sc='  '+String(si+1)+'. \u203a '+(s.description||'');if(s.responsaveis)sc+='\n  Resp: '+s.responsaveis;if(efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}
-        if(_cp){
-          tblB.push(['',{content:sc,styles:{fontSize:7.5,textColor:[26,32,44]}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:[60,80,100]}},{content:sD?'\u2713 Conclu\u00eddo':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:[60,80,100]}},{content:s.observacao||'',styles:{fontSize:7,textColor:[60,80,100]}}]);
-        }else{
-          tblB.push(['',{content:sc,styles:{fontSize:7.5,textColor:[26,32,44]}},{content:s.observacao||'',styles:{fontSize:7,textColor:[60,80,100]}}]);
-        }
-        tblE.push({cu:null,ru:chkImgSubResp?s.resp_url:null});
-      });
+      const busR2=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR2.rows.forEach(r=>tblB.push(r));busR2.imgs.forEach(e=>tblE.push(e));
       const subTxt='\u2211 Subtotal: '+subsToRender.length+' sub-item(ns)';
       if(_cp){tblB.push(['',{content:subTxt,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}},'','','']);}else{tblB.push(['',{content:subTxt,styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}},'']);}
       tblE.push({cu:null,ru:null});
