@@ -952,7 +952,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const lvlClass='lvl-'+Math.min(lvl,5);
   const indent=Math.min(lvl,5)*18;
-  const branchIcon=lvl===1?'└─▸':lvl===2?'  └─▸':lvl===3?'    └─▸':lvl===4?'      └─▸':'        └─▸';
+  const branchIcon=lvl===1?'>':lvl===2?'  >':lvl===3?'    >':lvl===4?'      >':'        >';
   const branchColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
   const _html=kids.map((c,_si)=>{
     const cD=c.concluded==1,cL=!cD&&c.deadline_date&&new Date(c.deadline_date)<today;
@@ -999,7 +999,7 @@ function renderItem(item,today,itemNum){
     return`<div class="sub-row lvl-1" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="Arraste para reordenar">⣿</span>
-      <span class="hier-branch" style="color:#3b82f6">└─▸</span>
+      <span class="hier-branch" style="color:#3b82f6">></span>
       <span class="hier-num">${subNum}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
@@ -1709,16 +1709,17 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<new Date();
     const lvl=(s._level||0);
     const indent='  '.repeat(lvl);
-    const branch=lvl===0?'└─▸ ':lvl===1?'  └─▸ ':lvl===2?'    └─▸ ':lvl===3?'      └─▸ ':'        └─▸ ';
+    const branch=lvl===0?'> ':lvl===1?'  > ':lvl===2?'    > ':lvl===3?'      > ':'        > ';
     let sc=indent+branch+s._hierNum+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
     if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
     const fill=lvlColors[Math.min(lvl,4)];
     const txt=lvlTextColors[Math.min(lvl,4)];
+    const txtStyles={fillColor:fill,textColor:txt,fontSize:7.5,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
     if(_cp){
       rows.push([
         {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
-        {content:sc,styles:{fillColor:fill,textColor:txt,fontSize:7.5}},
+        {content:sc,styles:txtStyles},
         {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
         {content:sD?'100%':'0%',styles:{halign:'center',fillColor:fill,textColor:txt,fontSize:7.5}},
         {content:sD?'✓ Concluído':sL?'⚠ Atrasado':'Pendente',styles:{fillColor:fill,textColor:txt,fontSize:7}},
@@ -1727,7 +1728,7 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     }else{
       rows.push([
         {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
-        {content:sc,styles:{fillColor:fill,textColor:txt,fontSize:7.5}}
+        {content:sc,styles:txtStyles}
       ]);
     }
     imgs.push({cu:null,ru:opts.subResp?s.resp_url:null});
@@ -1874,7 +1875,7 @@ window.gerarPdf=async function(secId,opts){
   y+=13;
 
   // ── Ranking ──
-  if(itemProgs.length>0){
+  if(opts.showRanking&&itemProgs.length>0){
     chk(14);
     doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,8,2,2,'F');
     sf(9,true,[255,255,255]);doc.text('RANKING DE PROGRESSO POR ITEM',mx+5,y+5.5);
@@ -2599,6 +2600,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <div id="popt-ef-list" style="display:flex;flex-direction:column;gap:6px"></div>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-table-mode" style="accent-color:#f59e0b;width:15px;height:15px"> 🗂️ Formato de tabela (colunas)</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-cards" checked style="accent-color:#f59e0b;width:15px;height:15px"> 📊 Mostrar cards de somatório</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-ranking" style="accent-color:#f59e0b;width:15px;height:15px"> 📈 Mostrar ranking de progresso por item</label>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🔀 Separar no PDF</div>
@@ -2672,6 +2674,7 @@ function confirmarGerarPdf(){
     efFields:efFields,
     tableMode:document.getElementById('popt-table-mode').checked,
     showCards:document.getElementById('popt-show-cards').checked,
+    showRanking:document.getElementById('popt-show-ranking').checked,
     sepField:document.getElementById('popt-sep-field')?.value||'',
     sepVal:document.getElementById('popt-sep-val')?.value||'',
     onlySep:document.getElementById('popt-only-sep').checked
@@ -2932,16 +2935,17 @@ function _pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,rowPrefix){
     const sD=s.concluded==1;
     const lvl=getLevel(s);
     const indent='  '.repeat(lvl);
-    const branch=lvl===0?'└─▸ ':lvl===1?'  └─▸ ':lvl===2?'    └─▸ ':lvl===3?'      └─▸ ':'        └─▸ ';
+    const branch=lvl===0?'> ':lvl===1?'  > ':lvl===2?'    > ':lvl===3?'      > ':'        > ';
     let sc=indent+branch+(rowPrefix?rowPrefix+'.':'')+(si+1)+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
     if(efFields&&efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
     const fill=lvlColors[Math.min(lvl,4)];
     const txt=lvlTextColors[Math.min(lvl,4)];
+    const txtStyles={fontSize:7.5,textColor:txt,fillColor:fill,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
     if(_cp){
-      rows.push(['',{content:sc,styles:{fontSize:7.5,textColor:txt,fillColor:fill}},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:sD?'✓ Concluído':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
+      rows.push(['',{content:sc,styles:txtStyles},{content:sD?'100%':'0%',styles:{halign:'center',fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:sD?'✓ Concluído':'Pendente',styles:{fontSize:7.5,textColor:sD?[16,185,129]:txt,fillColor:fill}},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
     }else{
-      rows.push(['',{content:sc,styles:{fontSize:7.5,textColor:txt,fillColor:fill}},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
+      rows.push(['',{content:sc,styles:txtStyles},{content:s.observacao||'',styles:{fontSize:7,textColor:txt,fillColor:fill}}]);
     }
     imgs.push({cu:null,ru:chkImgSubResp?s.resp_url:null});
   });
