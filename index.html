@@ -2653,13 +2653,7 @@ window.listaSaveResp=async function(id,isSub,secId,wrapId){
   await loadData();renderCadastros(secId);toast('Responsáveis atualizados!');
 };
 window.listaRespKey=async function(e,id,isSub,secId,wrapId){
-  if(e.key==='Enter'){e.preventDefault();await listaSaveResp(id,isSub,secId,wrapId);}
-  if(e.key==='Escape'){
-    e.preventDefault();
-    // restore original view without saving
-    const prefix=wrapId.replace('-wrap','');
-    listaToggleEdit(prefix);
-  }
+  if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();await listaSaveResp(id,isSub,secId,wrapId);}
 };
 window.listaRespChanged=function(select){
   const wrap=select.closest('.resp-combo-list');if(!wrap)return;
