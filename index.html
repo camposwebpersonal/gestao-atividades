@@ -2561,7 +2561,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none" tabindex="0" onkeydown="listaRespKey(event,${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)})" data-save-args="${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none" data-save-args="${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)}" data-prefix="${respId}">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</span>
@@ -2589,7 +2589,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;font-size:11px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none" tabindex="0" onkeydown="listaRespKey(event,${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)})" data-save-args="${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none" data-save-args="${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</span>
@@ -2629,16 +2629,35 @@ window.renderCadastros=function(secId){
   </table></div>`);
 };
 // ── LISTA HELPERS ──
+window._listaKeyHandler=null;
 window.listaToggleEdit=function(prefix){
   const v=document.getElementById(prefix+'-view');const e=document.getElementById(prefix+'-edit');
   if(!v||!e)return;
   const showing=e.style.display!=='none';
   v.style.display=showing?'inline':'none';e.style.display=showing?'none':'inline';
   if(!showing){
-    setTimeout(()=>e.focus(),0);
+    const cw=e.querySelector('.resp-combo-list');
+    if(cw){
+      if(window._listaKeyHandler)document.removeEventListener('keydown',window._listaKeyHandler);
+      window._listaKeyHandler=async function(ev){
+        if(ev.key!=='Enter'&&ev.key!=='Escape')return;
+        const editWrap=document.getElementById(prefix+'-edit');
+        if(!editWrap||editWrap.style.display==='none'){document.removeEventListener('keydown',window._listaKeyHandler);window._listaKeyHandler=null;return;}
+        const listWrap=editWrap.querySelector('.resp-combo-list');
+        if(!listWrap)return;
+        const args=listWrap.dataset.saveArgs;if(!args)return;
+        ev.preventDefault();
+        if(listWrap._autoSaveTimer){clearTimeout(listWrap._autoSaveTimer);listWrap._autoSaveTimer=null;}
+        if(ev.key==='Enter'){eval('listaSaveResp('+args+')');}
+        else{listaToggleEdit(prefix);}
+        document.removeEventListener('keydown',window._listaKeyHandler);window._listaKeyHandler=null;
+      };
+      document.addEventListener('keydown',window._listaKeyHandler);
+    }
   }else{
     const cw=e.querySelector('.resp-combo-list');
     if(cw&&cw._autoSaveTimer){clearTimeout(cw._autoSaveTimer);cw._autoSaveTimer=null;}
+    if(window._listaKeyHandler){document.removeEventListener('keydown',window._listaKeyHandler);window._listaKeyHandler=null;}
   }
 };
 window.listaSaveStatus=async function(id,isSub,secId,val){
