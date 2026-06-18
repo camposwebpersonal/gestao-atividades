@@ -993,6 +993,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(c.id,item,today,num,lvl)}`;
   }).join('');
@@ -1037,6 +1038,7 @@ function renderItem(item,today,itemNum){
       ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
       ${S.isAdmin&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(s.id,item,today,subNum)}`;
   }).join(''):'';
@@ -1063,6 +1065,7 @@ function renderItem(item,today,itemNum){
       ${S.isAdmin&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
       ${S.isAdmin&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
       ${S.isAdmin?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
+      ${S.isAdmin?`<button class="card-btn" style="background:#1e3a5f;color:#60a5fa" onclick="event.stopPropagation();duplicarItem('${item.id}',false,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
       ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
@@ -1159,6 +1162,47 @@ window.deleteItem=async function(id,isSub){
   if(!isSub){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
   await deleteDoc(doc(db,isSub?'subitems':'items',id));
   await loadData();closeModal();toast('Excluído!');openActivity(curSecId);
+};
+window.duplicarItem=async function(id,isSub,secId){
+  if(!confirm('Duplicar este '+(isSub?'sub-item':'item')+' e todos os seus filhos?'))return;
+  if(!isSub){
+    const orig=S.items.find(i=>i.id===id);if(!orig){toast('Item não encontrado','error');return;}
+    const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const newOrder=(its.length?Math.max(...its.map(x=>x.order_num||0)):-1)+1;
+    const data={...orig,order_num:newOrder,created_at:serverTimestamp()};
+    delete data.id;delete data.created_at;delete data.updated_at;
+    const r=await addDoc(collection(db,'items'),data);
+    const newItemId=r.id;
+    // recursive copy subitems
+    async function copySubs(parentId,newParentId,parentType){
+      const kids=[...S.subitems.filter(s=>s.parent_id===parentId&&s.parent_type===parentType)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+      for(const k of kids){
+        const subData={...k,parent_id:newParentId,item_id:newItemId,parent_type:parentType,created_at:serverTimestamp()};
+        delete subData.id;delete subData.created_at;delete subData.updated_at;
+        const sr=await addDoc(collection(db,'subitems'),subData);
+        await copySubs(k.id,sr.id,'subitem');
+      }
+    }
+    await copySubs(id,newItemId,'item');
+    await loadData();openActivity(secId);toast('Item duplicado!');
+  }else{
+    const orig=S.subitems.find(s=>s.id===id);if(!orig){toast('Sub-item não encontrado','error');return;}
+    const subData={...orig,created_at:serverTimestamp()};
+    delete subData.id;delete subData.created_at;delete subData.updated_at;
+    const r=await addDoc(collection(db,'subitems'),subData);
+    const newSubId=r.id;
+    async function copySubs(parentId,newParentId){
+      const kids=[...S.subitems.filter(s=>s.parent_id===parentId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+      for(const k of kids){
+        const childData={...k,parent_id:newParentId,item_id:orig.item_id,parent_type:'subitem',created_at:serverTimestamp()};
+        delete childData.id;delete childData.created_at;delete childData.updated_at;
+        const sr=await addDoc(collection(db,'subitems'),childData);
+        await copySubs(k.id,sr.id);
+      }
+    }
+    await copySubs(id,newSubId);
+    await loadData();openActivity(secId);toast('Sub-item duplicado!');
+  }
 };
 window.excluirSelecionados=async function(secId){
   const checkboxes=document.querySelectorAll('.mass-sel:checked');
@@ -2972,16 +3016,45 @@ let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
 function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;ev.dataTransfer.effectAllowed='move';}
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
 function onDrItemOver(ev){if(!_dragItemId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
-function onDrSubOver(ev,parentId){if(!_dragSubId||_dragSubParent!==parentId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
+function onDrSubOver(ev,parentId){if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
 function onDrLeave(ev){if(ev.currentTarget.contains(ev.relatedTarget))return;ev.currentTarget.classList.remove('drag-over');}
 function onDrItemDrop(ev,targetId,secId){ev.preventDefault();ev.currentTarget.classList.remove('drag-over');if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;}
 function onDrSubDrop(ev,targetId,parentId,secId){
   ev.currentTarget.classList.remove('drag-over');
-  if(!_dragSubId||_dragSubParent!==parentId){return;}
+  if(!_dragSubId){return;}
   ev.preventDefault();ev.stopPropagation();
   if(_dragSubId===targetId){_dragSubId=null;return;}
-  window.reorderSubitems(_dragSubId,targetId,parentId,secId);_dragSubId=null;
+  // detect if dropped on a different subitem (make it a child)
+  const targetSub=ev.target.closest('.sub-row');
+  const targetItem=ev.target.closest('.item-row');
+  const fromSub=S.subitems.find(s=>s.id===_dragSubId);
+  if(targetSub&&targetSub!==ev.currentTarget){
+    const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
+    if(toSubId&&toSubId!==_dragSubId){window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;}
+  }
+  if(targetItem){
+    const toItemId=targetItem.id.replace('ir-','');
+    if(toItemId&&toItemId!==_dragSubId){window.moverSubParaItem(_dragSubId,toItemId,secId);_dragSubId=null;return;}
+  }
+  // same group reorder
+  if(_dragSubParent===parentId)window.reorderSubitems(_dragSubId,targetId,parentId,secId);
+  _dragSubId=null;
 }
+window.moverSubParaSub=async function(fromId,toSubId,secId){
+  const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
+  const toSub=S.subitems.find(s=>s.id===toSubId);if(!toSub)return;
+  const sib=[...S.subitems.filter(s=>s.parent_id===toSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
+  await updateDoc(doc(db,'subitems',fromId),{parent_id:toSubId,parent_type:'subitem',item_id:toSub.item_id,order_num:newOrder});
+  await loadData();openActivity(secId);toast('Movido para sub-item!');
+};
+window.moverSubParaItem=async function(fromId,toItemId,secId){
+  const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
+  const sib=[...S.subitems.filter(s=>s.item_id===toItemId&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
+  await updateDoc(doc(db,'subitems',fromId),{parent_id:toItemId,parent_type:'item',item_id:toItemId,order_num:newOrder});
+  await loadData();openActivity(secId);toast('Movido para item!');
+};
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
   <div style="max-width:780px;margin:0 auto;background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:20px;position:relative">
