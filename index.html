@@ -2519,12 +2519,12 @@ window.renderCadastros=function(secId){
   function _sitBadge(done,late){
     return done?'<span style="color:#10b981">✅ Concluído</span>':late?'<span style="color:#f87171">⚠ Atrasado</span>':'<span style="color:#64748b">⏳ Pendente</span>';
   }
-  function _respInlineHtml(containerId,currentStr){
+  function _respInlineHtml(containerId,currentStr,saveArgs){
     const names=(currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim()).filter(Boolean);
     const list=names.length?names:[''];
-    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0">`;
-    list.forEach(n=>{h+=`<div class="resp-combo-row"><select class="resp-combo" style="padding:4px 6px;font-size:11px">${_respOptions(n)}</select><button type="button" class="resp-combo-del" style="padding:2px 6px;font-size:12px" onclick="removeRespCombo(this)" title="Remover">×</button></div>`;});
-    h+=`</div><button type="button" class="resp-combo-add" style="padding:3px 8px;font-size:11px;margin-top:4px" onclick="addRespCombo('${containerId}')">+ Resp</button>`;
+    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0" tabindex="0" autofocus onclick="event.stopPropagation()" onkeydown="listaRespKey(event,${esc(saveArgs)})" data-save-args="${esc(saveArgs)}">`;
+    list.forEach(n=>{h+=`<div class="resp-combo-row"><select class="resp-combo" style="padding:4px 6px;font-size:11px" onchange="listaRespChanged(this)">${_respOptions(n)}</select><button type="button" class="resp-combo-del" style="padding:2px 6px;font-size:12px" onclick="listaRemoveRespInline(this)" title="Remover">×</button></div>`;});
+    h+=`</div><button type="button" class="resp-combo-add" style="padding:3px 8px;font-size:11px;margin-top:4px" onclick="event.stopPropagation();listaAddRespInline('${containerId}',this)">+ Resp</button>`;
     return h;
   }
   function _itemActions(it,idx){
@@ -2561,7 +2561,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',it.responsaveis)}<button class="btn-save" style="font-size:10px;padding:3px 10px;margin-top:4px" onclick="listaSaveResp('${it.id}',false,'${secId}','${respId}-wrap')">💾</button></span>
+        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</span>
@@ -2589,7 +2589,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;font-size:11px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',sb.responsaveis)}<button class="btn-save" style="font-size:10px;padding:3px 10px;margin-top:4px" onclick="listaSaveResp('${sb.id}',true,'${secId}','${respId}-wrap')">💾</button></span>
+        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</span>
@@ -2634,6 +2634,10 @@ window.listaToggleEdit=function(prefix){
   if(!v||!e)return;
   const showing=e.style.display!=='none';
   v.style.display=showing?'inline':'none';e.style.display=showing?'none':'inline';
+  if(!showing){
+    const comboWrap=e.querySelector('.resp-combo-list');
+    if(comboWrap){setTimeout(()=>comboWrap.focus(),0);}
+  }
 };
 window.listaSaveStatus=async function(id,isSub,secId,val){
   await updateDoc(doc(db,isSub?'subitems':'items',id),{status:val,updated_at:serverTimestamp()});
@@ -2647,6 +2651,33 @@ window.listaSaveResp=async function(id,isSub,secId,wrapId){
   const respStr=_getRespFromCombos(wrapId);
   await updateDoc(doc(db,isSub?'subitems':'items',id),{responsaveis:respStr,updated_at:serverTimestamp()});
   await loadData();renderCadastros(secId);toast('Responsáveis atualizados!');
+};
+window.listaRespKey=async function(e,id,isSub,secId,wrapId){
+  if(e.key==='Enter'){e.preventDefault();await listaSaveResp(id,isSub,secId,wrapId);}
+  if(e.key==='Escape'){
+    e.preventDefault();
+    // restore original view without saving
+    const prefix=wrapId.replace('-wrap','');
+    listaToggleEdit(prefix);
+  }
+};
+window.listaRespChanged=function(select){
+  const wrap=select.closest('.resp-combo-list');if(!wrap)return;
+  const args=wrap.dataset.saveArgs;if(!args)return;
+  // auto-save after a brief delay so rapid changes don't spam
+  if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
+  wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},400);
+};
+window.listaRemoveRespInline=function(btn){
+  const row=btn.closest('.resp-combo-row');if(row)row.remove();
+  const wrap=btn.closest('.resp-combo-list');if(!wrap)return;
+  const args=wrap.dataset.saveArgs;if(!args)return;
+  if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
+  wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},200);
+};
+window.listaAddRespInline=function(containerId,btn){
+  addRespCombo(containerId);
+  const wrap=document.getElementById(containerId);if(wrap)wrap.focus();
 };
 window.listaOpenEdit=function(id,isSub,parentId,secId){
   window._returnToListAfterSave=()=>renderCadastros(secId);
