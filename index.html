@@ -2522,7 +2522,7 @@ window.renderCadastros=function(secId){
   function _respInlineHtml(containerId,currentStr,saveArgs){
     const names=(currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim()).filter(Boolean);
     const list=names.length?names:[''];
-    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0" tabindex="0" autofocus onclick="event.stopPropagation()" onkeydown="listaRespKey(event,${esc(saveArgs)})" data-save-args="${esc(saveArgs)}">`;
+    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0" onclick="event.stopPropagation()" data-save-args="${esc(saveArgs)}">`;
     list.forEach(n=>{h+=`<div class="resp-combo-row"><select class="resp-combo" style="padding:4px 6px;font-size:11px" onchange="listaRespChanged(this)">${_respOptions(n)}</select><button type="button" class="resp-combo-del" style="padding:2px 6px;font-size:12px" onclick="listaRemoveRespInline(this)" title="Remover">×</button></div>`;});
     h+=`</div><button type="button" class="resp-combo-add" style="padding:3px 8px;font-size:11px;margin-top:4px" onclick="event.stopPropagation();listaAddRespInline('${containerId}',this)">+ Resp</button>`;
     return h;
@@ -2561,7 +2561,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none" tabindex="0" onkeydown="listaRespKey(event,${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)})" data-save-args="${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</span>
@@ -2589,7 +2589,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;font-size:11px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none" tabindex="0" onkeydown="listaRespKey(event,${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)})" data-save-args="${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
       </td>
       <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</span>
@@ -2635,8 +2635,10 @@ window.listaToggleEdit=function(prefix){
   const showing=e.style.display!=='none';
   v.style.display=showing?'inline':'none';e.style.display=showing?'none':'inline';
   if(!showing){
-    const comboWrap=e.querySelector('.resp-combo-list');
-    if(comboWrap){setTimeout(()=>comboWrap.focus(),0);}
+    setTimeout(()=>e.focus(),0);
+  }else{
+    const cw=e.querySelector('.resp-combo-list');
+    if(cw&&cw._autoSaveTimer){clearTimeout(cw._autoSaveTimer);cw._autoSaveTimer=null;}
   }
 };
 window.listaSaveStatus=async function(id,isSub,secId,val){
@@ -2675,11 +2677,13 @@ window.listaRemoveRespInline=function(btn){
   const args=wrap.dataset.saveArgs;if(!args)return;
   if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
   wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},200);
-  setTimeout(()=>wrap.focus(),0);
+  const span=wrap.closest('[tabindex]');if(span){setTimeout(()=>span.focus(),0);}
 };
 window.listaAddRespInline=function(containerId,btn){
   addRespCombo(containerId);
-  const wrap=document.getElementById(containerId);if(wrap){setTimeout(()=>wrap.focus(),0);}
+  const wrap=document.getElementById(containerId);if(wrap){
+    const span=wrap.closest('[tabindex]');if(span){setTimeout(()=>span.focus(),0);}
+  }
 };
 window.listaOpenEdit=function(id,isSub,parentId,secId){
   window._returnToListAfterSave=()=>renderCadastros(secId);
