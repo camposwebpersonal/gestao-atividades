@@ -3039,7 +3039,7 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
   const fromSub=S.subitems.find(s=>s.id===_dragSubId);
-  if(targetSub&&targetSub!==ev.currentTarget){
+  if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
     if(toSubId&&toSubId!==_dragSubId){window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;}
   }
