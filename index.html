@@ -2653,6 +2653,8 @@ window.listaSaveResp=async function(id,isSub,secId,wrapId){
   await loadData();renderCadastros(secId);toast('Responsáveis atualizados!');
 };
 window.listaRespKey=async function(e,id,isSub,secId,wrapId){
+  const wrap=document.getElementById(wrapId);
+  if(wrap&&wrap._autoSaveTimer){clearTimeout(wrap._autoSaveTimer);wrap._autoSaveTimer=null;}
   if(e.key==='Enter'){e.preventDefault();await listaSaveResp(id,isSub,secId,wrapId);}
   if(e.key==='Escape'){
     e.preventDefault();
@@ -2673,10 +2675,11 @@ window.listaRemoveRespInline=function(btn){
   const args=wrap.dataset.saveArgs;if(!args)return;
   if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
   wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},200);
+  setTimeout(()=>wrap.focus(),0);
 };
 window.listaAddRespInline=function(containerId,btn){
   addRespCombo(containerId);
-  const wrap=document.getElementById(containerId);if(wrap)wrap.focus();
+  const wrap=document.getElementById(containerId);if(wrap){setTimeout(()=>wrap.focus(),0);}
 };
 window.listaOpenEdit=function(id,isSub,parentId,secId){
   window._returnToListAfterSave=()=>renderCadastros(secId);
