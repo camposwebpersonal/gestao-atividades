@@ -302,10 +302,13 @@ main{flex:1;overflow-y:auto}
 .system-ano-header{background:#0a1222;font-weight:700;color:#60a5fa;font-size:1.05rem}
 .system-ano-header td{padding:12px 10px;border-bottom:2px solid #1e3a5f}
 .system-warning{background:#fff8e1;border-left:4px solid #ffa000;padding:12px 16px;margin-bottom:20px;border-radius:0 8px 8px 0;font-size:.9rem;color:#665c00}
-.resp-checks{display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#0f172a;border:1px solid var(--border);border-radius:8px;max-height:140px;overflow-y:auto}
-.resp-checks label{display:flex;align-items:center;gap:5px;font-size:12px;background:#0a1222;border:1px solid #1e3a5f;border-radius:6px;padding:4px 8px;cursor:pointer;white-space:nowrap}
-.resp-checks label input{width:13px;height:13px;accent-color:#3b82f6;cursor:pointer}
-.resp-checks label.checked{background:rgba(59,130,246,.15);border-color:#3b82f6}
+.resp-combo-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.resp-combo-row{display:flex;align-items:center;gap:6px}
+.resp-combo{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px;cursor:pointer}
+.resp-combo-del{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:4px 10px;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1}
+.resp-combo-del:hover{background:rgba(239,68,68,.25)}
+.resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
 </head>
 <body>
@@ -1170,18 +1173,44 @@ window.openModal=function(title,sub,html){
 window.closeModal=function(){document.getElementById('modal-ov').style.display='none';_pRT={};};
 
 // ── RESPONSÁVEIS HELPERS ──
-function _respCheckboxesHtml(currentStr,containerId){
-  const currentSet=new Set((currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim().toUpperCase()).filter(Boolean));
-  const opts=S.responsaveis.map(r=>{
-    const checked=currentSet.has(r.name.trim().toUpperCase())?'checked':'';
-    return`<label class="${checked?'checked':''}"><input type="checkbox" value="${esc(r.name)}" data-resp-name="${esc(r.name)}" ${checked} onchange="this.parentElement.classList.toggle('checked',this.checked)"> ${esc(r.name)}</label>`;
-  }).join('')||'<span style="font-size:12px;color:var(--muted);padding:4px">Nenhum responsável cadastrado. Vá em Responsáveis para adicionar.</span>';
-  return`<div id="${containerId}" class="resp-checks">${opts}</div>`;
+function _respOptions(selectedName){
+  const sel=(selectedName||'').trim();
+  let html='<option value="">-- Selecionar --</option>';
+  S.responsaveis.forEach(r=>{
+    const s=sel===r.name.trim()?' selected':'';
+    html+=`<option value="${esc(r.name)}"${s}>${esc(r.name)}</option>`;
+  });
+  return html;
 }
-function _getRespFromChecks(containerId){
-  const checks=document.querySelectorAll('#'+containerId+' input[type="checkbox"]:checked');
-  return Array.from(checks).map(c=>c.value.trim()).filter(Boolean).join(' / ');
+function _respComboHtml(currentStr,containerId){
+  const names=(currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim()).filter(Boolean);
+  const list=names.length?names:[''];
+  let html=`<div id="${containerId}" class="resp-combo-list">`;
+  list.forEach((name,idx)=>{
+    html+=`<div class="resp-combo-row">`+
+      `<select class="resp-combo" onchange="this.dataset.val=this.value">${_respOptions(name)}</select>`+
+      `<button type="button" class="resp-combo-del" onclick="removeRespCombo(this)" title="Remover">×</button>`+
+      `</div>`;
+  });
+  html+=`</div>`;
+  html+=`<button type="button" class="resp-combo-add" onclick="addRespCombo('${containerId}')">+ Adicionar responsável</button>`;
+  return html;
 }
+function _getRespFromCombos(containerId){
+  const selects=document.querySelectorAll('#'+containerId+' select.resp-combo');
+  return Array.from(selects).map(s=>s.value.trim()).filter(Boolean).join(' / ');
+}
+window.addRespCombo=function(containerId){
+  const wrap=document.getElementById(containerId);
+  if(!wrap)return;
+  const row=document.createElement('div');row.className='resp-combo-row';
+  row.innerHTML=`<select class="resp-combo">${_respOptions('')}</select>`+
+    `<button type="button" class="resp-combo-del" onclick="removeRespCombo(this)" title="Remover">×</button>`;
+  wrap.appendChild(row);
+};
+window.removeRespCombo=function(btn){
+  const row=btn.closest('.resp-combo-row');if(row)row.remove();
+};
 function _usedRespIds(){
   return new Set(S.users.map(u=>u.responsavel_id).filter(Boolean));
 }
@@ -1194,7 +1223,7 @@ window.openSecModal=function(id){
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="s-name" value="${esc(s?.name||'')}"></div>
     <div class="form-group full"><label>Observações</label><textarea id="s-obs">${esc(s?.observacoes||'')}</textarea></div>
-    <div class="form-group full"><label>Responsáveis</label>${_respCheckboxesHtml(s?.responsaveis||'','s-resp-wrap')}<input type="hidden" id="s-resp" value="${esc(s?.responsaveis||'')}"></div>
+    <div class="form-group full"><label>Responsáveis</label>${_respComboHtml(s?.responsaveis||'','s-resp-wrap')}<input type="hidden" id="s-resp" value="${esc(s?.responsaveis||'')}"></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="s-start" value="${esc(s?.start_date||'')}"></div>
     <div class="form-group"><label>Data Término</label><input type="date" id="s-end" value="${esc(s?.end_date||'')}"></div>
   </div>
@@ -1240,7 +1269,7 @@ window.saveSec=async function(id){
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
-  const respStr=_getRespFromChecks('s-resp-wrap');
+  const respStr=_getRespFromCombos('s-resp-wrap');
   const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
@@ -1260,7 +1289,7 @@ window.openItemModal=function(id,secId,isSub,parentId){
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="it-name" value="${esc(it?.description||'')}"></div>
     <div class="form-group full"><label>Observação</label><textarea id="it-obs">${esc(it?.observacao||'')}</textarea></div>
-    <div class="form-group full"><label>Responsáveis</label>${_respCheckboxesHtml(it?.responsaveis||'','it-resp-wrap')}<input type="hidden" id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
+    <div class="form-group full"><label>Responsáveis</label>${_respComboHtml(it?.responsaveis||'','it-resp-wrap')}<input type="hidden" id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
     <div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${it?.secretaria_id===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
@@ -1332,7 +1361,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const name=document.getElementById('it-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
-  const respStr=_getRespFromChecks('it-resp-wrap');
+  const respStr=_getRespFromCombos('it-resp-wrap');
   const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
