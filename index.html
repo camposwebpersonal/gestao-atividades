@@ -2787,7 +2787,12 @@ window.reorderItems=async function(fromId,toId,secId){
   for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});
 };
 window.reorderSubitems=async function(fromId,toId,parentId,secId){
-  const sbs=[...S.subitems.filter(s=>s.item_id===parentId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const fromSub=S.subitems.find(s=>s.id===fromId);
+  const isNested=fromSub&&fromSub.parent_type==='subitem';
+  const sbs=[...S.subitems.filter(s=>{
+    if(isNested)return s.parent_id===parentId&&s.parent_type==='subitem';
+    return s.item_id===parentId&&s.parent_type!=='subitem';
+  })].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const fi=sbs.findIndex(s=>s.id===fromId),ti=sbs.findIndex(s=>s.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
   const[m]=sbs.splice(fi,1);sbs.splice(ti,0,m);
