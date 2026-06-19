@@ -30,6 +30,10 @@ img,iframe,video{max-width:100%;height:auto}
 .user-chip span{font-size:12px;font-weight:600;color:#94a3b8}
 .btn-logout{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
 .btn-logout:hover{background:rgba(239,68,68,.22)}
+.undo-btn,.redo-btn{background:#0e1729;border:1px solid var(--border);color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
+.undo-btn:hover,.redo-btn:hover{border-color:var(--accent);color:#e2e8f0;background:#1e293b}
+.undo-btn:active,.redo-btn:active{transform:translateY(1px)}
+#undo-redo-bar{display:flex;gap:6px;align-items:center;margin-left:8px}
 #navmenu{background:#060e1c;border-bottom:1px solid var(--border);display:flex;gap:2px;padding:0 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .nav-btn{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
 .nav-btn:hover{color:var(--text)}
@@ -315,6 +319,10 @@ main{flex:1;overflow-y:auto}
 <div id="app">
   <nav id="navbar">
     <div class="brand"><img src="img/logo_sertania.png" alt=""> <span>GESTÃO PMS</span></div>
+    <div id="undo-redo-bar">
+      <button id="undo-btn" class="undo-btn" style="opacity:.3" onclick="undoLast()" title="Desfazer (Ctrl+Z)">↩️ Desfazer</button>
+      <button id="redo-btn" class="redo-btn" style="opacity:.3" onclick="redoLast()" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
+    </div>
     <div class="spacer"></div>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
     <button class="btn-system" style="font-size:12px;padding:6px 12px" onclick="openInstalarModal()">📱 Instalar</button>
@@ -360,6 +368,20 @@ const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;
+
+// ── UNDO / REDO MANAGER ──
+const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
+function pushUndo(name,undoFn,redoFn){_undoStack.push({name,undo:undoFn,redo:redoFn});if(_undoStack.length>MAX_UNDO)_undoStack.shift();_redoStack.length=0;updateUndoUI();}
+async function undoLast(){if(!_undoStack.length){toast('Nada para desfazer','error');return;}const c=_undoStack.pop();try{await c.undo();}catch(e){console.error('Undo failed',e);}_redoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
+async function redoLast(){if(!_redoStack.length){toast('Nada para refazer','error');return;}const c=_redoStack.pop();try{await c.redo();}catch(e){console.error('Redo failed',e);}_undoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
+window.undoLast=undoLast;window.redoLast=redoLast;
+// wrappers para operações comuns
+window.wUpdateDoc=async function(ref,newData,oldData,name='Editar'){await updateDoc(ref,newData);pushUndo(name,async()=>await updateDoc(ref,oldData),async()=>await updateDoc(ref,newData));};
+window.wDeleteDoc=async function(ref,fullData,name='Excluir'){await deleteDoc(ref);pushUndo(name,async()=>await setDoc(ref,fullData),async()=>await deleteDoc(ref));};
+window.wAddDoc=async function(colRef,data,name='Criar'){const newRef=doc(colRef);await setDoc(newRef,data);pushUndo(name,async()=>await deleteDoc(newRef),async()=>await setDoc(newRef,data));return newRef;};
+function updateUndoUI(){const ub=document.getElementById('undo-btn'),rb=document.getElementById('redo-btn');if(ub)ub.style.opacity=_undoStack.length?1:.3;if(rb)rb.style.opacity=_redoStack.length?1:.3;}
+// atalhos de teclado undo/redo
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();undoLast();}if((e.ctrlKey&&(e.key==='y'||e.key==='Y'))||(e.ctrlKey&&e.shiftKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();redoLast();}});
 
 // ── IMGBB KEY (configure após receber) ──
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
@@ -1159,8 +1181,15 @@ window.deleteSec=async function(id){
 };
 window.deleteItem=async function(id,isSub){
   if(!confirm('Excluir este '+(isSub?'sub-item':'item')+(isSub?'':' e todos os seus sub-itens')+'?'))return;
-  if(!isSub){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
-  await deleteDoc(doc(db,isSub?'subitems':'items',id));
+  if(!isSub){
+    const sbs=S.subitems.filter(s=>s.item_id===id);
+    for(const sb of sbs)await wDeleteDoc(doc(db,'subitems',sb.id),{...sb},'Excluir sub-item');
+    const orig=S.items.find(i=>i.id===id);
+    if(orig)await wDeleteDoc(doc(db,'items',id),{...orig},'Excluir item');
+  }else{
+    const orig=S.subitems.find(s=>s.id===id);
+    if(orig)await wDeleteDoc(doc(db,'subitems',id),{...orig},'Excluir sub-item');
+  }
   await loadData();closeModal();toast('Excluído!');openActivity(curSecId);
 };
 window.duplicarItem=async function(id,isSub,secId){
@@ -2825,10 +2854,15 @@ window.reorderItems=async function(fromId,toId,secId){
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const fi=its.findIndex(i=>i.id===fromId),ti=its.findIndex(i=>i.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
+  const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
   const[m]=its.splice(fi,1);its.splice(ti,0,m);
   its.forEach((item,i)=>{const x=S.items.find(x=>x.id===item.id);if(x)x.order_num=i;});
   openActivity(secId);
   for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});
+  pushUndo('Reordenar itens',
+    async()=>{for(const o of oldOrders)await updateDoc(doc(db,'items',o.id),{order_num:o.order_num});},
+    async()=>{for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});}
+  );
 };
 window.reorderSubitems=async function(fromId,toId,parentId,secId){
   const fromSub=S.subitems.find(s=>s.id===fromId);
@@ -2839,10 +2873,15 @@ window.reorderSubitems=async function(fromId,toId,parentId,secId){
   })].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const fi=sbs.findIndex(s=>s.id===fromId),ti=sbs.findIndex(s=>s.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
+  const oldOrders=sbs.map(s=>({id:s.id,order_num:s.order_num||0}));
   const[m]=sbs.splice(fi,1);sbs.splice(ti,0,m);
   sbs.forEach((sb,i)=>{const x=S.subitems.find(x=>x.id===sb.id);if(x)x.order_num=i;});
   openActivity(secId);
   for(let i=0;i<sbs.length;i++)await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});
+  pushUndo('Reordenar sub-itens',
+    async()=>{for(const o of oldOrders)await updateDoc(doc(db,'subitems',o.id),{order_num:o.order_num});},
+    async()=>{for(let i=0;i<sbs.length;i++)await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});}
+  );
 };
 window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){return new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});}
 
@@ -3021,11 +3060,8 @@ function onDrLeave(ev){if(ev.currentTarget.contains(ev.relatedTarget))return;ev.
 function onDrItemDrop(ev,targetId,secId){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
   if(_dragSubId){
-    const fromSub=S.subitems.find(s=>s.id===_dragSubId);
-    if(fromSub&&fromSub.parent_type==='subitem'){
-      window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
-    }
-    _dragSubId=null;return;
+    // dropping a subitem on item-row always promotes it to direct child of the item
+    window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
   window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
@@ -3037,20 +3073,16 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   if(_dragSubId===targetId){_dragSubId=null;return;}
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
+  const isShift=ev.shiftKey;
   if(targetSub){
-    const rect=targetSub.getBoundingClientRect();
-    const yInSub=ev.clientY-rect.top;
-    const isTopHalf=yInSub < rect.height/2;
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
     if(!toSubId||toSubId===_dragSubId){_dragSubId=null;return;}
-    if(isTopHalf){
-      // dropped on top half → reorder with target
-      window.reorderSubitems(_dragSubId,toSubId,targetSub.parentNode===ev.currentTarget.parentNode?parentId:_dragSubParent,secId);
-      _dragSubId=null;return;
-    } else {
-      // dropped on bottom half → nest as child
+    if(isShift){
+      // SHIFT held → nest as child
       window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;
     }
+    // normal drop → reorder with target (same group or move to target's group)
+    window.reorderSubitems(_dragSubId,toSubId,parentId,secId);_dragSubId=null;return;
   }
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
@@ -3065,14 +3097,18 @@ window.moverSubParaSub=async function(fromId,toSubId,secId){
   const toSub=S.subitems.find(s=>s.id===toSubId);if(!toSub)return;
   const sib=[...S.subitems.filter(s=>s.parent_id===toSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
-  await updateDoc(doc(db,'subitems',fromId),{parent_id:toSubId,parent_type:'subitem',item_id:toSub.item_id,order_num:newOrder});
+  const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
+  const newData={parent_id:toSubId,parent_type:'subitem',item_id:toSub.item_id,order_num:newOrder};
+  await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Aninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para sub-item!');
 };
 window.moverSubParaItem=async function(fromId,toItemId,secId){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
   const sib=[...S.subitems.filter(s=>s.item_id===toItemId&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
-  await updateDoc(doc(db,'subitems',fromId),{parent_id:toItemId,parent_type:'item',item_id:toItemId,order_num:newOrder});
+  const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
+  const newData={parent_id:toItemId,parent_type:'item',item_id:toItemId,order_num:newOrder};
+  await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para item!');
 };
 </script>
