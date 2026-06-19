@@ -1131,12 +1131,18 @@ window.recolherTodos=function(){
 
 window.toggleDone=async function(col,id,val){
   if(val===1){openConclusaoModal(col,id);return;}
-  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null,status:'pendente'});
+  const orig=col==='item'?S.items.find(i=>i.id===id):S.subitems.find(s=>s.id===id);
+  if(!orig)return;
+  const oldData={concluded:orig.concluded,conclusion_date:orig.conclusion_date,status:orig.status};
+  await wUpdateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:0,conclusion_date:null,status:'pendente'},oldData,'Desmarcar conclusão');
   if(col==='item'){
     const allConc=S.subitems.filter(s=>s.item_id===id&&s.concluded==1);
     const hasFlag=allConc.some(s=>s.auto_concluded===true);
     const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
-    for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
+    for(const sb of toReset){
+      const sbOld={concluded:sb.concluded,conclusion_date:sb.conclusion_date,status:sb.status,auto_concluded:sb.auto_concluded};
+      await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false},sbOld,'Desmarcar sub-item');
+    }
   }
   await loadData();openActivity(curSecId);
 };
@@ -1160,8 +1166,15 @@ window.openConclusaoModal=function(col,id){
 window.saveConclusao=async function(col,id){
   const _ud=document.getElementById('conc-use-date')?.checked!==false;
   const d=_ud?document.getElementById('conc-date')?.value||null:null;
-  await updateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'});
-  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});}
+  const orig=col==='item'?S.items.find(i=>i.id===id):S.subitems.find(s=>s.id===id);
+  if(orig){
+    const oldData={concluded:orig.concluded,conclusion_date:orig.conclusion_date,status:orig.status};
+    await wUpdateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'},oldData,'Marcar concluído');
+  }
+  if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1){
+    const sbOld={concluded:sb.concluded,conclusion_date:sb.conclusion_date,status:sb.status,auto_concluded:sb.auto_concluded};
+    await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},sbOld,'Concluir sub-item');
+  }}
   await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.confirmarExcluirAtividade=function(id){
@@ -2462,8 +2475,15 @@ window._doMarkItemConcluded=async function(itemId,secId){
   const _ud=document.getElementById('item-use-date')?.checked!==false;
   const d=_ud?document.getElementById('item-conc-date')?.value||null:null;
   const sbs=S.subitems.filter(s=>s.item_id===itemId);
-  for(const sb of sbs)if(sb.concluded!=1)await updateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true});
-  if((S.items.find(x=>x.id===itemId))?.concluded!=1)await updateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d,status:'concluido'});
+  for(const sb of sbs)if(sb.concluded!=1){
+    const sbOld={concluded:sb.concluded,conclusion_date:sb.conclusion_date,status:sb.status,auto_concluded:sb.auto_concluded};
+    await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},sbOld,'Concluir sub-item');
+  }
+  const it=S.items.find(x=>x.id===itemId);
+  if(it&&it.concluded!=1){
+    const oldData={concluded:it.concluded,conclusion_date:it.conclusion_date,status:it.status};
+    await wUpdateDoc(doc(db,'items',itemId),{concluded:1,conclusion_date:d,status:'concluido'},oldData,'Concluir item');
+  }
   await loadData();closeModal();toast('✅ Item concluído!');openActivity(secId);
 };
 // ── ACTIVITY UNMARK + LIMPAR ──
@@ -2734,16 +2754,22 @@ window.listaToggleEdit=function(prefix){
   }
 };
 window.listaSaveStatus=async function(id,isSub,secId,val){
-  await updateDoc(doc(db,isSub?'subitems':'items',id),{status:val,updated_at:serverTimestamp()});
+  const orig=isSub?S.subitems.find(s=>s.id===id):S.items.find(i=>i.id===id);
+  const oldData={status:orig?.status||'pendente',updated_at:orig?.updated_at||null};
+  await wUpdateDoc(doc(db,isSub?'subitems':'items',id),{status:val,updated_at:serverTimestamp()},oldData,'Editar status');
   await loadData();renderCadastros(secId);toast('Status atualizado!');
 };
 window.listaSavePrazo=async function(id,isSub,secId,val){
-  await updateDoc(doc(db,isSub?'subitems':'items',id),{deadline_date:val||null,updated_at:serverTimestamp()});
+  const orig=isSub?S.subitems.find(s=>s.id===id):S.items.find(i=>i.id===id);
+  const oldData={deadline_date:orig?.deadline_date||null,updated_at:orig?.updated_at||null};
+  await wUpdateDoc(doc(db,isSub?'subitems':'items',id),{deadline_date:val||null,updated_at:serverTimestamp()},oldData,'Editar prazo');
   await loadData();renderCadastros(secId);toast('Prazo atualizado!');
 };
 window.listaSaveResp=async function(id,isSub,secId,wrapId){
   const respStr=_getRespFromCombos(wrapId);
-  await updateDoc(doc(db,isSub?'subitems':'items',id),{responsaveis:respStr,updated_at:serverTimestamp()});
+  const orig=isSub?S.subitems.find(s=>s.id===id):S.items.find(i=>i.id===id);
+  const oldData={responsaveis:orig?.responsaveis||'',updated_at:orig?.updated_at||null};
+  await wUpdateDoc(doc(db,isSub?'subitems':'items',id),{responsaveis:respStr,updated_at:serverTimestamp()},oldData,'Editar responsáveis');
   await loadData();renderCadastros(secId);toast('Responsáveis atualizados!');
 };
 window.listaRespKey=async function(e,id,isSub,secId,wrapId){
