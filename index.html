@@ -2875,7 +2875,7 @@ window.listaDrop=async function(e,type,targetId,secId){
       await moverSubParaSubLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
     }
     if(isSubAncestor(toSub.id,fromSub.id)){
-      await moverSubParaItemLista(src.id,toSub.item_id,secId);clearListaNest();_listaDragSrc=null;return;
+      await moverSubAntesDeLista(src.id,toSub.id,secId);clearListaNest();_listaDragSrc=null;return;
     }
     const fromParent=fromSub.parent_type==='subitem'?fromSub.parent_id:fromSub.item_id;
     const toParent=toSub.parent_type==='subitem'?toSub.parent_id:toSub.item_id;
@@ -2953,6 +2953,19 @@ window.moverSubParaMesmoGrupoLista=async function(fromId,toSubId,secId){
   const newData={parent_id:toParent,parent_type:toParentType,item_id:toSub.item_id,order_num:newOrder};
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Mover sub-item de grupo');
   await loadData();renderCadastros(secId);toast('Movido para novo grupo!');
+};
+window.moverSubAntesDeLista=async function(fromId,beforeSubId,secId){
+  const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
+  const beforeSub=S.subitems.find(s=>s.id===beforeSubId);if(!beforeSub)return;
+  const newParentId=beforeSub.parent_type==='subitem'?beforeSub.parent_id:beforeSub.item_id;
+  const newParentType=beforeSub.parent_type==='subitem'?'subitem':'item';
+  const targetOrder=beforeSub.order_num||0;
+  const sib=[...S.subitems.filter(s=>s.item_id===beforeSub.item_id&&s.parent_type===newParentType&&s.parent_id===newParentId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
+  for(const s of sib){if((s.order_num||0)>=targetOrder){await updateDoc(doc(db,'subitems',s.id),{order_num:(s.order_num||0)+1});}}
+  const newData={parent_id:newParentId,parent_type:newParentType,item_id:beforeSub.item_id,order_num:targetOrder};
+  await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
+  await loadData();renderCadastros(secId);toast('Desaninhado antes do alvo!');
 };
 window.reorderItems=async function(fromId,toId,secId){
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -3210,8 +3223,8 @@ function onDrSubDrop(ev,targetId,parentId,secId){
     const toSub=S.subitems.find(s=>s.id===toSubId);
     if(fromSub&&toSub){
       if(isSubAncestor(toSub.id,fromSub.id)){
-        // alvo é ancestral → desaninha para nível do alvo (vira irmão)
-        window.moverSubParaItem(_dragSubId,toSub.item_id,secId);clearDragNest();_dragSubId=null;return;
+        // alvo é ancestral → desaninha para nível do alvo, ficando ANTES do alvo
+        window.moverSubAntesDe(_dragSubId,toSub.id,secId);clearDragNest();_dragSubId=null;return;
       }
       if(fromSub.parent_type===toSub.parent_type&&fromSub.parent_id===toSub.parent_id){
         // mesmo pai → reordenar
@@ -3254,6 +3267,19 @@ window.moverSubParaSub=async function(fromId,toSubId,secId){
   const newData={parent_id:toSubId,parent_type:'subitem',item_id:toSub.item_id,order_num:newOrder};
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Aninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para sub-item!');
+};
+window.moverSubAntesDe=async function(fromId,beforeSubId,secId){
+  const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
+  const beforeSub=S.subitems.find(s=>s.id===beforeSubId);if(!beforeSub)return;
+  const newParentId=beforeSub.parent_type==='subitem'?beforeSub.parent_id:beforeSub.item_id;
+  const newParentType=beforeSub.parent_type==='subitem'?'subitem':'item';
+  const targetOrder=beforeSub.order_num||0;
+  const sib=[...S.subitems.filter(s=>s.item_id===beforeSub.item_id&&s.parent_type===newParentType&&s.parent_id===newParentId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
+  for(const s of sib){if((s.order_num||0)>=targetOrder){await updateDoc(doc(db,'subitems',s.id),{order_num:(s.order_num||0)+1});}}
+  const newData={parent_id:newParentId,parent_type:newParentType,item_id:beforeSub.item_id,order_num:targetOrder};
+  await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
+  await loadData();openActivity(secId);toast('Desaninhado antes do alvo!');
 };
 window.moverSubParaItem=async function(fromId,toItemId,secId){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
