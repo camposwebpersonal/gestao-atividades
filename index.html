@@ -34,6 +34,9 @@ img,iframe,video{max-width:100%;height:auto}
 .undo-btn:hover,.redo-btn:hover{border-color:var(--accent);color:#e2e8f0;background:#1e293b}
 .undo-btn:active,.redo-btn:active{transform:translateY(1px)}
 #undo-redo-bar{display:flex;gap:6px;align-items:center;margin-left:8px}
+.drag-over{border:2px dashed #60a5fa!important;transition:border-color .15s}
+.drag-nest{border:2px solid #10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.3);animation:pulseNest .6s infinite alternate}
+@keyframes pulseNest{from{box-shadow:0 0 0 4px rgba(16,185,129,.3)}to{box-shadow:0 0 0 8px rgba(16,185,129,.6)}}
 #navmenu{background:#060e1c;border-bottom:1px solid var(--border);display:flex;gap:2px;padding:0 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .nav-btn{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
 .nav-btn:hover{color:var(--text)}
@@ -1001,9 +1004,9 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
-    return`<div class="sub-row ${lvlClass}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${parentSubId}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+    return`<div class="sub-row ${lvlClass}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
-      <span class="drag-handle" title="Arraste para reordenar">⣿</span>
+      <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
       <span class="hier-num">${num}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
@@ -1035,9 +1038,9 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="sub-row lvl-1" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+    return`<div class="sub-row lvl-1" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
-      <span class="drag-handle" title="Arraste para reordenar">⣿</span>
+      <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
       <span class="hier-num">${subNum}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
@@ -2835,43 +2838,55 @@ window.listaAddSubSibling=async function(afterSubId,secId){
   await addDoc(collection(db,'subitems'),data);await loadData();renderCadastros(secId);toast('Sub-item adicionado!');
 };
 let _listaDragSrc=null;
+let _listaNestTimer=null,_listaNestTarget=null,_listaNestMode=false;
+function clearListaNest(){if(_listaNestTimer){clearTimeout(_listaNestTimer);_listaNestTimer=null;}_listaNestMode=false;_listaNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
 window.listaDragStart=function(e,type,id){
   _listaDragSrc={type,id};e.dataTransfer.effectAllowed='move';e.target.style.opacity='.4';
 };
 window.listaDragEnd=function(e){
-  e.target.style.opacity='1';
+  e.target.style.opacity='1';clearListaNest();
 };
 window.listaDragOver=function(e,type,id){
-  e.preventDefault();e.dataTransfer.dropEffect='move';const tr=e.target.closest('tr');if(tr)tr.style.background='rgba(59,130,246,.15)';
+  e.preventDefault();e.dataTransfer.dropEffect='move';const tr=e.target.closest('tr');if(tr){tr.style.background='rgba(59,130,246,.15)';tr.classList.add('drag-over');}
+  clearListaNest();_listaNestTarget=id;
+  _listaNestTimer=setTimeout(()=>{const t=document.querySelector(`tr[data-lista-id="${id}"]`);if(t){t.classList.add('drag-nest');}_listaNestMode=true;},800);
 };
 window.listaDragLeave=function(e){
-  const tr=e.target.closest('tr');if(tr)tr.style.background='';
+  const tr=e.target.closest('tr');if(tr){tr.style.background='';tr.classList.remove('drag-over','drag-nest');}
+  clearListaNest();
 };
 window.listaDrop=async function(e,type,targetId,secId){
-  e.preventDefault();const tr=e.target.closest('tr');if(tr)tr.style.background='';
-  if(!_listaDragSrc||_listaDragSrc.id===targetId){_listaDragSrc=null;return;}
+  e.preventDefault();const tr=e.target.closest('tr');if(tr){tr.style.background='';tr.classList.remove('drag-over','drag-nest');}
+  if(!_listaDragSrc||_listaDragSrc.id===targetId){clearListaNest();_listaDragSrc=null;return;}
   const src=_listaDragSrc;
+  const isNest=_listaNestMode&&_listaNestTarget===targetId;
   // ITEM -> ITEM: reordenar
-  if(src.type==='item'&&type==='item'){await reorderItemsLista(src.id,targetId,secId);_listaDragSrc=null;return;}
-  // SUBITEM -> ITEM: tornar filho direto do item (desaninhar / mudar de item)
-  if(src.type==='subitem'&&type==='item'){await moverSubParaItemLista(src.id,targetId,secId);_listaDragSrc=null;return;}
-  // SUBITEM -> SUBITEM: reordenar (mesmo pai), mover grupo (pai diferente, sem SHIFT), ou aninhar (pai diferente, com SHIFT)
+  if(src.type==='item'&&type==='item'){await reorderItemsLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;}
+  // SUBITEM -> ITEM
+  if(src.type==='subitem'&&type==='item'){
+    await moverSubParaItemLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+  }
+  // SUBITEM -> SUBITEM
   if(src.type==='subitem'&&type==='subitem'){
     const fromSub=S.subitems.find(s=>s.id===src.id);
     const toSub=S.subitems.find(s=>s.id===targetId);
-    if(!fromSub||!toSub){_listaDragSrc=null;return;}
+    if(!fromSub||!toSub){clearListaNest();_listaDragSrc=null;return;}
+    if(isNest){
+      await moverSubParaSubLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+    }
+    if(isSubAncestor(toSub.id,fromSub.id)){
+      await moverSubParaItemLista(src.id,toSub.item_id,secId);clearListaNest();_listaDragSrc=null;return;
+    }
     const fromParent=fromSub.parent_type==='subitem'?fromSub.parent_id:fromSub.item_id;
     const toParent=toSub.parent_type==='subitem'?toSub.parent_id:toSub.item_id;
     if(fromParent===toParent){
       await reorderSubitemsLista(src.id,targetId,secId);
-    }else if(e.shiftKey){
-      await moverSubParaSubLista(src.id,targetId,secId);
     }else{
       await moverSubParaMesmoGrupoLista(src.id,targetId,secId);
     }
-    _listaDragSrc=null;return;
+    clearListaNest();_listaDragSrc=null;return;
   }
-  _listaDragSrc=null;
+  clearListaNest();_listaDragSrc=null;
 };
 window.reorderItemsLista=async function(fromId,toId,secId){
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -3141,45 +3156,94 @@ function confirmarGerarRelatorio(){
 }
 // ── DRAG & DROP ──
 let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
+let _dragNestTimer=null,_dragNestTarget=null,_dragNestMode=false;
+function clearDragNest(){if(_dragNestTimer){clearTimeout(_dragNestTimer);_dragNestTimer=null;}_dragNestMode=false;_dragNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
 function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;ev.dataTransfer.effectAllowed='move';}
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
 function onDrItemOver(ev){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
-function onDrSubOver(ev,parentId){if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
-function onDrLeave(ev){if(ev.currentTarget.contains(ev.relatedTarget))return;ev.currentTarget.classList.remove('drag-over');}
+function onDrSubOver(ev,targetId,parentId,secId){
+  if(!_dragSubId)return;
+  ev.preventDefault();ev.stopPropagation();
+  ev.currentTarget.classList.add('drag-over');
+  clearDragNest();
+  _dragNestTarget=targetId;
+  _dragNestTimer=setTimeout(()=>{
+    _dragNestMode=true;
+    if(ev.currentTarget)ev.currentTarget.classList.add('drag-nest');
+  },800);
+}
+function onDrLeave(ev){
+  if(ev.currentTarget.contains(ev.relatedTarget))return;
+  ev.currentTarget.classList.remove('drag-over','drag-nest');
+  clearDragNest();
+}
 function onDrItemDrop(ev,targetId,secId){
-  ev.preventDefault();ev.currentTarget.classList.remove('drag-over');
+  ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
+  clearDragNest();
   if(_dragSubId){
-    // dropping a subitem on item-row always promotes it to direct child of the item
     window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
   window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
 }
 function onDrSubDrop(ev,targetId,parentId,secId){
-  ev.currentTarget.classList.remove('drag-over');
-  if(!_dragSubId){return;}
+  ev.currentTarget.classList.remove('drag-over','drag-nest');
+  if(!_dragSubId){clearDragNest();return;}
   ev.preventDefault();ev.stopPropagation();
-  if(_dragSubId===targetId){_dragSubId=null;return;}
+  if(_dragSubId===targetId){clearDragNest();_dragSubId=null;return;}
+
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
-  const isShift=ev.shiftKey;
+  const isNest=_dragNestMode&&_dragNestTarget===targetId;
+
   if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
-    if(!toSubId||toSubId===_dragSubId){_dragSubId=null;return;}
-    if(isShift){
-      // SHIFT held → nest as child
-      window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;
+    if(!toSubId||toSubId===_dragSubId){clearDragNest();_dragSubId=null;return;}
+
+    if(isNest){
+      // segurou 1s → vira filho do alvo
+      window.moverSubParaSub(_dragSubId,toSubId,secId);clearDragNest();_dragSubId=null;return;
     }
-    // normal drop → reorder with target (same group or move to target's group)
-    window.reorderSubitems(_dragSubId,toSubId,parentId,secId);_dragSubId=null;return;
+
+    const fromSub=S.subitems.find(s=>s.id===_dragSubId);
+    const toSub=S.subitems.find(s=>s.id===toSubId);
+    if(fromSub&&toSub){
+      if(isSubAncestor(toSub.id,fromSub.id)){
+        // alvo é ancestral → desaninha para nível do alvo (vira irmão)
+        window.moverSubParaItem(_dragSubId,toSub.item_id,secId);clearDragNest();_dragSubId=null;return;
+      }
+      if(fromSub.parent_type===toSub.parent_type&&fromSub.parent_id===toSub.parent_id){
+        // mesmo pai → reordenar
+        window.reorderSubitems(_dragSubId,toSubId,parentId,secId);clearDragNest();_dragSubId=null;return;
+      }
+      // pai diferente, não ancestral → vira irmão do alvo (mesmo grupo)
+      if(toSub.parent_type==='item'){
+        window.moverSubParaItem(_dragSubId,toSub.parent_id,secId);
+      }else{
+        window.moverSubParaSub(_dragSubId,toSub.parent_id,secId);
+      }
+      clearDragNest();_dragSubId=null;return;
+    }
   }
+
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
-    if(toItemId&&toItemId!==_dragSubId){window.moverSubParaItem(_dragSubId,toItemId,secId);_dragSubId=null;return;}
+    if(toItemId&&toItemId!==_dragSubId){
+      if(isNest){
+        // segurou 1s em item → vira subitem do item
+        window.moverSubParaItem(_dragSubId,toItemId,secId);
+      }else{
+        // soltou rápido em item → desaninha para item
+        window.moverSubParaItem(_dragSubId,toItemId,secId);
+      }
+      clearDragNest();_dragSubId=null;return;
+    }
   }
-  // same group reorder
+
+  // fallback: reordenar no mesmo grupo
   if(_dragSubParent===parentId)window.reorderSubitems(_dragSubId,targetId,parentId,secId);
-  _dragSubId=null;
+  clearDragNest();_dragSubId=null;
 }
 window.moverSubParaSub=async function(fromId,toSubId,secId){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
