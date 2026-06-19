@@ -2838,20 +2838,20 @@ window.listaAddSubSibling=async function(afterSubId,secId){
   await addDoc(collection(db,'subitems'),data);await loadData();renderCadastros(secId);toast('Sub-item adicionado!');
 };
 let _listaDragSrc=null;
-let _listaNestTimer=null,_listaNestTarget=null,_listaNestMode=false,_listaOverCurrent=null;
-function clearListaNest(){if(_listaNestTimer){clearTimeout(_listaNestTimer);_listaNestTimer=null;}_listaNestMode=false;_listaNestTarget=null;_listaOverCurrent=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+let _listaNestEnterTime=0,_listaNestTarget=null;
+function clearListaNest(){_listaNestEnterTime=0;_listaNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+function isListaNestHold(targetId){return _listaNestTarget===targetId&&(Date.now()-_listaNestEnterTime)>=800;}
 window.listaDragStart=function(e,type,id){
-  _listaDragSrc={type,id};e.dataTransfer.effectAllowed='move';e.target.style.opacity='.4';
+  _listaDragSrc={type,id};e.dataTransfer.effectAllowed='move';e.target.style.opacity='.4';clearListaNest();
 };
 window.listaDragEnd=function(e){
   e.target.style.opacity='1';clearListaNest();
 };
 window.listaDragOver=function(e,type,id){
   e.preventDefault();e.dataTransfer.dropEffect='move';const tr=e.target.closest('tr');if(tr){tr.style.background='rgba(59,130,246,.15)';tr.classList.add('drag-over');}
-  if(_listaOverCurrent===id)return;
-  _listaOverCurrent=id;
-  clearListaNest();_listaNestTarget=id;
-  _listaNestTimer=setTimeout(()=>{const t=document.querySelector(`tr[data-lista-id="${id}"]`);if(t){t.classList.add('drag-nest');}_listaNestMode=true;},800);
+  if(_listaNestTarget===id)return;
+  _listaNestTarget=id;_listaNestEnterTime=Date.now();
+  setTimeout(()=>{const t=document.querySelector(`tr[data-lista-id="${id}"]`);if(t&&_listaNestTarget===id)t.classList.add('drag-nest');},800);
 };
 window.listaDragLeave=function(e){
   const tr=e.target.closest('tr');if(tr){tr.style.background='';tr.classList.remove('drag-over','drag-nest');}
@@ -2861,7 +2861,7 @@ window.listaDrop=async function(e,type,targetId,secId){
   e.preventDefault();const tr=e.target.closest('tr');if(tr){tr.style.background='';tr.classList.remove('drag-over','drag-nest');}
   if(!_listaDragSrc||_listaDragSrc.id===targetId){clearListaNest();_listaDragSrc=null;return;}
   const src=_listaDragSrc;
-  const isNest=_listaNestMode&&_listaNestTarget===targetId;
+  const isNest=isListaNestHold(targetId);
   // ITEM -> ITEM: reordenar (rápido) ou aninhar (segurar 1s)
   if(src.type==='item'&&type==='item'){
     if(isNest){
@@ -3176,24 +3176,17 @@ function confirmarGerarRelatorio(){
 }
 // ── DRAG & DROP ──
 let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
-let _dragNestTimer=null,_dragNestTarget=null,_dragNestMode=false,_dragOverCurrent=null;
-function clearDragNest(){if(_dragNestTimer){clearTimeout(_dragNestTimer);_dragNestTimer=null;}_dragNestMode=false;_dragNestTarget=null;_dragOverCurrent=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+let _dragNestEnterTime=0,_dragNestTarget=null;
+function clearDragNest(){_dragNestEnterTime=0;_dragNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+function isNestHold(targetId){return _dragNestTarget===targetId&&(Date.now()-_dragNestEnterTime)>=800;}
 function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
-function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;ev.dataTransfer.effectAllowed='move';}
-function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragOverCurrent===targetId)return;_dragOverCurrent=targetId;clearDragNest();_dragNestTarget=targetId;_dragNestTimer=setTimeout(()=>{_dragNestMode=true;if(ev.currentTarget)ev.currentTarget.classList.add('drag-nest');},800);}
+function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;clearDragNest();ev.dataTransfer.effectAllowed='move';}
+function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;clearDragNest();ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
+function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();}
 function onDrSubOver(ev,targetId,parentId,secId){
-  if(!_dragSubId)return;
-  ev.preventDefault();ev.stopPropagation();
-  ev.currentTarget.classList.add('drag-over');
-  if(_dragOverCurrent===targetId)return;
-  _dragOverCurrent=targetId;
-  clearDragNest();
-  _dragNestTarget=targetId;
-  _dragNestTimer=setTimeout(()=>{
-    _dragNestMode=true;
-    if(ev.currentTarget)ev.currentTarget.classList.add('drag-nest');
-  },800);
+  if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();
+  // visual feedback timer (only for same element)
+  setTimeout(()=>{if(_dragNestTarget===targetId&&ev.currentTarget)ev.currentTarget.classList.add('drag-nest');},800);
 }
 function onDrLeave(ev){
   if(ev.currentTarget.contains(ev.relatedTarget))return;
@@ -3202,7 +3195,7 @@ function onDrLeave(ev){
 }
 function onDrItemDrop(ev,targetId,secId){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
-  const isNest=_dragNestMode&&_dragNestTarget===targetId;
+  const isNest=isNestHold(targetId);
   clearDragNest();
   if(_dragSubId){
     window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
@@ -3221,14 +3214,13 @@ function onDrSubDrop(ev,targetId,parentId,secId){
 
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
-  const isNest=_dragNestMode&&_dragNestTarget===targetId;
+  const isNest=isNestHold(targetId);
 
   if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
     if(!toSubId||toSubId===_dragSubId){clearDragNest();_dragSubId=null;return;}
 
     if(isNest){
-      // segurou 1s → vira filho do alvo
       window.moverSubParaSub(_dragSubId,toSubId,secId);clearDragNest();_dragSubId=null;return;
     }
 
@@ -3236,14 +3228,11 @@ function onDrSubDrop(ev,targetId,parentId,secId){
     const toSub=S.subitems.find(s=>s.id===toSubId);
     if(fromSub&&toSub){
       if(isSubAncestor(toSub.id,fromSub.id)){
-        // alvo é ancestral → desaninha para nível do alvo, ficando ANTES do alvo
         window.moverSubAntesDe(_dragSubId,toSub.id,secId);clearDragNest();_dragSubId=null;return;
       }
       if(fromSub.parent_type===toSub.parent_type&&fromSub.parent_id===toSub.parent_id){
-        // mesmo pai → reordenar
         window.reorderSubitems(_dragSubId,toSubId,parentId,secId);clearDragNest();_dragSubId=null;return;
       }
-      // pai diferente, não ancestral → vira irmão do alvo (mesmo grupo)
       if(toSub.parent_type==='item'){
         window.moverSubParaItem(_dragSubId,toSub.parent_id,secId);
       }else{
@@ -3256,18 +3245,11 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
     if(toItemId&&toItemId!==_dragSubId){
-      if(isNest){
-        // segurou 1s em item → vira subitem do item
-        window.moverSubParaItem(_dragSubId,toItemId,secId);
-      }else{
-        // soltou rápido em item → desaninha para item
-        window.moverSubParaItem(_dragSubId,toItemId,secId);
-      }
+      window.moverSubParaItem(_dragSubId,toItemId,secId);
       clearDragNest();_dragSubId=null;return;
     }
   }
 
-  // fallback: reordenar no mesmo grupo
   if(_dragSubParent===parentId)window.reorderSubitems(_dragSubId,targetId,parentId,secId);
   clearDragNest();_dragSubId=null;
 }
