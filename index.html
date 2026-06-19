@@ -1068,7 +1068,7 @@ function renderItem(item,today,itemNum){
     </div>${_renderSubSubs(s.id,item,today,subNum)}`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event)" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
@@ -2860,8 +2860,13 @@ window.listaDrop=async function(e,type,targetId,secId){
   if(!_listaDragSrc||_listaDragSrc.id===targetId){clearListaNest();_listaDragSrc=null;return;}
   const src=_listaDragSrc;
   const isNest=_listaNestMode&&_listaNestTarget===targetId;
-  // ITEM -> ITEM: reordenar
-  if(src.type==='item'&&type==='item'){await reorderItemsLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;}
+  // ITEM -> ITEM: reordenar (rápido) ou aninhar (segurar 1s)
+  if(src.type==='item'&&type==='item'){
+    if(isNest){
+      await converterItemEmSubitem(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+    }
+    await reorderItemsLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+  }
   // SUBITEM -> ITEM
   if(src.type==='subitem'&&type==='item'){
     await moverSubParaItemLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
@@ -3174,7 +3179,7 @@ function clearDragNest(){if(_dragNestTimer){clearTimeout(_dragNestTimer);_dragNe
 function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
 function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;ev.dataTransfer.effectAllowed='move';}
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrItemOver(ev){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');}
+function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');clearDragNest();_dragNestTarget=targetId;_dragNestTimer=setTimeout(()=>{_dragNestMode=true;if(ev.currentTarget)ev.currentTarget.classList.add('drag-nest');},800);}
 function onDrSubOver(ev,targetId,parentId,secId){
   if(!_dragSubId)return;
   ev.preventDefault();ev.stopPropagation();
@@ -3193,11 +3198,15 @@ function onDrLeave(ev){
 }
 function onDrItemDrop(ev,targetId,secId){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
+  const isNest=_dragNestMode&&_dragNestTarget===targetId;
   clearDragNest();
   if(_dragSubId){
     window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
+  if(isNest){
+    window.converterItemEmSubitem(_dragItemId,targetId,secId);_dragItemId=null;return;
+  }
   window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
 }
 function onDrSubDrop(ev,targetId,parentId,secId){
@@ -3289,6 +3298,43 @@ window.moverSubParaItem=async function(fromId,toItemId,secId){
   const newData={parent_id:toItemId,parent_type:'item',item_id:toItemId,order_num:newOrder};
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para item!');
+};
+window.converterItemEmSubitem=async function(itemId,targetItemId,secId){
+  const item=S.items.find(i=>i.id===itemId);if(!item)return;
+  const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
+  if(item.atividade_id!==targetItem.atividade_id){toast('Itens devem ser da mesma atividade','error');return;}
+  const sib=[...S.subitems.filter(s=>s.item_id===targetItemId&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
+  const subData={
+    item_id:targetItemId,atividade_id:secId,
+    description:item.description||'Sem nome',observacao:item.observacao||'',responsaveis:item.responsaveis||'',
+    secretaria_id:item.secretaria_id||null,start_date:item.start_date||null,deadline_date:item.deadline_date||null,
+    concluded:item.concluded||0,status:item.status||'pendente',conclusion_date:item.conclusion_date||null,
+    parent_id:targetItemId,parent_type:'item',order_num:newOrder,created_at:serverTimestamp()
+  };
+  const subRef=await addDoc(collection(db,'subitems'),subData);
+  const childSubs=S.subitems.filter(s=>s.item_id===itemId);
+  for(const c of childSubs){
+    await updateDoc(doc(db,'subitems',c.id),{parent_id:subRef.id,parent_type:'subitem',item_id:targetItemId});
+  }
+  await deleteDoc(doc(db,'items',itemId));
+  pushUndo('Converter item em sub-item',
+    async()=>{
+      // Recriar o item
+      const newItemRef=await addDoc(collection(db,'items'),{...item,atividade_id:secId,created_at:serverTimestamp()});
+      // Restaurar subitens como filhos do item recriado
+      for(const c of childSubs){
+        await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
+      }
+      // Deletar o subitem criado
+      await deleteDoc(doc(db,'subitems',subRef.id));
+      await loadData();openActivity(secId);
+    },
+    async()=>{
+      await window.converterItemEmSubitem(itemId,targetItemId,secId);
+    }
+  );
+  await loadData();openActivity(secId);toast('Item aninhado como sub-item!');
 };
 </script>
 <div id="busca-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.82);z-index:3000;padding:16px;box-sizing:border-box;overflow-y:auto">
