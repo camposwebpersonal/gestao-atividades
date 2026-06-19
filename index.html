@@ -3035,13 +3035,22 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   if(!_dragSubId){return;}
   ev.preventDefault();ev.stopPropagation();
   if(_dragSubId===targetId){_dragSubId=null;return;}
-  // detect if dropped on a different subitem (make it a child)
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
-  const fromSub=S.subitems.find(s=>s.id===_dragSubId);
   if(targetSub){
+    const rect=targetSub.getBoundingClientRect();
+    const yInSub=ev.clientY-rect.top;
+    const isTopHalf=yInSub < rect.height/2;
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
-    if(toSubId&&toSubId!==_dragSubId){window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;}
+    if(!toSubId||toSubId===_dragSubId){_dragSubId=null;return;}
+    if(isTopHalf){
+      // dropped on top half → reorder with target
+      window.reorderSubitems(_dragSubId,toSubId,targetSub.parentNode===ev.currentTarget.parentNode?parentId:_dragSubParent,secId);
+      _dragSubId=null;return;
+    } else {
+      // dropped on bottom half → nest as child
+      window.moverSubParaSub(_dragSubId,toSubId,secId);_dragSubId=null;return;
+    }
   }
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
