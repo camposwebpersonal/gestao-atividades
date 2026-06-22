@@ -3200,13 +3200,18 @@ function onDrLeave(ev){
   clearDragNest();
 }
 function onDrItemDrop(ev,targetId,secId){
+  console.log('>>> onDrItemDrop chamado! targetId=',targetId,'_dragSubId=',_dragSubId,'_dragItemId=',_dragItemId);
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
   const isNest=isNestHold(targetId);
+  console.log('isNest=',isNest);
   clearDragNest();
   if(_dragSubId){
+    console.log('Tem _dragSubId, isNest=',isNest);
     if(isNest){
+      console.log('Nesting mode: moverSubParaItem');
       window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
     }
+    console.log('Quick drop: converterSubitemEmItem');
     window.converterSubitemEmItem(_dragSubId,targetId,secId);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
@@ -3216,6 +3221,7 @@ function onDrItemDrop(ev,targetId,secId){
   window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
 }
 function onDrSubDrop(ev,targetId,parentId,secId){
+  console.log('>>> onDrSubDrop chamado! targetId=',targetId,'_dragSubId=',_dragSubId);
   ev.currentTarget.classList.remove('drag-over','drag-nest');
   if(!_dragSubId){clearDragNest();return;}
   ev.preventDefault();ev.stopPropagation();
@@ -3224,6 +3230,7 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   const targetSub=ev.target.closest('.sub-row');
   const targetItem=ev.target.closest('.item-row');
   const isNest=isNestHold(targetId);
+  console.log('targetSub=',!!targetSub,'targetItem=',!!targetItem,'isNest=',isNest);
 
   if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
@@ -3253,6 +3260,7 @@ function onDrSubDrop(ev,targetId,parentId,secId){
 
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
+    console.log('Drop em item-row dentro de onDrSubDrop, toItemId=',toItemId);
     if(toItemId&&toItemId!==_dragSubId){
       window.moverSubParaItem(_dragSubId,toItemId,secId);
       clearDragNest();_dragSubId=null;return;
