@@ -373,7 +373,7 @@ const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;
-console.log('=== VERSAO APP: v2.2-pushundo-targetitem-fix ===');
+console.log('=== VERSAO APP: v2.3-subitem-prioridade-fix ===');
 
 // ── UNDO / REDO MANAGER ──
 const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
@@ -3229,28 +3229,12 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   ev.preventDefault();ev.stopPropagation();
   if(_dragSubId===targetId){clearDragNest();_dragSubId=null;return;}
 
-  // VERIFICAR PRIMEIRO se soltou em um ITEM (prioridade maior)
-  const targetItem=ev.target.closest('.item-row');
   const targetSub=ev.target.closest('.sub-row');
+  const targetItem=!targetSub&&ev.target.closest('.item-row');
   const isNest=isNestHold(targetId);
-  console.log('targetItem=',!!targetItem,'targetSub=',!!targetSub,'isNest=',isNest);
+  console.log('targetSub=',!!targetSub,'targetItem=',!!targetItem,'isNest=',isNest);
 
-  if(targetItem){
-    const toItemId=targetItem.id.replace('ir-','');
-    // Verificar se o subitem alvo pertence a outro item
-    const targetSubItem=S.subitems.find(s=>s.id===targetId);
-    const targetItemId=targetSubItem?targetSubItem.item_id:toItemId;
-    console.log('Drop em item-row, targetSubItem.item_id=',targetItemId,'isNest=',isNest);
-    if(targetItemId&&targetItemId!==_dragSubId){
-      if(isNest){
-        window.moverSubParaItem(_dragSubId,targetItemId,secId);
-      }else{
-        window.converterSubitemEmItem(_dragSubId,targetItemId,secId);
-      }
-      clearDragNest();_dragSubId=null;return;
-    }
-  }
-
+  // 1. Soltou em outro SUBITEM -> reordenar, mover ou aninhar
   if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
     if(!toSubId||toSubId===_dragSubId){clearDragNest();_dragSubId=null;return;}
@@ -3272,6 +3256,20 @@ function onDrSubDrop(ev,targetId,parentId,secId){
         window.moverSubParaItem(_dragSubId,toSub.parent_id,secId);
       }else{
         window.moverSubParaSub(_dragSubId,toSub.parent_id,secId);
+      }
+      clearDragNest();_dragSubId=null;return;
+    }
+  }
+
+  // 2. Soltou diretamente em um ITEM (sem subitem no caminho) -> converter em item
+  if(targetItem){
+    const toItemId=targetItem.id.replace('ir-','');
+    console.log('Drop em item-row, toItemId=',toItemId,'isNest=',isNest);
+    if(toItemId&&toItemId!==_dragSubId){
+      if(isNest){
+        window.moverSubParaItem(_dragSubId,toItemId,secId);
+      }else{
+        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
       }
       clearDragNest();_dragSubId=null;return;
     }
