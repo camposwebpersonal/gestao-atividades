@@ -3180,9 +3180,9 @@ let _dragNestEnterTime=0,_dragNestTarget=null;
 function clearDragNest(){_dragNestEnterTime=0;_dragNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
 function isNestHold(targetId){return _dragNestTarget===targetId&&(Date.now()-_dragNestEnterTime)>=800;}
 function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
-function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;clearDragNest();ev.dataTransfer.effectAllowed='move';}
+function onDrItemStart(ev,id){console.log('[DRAG] Item start:',id);_dragItemId=id;_dragSubId=null;_dragSubParent=null;clearDragNest();ev.dataTransfer.effectAllowed='move';}
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;clearDragNest();ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();}
+function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;console.log('[DRAG] Item over target:',targetId,'_dragItemId:',_dragItemId);_dragNestTarget=targetId;_dragNestEnterTime=Date.now();}
 function onDrSubOver(ev,targetId,parentId,secId){
   if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();
   // visual feedback timer (only for same element)
@@ -3190,20 +3190,25 @@ function onDrSubOver(ev,targetId,parentId,secId){
 }
 function onDrLeave(ev){
   if(ev.currentTarget.contains(ev.relatedTarget))return;
+  console.log('[DRAG] Leave, clearing nest');
   ev.currentTarget.classList.remove('drag-over','drag-nest');
   clearDragNest();
 }
 function onDrItemDrop(ev,targetId,secId){
   ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
   const isNest=isNestHold(targetId);
+  const elapsed=Date.now()-(_dragNestEnterTime||Date.now());
+  console.log('[DRAG] Item DROP target:',targetId,'elapsed:',elapsed+'ms','isNest:',isNest,'_dragItemId:',_dragItemId);
   clearDragNest();
   if(_dragSubId){
     window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
   if(isNest){
+    console.log('[DRAG] → NESTING item into subitem');
     window.converterItemEmSubitem(_dragItemId,targetId,secId);_dragItemId=null;return;
   }
+  console.log('[DRAG] → REORDERING items');
   window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
 }
 function onDrSubDrop(ev,targetId,parentId,secId){
