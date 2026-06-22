@@ -3260,9 +3260,13 @@ function onDrSubDrop(ev,targetId,parentId,secId){
 
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
-    console.log('Drop em item-row dentro de onDrSubDrop, toItemId=',toItemId);
+    console.log('Drop em item-row dentro de onDrSubDrop, toItemId=',toItemId,'isNest=',isNest);
     if(toItemId&&toItemId!==_dragSubId){
-      window.moverSubParaItem(_dragSubId,toItemId,secId);
+      if(isNest){
+        window.moverSubParaItem(_dragSubId,toItemId,secId);
+      }else{
+        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
+      }
       clearDragNest();_dragSubId=null;return;
     }
   }
