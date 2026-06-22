@@ -373,6 +373,7 @@ const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;
+console.log('=== VERSAO APP: v2.1-dnd-fix-prioridade-item ===');
 
 // ── UNDO / REDO MANAGER ──
 const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
@@ -3227,10 +3228,24 @@ function onDrSubDrop(ev,targetId,parentId,secId){
   ev.preventDefault();ev.stopPropagation();
   if(_dragSubId===targetId){clearDragNest();_dragSubId=null;return;}
 
-  const targetSub=ev.target.closest('.sub-row');
+  // VERIFICAR PRIMEIRO se soltou em um ITEM (prioridade maior)
   const targetItem=ev.target.closest('.item-row');
+  const targetSub=ev.target.closest('.sub-row');
   const isNest=isNestHold(targetId);
-  console.log('targetSub=',!!targetSub,'targetItem=',!!targetItem,'isNest=',isNest);
+  console.log('targetItem=',!!targetItem,'targetSub=',!!targetSub,'isNest=',isNest);
+
+  if(targetItem){
+    const toItemId=targetItem.id.replace('ir-','');
+    console.log('Drop em item-row, toItemId=',toItemId,'isNest=',isNest);
+    if(toItemId&&toItemId!==_dragSubId){
+      if(isNest){
+        window.moverSubParaItem(_dragSubId,toItemId,secId);
+      }else{
+        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
+      }
+      clearDragNest();_dragSubId=null;return;
+    }
+  }
 
   if(targetSub){
     const toSubId=targetSub.querySelector('[onclick*="openItemModal"]')?.getAttribute('onclick')?.match(/openItemModal\('([^']+)'/)?.[1];
@@ -3253,19 +3268,6 @@ function onDrSubDrop(ev,targetId,parentId,secId){
         window.moverSubParaItem(_dragSubId,toSub.parent_id,secId);
       }else{
         window.moverSubParaSub(_dragSubId,toSub.parent_id,secId);
-      }
-      clearDragNest();_dragSubId=null;return;
-    }
-  }
-
-  if(targetItem){
-    const toItemId=targetItem.id.replace('ir-','');
-    console.log('Drop em item-row dentro de onDrSubDrop, toItemId=',toItemId,'isNest=',isNest);
-    if(toItemId&&toItemId!==_dragSubId){
-      if(isNest){
-        window.moverSubParaItem(_dragSubId,toItemId,secId);
-      }else{
-        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
       }
       clearDragNest();_dragSubId=null;return;
     }
