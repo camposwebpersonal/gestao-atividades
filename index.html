@@ -373,11 +373,12 @@ const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;
-console.log('=== VERSAO APP: v2.1-dnd-fix-prioridade-item ===');
+console.log('=== VERSAO APP: v2.2-pushundo-targetitem-fix ===');
 
 // ── UNDO / REDO MANAGER ──
 const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
 function pushUndo(name,undoFn,redoFn){_undoStack.push({name,undo:undoFn,redo:redoFn});if(_undoStack.length>MAX_UNDO)_undoStack.shift();_redoStack.length=0;updateUndoUI();}
+window.pushUndo=pushUndo;
 async function undoLast(){if(!_undoStack.length){toast('Nada para desfazer','error');return;}const c=_undoStack.pop();try{await c.undo();}catch(e){console.error('Undo failed',e);}_redoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
 async function redoLast(){if(!_redoStack.length){toast('Nada para refazer','error');return;}const c=_redoStack.pop();try{await c.redo();}catch(e){console.error('Redo failed',e);}_undoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
 window.undoLast=undoLast;window.redoLast=redoLast;
@@ -3236,12 +3237,15 @@ function onDrSubDrop(ev,targetId,parentId,secId){
 
   if(targetItem){
     const toItemId=targetItem.id.replace('ir-','');
-    console.log('Drop em item-row, toItemId=',toItemId,'isNest=',isNest);
-    if(toItemId&&toItemId!==_dragSubId){
+    // Verificar se o subitem alvo pertence a outro item
+    const targetSubItem=S.subitems.find(s=>s.id===targetId);
+    const targetItemId=targetSubItem?targetSubItem.item_id:toItemId;
+    console.log('Drop em item-row, targetSubItem.item_id=',targetItemId,'isNest=',isNest);
+    if(targetItemId&&targetItemId!==_dragSubId){
       if(isNest){
-        window.moverSubParaItem(_dragSubId,toItemId,secId);
+        window.moverSubParaItem(_dragSubId,targetItemId,secId);
       }else{
-        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
+        window.converterSubitemEmItem(_dragSubId,targetItemId,secId);
       }
       clearDragNest();_dragSubId=null;return;
     }
