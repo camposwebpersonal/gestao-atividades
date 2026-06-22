@@ -3335,14 +3335,15 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId){
   const sub=S.subitems.find(s=>s.id===subId);if(!sub)return;
   const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
   const targetOrder=targetItem.order_num||0;
-  const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  // Incrementar order_num de todos os itens a partir do alvo
+  const its=[...S.items.filter(i=>i.atividade_id===secId&&i.id!==targetItemId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
-  // Criar item com order_num antes do alvo
+  for(const i of its){if((i.order_num||0)>=targetOrder){await updateDoc(doc(db,'items',i.id),{order_num:(i.order_num||0)+1});}}
   const itemData={
     atividade_id:secId,description:sub.description||'Sem nome',observacao:sub.observacao||'',responsaveis:sub.responsaveis||'',
     secretaria_id:sub.secretaria_id||null,start_date:sub.start_date||null,deadline_date:sub.deadline_date||null,
     concluded:sub.concluded||0,status:sub.status||'pendente',conclusion_date:sub.conclusion_date||null,
-    order_num:targetOrder-0.5,created_at:serverTimestamp()
+    order_num:targetOrder,created_at:serverTimestamp()
   };
   const newItemRef=await addDoc(collection(db,'items'),itemData);
   const childSubs=S.subitems.filter(s=>s.parent_id===subId&&s.parent_type==='subitem');
@@ -3350,13 +3351,6 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
   await deleteDoc(doc(db,'subitems',subId));
-  // Recarregar e renumerar sequencialmente para garantir ordem
-  await loadData();
-  const refreshed=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  for(let i=0;i<refreshed.length;i++){
-    const it=S.items.find(x=>x.id===refreshed[i].id);
-    if(it&&it.order_num!==i){it.order_num=i;await updateDoc(doc(db,'items',it.id),{order_num:i});}
-  }
   pushUndo('Converter sub-item em item',
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
@@ -3373,13 +3367,14 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId){
   const sub=S.subitems.find(s=>s.id===subId);if(!sub)return;
   const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
   const targetOrder=targetItem.order_num||0;
-  const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const its=[...S.items.filter(i=>i.atividade_id===secId&&i.id!==targetItemId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
+  for(const i of its){if((i.order_num||0)>=targetOrder){await updateDoc(doc(db,'items',i.id),{order_num:(i.order_num||0)+1});}}
   const itemData={
     atividade_id:secId,description:sub.description||'Sem nome',observacao:sub.observacao||'',responsaveis:sub.responsaveis||'',
     secretaria_id:sub.secretaria_id||null,start_date:sub.start_date||null,deadline_date:sub.deadline_date||null,
     concluded:sub.concluded||0,status:sub.status||'pendente',conclusion_date:sub.conclusion_date||null,
-    order_num:targetOrder-0.5,created_at:serverTimestamp()
+    order_num:targetOrder,created_at:serverTimestamp()
   };
   const newItemRef=await addDoc(collection(db,'items'),itemData);
   const childSubs=S.subitems.filter(s=>s.parent_id===subId&&s.parent_type==='subitem');
@@ -3387,12 +3382,6 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
   await deleteDoc(doc(db,'subitems',subId));
-  await loadData();
-  const refreshed=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  for(let i=0;i<refreshed.length;i++){
-    const it=S.items.find(x=>x.id===refreshed[i].id);
-    if(it&&it.order_num!==i){it.order_num=i;await updateDoc(doc(db,'items',it.id),{order_num:i});}
-  }
   pushUndo('Converter sub-item em item (Lista)',
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
