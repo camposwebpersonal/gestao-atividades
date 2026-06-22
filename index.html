@@ -37,6 +37,8 @@ img,iframe,video{max-width:100%;height:auto}
 .drag-over{border:2px dashed #60a5fa!important;transition:border-color .15s}
 .drag-nest{border:2px solid #10b981!important;box-shadow:0 0 0 4px rgba(16,185,129,.3);animation:pulseNest .6s infinite alternate}
 @keyframes pulseNest{from{box-shadow:0 0 0 4px rgba(16,185,129,.3)}to{box-shadow:0 0 0 8px rgba(16,185,129,.6)}}
+.drag-nesting{border:2px solid #f59e0b!important;box-shadow:0 0 0 4px rgba(245,158,11,.4);animation:pulseDrag .6s infinite alternate}
+@keyframes pulseDrag{from{box-shadow:0 0 0 4px rgba(245,158,11,.4)}to{box-shadow:0 0 0 8px rgba(245,158,11,.7)}}
 #navmenu{background:#060e1c;border-bottom:1px solid var(--border);display:flex;gap:2px;padding:0 16px;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .nav-btn{background:none;border:none;color:var(--muted);font-size:13px;font-weight:600;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
 .nav-btn:hover{color:var(--text)}
@@ -2837,12 +2839,12 @@ window.listaAddSubSibling=async function(afterSubId,secId){
   const data={item_id:sb.item_id,atividade_id:secId,description:'Novo Sub-item',observacao:'',responsaveis:'',secretaria_id:null,start_date:null,deadline_date:null,concluded:0,parent_id:parentId,parent_type:sb.parent_type||'item',order_num:newOrder,created_at:serverTimestamp()};
   await addDoc(collection(db,'subitems'),data);await loadData();renderCadastros(secId);toast('Sub-item adicionado!');
 };
-let _listaDragSrc=null;
+let _listaDragSrc=null,_listaDragEl=null;
 let _listaNestEnterTime=0,_listaNestTarget=null;
-function clearListaNest(){_listaNestEnterTime=0;_listaNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+function clearListaNest(){_listaNestEnterTime=0;_listaNestTarget=null;if(_listaDragEl){_listaDragEl.classList.remove('drag-nesting');}document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
 function isListaNestHold(targetId){return _listaNestTarget===targetId&&(Date.now()-_listaNestEnterTime)>=800;}
 window.listaDragStart=function(e,type,id){
-  _listaDragSrc={type,id};e.dataTransfer.effectAllowed='move';e.target.style.opacity='.4';clearListaNest();
+  _listaDragSrc={type,id};_listaDragEl=e.target.closest('tr');e.dataTransfer.effectAllowed='move';e.target.style.opacity='.4';clearListaNest();
 };
 window.listaDragEnd=function(e){
   e.target.style.opacity='1';clearListaNest();
@@ -2852,6 +2854,7 @@ window.listaDragOver=function(e,type,id){
   if(_listaNestTarget===id)return;
   _listaNestTarget=id;_listaNestEnterTime=Date.now();
   setTimeout(()=>{const t=document.querySelector(`tr[data-lista-id="${id}"]`);if(t&&_listaNestTarget===id)t.classList.add('drag-nest');},800);
+  setTimeout(()=>{if(_listaNestTarget===id&&_listaDragEl)_listaDragEl.classList.add('drag-nesting');},800);
 };
 window.listaDragLeave=function(e){
   const tr=e.target.closest('tr');if(tr){tr.style.background='';tr.classList.remove('drag-over','drag-nest');}
@@ -3178,18 +3181,18 @@ function confirmarGerarRelatorio(){
   window.gerarPdfRelatorio(_pdfOptsSecId,field);
 }
 // ── DRAG & DROP ──
-let _dragItemId=null,_dragSubId=null,_dragSubParent=null;
+let _dragItemId=null,_dragSubId=null,_dragSubParent=null,_draggedEl=null;
 let _dragNestEnterTime=0,_dragNestTarget=null;
-function clearDragNest(){_dragNestEnterTime=0;_dragNestTarget=null;document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
+function clearDragNest(){_dragNestEnterTime=0;_dragNestTarget=null;if(_draggedEl){_draggedEl.classList.remove('drag-nesting');_draggedEl=null;}document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
 function isNestHold(targetId){return _dragNestTarget===targetId&&(Date.now()-_dragNestEnterTime)>=800;}
 function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
-function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;clearDragNest();ev.dataTransfer.effectAllowed='move';}
-function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;clearDragNest();ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();}
+function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;_draggedEl=ev.target.closest('.item-row');clearDragNest();ev.dataTransfer.effectAllowed='move';}
+function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;_draggedEl=ev.target.closest('.sub-row');clearDragNest();ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
+function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();setTimeout(()=>{if(_dragNestTarget===targetId&&_draggedEl)_draggedEl.classList.add('drag-nesting');},800);}
 function onDrSubOver(ev,targetId,parentId,secId){
   if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();
-  // visual feedback timer (only for same element)
   setTimeout(()=>{if(_dragNestTarget===targetId&&ev.currentTarget)ev.currentTarget.classList.add('drag-nest');},800);
+  setTimeout(()=>{if(_dragNestTarget===targetId&&_draggedEl)_draggedEl.classList.add('drag-nesting');},800);
 }
 function onDrLeave(ev){
   if(ev.currentTarget.contains(ev.relatedTarget))return;
@@ -3334,12 +3337,12 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId){
   const targetOrder=targetItem.order_num||0;
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
-  for(const i of its){if((i.order_num||0)>=targetOrder){await updateDoc(doc(db,'items',i.id),{order_num:(i.order_num||0)+1});}}
+  // Criar item com order_num antes do alvo
   const itemData={
     atividade_id:secId,description:sub.description||'Sem nome',observacao:sub.observacao||'',responsaveis:sub.responsaveis||'',
     secretaria_id:sub.secretaria_id||null,start_date:sub.start_date||null,deadline_date:sub.deadline_date||null,
     concluded:sub.concluded||0,status:sub.status||'pendente',conclusion_date:sub.conclusion_date||null,
-    order_num:targetOrder,created_at:serverTimestamp()
+    order_num:targetOrder-0.5,created_at:serverTimestamp()
   };
   const newItemRef=await addDoc(collection(db,'items'),itemData);
   const childSubs=S.subitems.filter(s=>s.parent_id===subId&&s.parent_type==='subitem');
@@ -3347,6 +3350,13 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
   await deleteDoc(doc(db,'subitems',subId));
+  // Recarregar e renumerar sequencialmente para garantir ordem
+  await loadData();
+  const refreshed=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  for(let i=0;i<refreshed.length;i++){
+    const it=S.items.find(x=>x.id===refreshed[i].id);
+    if(it&&it.order_num!==i){it.order_num=i;await updateDoc(doc(db,'items',it.id),{order_num:i});}
+  }
   pushUndo('Converter sub-item em item',
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
@@ -3365,12 +3375,11 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId){
   const targetOrder=targetItem.order_num||0;
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
-  for(const i of its){if((i.order_num||0)>=targetOrder){await updateDoc(doc(db,'items',i.id),{order_num:(i.order_num||0)+1});}}
   const itemData={
     atividade_id:secId,description:sub.description||'Sem nome',observacao:sub.observacao||'',responsaveis:sub.responsaveis||'',
     secretaria_id:sub.secretaria_id||null,start_date:sub.start_date||null,deadline_date:sub.deadline_date||null,
     concluded:sub.concluded||0,status:sub.status||'pendente',conclusion_date:sub.conclusion_date||null,
-    order_num:targetOrder,created_at:serverTimestamp()
+    order_num:targetOrder-0.5,created_at:serverTimestamp()
   };
   const newItemRef=await addDoc(collection(db,'items'),itemData);
   const childSubs=S.subitems.filter(s=>s.parent_id===subId&&s.parent_type==='subitem');
@@ -3378,6 +3387,12 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
   await deleteDoc(doc(db,'subitems',subId));
+  await loadData();
+  const refreshed=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  for(let i=0;i<refreshed.length;i++){
+    const it=S.items.find(x=>x.id===refreshed[i].id);
+    if(it&&it.order_num!==i){it.order_num=i;await updateDoc(doc(db,'items',it.id),{order_num:i});}
+  }
   pushUndo('Converter sub-item em item (Lista)',
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
