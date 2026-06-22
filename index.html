@@ -373,7 +373,7 @@ const fbApp=initializeApp(FB);
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;
-console.log('=== VERSAO APP: v2.6-tosub-item-id ===');
+console.log('=== VERSAO APP: v2.7-moverSubAntesDe-fix ===');
 
 // ── UNDO / REDO MANAGER ──
 const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
@@ -3252,7 +3252,7 @@ function onDrSubDrop(ev,targetId,parentId,secId){
       if(fromSub.parent_type===toSub.parent_type&&fromSub.parent_id===toSub.parent_id){
         window.reorderSubitems(_dragSubId,toSubId,parentId,secId);clearDragNest();_dragSubId=null;return;
       }
-      // Pais diferentes: quick drop = converter em item irmão do pai; nest = mover como subitem/aninhar
+      // Pais diferentes: quick drop = desaninhar antes do alvo; nest = aninhar como filho
       if(isNest){
         if(toSub.parent_type==='item'){
           window.moverSubParaItem(_dragSubId,toSub.parent_id,secId);
@@ -3260,10 +3260,8 @@ function onDrSubDrop(ev,targetId,parentId,secId){
           window.moverSubParaSub(_dragSubId,toSub.parent_id,secId);
         }
       }else{
-        // Quick drop sobre subitem de outro item -> virar item irmão do item pai
-        const targetItemId=toSub.item_id;
-        console.log('converterSubitemEmItem com toSub.item_id=',targetItemId);
-        window.converterSubitemEmItem(_dragSubId,targetItemId,secId);
+        // Quick drop sobre subitem de outro pai -> virar irmão antes do alvo
+        window.moverSubAntesDe(_dragSubId,toSubId,secId);
       }
       clearDragNest();_dragSubId=null;return;
     }
