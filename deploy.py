@@ -67,7 +67,7 @@ else:
 SITES = {
     "gestaoatividades": {
         "nome": "Gestao de Atividades",
-        "url": "https://gestao-atividades.vercel.app",
+        "url": "https://camposwebpersonal.github.io/gestao-atividades/",
         "pasta": "gestaoatividades",
         "tipo": "github",
         "repo": "camposwebpersonal/gestao-atividades",
