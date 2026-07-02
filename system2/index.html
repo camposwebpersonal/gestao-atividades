@@ -172,14 +172,15 @@
       border: 2px solid var(--mp-white);
     }
     .mp-logo-small {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      background: var(--mp-blue);
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--mp-white);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      overflow: hidden;
     }
-    .mp-logo-small svg { width: 24px; height: 24px; }
+    .mp-logo-small img { width: 32px; height: 32px; object-fit: contain; }
     .user-name {
       font-size: 15px;
       font-weight: 700;
@@ -527,13 +528,7 @@
   <!-- ═══ LOGIN SCREEN ═══ -->
   <div class="login-screen" id="loginScreen">
     <div class="login-logo">
-      <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0" y="0" width="60" height="60" rx="14" fill="#009EE3"/>
-        <path d="M15 45 L15 22 L25 22 L30 35 L35 22 L45 22 L45 45 L38 45 L38 32 L33 45 L27 45 L22 32 L22 45 Z" fill="white"/>
-        <circle cx="48" cy="48" r="10" fill="#FFE600"/>
-        <text x="70" y="38" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="#333333">mercado</text>
-        <text x="70" y="54" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="#333333">pago</text>
-      </svg>
+      <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__large.png" alt="Mercado Pago" />
     </div>
     <div class="login-box">
       <div class="login-title">Acessar conta</div>
@@ -562,11 +557,7 @@
       <div class="topbar">
         <div class="user-greeting">
           <div class="mp-logo-small">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
-              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
-              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
-            </svg>
+            <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__small.png" alt="MP" />
           </div>
           <div class="user-name">Olá, Adriana Si...</div>
         </div>
@@ -656,11 +647,7 @@
       <div class="topbar">
         <div class="user-greeting">
           <div class="mp-logo-small">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
-              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
-              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
-            </svg>
+            <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__small.png" alt="MP" />
           </div>
           <div class="user-name">Cartões</div>
         </div>
@@ -708,11 +695,7 @@
       <div class="topbar">
         <div class="user-greeting">
           <div class="mp-logo-small">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
-              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
-              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
-            </svg>
+            <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__small.png" alt="MP" />
           </div>
           <div class="user-name">Pix</div>
         </div>
@@ -751,11 +734,7 @@
       <div class="topbar">
         <div class="user-greeting">
           <div class="mp-logo-small">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
-              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
-              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
-            </svg>
+            <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__small.png" alt="MP" />
           </div>
           <div class="user-name">Pagamentos</div>
         </div>
@@ -792,11 +771,7 @@
       <div class="topbar">
         <div class="user-greeting">
           <div class="mp-logo-small">
-            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
-              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
-              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
-            </svg>
+            <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.0/mercado-pago/logo__small.png" alt="MP" />
           </div>
           <div class="user-name">Mais</div>
         </div>
