@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mercado Pago | Cartão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mp-blue:     #009EE3;
+      --mp-blue-dk:  #007EB5;
+      --mp-blue-lt:  #E6F7FD;
+      --mp-yellow:   #FFE600;
+      --mp-bg:       #F5F7FA;
+      --mp-white:    #FFFFFF;
+      --mp-text:     #333333;
+      --mp-muted:    #6B7280;
+      --mp-border:   #E5E7EB;
+      --green:       #00A650;
+      --green-lt:    #E6F6EF;
+      --red:         #E60000;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--mp-bg);
+      color: var(--mp-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ─── TOPBAR ───────────────────────────────────────────── */
+    .topbar {
+      width: 100%;
+      max-width: 480px;
+      background: var(--mp-blue);
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar .logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .topbar .logo .dot {
+      width: 10px; height: 10px;
+      background: var(--mp-yellow);
+      border-radius: 50%;
+    }
+    .topbar .greeting {
+      font-size: 13px; color: rgba(255,255,255,0.85); display: flex;
+      flex-direction: column; line-height: 1.3; text-align: right;
+    }
+    .topbar .greeting strong { font-size: 15px; color: #fff; font-weight: 700; }
+    .topbar .avatar {
+      width: 38px; height: 38px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+
+    /* ─── HEADER CARD ──────────────────────────────────────── */
+    .header-card {
+      width: 100%;
+      max-width: 480px;
+      background: var(--mp-blue);
+      padding: 0 22px 28px;
+    }
+
+    /* ─── CREDIT CARD ──────────────────────────────────────── */
+    .credit-card {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #009EE3 0%, #007EB5 100%);
+      border-radius: 18px;
+      padding: 22px 24px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.22);
+      position: relative; overflow: hidden;
+    }
+    .credit-card::after {
+      content: '';
+      position: absolute; top: -50px; right: -50px;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .credit-card::before {
+      content: '';
+      position: absolute; bottom: -70px; left: -30px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: center; }
+    .card-chip {
+      width: 40px; height: 30px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 6px;
+      position: relative;
+    }
+    .card-chip::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px; height: 20px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 4px;
+    }
+    .card-network {
+      font-size: 14px; font-weight: 800;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 1px;
+      background: rgba(255,255,255,0.15);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .card-limit-label { font-size: 11px; color: rgba(255,255,255,0.75); }
+    .card-limit-value { font-size: 26px; font-weight: 800; color: #fff; }
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    .card-name { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: 1px; }
+    .card-number { font-size: 13px; color: rgba(255,255,255,0.55); }
+
+    /* ─── LIMIT INFO ───────────────────────────────────────── */
+    .limit-info-box {
+      width: 100%;
+      max-width: 480px;
+      background: var(--mp-blue);
+      padding: 0 22px 24px;
+    }
+    .limit-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 14px;
+    }
+    .limit-info div:first-child { font-size: 13px; color: rgba(255,255,255,0.85); }
+    .limit-info div:last-child { font-size: 16px; color: #fff; font-weight: 700; }
+
+    /* ─── MAIN CONTENT ─────────────────────────────────────── */
+    .content {
+      width: 100%;
+      max-width: 480px;
+      background: var(--mp-white);
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 100px;
+      flex: 1;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ─── SECTIONS ─────────────────────────────────────────── */
+    .section-title {
+      font-size: 18px; font-weight: 800; color: var(--mp-text);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ─── FATURA CARD ────────────────────────────────────────── */
+    .invoice-card {
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      border: 1px solid var(--mp-border);
+    }
+    .invoice-header {
+      padding: 18px 20px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--green);
+    }
+    .invoice-month { font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600; }
+    .invoice-due   { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 3px; }
+    .invoice-total { font-size: 28px; font-weight: 800; color: #fff; }
+    .invoice-total-label { font-size: 11px; color: rgba(255,255,255,0.8); text-align: right; }
+    .invoice-body {
+      background: var(--green-lt);
+      padding: 18px 20px;
+      text-align: center;
+    }
+    .invoice-body p { font-size: 14px; color: var(--green); font-weight: 600; }
+    .invoice-body strong { font-size: 16px; display: block; margin-top: 4px; }
+
+    /* ─── SUMMARY BOX ───────────────────────────────────────── */
+    .summary-box {
+      background: var(--mp-white);
+      border: 1px solid var(--mp-border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .summary-title {
+      font-size: 14px; font-weight: 700; color: var(--mp-text);
+      margin-bottom: 12px;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--mp-border);
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { font-size: 13px; color: var(--mp-muted); }
+    .summary-value { font-size: 14px; font-weight: 700; }
+    .summary-value.pos { color: var(--green); }
+    .summary-value.neg { color: var(--red); }
+    .summary-value.main { color: var(--mp-blue); font-size: 16px; }
+
+    /* ─── QUICK ACTIONS ───────────────────────────────────── */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .action-btn {
+      background: var(--mp-blue-lt);
+      border: 1px solid rgba(0,158,227,0.15);
+      border-radius: 14px;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .action-btn:active { transform: scale(0.96); background: rgba(0,158,227,0.15); }
+    .action-btn .icon { font-size: 22px; }
+    .action-btn span { font-size: 11px; font-weight: 700; color: var(--mp-blue-dk); }
+
+    /* ─── INFO CARD ─────────────────────────────────────────── */
+    .info-card {
+      background: var(--mp-bg);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+    .info-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .info-card p { font-size: 13px; color: var(--mp-muted); line-height: 1.5; }
+
+    /* ─── BOTTOM NAV ─────────────────────────────────────────── */
+    .bottom-nav {
+      width: 100%; max-width: 480px;
+      background: #fff;
+      padding: 10px 0 14px;
+      display: flex; justify-content: space-around;
+      position: fixed; bottom: 0;
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 3px; font-size: 10px; font-weight: 700;
+      color: var(--mp-muted); cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 10px;
+      transition: all 0.15s;
+      border: none; background: none;
+      width: 56px;
+    }
+    .nav-item.active { color: var(--mp-blue); }
+    .nav-item:active { transform: scale(0.92); }
+    .nav-item .nav-icon { font-size: 22px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <span class="dot"></span>
+      <span>mercado pago</span>
+    </div>
+    <div class="greeting">
+      <span>Olá,</span>
+      <strong>Adriana</strong>
+    </div>
+    <div class="avatar">A</div>
+  </div>
+
+  <!-- HEADER CARD -->
+  <div class="header-card">
+    <div class="credit-card">
+      <div class="card-top">
+        <div class="card-chip"></div>
+        <div class="card-network">MASTERCARD</div>
+      </div>
+      <div>
+        <div class="card-limit-label">Limite total do cartão</div>
+        <div class="card-limit-value">R$ 800,00</div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-name">ADRIANA S G AMORIM</div>
+        <div class="card-number">•••• •••• •••• 8828</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIMIT INFO -->
+  <div class="limit-info-box">
+    <div class="limit-info">
+      <div>Limite disponível</div>
+      <div>R$ 800,00</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- ═══ TELA INÍCIO ═══ -->
+    <div class="screen active" id="screen-inicio">
+      <div class="section-title">🏠 Início</div>
+
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <div>
+            <div class="invoice-month">Fatura de Julho 2026</div>
+            <div class="invoice-due">Vencimento: 20/07/2026</div>
+          </div>
+          <div>
+            <div class="invoice-total-label">Valor da fatura</div>
+            <div class="invoice-total">R$ 0,00</div>
+          </div>
+        </div>
+        <div class="invoice-body">
+          <p>✅ Fatura atual quitada</p>
+          <strong>Nada para pagar</strong>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-title">Resumo da conta</div>
+        <div class="summary-row">
+          <span class="summary-label">Limite total</span>
+          <span class="summary-value">R$ 800,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Limite utilizado</span>
+          <span class="summary-value neg">R$ 0,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Limite disponível</span>
+          <span class="summary-value main">R$ 800,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Última fatura</span>
+          <span class="summary-value pos">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="actions-grid">
+        <div class="action-btn" onclick="navTo('pagar')">
+          <span class="icon">💳</span>
+          <span>Pagar</span>
+        </div>
+        <div class="action-btn" onclick="navTo('extrato')">
+          <span class="icon">📄</span>
+          <span>Extrato</span>
+        </div>
+        <div class="action-btn" onclick="navTo('cartao')">
+          <span class="icon">🔒</span>
+          <span>Cartão</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>👋 Bem-vinda, Adriana!</h4>
+        <p>CPF: <strong>050.059.324-88</strong><br>
+        Sua fatura de julho de 2026 está com valor <strong>R$ 0,00</strong> e vence no dia <strong>20/07/2026</strong>. Nenhuma compra foi registrada neste período.</p>
+      </div>
+    </div>
+
+    <!-- ═══ TELA CARTÃO ═══ -->
+    <div class="screen" id="screen-cartao">
+      <div class="section-title">💳 Cartão</div>
+
+      <div class="summary-box">
+        <div class="summary-title">Dados do cartão</div>
+        <div class="summary-row">
+          <span class="summary-label">Titular</span>
+          <span class="summary-value">Adriana Silva Guimarães Amorim</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">CPF</span>
+          <span class="summary-value">050.059.324-88</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Número</span>
+          <span class="summary-value">•••• •••• •••• 8828</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Bandeira</span>
+          <span class="summary-value">Mastercard</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Status</span>
+          <span class="summary-value pos">Ativo</span>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-title">Limite</div>
+        <div class="summary-row">
+          <span class="summary-label">Limite total</span>
+          <span class="summary-value">R$ 800,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Disponível</span>
+          <span class="summary-value main">R$ 800,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Utilizado</span>
+          <span class="summary-value neg">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>📌 Resumo</h4>
+        <p>Cartão Mercado Pago com limite de <strong>R$ 800,00</strong>. Nenhuma compra foi realizada. Fatura de julho/2026 com vencimento em 20/07/2026 no valor de <strong>R$ 0,00</strong>.</p>
+      </div>
+    </div>
+
+    <!-- ═══ TELA PAGAR ═══ -->
+    <div class="screen" id="screen-pagar">
+      <div class="section-title">💰 Pagar</div>
+
+      <div class="invoice-card">
+        <div class="invoice-header">
+          <div>
+            <div class="invoice-month">Fatura de Julho 2026</div>
+            <div class="invoice-due">Vencimento: 20/07/2026</div>
+          </div>
+          <div>
+            <div class="invoice-total-label">Valor a pagar</div>
+            <div class="invoice-total">R$ 0,00</div>
+          </div>
+        </div>
+        <div class="invoice-body">
+          <p>🎉 Fatura já está quitada</p>
+          <strong>Nenhum pagamento necessário</strong>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-title">Opções de pagamento</div>
+        <div class="summary-row">
+          <span class="summary-label">Pagamento mínimo</span>
+          <span class="summary-value">R$ 0,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Pagamento total</span>
+          <span class="summary-value">R$ 0,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Vencimento</span>
+          <span class="summary-value">20/07/2026</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>✅ Resumo</h4>
+        <p>A fatura de julho de 2026 vence em <strong>20/07/2026</strong> e está com valor <strong>R$ 0,00</strong>. Não há pagamento pendente.</p>
+      </div>
+    </div>
+
+    <!-- ═══ TELA EXTRATO ═══ -->
+    <div class="screen" id="screen-extrato">
+      <div class="section-title">📄 Extrato</div>
+
+      <div class="summary-box">
+        <div class="summary-title">Período: Julho 2026</div>
+        <div class="summary-row">
+          <span class="summary-label">Total de compras</span>
+          <span class="summary-value">R$ 0,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Quantidade de compras</span>
+          <span class="summary-value">0</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Parcelas</span>
+          <span class="summary-value">0</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Fatura atual</span>
+          <span class="summary-value pos">R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>📊 Resumo</h4>
+        <p>No período de julho de 2026 não foram registradas compras no cartão. O limite permanece integralmente disponível.</p>
+      </div>
+
+      <div class="info-card">
+        <h4>📅 Vencimento</h4>
+        <p>Próxima fatura: <strong>20/07/2026</strong><br>
+        Valor: <strong>R$ 0,00</strong></p>
+      </div>
+    </div>
+
+    <!-- ═══ TELA MAIS ═══ -->
+    <div class="screen" id="screen-mais">
+      <div class="section-title">⚙️ Mais</div>
+
+      <div class="summary-box">
+        <div class="summary-title">Dados do cliente</div>
+        <div class="summary-row">
+          <span class="summary-label">Nome</span>
+          <span class="summary-value">Adriana Silva Guimarães Amorim</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">CPF</span>
+          <span class="summary-value">050.059.324-88</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Produto</span>
+          <span class="summary-value">Cartão Mercado Pago</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Bandeira</span>
+          <span class="summary-value">Mastercard</span>
+        </div>
+      </div>
+
+      <div class="summary-box">
+        <div class="summary-title">Resumo geral</div>
+        <div class="summary-row">
+          <span class="summary-label">Limite total</span>
+          <span class="summary-value">R$ 800,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Fatura atual</span>
+          <span class="summary-value pos">R$ 0,00</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Vencimento</span>
+          <span class="summary-value">20/07/2026</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-label">Situação</span>
+          <span class="summary-value pos">Em dia</span>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h4>📋 Resumo</h4>
+        <p>Cliente <strong>Adriana Silva Guimarães Amorim</strong>, CPF <strong>050.059.324-88</strong>. Cartão com limite de <strong>R$ 800,00</strong>, fatura de julho/2026 no valor de <strong>R$ 0,00</strong>, vencimento em <strong>20/07/2026</strong>.</p>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="navTo('inicio')" data-screen="inicio">
+      <span class="nav-icon">🏠</span>
+      Início
+    </button>
+    <button class="nav-item" onclick="navTo('cartao')" data-screen="cartao">
+      <span class="nav-icon">💳</span>
+      Cartão
+    </button>
+    <button class="nav-item" onclick="navTo('pagar')" data-screen="pagar">
+      <span class="nav-icon">💰</span>
+      Pagar
+    </button>
+    <button class="nav-item" onclick="navTo('extrato')" data-screen="extrato">
+      <span class="nav-icon">📄</span>
+      Extrato
+    </button>
+    <button class="nav-item" onclick="navTo('mais')" data-screen="mais">
+      <span class="nav-icon">⚙️</span>
+      Mais
+    </button>
+  </div>
+
+  <script>
+    function navTo(screenId) {
+      // Esconde todas as telas
+      document.querySelectorAll('.screen').forEach(function(el) {
+        el.classList.remove('active');
+      });
+      // Mostra a tela selecionada
+      document.getElementById('screen-' + screenId).classList.add('active');
+      // Atualiza botões ativos
+      document.querySelectorAll('.nav-item').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      document.querySelector('.nav-item[data-screen="' + screenId + '"]').classList.add('active');
+      // Rola para o topo
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>
