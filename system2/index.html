@@ -57,18 +57,15 @@
       background: var(--mp-yellow);
     }
     .login-logo {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--mp-dark);
       margin-bottom: 40px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
     }
-    .login-logo .dot {
-      width: 14px; height: 14px;
-      background: var(--mp-dark);
-      border-radius: 50%;
+    .login-logo svg {
+      width: 160px;
+      height: auto;
+      filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
     }
     .login-box {
       width: 100%;
@@ -174,6 +171,15 @@
       font-size: 18px; font-weight: 800;
       border: 2px solid var(--mp-white);
     }
+    .mp-logo-small {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--mp-blue);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    .mp-logo-small svg { width: 24px; height: 24px; }
     .user-name {
       font-size: 15px;
       font-weight: 700;
@@ -521,8 +527,13 @@
   <!-- ═══ LOGIN SCREEN ═══ -->
   <div class="login-screen" id="loginScreen">
     <div class="login-logo">
-      <span class="dot"></span>
-      <span>mercado pago</span>
+      <svg viewBox="0 0 200 60" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0" y="0" width="60" height="60" rx="14" fill="#009EE3"/>
+        <path d="M15 45 L15 22 L25 22 L30 35 L35 22 L45 22 L45 45 L38 45 L38 32 L33 45 L27 45 L22 32 L22 45 Z" fill="white"/>
+        <circle cx="48" cy="48" r="10" fill="#FFE600"/>
+        <text x="70" y="38" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="#333333">mercado</text>
+        <text x="70" y="54" font-family="Inter, sans-serif" font-size="24" font-weight="800" fill="#333333">pago</text>
+      </svg>
     </div>
     <div class="login-box">
       <div class="login-title">Acessar conta</div>
@@ -550,7 +561,13 @@
     <div class="screen active" id="screen-conta">
       <div class="topbar">
         <div class="user-greeting">
-          <div class="user-avatar">A</div>
+          <div class="mp-logo-small">
+            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
+              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
+              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
+            </svg>
+          </div>
           <div class="user-name">Olá, Adriana Si...</div>
         </div>
         <div class="top-icons">
@@ -638,7 +655,13 @@
     <div class="screen" id="screen-cartoes">
       <div class="topbar">
         <div class="user-greeting">
-          <div class="user-avatar">A</div>
+          <div class="mp-logo-small">
+            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
+              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
+              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
+            </svg>
+          </div>
           <div class="user-name">Cartões</div>
         </div>
       </div>
@@ -684,7 +707,13 @@
     <div class="screen" id="screen-pix">
       <div class="topbar">
         <div class="user-greeting">
-          <div class="user-avatar">A</div>
+          <div class="mp-logo-small">
+            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
+              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
+              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
+            </svg>
+          </div>
           <div class="user-name">Pix</div>
         </div>
       </div>
@@ -721,7 +750,13 @@
     <div class="screen" id="screen-pagamentos">
       <div class="topbar">
         <div class="user-greeting">
-          <div class="user-avatar">A</div>
+          <div class="mp-logo-small">
+            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
+              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
+              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
+            </svg>
+          </div>
           <div class="user-name">Pagamentos</div>
         </div>
       </div>
@@ -756,7 +791,13 @@
     <div class="screen" id="screen-mais">
       <div class="topbar">
         <div class="user-greeting">
-          <div class="user-avatar">A</div>
+          <div class="mp-logo-small">
+            <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="36" height="36" rx="8" fill="#009EE3"/>
+              <path d="M10 30 L10 15 L16 15 L20 24 L24 15 L30 15 L30 30 L25 30 L25 20 L21 30 L19 30 L15 20 L15 30 Z" fill="white"/>
+              <circle cx="30" cy="30" r="6" fill="#FFE600"/>
+            </svg>
+          </div>
           <div class="user-name">Mais</div>
         </div>
       </div>
