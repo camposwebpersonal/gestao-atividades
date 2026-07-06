@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v3';
+const CACHE_NAME = 'gestao-pms-v4';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -35,6 +35,7 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const {request} = event;
+  if(request.method !== 'GET') return;
   const url = new URL(request.url);
 
   // Firebase Firestore/API: network-first
