@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="js/controle-contas.js"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -98,6 +99,37 @@ main{flex:1;overflow-y:auto}
 .btn-action{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
 .btn-action:hover{border-color:var(--accent);color:var(--accent)}
 .btn-action.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.cc-local-card{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:16px;overflow:hidden}
+.cc-local-head{background:#0a1222;border-bottom:1px solid var(--border);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.cc-local-title{flex:1;min-width:200px}
+.cc-local-name{font-size:16px;font-weight:800;color:#38bdf8;margin-bottom:4px}
+.cc-local-meta{font-size:12px;color:var(--muted)}
+.cc-local-actions{display:flex;gap:8px;flex-wrap:wrap}
+.cc-lancamentos{padding:12px 16px}
+.cc-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #1e3a5f;background:#060c18}
+.cc-table{width:100%;border-collapse:collapse;min-width:720px;font-size:12px}
+.cc-table th{background:#0e1729;color:#94a3b8;font-size:11px;font-weight:700;text-align:left;padding:10px 8px;border-bottom:1px solid #1e3a5f;white-space:nowrap}
+.cc-table td{padding:8px;border-bottom:1px solid #1e293b;color:var(--text);vertical-align:middle}
+.cc-table tr:hover td{background:#0a1222}
+.cc-table .cc-pago-row td{background:rgba(16,185,129,.08)}
+.cc-table input[type="checkbox"]{width:18px;height:18px;accent-color:#10b981;cursor:pointer}
+.cc-table input[type="text"],.cc-table input[type="number"],.cc-table input[type="date"]{background:#0f172a;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 7px;font-size:12px;width:100%;min-width:70px}
+.cc-table select{background:#0f172a;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:5px 7px;font-size:12px;width:100%}
+.cc-table .cc-col-pago{text-align:center}
+.cc-total-bar{background:#0e1729;border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;font-size:13px}
+.cc-filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.cc-filtros select,.cc-filtros input{background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px}
+.cc-badge{display:inline-flex;align-items:center;gap:5px;background:#1e3a5f;color:#e2e8f0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700}
+.cc-mobile-card{display:none;background:#060c18;border:1px solid #1e3a5f;border-radius:10px;padding:12px;margin-bottom:10px}
+.cc-mobile-title{font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:8px}
+.cc-mobile-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--text)}
+.cc-mobile-row span:first-child{color:var(--muted)}
+@media(max-width:760px){
+  .cc-table-wrap{display:none}
+  .cc-mobile-card{display:block}
+  .cc-local-head{padding:12px}
+  .cc-local-actions{width:100%;justify-content:flex-end}
+}
 .btn-action.primary:hover{background:#2563eb;border-color:#2563eb}
 .item-row{background:var(--card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden}
 .item-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none}
@@ -445,7 +477,7 @@ window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
 // ── DATA ──
 window.loadData=async function loadData(){
-  const[a,b,c,ft,se,resp,usr,ch,gal,cont]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,ch,gal,cont,contas]=await Promise.all([
     getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
     getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
@@ -455,7 +487,8 @@ window.loadData=async function loadData(){
     getDocs(query(collection(db,'users'),orderBy('displayName','asc'))),
     getDocs(query(collection(db,'chamados'),orderBy('created_at','desc'))),
     getDocs(query(collection(db,'galeria'),orderBy('created_at','desc'))),
-    getDocs(query(collection(db,'contatos'),orderBy('nome','asc')))
+    getDocs(query(collection(db,'contatos'),orderBy('nome','asc'))),
+    getDocs(query(collection(db,'contas'),orderBy('created_at','desc')))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -467,6 +500,7 @@ window.loadData=async function loadData(){
   S.chamados=ch.docs.map(d=>({id:d.id,...d.data()}));
   S.galeria=gal.docs.map(d=>({id:d.id,...d.data()}));
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
+  S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 // ── UTILS ──
@@ -877,6 +911,7 @@ function renderDash(){
 window.openActivity=function(secId){
   curSecId=secId;
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(sec.controle_contas){renderControleContas(secId);return;}
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias!==0;
@@ -1337,6 +1372,7 @@ window.openSecModal=function(id){
     <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
     <div style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_pendencias!==0?'#38bdf8':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📋 Controle de Pendências <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita itens, sub-itens, status e prazos)</span></label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
         const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
@@ -1374,7 +1410,7 @@ window.saveSec=async function(id){
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
   const respStr=_getRespFromCombos('s-resp-wrap');
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
@@ -3119,6 +3155,26 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <button onclick="fecharPdfOpts()" style="padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
       <button onclick="confirmarGerarRelatorio()" style="padding:10px 18px;background:#0d9488;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📊 Relatório</button>
       <button onclick="confirmarGerarPdf()" style="padding:10px 22px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+    </div>
+  </div>
+</div>
+
+<div id="cc-pdf-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:3000;align-items:center;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:#0e1729;border:1px solid #1e3a5f;border-radius:16px;padding:24px;max-width:420px;width:100%;position:relative;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column">
+    <button onclick="ccFecharPdfOpts()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;z-index:10">✕</button>
+    <div style="font-size:16px;font-weight:800;margin-bottom:6px;flex-shrink:0">📄 Relatório de Contas</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:16px;flex-shrink:0">Escolha o ano e os filtros do relatório</div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#6ee7b7">Ano</label>
+        <select id="cc-pdf-ano" style="width:100%;margin-top:6px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"></select>
+      </div>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="cc-pdf-todos" style="accent-color:#f59e0b;width:15px;height:15px"> Todos os anos</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="cc-pdf-pagas" style="accent-color:#10b981;width:15px;height:15px"> Apenas contas pagas</label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="ccFecharPdfOpts()" style="padding:10px 18px;background:#334155;color:#e2e8f0;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>
+      <button onclick="ccConfirmarPdf()" style="padding:10px 22px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
     </div>
   </div>
 </div>
