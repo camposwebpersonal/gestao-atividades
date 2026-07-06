@@ -36,6 +36,7 @@ window.renderControleContas = function(secId){
   const categoriasHtml = items.map((item, idx)=>{
     const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     let locaisHtml = '';
+    let catTotal = 0, catPago = 0, catQtd = 0;
     locais.forEach((local, li)=>{
       const lancamentos = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{
         const da = (a.mes_ano||'').split('/').reverse().join('-');
@@ -55,6 +56,7 @@ window.renderControleContas = function(secId){
       const locPendente = locTotal - locPago;
       totalGeral += locTotal; totalPago += locPago; totalPendente += locPendente;
       qtdTotal += locRows.length; qtdPago += locRows.filter(c=>c.pago).length; qtdPendente += locRows.filter(c=>!c.pago).length;
+      catTotal += locTotal; catPago += locPago; catQtd += locRows.length;
       const efAll = (local && local.extra_fields) || {};
       const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
@@ -122,10 +124,17 @@ window.renderControleContas = function(secId){
     if(!locaisHtml && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
     const catEf = (item.extra_fields)||{};
     const catMeta = Object.entries(catEf).filter(([k,v])=>String(v==null?'':v).trim()).map(([k,v])=>`<span class="cc-badge" style="font-size:11px">${esc(k)}: ${esc(v)}</span>`).join(' ');
+    const catPend = catTotal - catPago;
     return `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${esc(item.description||'Categoria')}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
+          <span class="cc-badge" style="font-weight:700">Total: R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${catPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${catPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span class="cc-badge" style="color:var(--muted)">${catQtd} lanç.</span>
+        </div>
       </div>
       ${catMeta?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${catMeta}</div>`:''}
       ${locaisHtml}

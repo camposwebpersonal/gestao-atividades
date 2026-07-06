@@ -482,6 +482,17 @@ onAuthStateChanged(auth,async u=>{
       document.body.appendChild(sc);
     },800);
   }
+  const _reimp=new URLSearchParams(location.search).get('reimportar');
+  if(_reimp==='celpe'&&S.isAdmin){
+    setTimeout(()=>{
+      toast('Carregando reimportação CELPE…','info',3000);
+      const sc=document.createElement('script');
+      sc.src='reimportar-contas-celpe.js?v='+Date.now();
+      sc.onload=()=>history.replaceState(null,'',location.pathname);
+      sc.onerror=()=>toast('Erro ao carregar script de reimportação','error');
+      document.body.appendChild(sc);
+    },800);
+  }
   const _corr=new URLSearchParams(location.search).get('corrigir');
   if(_corr==='celpe'&&S.isAdmin){
     setTimeout(()=>{
