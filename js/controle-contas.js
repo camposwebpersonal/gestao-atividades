@@ -119,12 +119,15 @@ window.renderControleContas = function(secId){
         </div>
       </div>`;
     });
-    if(!locaisHtml) return '';
+    if(!locaisHtml && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
+    const catEf = (item.extra_fields)||{};
+    const catMeta = Object.entries(catEf).filter(([k,v])=>String(v==null?'':v).trim()).map(([k,v])=>`<span class="cc-badge" style="font-size:11px">${esc(k)}: ${esc(v)}</span>`).join(' ');
     return `<div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${esc(item.description||'Categoria')}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
       </div>
+      ${catMeta?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${catMeta}</div>`:''}
       ${locaisHtml}
       ${S.isAdmin?`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="ccOpenLocalModal(null,'${item.id}')">+ Local</button>`:''}
     </div>`;
@@ -164,15 +167,37 @@ window.renderControleContas = function(secId){
 
 window.ccOpenCategoriaModal = function(id, secId){
   const it = id ? S.items.find(i=>i.id===id) : null;
+  const ef = it ? (it.extra_fields||{}) : {};
+  const fieldsHtml = Object.entries(ef).map(([k,v])=>`
+    <div class="form-group cc-dynamic-field">
+      <div style="display:flex;gap:8px;align-items:center;width:100%">
+        <input class="cc-field-key" value="${esc(k)}" placeholder="Nome do campo" style="flex:1;min-width:120px">
+        <input class="cc-field-val" value="${esc(v)}" placeholder="Valor" style="flex:2;min-width:180px">
+        <button class="card-btn" type="button" onclick="this.closest('.cc-dynamic-field').remove()">🗑️</button>
+      </div>
+    </div>`).join('');
   openModal(id ? '✏️ Editar Categoria' : '➕ Nova Categoria', '',
-    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="cc-cat-name" value="${esc(it?.description||'')}"></div></div>
+    `<div class="form-grid">
+      <div class="form-group full"><label>Nome *</label><input id="cc-cat-name" value="${esc(it?.description||'')}"></div>
+      <div class="form-group full" style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:4px">
+        <label>Campos da categoria</label>
+        <button class="btn-action" style="font-size:12px;padding:5px 10px" type="button" onclick="ccAddLocalField()">+ Adicionar campo</button>
+      </div>
+      <div class="cc-fields-container" style="display:contents">${fieldsHtml}</div>
+    </div>
      <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="ccDeleteCategoria('${id}','${secId}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveCategoria('${id||''}','${secId}')">💾 Salvar</button></div>`);
 };
 
 window.ccSaveCategoria = async function(id, secId){
   const name = document.getElementById('cc-cat-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
-  const data = {description:name, atividade_id:secId, item_icon:'📁', item_color:'#3B82F6', updated_at:serverTimestamp()};
+  const efNew = {};
+  document.querySelectorAll('.cc-dynamic-field').forEach(el => {
+    const k = el.querySelector('.cc-field-key')?.value.trim();
+    const v = el.querySelector('.cc-field-val')?.value.trim();
+    if(k) efNew[k] = v;
+  });
+  const data = {description:name, atividade_id:secId, item_icon:'📁', item_color:'#3B82F6', extra_fields:efNew, updated_at:serverTimestamp()};
   if(id){ await updateDoc(doc(db,'items',id),data); }
   else { data.order_num = S.items.filter(i=>i.atividade_id===secId).length; data.concluded=0; data.created_at=serverTimestamp(); await addDoc(collection(db,'items'),data); }
   await loadData(); closeModal(); toast('Salvo!'); renderControleContas(secId);

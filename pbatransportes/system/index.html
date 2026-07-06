@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nu | Cartão de Crédito</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --nu-purple:    #8A05BE;
+      --nu-purple-dk: #6B0492;
+      --nu-purple-lt: #BB77E0;
+      --nu-bg:        #F0E6F6;
+      --nu-white:     #FFFFFF;
+      --nu-gray:      #F5F5FA;
+      --nu-text:      #1A1A2E;
+      --nu-muted:     #7B7B99;
+      --green:        #06D6A0;
+      --red:          #EF476F;
+      --card-h:       200px;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--nu-bg);
+      color: var(--nu-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ─── TOPBAR ───────────────────────────────────────────── */
+    .topbar {
+      width: 100%;
+      max-width: 480px;
+      background: var(--nu-purple);
+      padding: 18px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar .logo {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+    .topbar .logo span { color: var(--nu-purple-lt); }
+    .topbar .avatar {
+      width: 40px; height: 40px;
+      background: var(--nu-purple-lt);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: var(--nu-purple);
+    }
+    .topbar .greeting {
+      font-size: 13px; color: rgba(255,255,255,0.75); display: flex;
+      flex-direction: column; line-height: 1.3;
+    }
+    .topbar .greeting strong { font-size: 16px; color: #fff; font-weight: 700; }
+
+    /* ─── CARD ─────────────────────────────────────────────── */
+    .card-wrap {
+      width: 100%;
+      max-width: 480px;
+      background: var(--nu-purple);
+      padding: 0 22px 28px;
+    }
+    .credit-card {
+      width: 100%;
+      height: var(--card-h);
+      background: linear-gradient(135deg, #8A05BE 0%, #4A0080 100%);
+      border-radius: 18px;
+      padding: 22px 24px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      position: relative; overflow: hidden;
+    }
+    .credit-card::after {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 180px; height: 180px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+    .credit-card::before {
+      content: '';
+      position: absolute; bottom: -60px; left: -20px;
+      width: 220px; height: 220px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: center; }
+    .card-chip {
+      width: 36px; height: 28px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 6px;
+    }
+    .card-network {
+      font-size: 22px; font-weight: 900;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 1px;
+    }
+    .card-limit-label { font-size: 11px; color: rgba(255,255,255,0.6); }
+    .card-limit-value { font-size: 22px; font-weight: 800; color: #fff; }
+    .card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+    .card-name { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); letter-spacing: 1px; }
+    .card-number { font-size: 13px; color: rgba(255,255,255,0.5); }
+
+    /* ─── LIMIT BAR ─────────────────────────────────────────── */
+    .limit-box {
+      width: 100%;
+      max-width: 480px;
+      background: var(--nu-purple);
+      padding: 0 22px 22px;
+    }
+    .limit-info { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .limit-info span { font-size: 13px; color: rgba(255,255,255,0.75); }
+    .limit-info strong { font-size: 13px; color: #fff; }
+    .progress-bar-bg {
+      width: 100%; height: 6px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--nu-purple-lt);
+      border-radius: 10px;
+      width: 0%;
+    }
+
+    /* ─── MAIN CONTENT ──────────────────────────────────────── */
+    .content {
+      width: 100%;
+      max-width: 480px;
+      background: var(--nu-white);
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px;
+      flex: 1;
+    }
+
+    /* ─── SECTION HEADER ────────────────────────────────────── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title {
+      font-size: 16px; font-weight: 800; color: var(--nu-text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .icon { font-size: 18px; }
+    .badge {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px;
+    }
+    .badge-paid { background: #E8FBF4; color: #059669; }
+    .badge-open { background: #F3E8FF; color: var(--nu-purple); }
+    .badge-future { background: #FEF3C7; color: #D97706; }
+
+    /* ─── FATURA CARD ───────────────────────────────────────── */
+    .invoice-card {
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 22px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .invoice-header {
+      padding: 16px 18px 14px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .invoice-header.paid   { background: linear-gradient(135deg, #059669, #06D6A0); }
+    .invoice-header.open   { background: linear-gradient(135deg, #8A05BE, #BB77E0); }
+    .invoice-header.future { background: linear-gradient(135deg, #D97706, #FBBF24); }
+    .invoice-header.empty  { background: linear-gradient(135deg, #9CA3AF, #D1D5DB); }
+    .invoice-month { font-size: 13px; color: rgba(255,255,255,0.85); font-weight: 600; }
+    .invoice-due   { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+    .invoice-total { font-size: 24px; font-weight: 800; color: #fff; }
+    .invoice-total-label { font-size: 10px; color: rgba(255,255,255,0.75); text-align: right; }
+
+    /* ─── TRANSACTIONS ──────────────────────────────────────── */
+    .transactions { background: var(--nu-gray); border-radius: 0 0 16px 16px; }
+    .tx-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 18px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    .tx-item:last-child { border-bottom: none; }
+    .tx-left  { display: flex; align-items: center; gap: 12px; }
+    .tx-icon  {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--nu-purple); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .tx-icon.paid-icon   { background: #059669; }
+    .tx-icon.future-icon { background: #D97706; }
+    .tx-icon.empty-icon  { background: #9CA3AF; }
+    .tx-store  { font-size: 14px; font-weight: 700; color: var(--nu-text); }
+    .tx-detail { font-size: 11px; color: var(--nu-muted); margin-top: 2px; }
+    .tx-right  { text-align: right; }
+    .tx-value  { font-size: 15px; font-weight: 800; color: var(--nu-text); }
+    .tx-value.paid   { color: #059669; }
+    .tx-value.future { color: #D97706; }
+    .tx-date   { font-size: 11px; color: var(--nu-muted); margin-top: 2px; }
+    .tx-status {
+      font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
+      display: inline-block; margin-top: 3px;
+    }
+    .status-paid   { background: #E8FBF4; color: #059669; }
+    .status-future { background: #FEF3C7; color: #D97706; }
+
+    /* ─── DIVIDER ───────────────────────────────────────────── */
+    .divider {
+      font-size: 12px; font-weight: 700; color: var(--nu-muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      padding: 8px 0 4px; margin: 8px 0;
+      border-top: 1px solid #EBEBF5;
+    }
+
+    /* ─── EMPTY STATE ───────────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 20px 18px;
+      background: var(--nu-gray);
+    }
+    .empty-state p { font-size: 13px; color: var(--nu-muted); }
+
+    /* ─── BOTTOM NAV ─────────────────────────────────────────── */
+    .bottom-nav {
+      width: 100%; max-width: 480px;
+      background: #fff;
+      padding: 12px 0 6px;
+      display: flex; justify-content: space-around;
+      position: sticky; bottom: 0;
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 3px; font-size: 10px; font-weight: 600;
+      color: var(--nu-muted); cursor: pointer;
+    }
+    .nav-item.active { color: var(--nu-purple); }
+    .nav-item .nav-icon { font-size: 22px; }
+
+    /* ─── TOTALS SUMMARY ─────────────────────────────────────── */
+    .summary-box {
+      background: var(--nu-gray); border-radius: 14px;
+      padding: 16px 18px; margin-bottom: 22px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .summary-row {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .summary-label { font-size: 13px; color: var(--nu-muted); }
+    .summary-value { font-size: 14px; font-weight: 700; }
+    .summary-value.avail { color: var(--nu-purple); font-size: 16px; }
+    .summary-divider { border: none; border-top: 1px solid #DDDDF0; margin: 2px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="logo">nu<span>bank</span></div>
+    </div>
+    <div class="greeting">
+      <span>Olá,</span>
+      <strong>Adriana 👋</strong>
+    </div>
+    <div class="avatar">A</div>
+  </div>
+
+  <!-- CREDIT CARD -->
+  <div class="card-wrap">
+    <div class="credit-card">
+      <div class="card-top">
+        <div class="card-chip"></div>
+        <div class="card-network">MASTERCARD</div>
+      </div>
+      <div>
+        <div class="card-limit-label">Limite total do cartão</div>
+        <div class="card-limit-value">R$ 4.100,00</div>
+      </div>
+      <div class="card-bottom">
+        <div class="card-name">ADRIANA</div>
+        <div class="card-number">•••• •••• •••• 0000</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIMIT BAR -->
+  <div class="limit-box">
+    <div class="limit-info">
+      <span>Limite disponível</span>
+      <strong>R$ 4.100,00</strong>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill"></div>
+    </div>
+    <div class="limit-info" style="margin-top:6px; margin-bottom:0;">
+      <span style="font-size:11px;">R$ 0,00 utilizados</span>
+      <span style="font-size:11px;">de R$ 4.100,00</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+
+    <!-- ═══ FATURA FEVEREIRO — PAGA ═══ -->
+    <div class="section-header">
+      <div class="section-title"><span class="icon">✅</span> Fatura Fevereiro</div>
+      <span class="badge badge-paid">PAGA</span>
+    </div>
+
+    <div class="invoice-card">
+      <div class="invoice-header paid">
+        <div>
+          <div class="invoice-month">Fevereiro 2026</div>
+          <div class="invoice-due">Vencimento: 20/02/2026</div>
+        </div>
+        <div>
+          <div class="invoice-total-label">Total pago</div>
+          <div class="invoice-total">R$ 55,00</div>
+        </div>
+      </div>
+      <div class="transactions">
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🏪</div>
+            <div>
+              <div class="tx-store">LW SERTÂNIA</div>
+              <div class="tx-detail">Parcela 1/3 · Compra no crédito</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 55,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ FATURA MARÇO — PAGA ═══ -->
+    <div class="section-header">
+      <div class="section-title"><span class="icon">✅</span> Fatura Março</div>
+      <span class="badge badge-paid">PAGA</span>
+    </div>
+
+    <div class="invoice-card">
+      <div class="invoice-header paid">
+        <div>
+          <div class="invoice-month">Março 2026</div>
+          <div class="invoice-due">Vencimento: 20/03/2026</div>
+        </div>
+        <div>
+          <div class="invoice-total-label">Total pago</div>
+          <div class="invoice-total">R$ 203,48</div>
+        </div>
+      </div>
+      <div class="transactions">
+
+        <!-- LW Sertânia -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🏪</div>
+            <div>
+              <div class="tx-store">LW SERTÂNIA</div>
+              <div class="tx-detail">Parcela 2/3 · Vence 20/03/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 55,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Danila Barbosa -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">✂️</div>
+            <div>
+              <div class="tx-store">DANILA BARBOSA</div>
+              <div class="tx-detail">Parcela 1/2 · Compra 18/02/2026 · R$ 30,00</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 15,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Caprichosa -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🛍️</div>
+            <div>
+              <div class="tx-store">CAPRICHOSA</div>
+              <div class="tx-detail">Compra à vista · 18/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 23,09</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Farmácia São Paulo -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">💊</div>
+            <div>
+              <div class="tx-store">FARMÁCIA SÃO PAULO</div>
+              <div class="tx-detail">Compra à vista · 18/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 22,50</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Mundo Real -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🌐</div>
+            <div>
+              <div class="tx-store">MUNDO REAL</div>
+              <div class="tx-detail">Compra à vista · 18/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 6,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Caprichosa 25/02 -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🛍️</div>
+            <div>
+              <div class="tx-store">CAPRICHOSA</div>
+              <div class="tx-detail">Compra à vista · 25/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 24,89</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Viviane de Araujo 25/02 -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">💅</div>
+            <div>
+              <div class="tx-store">VIVIANE DE ARAUJO</div>
+              <div class="tx-detail">Compra à vista · 25/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 25,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Farmácia Diariamente 25/02 -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">💊</div>
+            <div>
+              <div class="tx-store">FARMÁCIA DIARIAMENTE</div>
+              <div class="tx-detail">Compra à vista · 25/02/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 32,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ FATURA ABRIL — PAGA ═══ -->
+    <div class="section-header">
+      <div class="section-title"><span class="icon">✅</span> Fatura Abril</div>
+      <span class="badge badge-paid">PAGA</span>
+    </div>
+
+    <div class="invoice-card">
+      <div class="invoice-header paid">
+        <div>
+          <div class="invoice-month">Abril 2026</div>
+          <div class="invoice-due">Vencimento: 20/04/2026</div>
+        </div>
+        <div>
+          <div class="invoice-total-label">Total pago</div>
+          <div class="invoice-total">R$ 70,00</div>
+        </div>
+      </div>
+      <div class="transactions">
+
+        <!-- LW Sertânia Abril -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">🏪</div>
+            <div>
+              <div class="tx-store">LW SERTÂNIA</div>
+              <div class="tx-detail">Parcela 3/3 · Vence 20/04/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 55,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+        <!-- Danila Barbosa Abril -->
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-icon paid-icon">✂️</div>
+            <div>
+              <div class="tx-store">DANILA BARBOSA</div>
+              <div class="tx-detail">Parcela 2/2 · Vence 20/04/2026</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-value paid">R$ 15,00</div>
+            <span class="tx-status status-paid">Pago</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ FATURAS POSTERIORES ═══ -->
+    <div class="section-header">
+      <div class="section-title"><span class="icon">🎉</span> Tudo zerado!</div>
+    </div>
+
+    <div class="invoice-card">
+      <div class="invoice-header paid">
+        <div>
+          <div class="invoice-month">Maio 2026 em diante</div>
+          <div class="invoice-due">Nenhuma dívida pendente</div>
+        </div>
+        <div>
+          <div class="invoice-total-label">Saldo devedor</div>
+          <div class="invoice-total">R$ 0,00</div>
+        </div>
+      </div>
+      <div class="empty-state">
+        <p>🎉 Parabéns! Você não deve nada.<br/>Limite totalmente disponível: <strong>R$ 4.100,00</strong></p>
+      </div>
+    </div>
+
+    <!-- ═══ RESUMO DO LIMITE ═══ -->
+    <div class="section-header">
+      <div class="section-title"><span class="icon">💳</span> Resumo do Limite</div>
+    </div>
+
+    <div class="summary-box">
+      <div class="summary-row">
+        <span class="summary-label">Limite total</span>
+        <span class="summary-value">R$ 4.100,00</span>
+      </div>
+      <hr class="summary-divider" />
+      <div class="summary-row">
+        <span class="summary-label">Total pago em faturas</span>
+        <span class="summary-value" style="color:#059669;">R$ 273,48</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Saldo devedor atual</span>
+        <span class="summary-value" style="color:#059669;">R$ 0,00</span>
+      </div>
+      <hr class="summary-divider" />
+      <div class="summary-row">
+        <span class="summary-label" style="font-weight:700; color:#1A1A2E;">Limite disponível</span>
+        <span class="summary-value avail">R$ 4.100,00</span>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <span class="nav-icon">🏠</span>
+      Início
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">💳</span>
+      Cartão
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">💰</span>
+      Pagar
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      Mais
+    </div>
+  </div>
+
+</body>
+</html>

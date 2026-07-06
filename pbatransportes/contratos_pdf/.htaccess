@@ -1,0 +1,5 @@
+Options +Indexes
+<Files "*.pdf">
+    Header set Content-Type "application/pdf"
+    Header set Content-Disposition "inline"
+</Files>
