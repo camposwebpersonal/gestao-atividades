@@ -193,29 +193,55 @@ window.ccDeleteCategoria = async function(id, secId){
 window.ccOpenLocalModal = function(id, itemId){
   const local = id ? S.subitems.find(s=>s.id===id) : null;
   const ef = local ? (local.extra_fields||{}) : {};
+  const standardKeys = ['Número do Relógio','Conta Contrato','Endereço','Medidor'];
+  const existingKeysNorm = Object.keys(ef).map(k=>_ccNorm(k));
+  const allFields = [];
+  Object.entries(ef).forEach(([k,v])=>allFields.push({k,v}));
+  standardKeys.forEach(k=>{ if(!existingKeysNorm.some(ek=>ek.includes(_ccNorm(k)))) allFields.push({k,v:''}); });
+  const fieldsHtml = allFields.map(f=>`
+    <div class="form-group cc-dynamic-field">
+      <div style="display:flex;gap:8px;align-items:center;width:100%">
+        <input class="cc-field-key" value="${esc(f.k)}" placeholder="Nome do campo" style="flex:1;min-width:120px">
+        <input class="cc-field-val" value="${esc(f.v)}" placeholder="Valor" style="flex:2;min-width:180px">
+        <button class="card-btn" type="button" onclick="this.closest('.cc-dynamic-field').remove()">🗑️</button>
+      </div>
+    </div>`).join('');
   openModal(id ? '✏️ Editar Local' : '➕ Novo Local', '',
     `<div class="form-grid">
       <div class="form-group full"><label>Nome do Local *</label><input id="cc-local-name" value="${esc(local?.description||'')}"></div>
-      <div class="form-group"><label>Número do Relógio</label><input id="cc-local-relogio" value="${esc(_ccLocalExtraFields(local).numero_relogio)}" placeholder="Ex: 123456"></div>
-      <div class="form-group"><label>Conta/Contrato</label><input id="cc-local-contrato" value="${esc(_ccLocalExtraFields(local).conta_contrato)}" placeholder="Ex: 987654"></div>
-      <div class="form-group full"><label>Endereço</label><input id="cc-local-endereco" value="${esc(_ccLocalExtraFields(local).endereco)}" placeholder="Ex: Rua..."></div>
+      <div class="form-group full" style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:4px">
+        <label>Campos do local</label>
+        <button class="btn-action" style="font-size:12px;padding:5px 10px" type="button" onclick="ccAddLocalField()">+ Adicionar campo</button>
+      </div>
+      <div class="cc-fields-container" style="display:contents">${fieldsHtml}</div>
     </div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="ccDeleteLocal('${id}','${itemId}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveLocal('${id||''}','${itemId}')">💾 Salvar</button></div>`);
+};
+
+window.ccAddLocalField = function(){
+  const container = document.querySelector('.cc-fields-container');
+  if(!container) return;
+  container.insertAdjacentHTML('beforeend', `
+    <div class="form-group cc-dynamic-field">
+      <div style="display:flex;gap:8px;align-items:center;width:100%">
+        <input class="cc-field-key" value="" placeholder="Nome do campo" style="flex:1;min-width:120px">
+        <input class="cc-field-val" value="" placeholder="Valor" style="flex:2;min-width:180px">
+        <button class="card-btn" type="button" onclick="this.closest('.cc-dynamic-field').remove()">🗑️</button>
+      </div>
+    </div>`);
 };
 
 window.ccSaveLocal = async function(id, itemId){
   const name = document.getElementById('cc-local-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const local = id ? S.subitems.find(s=>s.id===id) : null;
-  const ef = {...((local && local.extra_fields) || {})};
-  const rel = document.getElementById('cc-local-relogio')?.value.trim();
-  const contr = document.getElementById('cc-local-contrato')?.value.trim();
-  const end = document.getElementById('cc-local-endereco')?.value.trim();
-  const setEf = (frag, defKey, val) => { const k = _ccFindKey(ef, frag) || defKey; if(val) ef[k] = val; else if(k in ef) delete ef[k]; };
-  setEf('RELOGIO', 'Número do Relógio', rel);
-  setEf('CONTA CONTRATO', 'Conta Contrato', contr);
-  setEf('ENDERECO', 'Endereço', end);
-  const data = {description:name, item_id:itemId, parent_type:'item', concluded:0, extra_fields:ef, updated_at:serverTimestamp()};
+  const newEf = {};
+  document.querySelectorAll('.cc-dynamic-field').forEach(el => {
+    const k = el.querySelector('.cc-field-key')?.value.trim();
+    const v = el.querySelector('.cc-field-val')?.value.trim();
+    if(k) newEf[k] = v;
+  });
+  const data = {description:name, item_id:itemId, parent_type: local?.parent_type || 'item', concluded:0, extra_fields:newEf, updated_at:serverTimestamp()};
   if(id){ await updateDoc(doc(db,'subitems',id),data); }
   else { data.order_num = S.subitems.filter(s=>s.item_id===itemId).length; data.created_at=serverTimestamp(); await addDoc(collection(db,'subitems'),data); }
   await loadData(); closeModal(); toast('Salvo!'); renderControleContas(curSecId);
