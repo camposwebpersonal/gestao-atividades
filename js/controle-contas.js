@@ -4,6 +4,8 @@ const CC_TIPOS = ['Luz','Água','Aluguel','Apólice','Seguro','Telefone','Intern
 
 const ccEsc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 if (typeof window.esc !== 'function') window.esc = ccEsc;
+if (typeof window.fmtD !== 'function') window.fmtD = d => { if(!d) return '—'; try { return new Date(d+'T00:00').toLocaleDateString('pt-BR'); } catch { return d; } };
+if (typeof window.setC !== 'function') window.setC = h => document.getElementById('content').innerHTML = h;
 
 function _ccLocalExtraFields(local){
   const ef = (local && local.extra_fields) || {};
