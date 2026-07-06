@@ -10,6 +10,11 @@
   let ativId;
   if (ativ) {
     ativId = ativ.id;
+    if ((S.contas || []).some(c => c.atividade_id === ativId)) {
+      toast('Dados CELPE já importados anteriormente. Importação cancelada para evitar duplicatas.', 'error', 6000);
+      console.warn('Importação abortada: já existem contas para a atividade', ativId);
+      return;
+    }
     await updateDoc(doc(db, 'secretariats', ativId), { controle_contas: true, controle_pendencias: 0, updated_at: serverTimestamp() });
     console.log('Atividade existente atualizada:', ativId);
   } else {
@@ -89,4 +94,5 @@
   await loadData();
   toast('Importação CELPE concluída!','success',5000);
   console.log('IMPORTAÇÃO CONCLUÍDA');
+  if (typeof openActivity === 'function') openActivity(ativId);
 })();

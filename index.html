@@ -472,6 +472,16 @@ onAuthStateChanged(auth,async u=>{
       }catch(e){console.error(e);toast('Erro na importação: '+e.message,'error');}
     },800);
   }
+  if(_imp==='celpe'&&S.isAdmin){
+    setTimeout(()=>{
+      toast('Iniciando importação CELPE…','info',3000);
+      const sc=document.createElement('script');
+      sc.src='importar-contas-celpe.js?v='+Date.now();
+      sc.onload=()=>history.replaceState(null,'',location.pathname);
+      sc.onerror=()=>toast('Erro ao carregar script de importação','error');
+      document.body.appendChild(sc);
+    },800);
+  }
 });
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
