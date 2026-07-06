@@ -2,6 +2,9 @@
 
 const CC_TIPOS = ['Luz','Água','Aluguel','Apólice','Seguro','Telefone','Internet','Outros'];
 
+const ccEsc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+if (typeof window.esc !== 'function') window.esc = ccEsc;
+
 function _ccLocalExtraFields(local){
   const ef = (local && local.extra_fields) || {};
   return {
