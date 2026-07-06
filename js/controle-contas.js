@@ -7,13 +7,18 @@ if (typeof window.esc !== 'function') window.esc = ccEsc;
 if (typeof window.fmtD !== 'function') window.fmtD = d => { if(!d) return '—'; try { return new Date(d+'T00:00').toLocaleDateString('pt-BR'); } catch { return d; } };
 if (typeof window.setC !== 'function') window.setC = h => document.getElementById('content').innerHTML = h;
 
+const _ccNorm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+function _ccFindKey(ef, frag){
+  return Object.keys(ef).find(k => _ccNorm(k).includes(_ccNorm(frag))) || null;
+}
 function _ccLocalExtraFields(local){
   const ef = (local && local.extra_fields) || {};
+  const get = frag => { const k = _ccFindKey(ef, frag); return k ? ef[k] : ''; };
   return {
-    numero_relogio: ef['Número do Relógio'] || ef['Numero do Relogio'] || '',
-    conta_contrato: ef['Conta Contrato'] || ef['Conta/Contrato'] || '',
-    endereco: ef['Endereço'] || ef['Endereco'] || '',
-    medidor: ef['Medidor'] || '',
+    numero_relogio: get('RELOGIO'),
+    conta_contrato: get('CONTA CONTRATO') || get('CONTRATO'),
+    endereco: get('ENDERECO'),
+    medidor: get('MEDIDOR'),
   };
 }
 
@@ -50,11 +55,8 @@ window.renderControleContas = function(secId){
       const locPendente = locTotal - locPago;
       totalGeral += locTotal; totalPago += locPago; totalPendente += locPendente;
       qtdTotal += locRows.length; qtdPago += locRows.filter(c=>c.pago).length; qtdPendente += locRows.filter(c=>!c.pago).length;
-      const extra = _ccLocalExtraFields(local);
-      const headMeta = [];
-      if(extra.numero_relogio) headMeta.push('Relógio: '+extra.numero_relogio);
-      if(extra.conta_contrato) headMeta.push('Contrato: '+extra.conta_contrato);
-      if(extra.endereco) headMeta.push('End.: '+extra.endereco);
+      const efAll = (local && local.extra_fields) || {};
+      const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
       const tableRows = locRows.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
@@ -194,9 +196,9 @@ window.ccOpenLocalModal = function(id, itemId){
   openModal(id ? '✏️ Editar Local' : '➕ Novo Local', '',
     `<div class="form-grid">
       <div class="form-group full"><label>Nome do Local *</label><input id="cc-local-name" value="${esc(local?.description||'')}"></div>
-      <div class="form-group"><label>Número do Relógio</label><input id="cc-local-relogio" value="${esc(ef['Número do Relógio']||'')}" placeholder="Ex: 123456"></div>
-      <div class="form-group"><label>Conta/Contrato</label><input id="cc-local-contrato" value="${esc(ef['Conta Contrato']||'')}" placeholder="Ex: 987654"></div>
-      <div class="form-group full"><label>Endereço</label><input id="cc-local-endereco" value="${esc(ef['Endereço']||'')}" placeholder="Ex: Rua..."></div>
+      <div class="form-group"><label>Número do Relógio</label><input id="cc-local-relogio" value="${esc(_ccLocalExtraFields(local).numero_relogio)}" placeholder="Ex: 123456"></div>
+      <div class="form-group"><label>Conta/Contrato</label><input id="cc-local-contrato" value="${esc(_ccLocalExtraFields(local).conta_contrato)}" placeholder="Ex: 987654"></div>
+      <div class="form-group full"><label>Endereço</label><input id="cc-local-endereco" value="${esc(_ccLocalExtraFields(local).endereco)}" placeholder="Ex: Rua..."></div>
     </div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="ccDeleteLocal('${id}','${itemId}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveLocal('${id||''}','${itemId}')">💾 Salvar</button></div>`);
 };
@@ -204,13 +206,15 @@ window.ccOpenLocalModal = function(id, itemId){
 window.ccSaveLocal = async function(id, itemId){
   const name = document.getElementById('cc-local-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
-  const ef = {};
+  const local = id ? S.subitems.find(s=>s.id===id) : null;
+  const ef = {...((local && local.extra_fields) || {})};
   const rel = document.getElementById('cc-local-relogio')?.value.trim();
   const contr = document.getElementById('cc-local-contrato')?.value.trim();
   const end = document.getElementById('cc-local-endereco')?.value.trim();
-  if(rel) ef['Número do Relógio'] = rel;
-  if(contr) ef['Conta Contrato'] = contr;
-  if(end) ef['Endereço'] = end;
+  const setEf = (frag, defKey, val) => { const k = _ccFindKey(ef, frag) || defKey; if(val) ef[k] = val; else if(k in ef) delete ef[k]; };
+  setEf('RELOGIO', 'Número do Relógio', rel);
+  setEf('CONTA CONTRATO', 'Conta Contrato', contr);
+  setEf('ENDERECO', 'Endereço', end);
   const data = {description:name, item_id:itemId, parent_type:'item', concluded:0, extra_fields:ef, updated_at:serverTimestamp()};
   if(id){ await updateDoc(doc(db,'subitems',id),data); }
   else { data.order_num = S.subitems.filter(s=>s.item_id===itemId).length; data.created_at=serverTimestamp(); await addDoc(collection(db,'subitems'),data); }
