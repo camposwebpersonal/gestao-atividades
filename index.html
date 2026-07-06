@@ -482,6 +482,17 @@ onAuthStateChanged(auth,async u=>{
       document.body.appendChild(sc);
     },800);
   }
+  const _corr=new URLSearchParams(location.search).get('corrigir');
+  if(_corr==='celpe'&&S.isAdmin){
+    setTimeout(()=>{
+      toast('Iniciando correção CELPE…','info',3000);
+      const sc=document.createElement('script');
+      sc.src='corrigir-contas-celpe.js?v='+Date.now();
+      sc.onload=()=>history.replaceState(null,'',location.pathname);
+      sc.onerror=()=>toast('Erro ao carregar script de correção','error');
+      document.body.appendChild(sc);
+    },800);
+  }
 });
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
