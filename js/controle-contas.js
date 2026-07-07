@@ -164,9 +164,20 @@ window.renderControleContas = function(secId){
   const proximas = pendComData.filter(x=>x.dias>=0 && x.dias<=30);
   const totVencido = vencidas.reduce((a,x)=>a+(parseFloat(x.c.valor)||0),0);
   const totProximo = proximas.reduce((a,x)=>a+(parseFloat(x.c.valor)||0),0);
-  const LIM_LINHAS = 12;
-  const linhas = [...vencidas, ...proximas];
-  const linhasHtml = linhas.slice(0,LIM_LINHAS).map(x=>{
+  const vencOrdem = document.getElementById('cc-venc-ordem')?.value || 'asc';
+  let linhas = [...vencidas, ...proximas];
+  if(vencOrdem === 'desc') linhas = [...linhas].reverse();
+  // resumo quantitativo por categoria (item)
+  const porCat = {};
+  linhas.forEach(x=>{
+    const k = x.catNome || 'Sem categoria';
+    if(!porCat[k]) porCat[k] = { qtd: 0, valor: 0 };
+    porCat[k].qtd++; porCat[k].valor += (parseFloat(x.c.valor)||0);
+  });
+  const resumoCatHtml = Object.entries(porCat).sort((a,b)=>b[1].valor-a[1].valor).map(([k,v])=>
+    `<span class="cc-badge" style="font-size:11px"><b>${esc(k)}</b>: ${v.qtd} lanç. — R$ ${v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
+  ).join(' ');
+  const linhasHtml = linhas.map(x=>{
     const venc = x.dias<0;
     const cor = venc ? '#f87171' : (x.dias<=7 ? '#f59e0b' : '#fbbf24');
     const status = venc ? `VENCIDA há ${-x.dias} dia(s)` : (x.dias===0 ? 'VENCE HOJE' : `vence em ${x.dias} dia(s)`);
@@ -183,9 +194,14 @@ window.renderControleContas = function(secId){
       <div style="font-size:14px;font-weight:800">⏰ Vencimentos</div>
       ${vencidas.length?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${vencidas.length} vencida(s): R$ ${totVencido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
       ${proximas.length?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${proximas.length} nos próximos 30 dias: R$ ${totProximo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+      <div style="flex:1"></div>
+      <select id="cc-venc-ordem" onchange="renderControleContas('${secId}')" style="font-size:12px;padding:4px 8px;border-radius:8px;background:var(--card,#1e293b);color:inherit;border:1px solid rgba(255,255,255,.15)">
+        <option value="asc" ${vencOrdem==='asc'?'selected':''}>Mais antiga → mais recente</option>
+        <option value="desc" ${vencOrdem==='desc'?'selected':''}>Mais recente → mais antiga</option>
+      </select>
     </div>
+    ${resumoCatHtml?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)">${resumoCatHtml}</div>`:''}
     ${linhasHtml}
-    ${linhas.length>LIM_LINHAS?`<div style="font-size:11px;color:var(--muted);margin-top:6px">+ ${linhas.length-LIM_LINHAS} outro(s) lançamento(s) pendente(s) — use o filtro "Pendente" para ver todos.</div>`:''}
   </div>` : '';
 
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
