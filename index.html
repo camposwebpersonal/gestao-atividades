@@ -482,6 +482,16 @@ onAuthStateChanged(auth,async u=>{
       document.body.appendChild(sc);
     },800);
   }
+  if(_imp==='seguros'&&S.isAdmin){
+    setTimeout(()=>{
+      toast('Iniciando importação SEGUROS…','info',3000);
+      const sc=document.createElement('script');
+      sc.src='importar-seguros.js?v='+Date.now();
+      sc.onload=()=>history.replaceState(null,'',location.pathname);
+      sc.onerror=()=>toast('Erro ao carregar script de importação','error');
+      document.body.appendChild(sc);
+    },800);
+  }
   const _reimp=new URLSearchParams(location.search).get('reimportar');
   if(_reimp==='celpe'&&S.isAdmin){
     setTimeout(()=>{
