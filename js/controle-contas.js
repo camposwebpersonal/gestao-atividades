@@ -147,6 +147,47 @@ window.renderControleContas = function(secId){
   const tipoOptions = CC_TIPOS.map(t=>`<option value="${esc(t)}" ${t===tipoFiltro?'selected':''}>${esc(t)}</option>`).join('');
   const currentYear = String(new Date().getFullYear());
 
+  // ── PAINEL DE VENCIMENTOS (vencidas + próximas a vencer) ──
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const fmtBR = d => { const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
+  const pendComData = S.contas
+    .filter(c => c.atividade_id===secId && !c.pago && c.data_vencimento)
+    .map(c => {
+      const dt = new Date(c.data_vencimento+'T00:00:00');
+      const dias = Math.round((dt-hoje)/86400000);
+      const local = S.subitems.find(s=>s.id===c.subitem_id);
+      const cat = S.items.find(i=>i.id===c.item_id);
+      return { c, dias, localNome: local?.description||'—', catNome: cat?.description||'' };
+    })
+    .sort((a,b)=>a.dias-b.dias);
+  const vencidas = pendComData.filter(x=>x.dias<0);
+  const proximas = pendComData.filter(x=>x.dias>=0 && x.dias<=30);
+  const totVencido = vencidas.reduce((a,x)=>a+(parseFloat(x.c.valor)||0),0);
+  const totProximo = proximas.reduce((a,x)=>a+(parseFloat(x.c.valor)||0),0);
+  const LIM_LINHAS = 12;
+  const linhas = [...vencidas, ...proximas];
+  const linhasHtml = linhas.slice(0,LIM_LINHAS).map(x=>{
+    const venc = x.dias<0;
+    const cor = venc ? '#f87171' : (x.dias<=7 ? '#f59e0b' : '#fbbf24');
+    const status = venc ? `VENCIDA há ${-x.dias} dia(s)` : (x.dias===0 ? 'VENCE HOJE' : `vence em ${x.dias} dia(s)`);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
+      <span style="font-weight:800;color:${cor};min-width:86px">${fmtBR(x.c.data_vencimento)}</span>
+      <span style="font-size:11px;font-weight:700;color:${cor};min-width:130px">${venc?'🔴':(x.dias<=7?'🟠':'🟡')} ${status}</span>
+      <span style="flex:1;min-width:160px;font-size:12px">${esc(x.localNome)}${x.catNome?` <span style="color:var(--muted);font-size:11px">(${esc(x.catNome)})</span>`:''}</span>
+      <span style="font-size:12px;color:var(--muted)">${esc(x.c.tipo||'')}</span>
+      <span style="font-weight:800;min-width:100px;text-align:right">R$ ${(parseFloat(x.c.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+    </div>`;
+  }).join('');
+  const alertPanel = linhas.length ? `<div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:800">⏰ Vencimentos</div>
+      ${vencidas.length?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${vencidas.length} vencida(s): R$ ${totVencido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+      ${proximas.length?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${proximas.length} nos próximos 30 dias: R$ ${totProximo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+    </div>
+    ${linhasHtml}
+    ${linhas.length>LIM_LINHAS?`<div style="font-size:11px;color:var(--muted);margin-top:6px">+ ${linhas.length-LIM_LINHAS} outro(s) lançamento(s) pendente(s) — use o filtro "Pendente" para ver todos.</div>`:''}
+  </div>` : '';
+
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="setView('ativ')">← Voltar</button>
     <div style="flex:1;min-width:60px"></div>
@@ -165,6 +206,7 @@ window.renderControleContas = function(secId){
     <div class="stat-card"><div class="stat-val" style="color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Pendente</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${qtdPago}/${qtdTotal}</div><div class="stat-lbl">Pagas</div></div>
   </div>
+  ${alertPanel}
   <div class="cc-filtros">
     <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
     <select id="cc-filtro-ano" onchange="renderControleContas('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
