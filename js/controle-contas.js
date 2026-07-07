@@ -32,6 +32,7 @@ window.renderControleContas = function(secId){
 
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
+  const colsOff = new Set(sec.cc_cols_ocultas || []);
 
   const categoriasHtml = items.map((item, idx)=>{
     const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -63,10 +64,10 @@ window.renderControleContas = function(secId){
       const tableRows = locRows.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
         return `<tr class="${pagoCls}">
-          <td>${esc(c.mes_ano||'—')}</td>
-          <td>${esc(c.tipo||'—')}</td>
-          <td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>
-          <td><input type="text" value="${esc(c.consumo_kwh||'')}" onchange="ccSalvarCampo('${c.id}','consumo_kwh',this.value)" placeholder="kWh"></td>
+          ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
+          ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
+          ${colsOff.has('leitura')?'':`<td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>`}
+          ${colsOff.has('consumo')?'':`<td><input type="text" value="${esc(c.consumo_kwh||'')}" onchange="ccSalvarCampo('${c.id}','consumo_kwh',this.value)" placeholder="kWh"></td>`}
           <td><input type="number" step="0.01" value="${esc(String(c.valor||''))}" onchange="ccSalvarCampo('${c.id}','valor',this.value)" placeholder="R$"></td>
           <td><input type="date" value="${esc(c.data_vencimento||'')}" onchange="ccSalvarCampo('${c.id}','data_vencimento',this.value)"></td>
           <td><input type="date" value="${esc(c.data_pagamento||'')}" onchange="ccSalvarCampo('${c.id}','data_pagamento',this.value)"></td>
@@ -79,8 +80,8 @@ window.renderControleContas = function(secId){
       const mobileRows = locRows.map(c=>{
         return `<div class="cc-mobile-card">
           <div class="cc-mobile-title">${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
-          <div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>
-          <div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>
+          ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
+          ${colsOff.has('consumo')?'':`<div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>`}
           <div class="cc-mobile-row"><span>Valor</span><span>R$ ${esc(String((parseFloat(c.valor)||0).toFixed(2)))}</span></div>
           <div class="cc-mobile-row"><span>Vencimento</span><span>${fmtD(c.data_vencimento)}</span></div>
           <div class="cc-mobile-row"><span>Pagamento</span><span>${fmtD(c.data_pagamento)}</span></div>
@@ -104,9 +105,9 @@ window.renderControleContas = function(secId){
           <div class="cc-table-wrap">
             <table class="cc-table">
               <thead><tr>
-                <th>Mês/Ano</th><th>Tipo</th><th>Leitura</th><th>Consumo</th><th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th></th>
+                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th></th>
               </tr></thead>
-              <tbody>${tableRows || '<tr><td colspan="10" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>'}</tbody>
+              <tbody>${tableRows || `<tr><td colspan="${10-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
             </table>
           </div>
           ${mobileRows}
@@ -189,6 +190,59 @@ window.renderControleContas = function(secId){
       <span style="font-weight:800;min-width:100px;text-align:right">R$ ${(parseFloat(x.c.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
     </div>`;
   }).join('');
+  // ── PAINEL DE VIGÊNCIA DAS APÓLICES (por local/veículo) ──
+  const _efGet = (ef, frag) => {
+    for(const [k,v] of Object.entries(ef||{})){
+      if(_ccNorm(k).includes(_ccNorm(frag))) return String(v||'').trim();
+    }
+    return '';
+  };
+  const vigItens = [];
+  S.subitems.filter(s=>s.parent_type!=='subitem' && (s.atividade_id===secId || items.some(i=>i.id===s.item_id))).forEach(loc=>{
+    const vig = _efGet(loc.extra_fields, 'VIGENCIA');
+    const m = vig.match(/(\d{2}\/\d{2}\/\d{4})\s*(?:a|até|-)\s*(\d{2}\/\d{2}\/\d{4})/i);
+    if(!m) return;
+    const [d2,m2,y2] = m[2].split('/');
+    const fim = new Date(`${y2}-${m2}-${d2}T00:00:00`);
+    const dias = Math.round((fim-hoje)/86400000);
+    if(dias > 30) return; // sem alarme ainda
+    const resp = _efGet(loc.extra_fields, 'RESPONSAVEL');
+    const zap = _efGet(loc.extra_fields, 'WHATSAPP').replace(/\D/g,'');
+    vigItens.push({ loc, vig, fimStr: m[2], dias, resp, zap });
+  });
+  vigItens.sort((a,b)=>a.dias-b.dias);
+  const vigRows = vigItens.map(x=>{
+    let cor, icone, status;
+    if(x.dias < 0){ cor='#f87171'; icone='🔴'; status=`APÓLICE VENCIDA há ${-x.dias} dia(s)`; }
+    else if(x.dias === 0){ cor='#f87171'; icone='🚨'; status='VENCE HOJE'; }
+    else if(x.dias <= 15){ cor='#f59e0b'; icone='🟠'; status=`vence em ${x.dias} dia(s) (≤15)`; }
+    else { cor='#fbbf24'; icone='🟡'; status=`vence em ${x.dias} dia(s) (≤30)`; }
+    const placa = _efGet(x.loc.extra_fields,'PLACA');
+    const msg = encodeURIComponent(`⚠️ ALERTA DE SEGURO — ${x.loc.description}${placa?` (placa ${placa})`:''}: a vigência da apólice ${x.dias<0?`VENCEU há ${-x.dias} dia(s)`:x.dias===0?'VENCE HOJE':`vence em ${x.dias} dia(s)`} (${x.fimStr}). Favor providenciar a renovação.`);
+    const zapBtn = x.zap ? `<a class="btn-action" style="font-size:11px;padding:4px 10px;text-decoration:none" target="_blank" href="https://wa.me/${x.zap.length<=11?'55'+x.zap:x.zap}?text=${msg}">📱 WhatsApp${x.resp?' ('+esc(x.resp.split(' ')[0])+')':''}</a>` : `<span style="font-size:11px;color:var(--muted)">sem WhatsApp — edite o local e preencha RESPONSÁVEL e WHATSAPP</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
+      <span style="font-weight:800;color:${cor};min-width:86px">${esc(x.fimStr)}</span>
+      <span style="font-size:11px;font-weight:700;color:${cor};min-width:170px">${icone} ${status}</span>
+      <span style="flex:1;min-width:160px;font-size:12px">${esc(x.loc.description)}${x.resp?` <span style="color:var(--muted);font-size:11px">— Resp.: ${esc(x.resp)}</span>`:''}</span>
+      ${zapBtn}
+      ${S.isAdmin?`<button class="btn-action" style="font-size:11px;padding:4px 10px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="ccOpenRenovarModal('${x.loc.id}')">✅ Renovado</button>`:''}
+    </div>`;
+  }).join('');
+  const nVigVencidas = vigItens.filter(x=>x.dias<0).length;
+  const nVigProximas = vigItens.length - nVigVencidas;
+  const vigPanel = vigItens.length ? `<div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.35);border-radius:12px;padding:12px 16px;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="font-size:14px;font-weight:800">🛡️ Vigência das Apólices</div>
+      ${nVigVencidas?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${nVigVencidas} vencida(s)</span>`:''}
+      ${nVigProximas?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${nVigProximas} vencendo em até 30 dias</span>`:''}
+    </div>
+    ${vigRows}
+  </div>` : '';
+  if(vigItens.length && !window.__ccVigAlarme){
+    window.__ccVigAlarme = true;
+    setTimeout(()=>toast(`🛡️ Atenção: ${nVigVencidas?nVigVencidas+' apólice(s) VENCIDA(S)':''}${nVigVencidas&&nVigProximas?' e ':''}${nVigProximas?nVigProximas+' apólice(s) vencendo em até 30 dias':''}!`,'error',7000),400);
+  }
+
   const alertPanel = linhas.length ? `<div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-size:14px;font-weight:800">⏰ Vencimentos</div>
@@ -209,6 +263,7 @@ window.renderControleContas = function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${S.isAdmin?`<button class="btn-action" onclick="ccOpenColunasModal('${secId}')">⚙️ Colunas</button>`:''}
     <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
@@ -222,6 +277,7 @@ window.renderControleContas = function(secId){
     <div class="stat-card"><div class="stat-val" style="color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Pendente</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${qtdPago}/${qtdTotal}</div><div class="stat-lbl">Pagas</div></div>
   </div>
+  ${vigPanel}
   ${alertPanel}
   <div class="cc-filtros">
     <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
@@ -285,7 +341,7 @@ window.ccDeleteCategoria = async function(id, secId){
 window.ccOpenLocalModal = function(id, itemId){
   const local = id ? S.subitems.find(s=>s.id===id) : null;
   const ef = local ? (local.extra_fields||{}) : {};
-  const standardKeys = ['Número do Relógio','Conta Contrato','Endereço','Medidor'];
+  const standardKeys = ['Número do Relógio','Conta Contrato','Endereço','Medidor','RESPONSÁVEL','WHATSAPP DO RESPONSÁVEL'];
   const existingKeysNorm = Object.keys(ef).map(k=>_ccNorm(k));
   const allFields = [];
   Object.entries(ef).forEach(([k,v])=>allFields.push({k,v}));
@@ -416,6 +472,53 @@ window.ccSalvarCampo = async function(id, campo, valor){
 
 window.ccTogglePago = async function(id, checked){
   await ccSalvarCampo(id,'pago',checked);
+};
+
+// ── Configuração de colunas visíveis da tabela ──
+window.ccOpenColunasModal = function(secId){
+  const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
+  const off = new Set(sec.cc_cols_ocultas || []);
+  const opts = [['mes','Mês/Ano'],['tipo','Tipo'],['leitura','Leitura'],['consumo','Consumo']];
+  const checks = opts.map(([k,lbl])=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0"><input type="checkbox" class="cc-col-chk" data-col="${k}" ${off.has(k)?'':'checked'}> ${lbl}</label>`).join('');
+  openModal('⚙️ Colunas da Tabela', 'Desmarque as colunas que não fazem sentido para esta atividade. Valor, Vencimento, Pagamento, Pago e Obs. são fixas.',
+    `<div class="form-grid"><div class="form-group full">${checks}</div></div>
+     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveColunas('${secId}')">💾 Salvar</button></div>`);
+};
+
+window.ccSaveColunas = async function(secId){
+  const ocultas = [...document.querySelectorAll('.cc-col-chk')].filter(el=>!el.checked).map(el=>el.dataset.col);
+  await updateDoc(doc(db,'secretariats',secId), { cc_cols_ocultas: ocultas, updated_at: serverTimestamp() });
+  await loadData(); closeModal(); toast('Colunas atualizadas!'); renderControleContas(secId);
+};
+
+// ── Renovação de vigência de apólice ──
+window.ccOpenRenovarModal = function(subitemId){
+  const loc = S.subitems.find(s=>s.id===subitemId); if(!loc) return;
+  openModal('✅ Renovar Apólice', 'Veículo: '+(loc.description||''),
+    `<div class="form-grid">
+      <div class="form-group"><label>Início da nova vigência *</label><input type="date" id="cc-renov-ini"></div>
+      <div class="form-group"><label>Fim da nova vigência *</label><input type="date" id="cc-renov-fim"></div>
+    </div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveRenovacao('${subitemId}')">💾 Confirmar Renovação</button></div>`);
+};
+
+window.ccSaveRenovacao = async function(subitemId){
+  const ini = document.getElementById('cc-renov-ini')?.value;
+  const fim = document.getElementById('cc-renov-fim')?.value;
+  if(!ini || !fim){ toast('Informe as duas datas','error'); return; }
+  if(fim <= ini){ toast('A data de fim deve ser depois do início','error'); return; }
+  const loc = S.subitems.find(s=>s.id===subitemId); if(!loc) return;
+  const fmt = d => { const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
+  const ef = { ...(loc.extra_fields||{}) };
+  let chave = 'VIGÊNCIA';
+  for(const k of Object.keys(ef)){ if(_ccNorm(k).includes(_ccNorm('VIGENCIA'))){ chave = k; break; } }
+  const anterior = ef[chave] || '';
+  ef[chave] = `${fmt(ini)} a ${fmt(fim)}`;
+  if(anterior) ef['VIGÊNCIA ANTERIOR'] = anterior;
+  await updateDoc(doc(db,'subitems',subitemId), { extra_fields: ef, updated_at: serverTimestamp() });
+  await loadData(); closeModal();
+  toast('Apólice renovada! Nova vigência: '+ef[chave],'success',5000);
+  renderControleContas(loc.atividade_id||curSecId);
 };
 
 window.ccOpenPdfOpts = function(secId){
