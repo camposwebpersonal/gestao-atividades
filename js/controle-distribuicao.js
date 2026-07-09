@@ -149,7 +149,7 @@ window.renderControleDistribuicao = function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin ? `<button class="btn-action primary" onclick="distOpenModal(null, '${secId}')">+ Beneficiário</button>` : ''}
     ${S.isAdmin ? `<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>` : ''}
-    <button class="btn-action" onclick="distExportarCSV('${secId}')">📄 CSV</button>
+    <button class="btn-action" onclick="distExportarPDF('${secId}')">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
     <div class="page-title">🎁 ${_distEsc(sec.name)}</div>
@@ -356,22 +356,55 @@ window.distAtualizaIdade = function(){
   display.textContent = idade ? `${idade} (atualizado automaticamente)` : 'Preencha a data de nascimento';
 };
 
-window.distExportarCSV = function(secId){
+window.distExportarPDF = function(secId){
   const sec = S.secs.find(s => s.id === secId); if (!sec) return;
+  if (!window.jspdf?.jsPDF) { toast('jsPDF não carregado', 'error'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const itens = [...S.items.filter(i => i.atividade_id === secId)].sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
-  const header = ['Nome do Paciente', ...DIST_CAMPOS.map(c => c.label), 'Idade'];
-  const linhas = itens.map(it => {
+  const agora = new Date().toLocaleDateString('pt-BR');
+
+  doc.setFillColor(13, 34, 64);
+  doc.rect(0, 0, 297, 22, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.text(_distEsc(sec.name || 'Controle de Distribuição'), 14, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(180, 210, 255);
+  doc.text('Relatório de distribuição  •  ' + agora, 14, 19);
+
+  const header = ['#', 'Paciente', ...DIST_CAMPOS.map(c => c.label), 'Idade'];
+  const body = itens.map((it, idx) => {
     const ef = it.extra_fields || {};
     const idade = _distCalcIdade(ef['Data de Nascimento do Paciente'] || '');
-    return [it.description || '', ...DIST_CAMPOS.map(c => ef[c.key] || ''), idade];
+    return [String(idx + 1), it.description || '', ...DIST_CAMPOS.map(c => ef[c.key] || ''), idade];
   });
-  const csv = [header, ...linhas].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `distribuicao-${String(sec.name).replace(/\s+/g, '_').toLowerCase()}.csv`;
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-  toast('CSV exportado!');
+
+  doc.autoTable({
+    startY: 28,
+    head: [header],
+    body: body,
+    margin: { left: 10, right: 10, top: 28, bottom: 16 },
+    styles: { fontSize: 7, cellPadding: 1.8, overflow: 'linebreak', textColor: [26, 32, 44], lineColor: [200, 210, 220], lineWidth: 0.15 },
+    headStyles: { fillColor: [13, 34, 64], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+    rowPageBreak: 'avoid',
+    didDrawPage: (data) => {
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text(data.pageNumber + '/' + doc.internal.getNumberOfPages(), 287, 205, { align: 'right' });
+    }
+  });
+
+  const totalQty = itens.reduce((acc, it) => acc + (parseFloat(it.extra_fields?.['Quantidade Distribuído Mensal']) || 0), 0);
+  const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 6 : 40;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(13, 34, 64);
+  doc.text(`Total de beneficiários: ${itens.length}    |    Quantidade mensal total: ${totalQty}`, 14, finalY);
+
+  doc.save((sec.name || 'distribuicao').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g, '_').trim() + '_' + agora.replace(/\//g, '-') + '.pdf');
+  toast('PDF gerado!');
 };
