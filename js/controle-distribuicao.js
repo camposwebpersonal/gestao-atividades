@@ -5,7 +5,7 @@
 
 const DIST_CAMPOS = [
   { key: 'CPF do Paciente', label: 'CPF do Paciente', required: false, type: 'cpf' },
-  { key: 'Nome do Responsável', label: 'Nome do Responsável', required: false, type: 'text' },
+  { key: 'Nome do Responsável', label: 'Nome do Responsável', required: false, type: 'responsavel' },
   { key: 'CPF do Responsável', label: 'CPF do Responsável', required: false, type: 'cpf' },
   { key: 'Fórmula', label: 'Fórmula', required: false, type: 'text' },
   { key: 'Número do Processo', label: 'Número do Processo', required: false, type: 'text' },
@@ -195,7 +195,23 @@ window.distOpenModal = function(id, secId){
   const camposHtml = DIST_CAMPOS.map(c => {
     const val = ef[c.key] || '';
     let input = '';
-    if (c.type === 'cpf') {
+    if (c.type === 'responsavel') {
+      const currentName = String(val).trim();
+      const currentCPF = String(ef['CPF do Responsável'] || '').trim().replace(/\D/g, '');
+      let selectedId = '';
+      const matched = S.responsaveis.find(r => String(r.name || '').trim() === currentName && (currentCPF ? String(r.cpf || '').trim() === currentCPF : true));
+      if (matched) selectedId = matched.id;
+      let options = '<option value="">-- Selecionar --</option>';
+      S.responsaveis.forEach(r => {
+        const sel = r.id === selectedId ? ' selected' : '';
+        const cpf = r.cpf ? ` (${_distFmtCPF(r.cpf)})` : '';
+        options += `<option value="${_distEsc(r.id)}" data-name="${_distEsc(r.name || '')}" data-cpf="${_distEsc(r.cpf || '')}"${sel}>${_distEsc(r.name)}${cpf}</option>`;
+      });
+      if (currentName && !matched) {
+        options += `<option value="legacy" data-name="${_distEsc(currentName)}" data-cpf="${_distEsc(currentCPF)}" selected>${_distEsc(currentName)}${currentCPF ? ` (${_distFmtCPF(currentCPF)})` : ''}</option>`;
+      }
+      input = `<select id="dist-${c.key.replace(/\s+/g, '-')}" onchange="distSelectResponsavel(this)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">${options}</select>`;
+    } else if (c.type === 'cpf') {
       input = `<input type="text" id="dist-${c.key.replace(/\s+/g, '-')}" value="${_distEsc(val)}" oninput="distFormatCPF(this)" placeholder="000.000.000-00" maxlength="14">`;
     } else if (c.type === 'tel') {
       input = `<input type="text" id="dist-${c.key.replace(/\s+/g, '-')}" value="${_distEsc(val)}" oninput="distFormatTel(this)" placeholder="(00) 00000-0000" maxlength="15">`;
@@ -238,10 +254,19 @@ window.distSave = async function(id, secId){
   if (!nasc) { toast('Data de Nascimento do Paciente é obrigatória', 'error'); return; }
 
   const ef = {};
+  let respCPF = '';
   DIST_CAMPOS.forEach(c => {
     const el = document.getElementById('dist-' + c.key.replace(/\s+/g, '-'));
-    if (el) ef[c.key] = el.value.trim();
+    if (!el) return;
+    if (c.type === 'responsavel') {
+      const opt = el.options[el.selectedIndex];
+      ef[c.key] = opt?.dataset?.name || '';
+      respCPF = opt?.dataset?.cpf || '';
+    } else {
+      ef[c.key] = el.value.trim();
+    }
   });
+  if (respCPF) ef['CPF do Responsável'] = _distFmtCPF(respCPF);
 
   const data = {
     description: nome,
@@ -312,6 +337,14 @@ window.distFormatCPF = function(el){
 
 window.distFormatTel = function(el){
   el.value = _distFmtTel(el.value);
+};
+
+window.distSelectResponsavel = function(sel){
+  const opt = sel.options[sel.selectedIndex];
+  const name = opt?.dataset?.name || '';
+  const cpf = opt?.dataset?.cpf || '';
+  const cpfInput = document.getElementById('dist-CPF-do-Responsável');
+  if (cpfInput) cpfInput.value = _distFmtCPF(cpf);
 };
 
 window.distAtualizaIdade = function(){

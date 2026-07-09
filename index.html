@@ -628,26 +628,34 @@ window.deleteSecretaria=async function(id){
 };
 
 // ── RESPONSÁVEIS ──
+function _fmtRespCPF(v){
+  const d=String(v||'').replace(/\D/g,'').slice(0,11);
+  if(d.length<=3)return d;
+  if(d.length<=6)return `${d.slice(0,3)}.${d.slice(3)}`;
+  if(d.length<=9)return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
+}
 window.renderResponsaveis=function(){
-  const rows=S.responsaveis.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.cargo||'')}</td><td>${esc(r.setor||'')}</td><td>${esc(r.contato||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteResponsavel('${r.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:var(--muted)">Nenhum responsável cadastrado.</td></tr>';
+  const rows=S.responsaveis.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(_fmtRespCPF(r.cpf)||'')}</td><td>${esc(r.cargo||'')}</td><td>${esc(r.setor||'')}</td><td>${esc(r.contato||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteResponsavel('${r.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum responsável cadastrado.</td></tr>';
   setC(`<div class="page-title">👤 Responsáveis</div><div class="page-sub">Cadastro de Responsáveis / Agentes Municipais</div>
     ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openResponsavelModal()">+ Novo Responsável</button></div>`:''}
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Cargo</th><th>Setor</th><th>Contato</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>CPF</th><th>Cargo</th><th>Setor</th><th>Contato</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
 };
 window.openResponsavelModal=function(id){
   const r=id?S.responsaveis.find(x=>x.id===id):null;
   openModal(id?'✏️ Editar Responsável':'➕ Novo Responsável','',
-    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="resp-name" value="${esc(r?.name||'')}"></div><div class="form-group"><label>Cargo</label><input id="resp-cargo" value="${esc(r?.cargo||'')}"></div><div class="form-group"><label>Setor</label><input id="resp-setor" value="${esc(r?.setor||'')}"></div><div class="form-group"><label>Contato</label><input id="resp-contato" value="${esc(r?.contato||'')}"></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="resp-name" value="${esc(r?.name||'')}"></div><div class="form-group"><label>CPF</label><input id="resp-cpf" value="${esc(_fmtRespCPF(r?.cpf)||'')}" oninput="this.value=_fmtRespCPF(this.value)" maxlength="14" placeholder="000.000.000-00"></div><div class="form-group"><label>Cargo</label><input id="resp-cargo" value="${esc(r?.cargo||'')}"></div><div class="form-group"><label>Setor</label><input id="resp-setor" value="${esc(r?.setor||'')}"></div><div class="form-group"><label>Contato</label><input id="resp-contato" value="${esc(r?.contato||'')}"></div></div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteResponsavel('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveResponsavel('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveResponsavel=async function(id){
   const name=document.getElementById('resp-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
+  const cpfRaw=document.getElementById('resp-cpf')?.value.trim().replace(/\D/g,'')||'';
   const cargo=document.getElementById('resp-cargo')?.value.trim()||'';
   const setor=document.getElementById('resp-setor')?.value.trim()||'';
   const contato=document.getElementById('resp-contato')?.value.trim()||'';
-  if(id){await updateDoc(doc(db,'responsaveis',id),{name,cargo,setor,contato,updated_at:serverTimestamp()});}
-  else{await addDoc(collection(db,'responsaveis'),{name,cargo,setor,contato,created_at:serverTimestamp()});}
+  if(id){await updateDoc(doc(db,'responsaveis',id),{name,cpf:cpfRaw,cargo,setor,contato,updated_at:serverTimestamp()});}
+  else{await addDoc(collection(db,'responsaveis'),{name,cpf:cpfRaw,cargo,setor,contato,created_at:serverTimestamp()});}
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderResponsaveis();
 };
 window.deleteResponsavel=async function(id){
