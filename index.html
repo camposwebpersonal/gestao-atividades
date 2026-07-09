@@ -15,6 +15,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="js/controle-contas.js"></script>
+<script src="js/controle-distribuicao.js"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -514,6 +515,17 @@ onAuthStateChanged(auth,async u=>{
       document.body.appendChild(sc);
     },800);
   }
+  const _criar=new URLSearchParams(location.search).get('criar');
+  if(_criar==='distribuicao'&&S.isAdmin){
+    setTimeout(()=>{
+      toast('Criando atividades de distribuição…','info',3000);
+      const sc=document.createElement('script');
+      sc.src='criar-distribuicao.js?v='+Date.now();
+      sc.onload=()=>history.replaceState(null,'',location.pathname);
+      sc.onerror=()=>toast('Erro ao carregar script de criação','error');
+      document.body.appendChild(sc);
+    },800);
+  }
 });
 window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
 
@@ -953,6 +965,7 @@ function renderDash(){
 window.openActivity=function(secId){
   curSecId=secId;
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
@@ -1415,6 +1428,7 @@ window.openSecModal=function(id){
     <div style="display:flex;flex-direction:column;gap:6px">
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_pendencias!==0?'#38bdf8':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📋 Controle de Pendências <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita itens, sub-itens, status e prazos)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
         const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
@@ -1452,7 +1466,7 @@ window.saveSec=async function(id){
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
   const respStr=_getRespFromCombos('s-resp-wrap');
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),show_stats:gc('s-show-stats'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
