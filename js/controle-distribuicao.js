@@ -1,7 +1,8 @@
 /* ── CONTROLE DE DISTRIBUIÇÃO ──
    Renderizador genérico para atividades do tipo "distribuição".
    Cada beneficiário/paciente é um item da atividade, com campos extras.
-   Uso: marque a atividade com controle_distribuicao=true. */
+   Uso: marque a atividade com controle_distribuicao=true.
+   v2026-07-09-09-25 */
 
 const DIST_CAMPOS = [
   { key: 'CPF do Paciente', label: 'CPF do Paciente', required: false, type: 'cpf' },
