@@ -398,7 +398,7 @@ main{flex:1;overflow-y:auto}
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import{getAuth,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import{getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
@@ -1740,23 +1740,36 @@ window.openUserModal=function(id){
     if(isUsed&&!isCurrent)return '';
     return`<option value="${esc(r.id)}" ${isCurrent?'selected':''}>${esc(r.name)}</option>`;
   }).join('');
+  const senhaHtml=id?'':`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres"></div>`;
   openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
-    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email *</label><input id="usr-email" type="email" value="${esc(u?.email||'')}" ${id?'disabled style="background:#0a1222;color:#64748b"':''}></div><div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email *</label><input id="usr-email" type="email" value="${esc(u?.email||'')}" ${id?'disabled style="background:#0a1222;color:#64748b"':''}></div>${senhaHtml}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div></div>`
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveUser=async function(id){
   const name=document.getElementById('usr-name')?.value.trim();
   const email=document.getElementById('usr-email')?.value.trim().toLowerCase();
+  const password=document.getElementById('usr-password')?.value||'';
   const role=document.getElementById('usr-role')?.value||'usuario';
   const setor_id=document.getElementById('usr-setor')?.value||'';
   const responsavel_id=document.getElementById('usr-resp')?.value||'';
   if(!name||!email){toast('Nome e email são obrigatórios','error');return;}
   if(id){
     await updateDoc(doc(db,'users',id),{displayName:name,email,role,setor_id,responsavel_id,updated_at:serverTimestamp()});
+    await loadData();closeModal();toast('Atualizado!');renderAdmin();
   }else{
-    await setDoc(doc(db,'users',email.replace(/[^a-z0-9]/g,'_')),{displayName:name,email,role,setor_id,responsavel_id,created_at:serverTimestamp()});
+    if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
+    try{
+      const cred=await createUserWithEmailAndPassword(auth,email,password);
+      const uid=cred.user.uid;
+      await setDoc(doc(db,'users',uid),{displayName:name,email,role,setor_id,responsavel_id,created_at:serverTimestamp()});
+      toast('Usuário criado! Faça login novamente com sua conta de admin.','info',4000);
+      await signOut(auth);
+      location.href='login.html';
+    }catch(e){
+      const msgs={'auth/email-already-in-use':'Este email já está cadastrado.','auth/invalid-email':'Email inválido.','auth/weak-password':'Senha muito fraca. Use pelo menos 6 caracteres.'};
+      toast(msgs[e.code]||'Erro ao criar usuário: '+e.message,'error');return;
+    }
   }
-  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderAdmin();
 };
 window.deleteUser=async function(id){
   if(!confirm('Excluir este usuário?'))return;
