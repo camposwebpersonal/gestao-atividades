@@ -33,11 +33,12 @@ window.renderControleContas = function(secId){
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
   const colsOff = new Set(sec.cc_cols_ocultas || []);
+  const resumoCats = [];
 
   const categoriasHtml = items.map((item, idx)=>{
     const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     let locaisHtml = '';
-    let catTotal = 0, catPago = 0, catQtd = 0;
+    let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
       const lancamentos = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{
         const da = (a.mes_ano||'').split('/').reverse().join('-');
@@ -57,7 +58,8 @@ window.renderControleContas = function(secId){
       const locPendente = locTotal - locPago;
       totalGeral += locTotal; totalPago += locPago; totalPendente += locPendente;
       qtdTotal += locRows.length; qtdPago += locRows.filter(c=>c.pago).length; qtdPendente += locRows.filter(c=>!c.pago).length;
-      catTotal += locTotal; catPago += locPago; catQtd += locRows.length;
+      catTotal += locTotal; catPago += locPago; catPendente += locPendente; catQtd += locRows.length;
+      catQPago += locRows.filter(c=>c.pago).length; catQPendente += locRows.filter(c=>!c.pago).length;
       const efAll = (local && local.extra_fields) || {};
       const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
@@ -126,6 +128,7 @@ window.renderControleContas = function(secId){
     const catEf = (item.extra_fields)||{};
     const catMeta = Object.entries(catEf).filter(([k,v])=>String(v==null?'':v).trim()).map(([k,v])=>`<span class="cc-badge" style="font-size:11px">${esc(k)}: ${esc(v)}</span>`).join(' ');
     const catPend = catTotal - catPago;
+    if(catQtd > 0) resumoCats.push({ nome: item.description || 'Categoria', qtd: catQtd, qPago: catQPago, qPendente: catQPendente, total: catTotal, pago: catPago, pendente: catPend });
     return `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${esc(item.description||'Categoria')}</div>
@@ -277,6 +280,37 @@ window.renderControleContas = function(secId){
     <div class="stat-card"><div class="stat-val" style="color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Pendente</div></div>
     <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${qtdPago}/${qtdTotal}</div><div class="stat-lbl">Pagas</div></div>
   </div>
+  ${resumoCats.length?`<div class="cc-table-wrap" style="margin-bottom:14px">
+    <table class="cc-table">
+      <thead><tr>
+        <th>Categoria</th>
+        <th style="text-align:center">Lançamentos</th>
+        <th style="text-align:center">Pagos</th>
+        <th style="text-align:center">Pendentes</th>
+        <th style="text-align:right">Valor Total</th>
+        <th style="text-align:right">Valor Pago</th>
+        <th style="text-align:right">Valor Pendente</th>
+      </tr></thead>
+      <tbody>${resumoCats.map(c=>`<tr>
+        <td>${esc(c.nome)}</td>
+        <td style="text-align:center">${c.qtd}</td>
+        <td style="text-align:center;color:#10b981">${c.qPago}</td>
+        <td style="text-align:center;color:#f87171">${c.qPendente}</td>
+        <td style="text-align:right;font-weight:700">R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;color:#10b981">R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;color:#f87171">R$ ${c.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr style="background:rgba(13,34,64,.35);font-weight:700">
+        <td>TOTAL GERAL</td>
+        <td style="text-align:center">${qtdTotal}</td>
+        <td style="text-align:center;color:#10b981">${qtdPago}</td>
+        <td style="text-align:center;color:#f87171">${qtdPendente}</td>
+        <td style="text-align:right">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;color:#10b981">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      </tr></tfoot>
+    </table>
+  </div>`:''}
   ${vigPanel}
   ${alertPanel}
   <div class="cc-filtros">
