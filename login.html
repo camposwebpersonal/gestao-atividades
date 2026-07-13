@@ -59,14 +59,15 @@ h2{text-align:center;font-size:21px;font-weight:800;color:#f1f5f9;margin-bottom:
 </div>
 
 <script type="module">
-import{initializeApp}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import{getAuth,signInWithEmailAndPassword,onAuthStateChanged,sendPasswordResetEmail}from"https://www.gstatic.com/firebasejs/11.8.1/firebase-auth.js";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0';
 
-const FB={apiKey:"AIzaSyBy_k7nY2legV17h53GaU-7-usDvtnOzjs",authDomain:"gestao-atividades-26257.firebaseapp.com",projectId:"gestao-atividades-26257",storageBucket:"gestao-atividades-26257.firebasestorage.app",messagingSenderId:"113932809324",appId:"1:113932809324:web:b441b9549106822a9cd449"};
-const auth=getAuth(initializeApp(FB));
+const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Se já logado, vai direto para o app
-onAuthStateChanged(auth,u=>{if(u)location.href='index.html';});
+supabase.auth.getSession().then(({ data })=>{ if(data.session) location.href='index.html'; });
+supabase.auth.onAuthStateChange((event, session)=>{ if(session) location.href='index.html'; });
 
 // Converte usuário → email interno
 // Ex: RCAMPOS → rcampos@pms.sertania
@@ -80,17 +81,18 @@ window.doLogin=async function(){
   if(!user||!pass){showErr('Preencha usuário e senha.');return;}
   btn.disabled=true;btn.textContent='Entrando…';err.style.display='none';
   try{
-    await signInWithEmailAndPassword(auth,toEmail(user),pass);
+    const { error } = await supabase.auth.signInWithPassword({ email: toEmail(user), password: pass });
+    if(error) throw error;
     location.href='index.html';
   }catch(e){
+    const msg=e.message||e.code||'';
     const msgs={
-      'auth/invalid-credential':'Usuário ou senha incorretos.',
-      'auth/user-not-found':'Usuário não encontrado.',
-      'auth/wrong-password':'Senha incorreta.',
-      'auth/too-many-requests':'Muitas tentativas. Aguarde alguns minutos.',
-      'auth/invalid-email':'Usuário inválido.'
+      'Invalid login credentials':'Usuário ou senha incorretos.',
+      'Email not confirmed':'E-mail não confirmado.',
+      'User not found':'Usuário não encontrado.',
+      'too-many-requests':'Muitas tentativas. Aguarde alguns minutos.'
     };
-    showErr(msgs[e.code]||'Erro ao entrar. Tente novamente. ('+e.code+')');
+    showErr(msgs[msg]||'Erro ao entrar. Tente novamente. ('+msg+')');
     btn.disabled=false;btn.textContent='Entrar';
   }
 };
@@ -100,12 +102,14 @@ window.recuperarSenha=async function(){
   const err=document.getElementById('err');
   if(!user){showErr('Digite seu usuário para recuperar a senha.');return;}
   try{
-    await sendPasswordResetEmail(auth,toEmail(user));
+    const { error } = await supabase.auth.resetPasswordForEmail(toEmail(user));
+    if(error) throw error;
     err.style.color='#34d399';err.style.borderColor='rgba(16,185,129,.3)';err.style.background='rgba(16,185,129,.1)';
     showErr('✅ E-mail de recuperação enviado! Verifique sua caixa de entrada.');
   }catch(e){
-    const msgs={'auth/user-not-found':'Usuário não encontrado.','auth/invalid-email':'Usuário inválido.','auth/too-many-requests':'Muitas tentativas. Aguarde.'};
-    showErr(msgs[e.code]||'Erro ao enviar e-mail. ('+e.code+')');
+    const msg=e.message||e.code||'';
+    const msgs={'User not found':'Usuário não encontrado.','too-many-requests':'Muitas tentativas. Aguarde.'};
+    showErr(msgs[msg]||'Erro ao enviar e-mail. ('+msg+')');
   }
 };
 function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
