@@ -969,6 +969,62 @@ function renderDash(){
     <div class="${view==='list'?'list-view':'cards-grid'}">${itemsHtml}</div>`);
 }
 
+function _parseValor(v){
+  if(v==null||v==='')return 0;
+  const n=parseFloat(String(v).replace(/[^\d,\-]/g,'').replace(',','.'));
+  return isNaN(n)?0:n;
+}
+function _fmtMoney(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _renderResumoFinanceiro(secId){
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const monthCol='Mês', valCol='Remuneração';
+  const months=new Set();
+  const rows=[];
+  let grandCount=0,grandTotal=0;
+  items.forEach(item=>{
+    const subs=S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem');
+    const byMonth={};
+    subs.forEach(s=>{
+      const mes=(s.extra_fields||{})[monthCol]||'—';
+      const val=_parseValor((s.extra_fields||{})[valCol]);
+      if(!byMonth[mes])byMonth[mes]={count:0,total:0};
+      byMonth[mes].count++;byMonth[mes].total+=val;
+      months.add(mes);
+    });
+    rows.push({item,byMonth});
+  });
+  const monthArr=[...months].sort((a,b)=>{if(a==='—')return 1;if(b==='—')return -1;return a.localeCompare(b);});
+  if(!monthArr.length)return '<div class="empty">Nenhum dado financeiro encontrado. Verifique os campos "Mês" e "Remuneração".</div>';
+  const cw1=120,cw2=90;
+  let html='<div style="overflow-x:auto;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden;border:1px solid #1e3a5f">';
+  html+='<thead><tr style="background:#0e1729"><th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f">Secretaria / Item</th>';
+  monthArr.forEach(m=>{
+    html+=`<th style="padding:8px 10px;text-align:center;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;border-left:1px solid #1e3a5f">${esc(m)}<br><span style="font-size:9px;color:#64748b">Qtd / Valor</span></th>`;
+  });
+  html+='<th style="padding:8px 10px;text-align:center;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;border-left:1px solid #1e3a5f">Total Geral<br><span style="font-size:9px;color:#64748b">Qtd / Valor</span></th></tr></thead><tbody>';
+  const colTotals={};
+  monthArr.forEach(m=>colTotals[m]={count:0,total:0});
+  rows.forEach(({item,byMonth})=>{
+    let rowCount=0,rowTotal=0;
+    html+=`<tr style="background:#0a1222"><td style="padding:8px 10px;color:#e2e8f0;font-weight:600;border-bottom:1px solid #1e293b">${esc(item.description||'')}</td>`;
+    monthArr.forEach(m=>{
+      const d=byMonth[m]||{count:0,total:0};
+      rowCount+=d.count;rowTotal+=d.total;
+      colTotals[m].count+=d.count;colTotals[m].total+=d.total;
+      html+=`<td style="padding:8px 10px;text-align:center;color:${d.count?'#e2e8f0':'#475569'};border-bottom:1px solid #1e293b;border-left:1px solid #1e293b">${d.count?d.count+'<br><span style="color:#34d399;font-size:11px">'+_fmtMoney(d.total)+'</span>':'—'}</td>`;
+    });
+    grandCount+=rowCount;grandTotal+=rowTotal;
+    html+=`<td style="padding:8px 10px;text-align:center;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b;border-left:1px solid #1e3a5f;background:#0e1729">${rowCount}<br><span style="color:#f59e0b;font-size:11px">${_fmtMoney(rowTotal)}</span></td></tr>`;
+  });
+  html+=`<tr style="background:#0e1729"><td style="padding:8px 10px;color:#60a5fa;font-weight:700;border-bottom:1px solid #1e3a5f">TOTAL GERAL</td>`;
+  monthArr.forEach(m=>{
+    html+=`<td style="padding:8px 10px;text-align:center;color:#60a5fa;font-weight:700;border-bottom:1px solid #1e3a5f;border-left:1px solid #1e3a5f">${colTotals[m].count}<br><span style="color:#f59e0b;font-size:11px">${_fmtMoney(colTotals[m].total)}</span></td>`;
+  });
+  html+=`<td style="padding:8px 10px;text-align:center;color:#fff;font-weight:800;border-bottom:1px solid #1e3a5f;border-left:1px solid #1e3a5f;background:#1e3a5f">${grandCount}<br><span style="color:#fbbf24;font-size:11px">${_fmtMoney(grandTotal)}</span></td></tr>`;
+  html+='</tbody></table></div>';
+  return html;
+}
+
 // ── ACTIVITY DETAIL ──
 window.openActivity=function(secId){
   curSecId=secId;
@@ -981,6 +1037,8 @@ window.openActivity=function(secId){
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked||false;
   const ftSubs=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');
   const useTableAtiv=tableModeAtiv&&ftSubs.length>0;
+  const hasResumoField=ftSubs.some(t=>t.field_name==='Mês')&&ftSubs.some(t=>t.field_name==='Remuneração');
+  const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
     const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];ftSubs.forEach(t=>th.push(t.field_name));if(_cp){th.push('Prog.');th.push('Status');}
@@ -1081,7 +1139,9 @@ window.openActivity=function(secId){
   </div>
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
+    ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
   </div>
+  ${resumoAtiv&&hasResumoField?`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:8px">📊 Resumo Financeiro — Valores por Secretaria e Mês</div>${_renderResumoFinanceiro(secId)}</div>`:''}
   ${expandirHtml}
   ${statsHtml}
   <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
@@ -2025,6 +2085,97 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
   const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
   return{rows,imgs,subSumTxt:_subSumTxt,count:flat.length};
 }
+
+function _buildResumoMatrix(secId){
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const monthCol='Mês', valCol='Remuneração';
+  const months=new Set();
+  const rows=[];
+  let grandCount=0,grandTotal=0;
+  items.forEach(item=>{
+    const subs=S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem');
+    const byMonth={};
+    subs.forEach(s=>{
+      const mes=(s.extra_fields||{})[monthCol]||'—';
+      const val=_parseValor((s.extra_fields||{})[valCol]);
+      if(!byMonth[mes])byMonth[mes]={count:0,total:0};
+      byMonth[mes].count++;byMonth[mes].total+=val;
+      months.add(mes);
+    });
+    rows.push({item,byMonth});
+  });
+  const monthArr=[...months].sort((a,b)=>{if(a==='—')return 1;if(b==='—')return -1;return a.localeCompare(b);});
+  const colTotals={};
+  monthArr.forEach(m=>colTotals[m]={count:0,total:0});
+  const body=[];
+  rows.forEach(({item,byMonth})=>{
+    let rowCount=0,rowTotal=0;
+    const row=[item.description||''];
+    monthArr.forEach(m=>{
+      const d=byMonth[m]||{count:0,total:0};
+      rowCount+=d.count;rowTotal+=d.total;
+      colTotals[m].count+=d.count;colTotals[m].total+=d.total;
+      row.push(d.count?d.count+'\n'+_fmtMoney(d.total):'—');
+    });
+    grandCount+=rowCount;grandTotal+=rowTotal;
+    row.push(rowCount+'\n'+_fmtMoney(rowTotal));
+    body.push(row);
+  });
+  const totalRow=['TOTAL GERAL'];
+  monthArr.forEach(m=>totalRow.push(colTotals[m].count+'\n'+_fmtMoney(colTotals[m].total)));
+  totalRow.push(grandCount+'\n'+_fmtMoney(grandTotal));
+  body.push(totalRow);
+  return {monthArr, body, grandCount, grandTotal};
+}
+window.gerarPdfResumoBCCS=async function(secId){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando PDF resumo financeiro...','info',8000);
+  const {jsPDF}=window.jspdf;
+  let doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=297,H=210,mx=14,cw=W-mx*2;
+  const HDR_H=28,FTR_Y=H-12,FTR_H=12,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const now=new Date().toLocaleDateString('pt-BR');
+  const lObj=await loadB64('img/logo_sertania.png','png',120);
+  function cab(){doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ar=lObj.w/lObj.h;let lh=18,lw=18*ar;if(lw>28){lw=28;lh=28/ar;}doc.addImage(lObj.d,'PNG',W-mx-lw,3+(24-lh)/2,lw,lh,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RESUMO FINANCEIRO BCC',mx+10,12);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania — PE  •  '+sec.name+'  •  '+now,mx+10,21);}
+  function rod(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');sf(6.5,false,[180,240,180]);doc.text('Sertania — PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+8,{align:'center'});}
+  let y=BODY_TOP,pageNum=1;
+  cab();rod();
+  const {monthArr, body, grandCount, grandTotal}=_buildResumoMatrix(secId);
+  if(!monthArr.length){toast('Nenhum dado financeiro para o resumo.','error');return;}
+  const head=['Secretaria / Item'].concat(monthArr.map(m=>m+'\nQtd / Valor'),['Total Geral\nQtd / Valor']);
+  const colCount=head.length;
+  const colW=(cw-40)/(colCount-1);
+  const colStyles={0:{cellWidth:40}};
+  for(let i=1;i<colCount;i++)colStyles[i]={cellWidth:colW,halign:'center'};
+  doc.autoTable({
+    startY:y,
+    head:[head],
+    body: body,
+    margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},
+    styles:{fontSize:8,cellPadding:2,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},
+    headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:8,halign:'center'},
+    alternateRowStyles:{fillColor:[248,252,248]},
+    columnStyles:colStyles,
+    didParseCell:function(dat){
+      if(dat.section==='body'&&dat.row.index===body.length-1){
+        dat.cell.styles.fillColor=[13,34,64];dat.cell.styles.textColor=[255,255,255];dat.cell.styles.fontStyle='bold';
+      }
+      if(dat.section==='body'&&dat.column.index===0&&dat.row.index!==body.length-1){
+        dat.cell.styles.fontStyle='bold';
+      }
+    },
+    didDrawPage:data=>{if(data.pageNumber>1){cab();}rod();}
+  });
+  y=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+5;
+  if(y+12<BODY_BOT){
+    sf(9,true,[13,34,64]);doc.text('Total geral: '+grandCount+' cadastro(s) — '+_fmtMoney(grandTotal),mx,y+6);
+  }
+  rod();
+  doc.save('resumo-bcc-'+sec.name.replace(/\s+/g,'-').toLowerCase()+'-'+now.replace(/\//g,'-')+'.pdf');
+  toast('PDF resumo gerado!','success',4000);
+};
 
 // ── PDF ──
 window.gerarPdf=async function(secId,opts){

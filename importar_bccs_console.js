@@ -34,10 +34,10 @@
   console.log("📥 Carregando dados BCC...");
   let BCC_DATA = [];
   try {
-    const res = await fetch('bcc_data.json');
+    const res = await fetch('bcc_data_junho_2026.json');
     BCC_DATA = await res.json();
   } catch (e) {
-    console.error("❌ Erro ao carregar bcc_data.json:", e);
+    console.error("❌ Erro ao carregar bcc_data_junho_2026.json:", e);
     return;
   }
   console.log("✅ Dados carregados:", BCC_DATA.length, "secretarias");
@@ -78,7 +78,8 @@
     { name: 'Função',        type: 'text' },
     { name: 'Remuneração',   type: 'text' },
     { name: 'Data Início',   type: 'text' },
-    { name: 'Carga Horária', type: 'text' }
+    { name: 'Carga Horária', type: 'text' },
+    { name: 'Mês',           type: 'text' }
   ];
 
   const ftMap = {};
@@ -132,18 +133,34 @@
   // 5. Criar Sub-items (1 por pessoa)
   console.log("👤 Criando sub-itens...");
   let subCount = 0;
+  let skipCount = 0;
   const baseSubCount = S.subitems.length;
+  const existingSubKeys = new Set();
+  S.subitems.filter(s => s.atividade_id === bccs.id).forEach(s => {
+    const mes = (s.extra_fields || {})['Mês'] || '';
+    existingSubKeys.add((s.description || '').trim().toUpperCase() + '|' + String(mes).trim().toUpperCase());
+  });
 
   for (const sec of BCC_DATA) {
     const itemId = itemMap[sec.name];
+    let secNew = 0, secSkip = 0;
     for (const p of sec.people) {
       const ef = {};
       if (p.localidade)     ef['Localidade']    = p.localidade;
       if (p.telefone)       ef['Telefone']      = p.telefone;
       if (p.funcao)         ef['Função']        = p.funcao;
-      if (p.remuneracao)    ef['Remuneração']   = 'R$ ' + p.remuneracao;
+      if (p.remuneracao != null) ef['Remuneração'] = 'R$ ' + Number(p.remuneracao).toFixed(2).replace('.',',');
       if (p.data_inicio)    ef['Data Início']   = p.data_inicio;
       if (p.carga_horaria)  ef['Carga Horária'] = p.carga_horaria;
+      ef['Mês'] = p.mes || '06/2026';
+
+      const key = (p.nome || '').trim().toUpperCase() + '|' + String(ef['Mês']).trim().toUpperCase();
+      if (existingSubKeys.has(key)) {
+        skipCount++; secSkip++;
+        console.log("  ↳ Já existe:", p.nome, "-", sec.name, "Mês:", ef['Mês']);
+        continue;
+      }
+      existingSubKeys.add(key);
 
       await addDoc(collection(db, 'subitems'), {
         atividade_id: bccs.id,
@@ -154,9 +171,9 @@
         concluded: 0,
         created_at: serverTimestamp()
       });
-      subCount++;
+      subCount++; secNew++;
     }
-    console.log("  ✚ Sub-itens criados para", sec.name, "(" + sec.people.length + " pessoas)");
+    console.log("  ✚", sec.name, ":", secNew, "novos", secSkip > 0 ? "(" + secSkip + " já existiam)" : "");
   }
 
   console.log("");

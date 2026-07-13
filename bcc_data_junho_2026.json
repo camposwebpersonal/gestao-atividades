@@ -1,0 +1,4068 @@
+[
+  {
+    "name": "AGRICULTURA",
+    "people": [
+      {
+        "nome": "CARLOS  HENRIQUE CANDIDO FERREIRA",
+        "localidade": "SÍTIO CUXI DOS VIANAS",
+        "telefone": "87 99946-3599",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLARELICE FERREIRA SILVA",
+        "localidade": "SÍTIO CAATINGA 2",
+        "telefone": "87 99105-5994",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAMIAO FAGNER DOS SANTOS SILVA",
+        "localidade": "SÍTIO IMBE",
+        "telefone": "87 99129-8478",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DIEGO RAMON ALVES DO AMARAL",
+        "localidade": "QUILOMBO SEVERO",
+        "telefone": "87 9.9179-6255",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERIVALDO BARBOSA MONTEIRO",
+        "localidade": "MERCADO PÚBLICO",
+        "telefone": "87 9.8841-2327",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.09.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERIVALDO CAVALCANTI CARVALHO",
+        "localidade": "SÍTIO PINHANHAS",
+        "telefone": "87 9.8841-2327",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EVANIA DA SILVA SANTOS FREIRE",
+        "localidade": "SÍTIO SANTO ANTONIO",
+        "telefone": "87 99181-9051",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRAILDA DE SIQUEIRA DA SILVA",
+        "localidade": "RIACHO DO CAROÁ",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JANINE ARAGÃO VIEIRA",
+        "localidade": "CASA VELHA",
+        "telefone": "87 99146-9236",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAQUELINE MARQUES DE MIRANDA",
+        "localidade": "SÍTIO CAATINGA 1",
+        "telefone": "87 99108-3851",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ALCIDES NUNES DE FARIAS",
+        "localidade": "SÍTIO CAMPOS 2",
+        "telefone": "87 99209-7593",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSENILDA BARBOSA SERAFIM",
+        "localidade": "SÍTIO CACIBINHA",
+        "telefone": "87 98825-1512",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSILDO GOLVEIA DA SILVA",
+        "localidade": "SÍTIO SERROTE BRANCO",
+        "telefone": "87 9.9183-7081",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSIVALDO ALVES DE SIQUEIRA",
+        "localidade": "SÍTIO JACUZINHO",
+        "telefone": "87 9.9177-6721",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARCELO CORDEIRO DE LIMA",
+        "localidade": "CURRAL/CANIL",
+        "telefone": "87 9.9924-9281",
+        "funcao": "VIGILANTE",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MANUEL FERREIRA DA SILVA FILHO",
+        "localidade": "SÍTIO LAJINHA",
+        "telefone": "81 99353-2329",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES DA SILVA XAVIER",
+        "localidade": "SÍTIO CAROÁ DE CIMA",
+        "telefone": "8799117-6170",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DO SOCORRO DA CONCEIÇÃO",
+        "localidade": "MATADOURO",
+        "telefone": "87 9.9110-7012",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE FERREIRA DE MELO",
+        "localidade": "SÍTIO BARRA",
+        "telefone": "87 99153-7390",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA SELMA MONTEIRO SILVA",
+        "localidade": "SÍTIO SERECÉ",
+        "telefone": "87 99161-1446",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA SOLANGE BEZERRA DA SILVA",
+        "localidade": "SÍTIO CARNAIBA",
+        "telefone": "87 99142-0333",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIANA  DA SILVA",
+        "localidade": "SÍTIO CAROA DE BAIXO",
+        "telefone": "87 99143-7221",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ORLANDO BATISTA DE LIMA",
+        "localidade": "SÍTIO TIGRE DOS MANOS",
+        "telefone": "87 9.9904-7052",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SEVERINA BEZERRA DA SILVA",
+        "localidade": "MERCADO PÚBLICO",
+        "telefone": "87 99186-0796",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SEVERINA RAMOS DA SILVA",
+        "localidade": "RIACHO DO CAROÁ",
+        "telefone": "87 9.9153-6069",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SIMONE TASLAINA CAMILO DA SILVA CORDEIRO",
+        "localidade": "SITIO CAATINGA",
+        "telefone": "87. 9.9169-5202",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "TATIANE DA SILVA CAMPOS",
+        "localidade": "SÍTIO CARNAÚBA",
+        "telefone": "87 9.9107-1468",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "COMUNICAÇÃO",
+    "people": [
+      {
+        "nome": "MARIA JAMILLY FERREIRA ALVES",
+        "localidade": "SEDE",
+        "telefone": "87 9.9420-1041",
+        "funcao": "MÍDIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.09.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "CULTURA",
+    "people": [
+      {
+        "nome": "ADELSON SIQUEIRA DA SILVA",
+        "localidade": "CAMPO",
+        "telefone": "85 9.9214-0191",
+        "funcao": "TÉCNICO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDUARDO SERGIO FERREIRA SILVA",
+        "localidade": "CAMPO",
+        "telefone": "87 9.9130-4363",
+        "funcao": "TREINADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ILARE EDUARDA DE CARVALHO",
+        "localidade": "CAMPO",
+        "telefone": "87 9.9208-9961",
+        "funcao": "TREINADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MANOELA SOARES NUNES",
+        "localidade": "CAMPO",
+        "telefone": "",
+        "funcao": "TRC. DA SELEÇÃO",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WESLEY LIMADA SILVA MENDONÇA",
+        "localidade": "CAMPO",
+        "telefone": "",
+        "funcao": "PREPARADOR FISICO",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EMERSON LEAL BASTOS DE OLIVEIRA",
+        "localidade": "SEJECT",
+        "telefone": "",
+        "funcao": "PROFESSOR JUDÔ",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JEISIANE SALVADOR DE ALMEIDA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9144-6223",
+        "funcao": "PROFESSORA SANF.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ ADRIANO DA SILVA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9140-4563",
+        "funcao": "PROFESSOR VIOLÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MANUEL MESSIAS DA SILVA  SANTANA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9128-7748",
+        "funcao": "PROFESSOR  DANÇA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MIRIAN DE SOUSA SILVA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9193-8320",
+        "funcao": "FUT. DE SALÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SAMARA LETICIA CARVALHO FELICIANO",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9136-7338",
+        "funcao": "LIMPEZA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "TALISSON FERNANDO LEITE DE ANDRADE",
+        "localidade": "SEJECT",
+        "telefone": "87 9.8811-7416",
+        "funcao": "AUX. DE SECRETARIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.11.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "THAMIRYRES VITORIA SILVA SABINO",
+        "localidade": "SEJECT",
+        "telefone": "87 9.8847-7183",
+        "funcao": "PROFESSORA DANÇA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VICTOR MANOEL CORDEIRO DE SIQUEIRA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9195-8314",
+        "funcao": "TENDAS",
+        "remuneracao": 550.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WALLEX VITTOR BEZERRA DA SILVA",
+        "localidade": "SEJECT",
+        "telefone": "87 9.9621-8730",
+        "funcao": "TENDAS",
+        "remuneracao": 550.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WELTON CORDEIRO FERREIRA",
+        "localidade": "SEJECT",
+        "telefone": "87 99101- 2785",
+        "funcao": "PROFESSOR BATERIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIENE PEREIRA DA SILVA GERMANO",
+        "localidade": "CASA DA CULTURA",
+        "telefone": "87 9.9202-9222",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RUBEVÂNIA DE SIQUEIRA TELES",
+        "localidade": "ARMAZÉM DAS ARTES",
+        "telefone": "87 9.9144-6223",
+        "funcao": "RECEPCIONISTA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SAIU EM 09.06.2026",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": "",
+        "data_inicio": "",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "DESENVOLVIMENTO E AÇÃO SOCIAL",
+    "people": [
+      {
+        "nome": "AUXILIADORA LUCIA DA SILVA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9653-4455",
+        "funcao": "AUX. CUIDADORA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CHRISTIANE MARIA SOARES BEZERRA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9935-6277",
+        "funcao": "AUX. CUIDADORA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ LUCENILDO DA SILVA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.8812-7992",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES  MARIANO FERREIRA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9181-5298",
+        "funcao": "CUIDADORA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA APARECIDA RUFINO SOUSA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9935-0558",
+        "funcao": "AUX. CUIDADORA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ROZILENE ROQUE DA SILVA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9167-2690",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VERA LÚCIA ARRUDA DE SOUSA",
+        "localidade": "CASA DE ACOLHIMENTO",
+        "telefone": "87 9.9170-9134",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GILCIENE CRISTINA AMARAL",
+        "localidade": "CENTRO DO IDOSO",
+        "telefone": "87 9.9184-6307",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.10.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IEGO CAUE FERREIRA DE HOLANDA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9166-3224",
+        "funcao": "AUX. COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRACI PEREIRA GUEDES",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9164-0212",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRANY GONÇALVES DA SILVA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9195-5466",
+        "funcao": "COZINHEIRA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DA PAZ DE FRANCA SILVA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "81 9.8251-9867",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SERGIO BRENNO MARTINS DE ALCANTA PEREIRA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9913-0102",
+        "funcao": "AUX. COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VALDEMERI LINS DA SILVA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9620-3785",
+        "funcao": "AUX. COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WELLISON LEANDRO DE LIMA",
+        "localidade": "COZINHA COMUNITARIA",
+        "telefone": "87 9.9209-6622",
+        "funcao": "AUX. COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GABRIELLY FEITOSADE ARAÚJO",
+        "localidade": "CONSELHO TUTELAR",
+        "telefone": "87 9.9143-6601",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GABRIELLA PATRIOTA PATU",
+        "localidade": "COPY",
+        "telefone": "87 9.9950-0020",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALCILENE DOS SANTOS SILVA",
+        "localidade": "CRAS",
+        "telefone": "83 9.9368-3500",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLA MARIANA ALVES SILVA",
+        "localidade": "CRAS",
+        "telefone": "87 9.9208-1384",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JULIANA DEODATO NUNES",
+        "localidade": "CRAS",
+        "telefone": "81 9.9545-1419",
+        "funcao": "COZINHEIRA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIVANIA FERREIRA DE LIMA",
+        "localidade": "CRAS",
+        "telefone": "87 9.9130-9131",
+        "funcao": "DISTRI. DE LEITE",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARITANIA LIMA DA SILVA",
+        "localidade": "CRAS",
+        "telefone": "87 9.8874-0920",
+        "funcao": "COZINHEIRA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA AÇUCENA FERREIRA DA SILVA",
+        "localidade": "CREAS",
+        "telefone": "87 9.9141-8106",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PAULO VINICIUS ROQUE",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8808-3863",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SAIU 09.06.2026",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": "",
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CRISTIANE MARIA SOARES BEZERRA",
+        "localidade": "CENTRO DO IDOSO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "EDUCAÇÃO",
+    "people": [
+      {
+        "nome": "ANTONIO CARLOS FERREIRA DA SILVA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLOS VINICIUS FERREIRA DA SILVA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA XAVIER DA SILVA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDIVANIA AVELINO DA SILVA SANTOS",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDIVANEIDE BRITO DOS SANTOS",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "HILDIELE DA SILVA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCINEIDE RICARDO DA SILVA PEREIRA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DAS DORES NUNES DE SOUSA",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MICAELE DE SOUZA DUARTE",
+        "localidade": "CEI PREF. RAIM",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA CARLA DOMINGOS DA SILVA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA CLAUDIA DOMINGOS DA SILVA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA NOEMIA PINHEIRO LIMA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERICA RAFAELA DE MELO ALVES",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GISELE RAQUEL MARIA DOS SANTOS FEITOSA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAILDA NUNES DE LIMA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSIVANIA DE BRITO ALVES",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JUSSARA VIRGINIO DE SIQUEIRA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DO CARMO PEREIRA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JAIANE BARBOZA DE CARVALHO",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE FERREIRA DE MELO DO NASCIMENTO",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RENATA MICAELE BEZERRA DA SILVA",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROBERTA MARIA DE SIQUEIRA GOMES",
+        "localidade": "CREC. BARTOLO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AMANDA LOPES CORDEIRO GUEDES MORERIA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DANIELA MARIA PESSOA DA SILVA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "KAROLAYNE CARVALHO SILVA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JEANE CORDEIRO DA SILVA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA LUCENI AZEVEDO DE LIMA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA SUELI DOS SANTOS ARRUDA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSEANE DA SILVA",
+        "localidade": "AGRICOLA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAQUELINE BARROS SIQUEIRA",
+        "localidade": "ANT. MARCOS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOELMA BEZERRA FERREIRA RAFAEL",
+        "localidade": "ANT. MARCOS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ESTEFFANE GOUVEIA DOS SANTOS",
+        "localidade": "ANT. MARCOS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA VITORIA BARBOSA COSTA DE MEZES",
+        "localidade": "ANT. MARCOS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JANCIA DE SOUSA MELO",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA APARECIDA DE SOUZA FLORENCIO",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DA CONCEIÇÃO ALVES DE MELO",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA GABRIELA ALVES ALEIXO",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PATRICIA  TENORIO DA SILVA",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "QUITERIA ALVES DE MELO",
+        "localidade": "ANT. BATISTA M.",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ISABELY MONTEIRO DOS  SANTOS",
+        "localidade": "ANT. TEXEIRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALEXANDRA SIMOES DA SILVA",
+        "localidade": "ERNANI GOMES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA KERLY DOS SANTOS DE LIMA",
+        "localidade": "ERNANI GOMES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GABRIELA RODRIGUES NORONHA",
+        "localidade": "ERNANI GOMES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA TULIANA CARVALHO SILVA",
+        "localidade": "ERNANI GOMES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARLENE MARIA DOS SANTOS SILVA",
+        "localidade": "ERNANI GOMES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALESSANDRA DA SILVA OLIVEIRA GOMES",
+        "localidade": "CONSTANCIA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ELENILDA BEZERRA DE MORAIS",
+        "localidade": "CONSTANCIA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JULIANA GONÇALVES DE SILVA",
+        "localidade": "CONSTANCIA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "POLIANA GUILHERME DA SILVA",
+        "localidade": "CONSTANCIA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 1100.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROZINEIDE PEREIRA DA SILVA",
+        "localidade": "CONSTANCIA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ACIBELA BEZERRA DA SILVA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALDERLANE DOS SANTOS",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DANIELA SOARES DA SILVA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERICA FERNANDA PEREIRA FIGUEIREDO",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IARA LORENA SOUSA SIQUEIRA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "KAWANY RAMOS DE ALENCAR",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIANA NUNES DO AMARAL",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIANO FERREIRA DE LIMA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA AUDIANE DE MEDEIROS SILVA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DO CARMO DA SILVA LIMA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA IRIS SANTOS DE SIQUEIRA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MERCIA RICKELY GOMES DO AMARAL",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MYKAELE RAIANE SILVA CACHOEIRA",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAFAELA GOMES ALVES",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "THAIANE DOS SANTOS ARAUJO",
+        "localidade": "ALCIDES LOPES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALECIANA VILELA DE ALMEIDA",
+        "localidade": "ELOI CADETE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAIANE NUNES TORRES",
+        "localidade": "ELOI CADETE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE FERREIRA DA CONCEIÇÃO",
+        "localidade": "ELOI CADETE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA LUCIA DE BRITO",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA PAULA BARBOSA DE MELO",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ELISANGELA RAMOS NUNES",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JEANE DARK DA SILVA",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JUCILEIDE DE CARVALHO SILVA",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ELIANA RUFINO DA SILVA",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE DA SILVA",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE DE ALMEIDA BEZERRA",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA SABRINA PEREIRA DE FREITAS",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "QUITERIA VITORIA MELO ALVES",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAFAELA KALINE PEREIRA GERMANO",
+        "localidade": "ETELVINO LINS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA MARIA DA SILVA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "FABIANE BEZERRA ARAUJO",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GEOVANNA BEZERRA FEITOSA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ADRIANA DA SILVA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA NARAZE ALVES DA SILVA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAFAELA FIRMINO BEZERRA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VATUSE JANUARIO DA SILVA",
+        "localidade": "ISAURA XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IZONEIDE BEZERRA",
+        "localidade": "JOAO PEREIRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSILENE DA SILVA BEZERRA",
+        "localidade": "JOAO PEREIRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIZA MARIA ALEXANDRINO",
+        "localidade": "JOAO PEREIRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRANY BATISTA DOS SANTOS",
+        "localidade": "JOAQUIM FERREI",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CELIA GOMES FEITOSA",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA IRANEIDE BEZERRA DE SOUZA",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSELY BEZERRA DA SILVA",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSIMERE BEZERRA DA SILVA",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SILEIDE SILVA DE MOURA",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VANESSA ANDRADE DOS SANTOS",
+        "localidade": "SERGIO VERAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALBA REJANE DA SILVA",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDINAIRAN LOEDJA PEREIRA DA SILVA",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GILCIENE BERNARDO NOGUEIRA",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JANAINA DE LIMA FREIRE ALVES",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUZINETE FRANCISCA DE SOUZA IZIDRO",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES BATISTA PEREIRA",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES DE LIMA FREIRE",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA LEONICE TAVARES DOS SANTOS",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROGELMA BEZERRA MONTEIRO",
+        "localidade": "LAURA ALVES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALINE MARIA DE GOIS SILVA",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANDREIA CLARA DOS SANTOS SILVA",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA BATISTA DOS SANTOS MELO",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERICA FRANCISCA BATISTA DE MELO",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GABRIELE ALEIXO DOS SANTOS",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "KASSIA MARILIA BATISTA DE SOUZA",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARTA MARIA SOUZA GOMES",
+        "localidade": "MANOEL XAVIER",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADRIANA DE SOUZA",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GENILMA FRAZAO DA SILVA",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE DE SANTANA SILVA",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA VIVIANE SANTANA FREITAS",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PAULA FERREIRA DA SILVA",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAFAELA RODRIGUES SOARES",
+        "localidade": "MANOEL MONT",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADEILZA DE SOUSA PEREIRA AMARAL",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CALINE BRASILIANO DE SIQUEIRA",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 1100.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDNALDA FERREIRA DA COSTA",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ELIANE DE SIQUEIRA LEITE",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "HELIA ALVES RODRIGUES SOUZA",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRIS BEZERRA DA SILVA",
+        "localidade": "MARIA MORAIS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DAIANE BEZERRA VIDAL DA SILVA",
+        "localidade": "M.ª VERONICA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JAILDA NUNES BEZERRA",
+        "localidade": "M.ª VERONICA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RITA DE CASSIA DE LIMA BEZERRA",
+        "localidade": "M.ª VERONICA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LAYANNE FREIRE DA SILVA",
+        "localidade": "NAIR FREIRE",
+        "telefone": "",
+        "funcao": "CUIDADORA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUANA ELIAS FREIRE",
+        "localidade": "NAIR FREIRE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MANUELA FREIRE FERREIRA",
+        "localidade": "NAIR FREIRE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EUDEZANGELA MALAQUEIAS DA SILVA",
+        "localidade": "ODILON MARINHO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA LUIZA FRAZAO TIMOTEO VITAL",
+        "localidade": "ODILON MARINHO",
+        "telefone": "",
+        "funcao": "CUIDADORA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VANUSIA MARIA DA SILVA",
+        "localidade": "ODILON MARINHO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADRIANA HELENA DA SILVA",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AILA MARIA DA SILVA SANTOS",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GILVANIA MARIA DA SILVA",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LILIAN APARECIDA DE LIMA",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA BETANIA SOARES MARQUES",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES MOREIRA DA SILVA",
+        "localidade": "PRE. VARGAS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA CLAUDIA DA SILVA",
+        "localidade": "SENHOR VICENTE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "INA IRANIANA CHAVES DE OLIVEIRA DA SILVA",
+        "localidade": "VICENTE BEZERRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIANA HENRIQUE DE MELO MAGALHAES",
+        "localidade": "VICENTE BEZERRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA RAYANE CORDEIRO NUNES",
+        "localidade": "VICENTE BEZERRA",
+        "telefone": "",
+        "funcao": "CUIDADORA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALINE PATRICIA ALVES AMARAL",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANE RUSE RODRIGUES SIMOES",
+        "localidade": "SEDE- BIBLIOTECA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CAUAN BARBOSA NASCIMENTO",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLEIDIANE MARTINS DOS SANTOS",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAMIAO DOUGLAS DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAYANE LEAL FERREIRA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDUARDA JULIANA IZIDIO RODRIGUES",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "CUIDADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAQUELINE DE SIQUEIRA RODRIGUES DE QUEIROZ",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JESSICA RAYANE DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE MARCIO FERREIRA BEZERRA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSENILDO IZIDIO DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "CUIDADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LAUDJANE CECILIA TAVARES",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LINDOMARCIO HENRIQUE DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCINEIDE RUFINO DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JULIANA MARINHEIRO DOS SANTOS",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SILVANIA MARTINS DE SOUSA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "TANIA MARIA LIMA DE SOUZA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "CUIDADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADRIENE GOUVEIA DE SOUZA",
+        "localidade": "SEVERO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALINE MARTINS RODRIGUES",
+        "localidade": "SOARES",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANA PAULA DA SILVA",
+        "localidade": "CALDEIRAO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANGELICA MARIA DA SILVA",
+        "localidade": "MACAMBIRA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AVIANY DOS SANTOS CALADO",
+        "localidade": "RIO GRANDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CATARINA NUNES VILELA",
+        "localidade": "BRABO NOVO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLEONICE BANDEIRA DA SILVA",
+        "localidade": "JIBOIA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "FABIANA FERREIRA DA SILVA",
+        "localidade": "S. PANTALEAO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JEISIANE ANTUNINO FERREIRA",
+        "localidade": "UBURANAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JESSICA RAYANE PINHEIRO GOMES",
+        "localidade": "BRABO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MACIANA SILVA MELO",
+        "localidade": "S. MALHADINHA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARCIA VALEIRA ALVES DA SILVA",
+        "localidade": "PAU BRANCO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA CLARA FERREIRA FREIRE",
+        "localidade": "MANIÇOBA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA EDUARDA MONTEIRO ALVES",
+        "localidade": "B. VERMELHO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ERIKA FERREIRA DA SILVA",
+        "localidade": "C. DO NORDESTE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JAICE BEZERRA DE SIQUEIRA",
+        "localidade": "B. VERMELHO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MERCIA PEDRO DA SILVA",
+        "localidade": "HENRIQUE DIAS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAYANE DINIZ DA SILVA",
+        "localidade": "RIACHO VERDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SIDINEY MARTINS BATISTA",
+        "localidade": "FERRO VELHO",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "THAIS MARQUES BRITO",
+        "localidade": "LAGE DA ONÇA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WANESSA MOURA FREIRE DE SIQUEIRA",
+        "localidade": "SEVERINO DIAS F",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 550.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "FRANCYANE ALVES DA SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 275.0,
+        "data_inicio": "",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SAIU 09.06.2026",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": "",
+        "data_inicio": "",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "FINANÇAS",
+    "people": [
+      {
+        "nome": "PABLO HENRIQUE DE BRITO SILVA",
+        "localidade": "PREFEITURA",
+        "telefone": "87 9.9205-0742",
+        "funcao": "PORTAL DA TRANSP.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "GABINETE",
+    "people": [
+      {
+        "nome": "ANTÔNIO MÁRCIO DA SILVA",
+        "localidade": "PREFEITURA",
+        "telefone": "87 9.9195-6748",
+        "funcao": "PORTEIRO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IANY NATALLY TORRES DE ALMEIDA",
+        "localidade": "GÊNESIS",
+        "telefone": "87 9.9110-7525",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "YASMIM JULLY PEREIRA ALBUQUERQUE",
+        "localidade": "PREFEITURA",
+        "telefone": "87 9.9459-3081",
+        "funcao": "COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIANA LOPES DA SILVA",
+        "localidade": "PREFEITURA",
+        "telefone": "87 99105-8768",
+        "funcao": "LIMPEZA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAIANE ROLIM DE SIQUEIRA",
+        "localidade": "VARZEA VELHA",
+        "telefone": "87 9.9646-5292",
+        "funcao": "CORREIOS",
+        "remuneracao": 825.0,
+        "data_inicio": "10.09.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "IPSESE",
+    "people": [
+      {
+        "nome": "EDUARDO SOUZA SANTOS",
+        "localidade": "SEDE",
+        "telefone": "87 9.9947-5748",
+        "funcao": "AUX. ADMINIST.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "INFRAESTRUTURA DISTRITOS",
+    "people": [
+      {
+        "nome": "GILDEAN  QUIRINO DOS SANTOS",
+        "localidade": "ALGODÕES",
+        "telefone": "87 9.9137-7533",
+        "funcao": "CEMITÉRIO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOAO BATISTA TAVARES DOS SANTOS",
+        "localidade": "ALGODÕES",
+        "telefone": "87 9.9167-2417",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ OSMAR DA SILVA",
+        "localidade": "ALGODÕES",
+        "telefone": "87 9.8854-1948",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARINEZ RODRIGUES DA SILVA",
+        "localidade": "ALGODÕES",
+        "telefone": "87 9.8854-1948",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AMAURI CAMPOS DOS SANTOS",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "11 9.6594-3291",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAIANE GOMES DOS SANTOS",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "87 9.9183-5889",
+        "funcao": "POSTO/AÇ/CLUBE",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERIVALDO ALVES DE SIQUEIRA",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "87 9.8156-2772",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOACÍ MARINHO DO NASCIMENTO",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "87 9.8125-5212",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ADRIANO SALES",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "87 9.8122-8902",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MAURILIO PINHEIRO MAGALHÃES",
+        "localidade": "ALBUQUERQUE NÉ",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "FERNANDO CAMILO DOS SANTOS",
+        "localidade": "CAROALINA",
+        "telefone": "87 9.9111-5807",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ADERVAL FREIRE DA SILVA",
+        "localidade": "CAROALINA",
+        "telefone": "87 9.9614-4991",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSEFA FREIRE DE LIMA",
+        "localidade": "CAROALINA",
+        "telefone": "87 9.9629-6351",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PRESLEY YOHAN FREITAS ARAUJO",
+        "localidade": "CAROALINA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANTONIO BEZERRA DA SILVA",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "87 9.9243-5046",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLOS LUCAS PEREIRA DA SILVA",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "87 9.9913-5813",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDIVALDO DA SILVA LACERDA",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "87 9.9664-5013",
+        "funcao": "CEMITÉRIO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ JARBAS FERREIRA DE MELO",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "87 9.9203-4702",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARCOS PAULO DE BRITO SIMOES",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "",
+        "funcao": "ENCANADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MICAEL FREIRE DE ALBUQUERQUE",
+        "localidade": "CRUZEIRO DO N.",
+        "telefone": "87 9.9641-9895",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLAUDIVAN LEITE DA SILVA",
+        "localidade": "MODERNA",
+        "telefone": "87 99995-7217",
+        "funcao": "GARI",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ BRUNO BEZERRA MAGALHÃES",
+        "localidade": "MODERNA",
+        "telefone": "87 9.9117-5173",
+        "funcao": "GARI",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ VANDERLAN DE SANTANA",
+        "localidade": "MODERNA",
+        "telefone": "87 9.9158-0038",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PRISCILA JESUS DOS SANTOS",
+        "localidade": "MODERNA",
+        "telefone": "8799628-5548",
+        "funcao": "BANHEIRO/MERCADO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLOS ANTÔNIO BEZERRA JUREMA",
+        "localidade": "VARZEA VELHA",
+        "telefone": "87 9.9965-2358",
+        "funcao": "GARI",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUIZ GONZAGA DE SIQUEIRA",
+        "localidade": "VARZEA VELHA",
+        "telefone": "87 9.8805-1351",
+        "funcao": "COLETA LIXO",
+        "remuneracao": 550.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA FRANCISCA DA SILVA",
+        "localidade": "VARZEA VELHA",
+        "telefone": "87 9.9612-8526",
+        "funcao": "DESSANILIZADOR",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ROSA DA SILVA",
+        "localidade": "VARZEA VELHA",
+        "telefone": "87 9.9637-6530",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GUILHERME ANTÔNIO ANDRADE NUNES",
+        "localidade": "H.D. /MANIÇOBA",
+        "telefone": "87 9.9132-9222",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VERÔNICA OTACILIA DA SILVA",
+        "localidade": "HENRIQUE DIAS",
+        "telefone": "87 99978-9941",
+        "funcao": "CEMIT./C. LIXO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADILIO CLEMENTINO LEITE",
+        "localidade": "WALDEMAR SIQUEIRA",
+        "telefone": "87 9.8124-5325",
+        "funcao": "GARI",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAYSE MARIA RODRIGUES SALVADOR",
+        "localidade": "WALDEMAR SIQUEIRA",
+        "telefone": "87 9.9210-6935",
+        "funcao": "ABASTEC. ÁGUA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DOUGLAS RODRIGUES DE AQUINO",
+        "localidade": "WALDEMAR SIQUEIRA",
+        "telefone": "87 9.8150-7522",
+        "funcao": "LIM. PRAÇAS",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLAUDIANO DA PAZ SILVA",
+        "localidade": "RIO DA BARRA",
+        "telefone": "87 9.9124-3237",
+        "funcao": "COVEIRO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOAO VITOR RODRIGUES DE LIMA",
+        "localidade": "RIO DA BARRA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JENILSON ROQUE FLORENCIO",
+        "localidade": "RIO DA BARRA",
+        "telefone": "71 9.9967-7702",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.09.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAILSON ANTUNINO FERREIRA",
+        "localidade": "UBURANAS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROBERTO CARLOS DA SILVA",
+        "localidade": "UBURANAS",
+        "telefone": "87 9.9210-9413",
+        "funcao": "GARI/CEMITÉRIO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VENICIO JOSE DA SILVA",
+        "localidade": "UBURANAS",
+        "telefone": "87 9.9156-0366",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SUITIBERTO GOMES PATRIOTA",
+        "localidade": "PERNAMBUQUINHO",
+        "telefone": "83 9.9949-6715",
+        "funcao": "DISTRITAL",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "INFRAESTRUTURA SEDE",
+    "people": [
+      {
+        "nome": "JONILSON  DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "APREENÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ROBERTO DOS SANTOS BEZERRA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9116-3058",
+        "funcao": "APREENÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANDREA DE ARAÚJO MARQUE SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9180-2100",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLOS AUGUSTO PINHEIRO",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9906-6624",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA EDUARDA ALVES DE SIQUEIRA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9108-7819",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ANDERSON MARINHO DO NASCIMENTO",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AUGUSTO ALVES SANTANA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9146-0945",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERO BEZERRA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8856-7416",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 1650.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CRISTIANO DOS SANTOS ROMAO",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9215-6212",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 1650.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERIVALDO FRANCISCO DE SOUSA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9108-9598",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "FABIO JUNIOR DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9143-4903",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GENIVAL DOS SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "HELIOMAR DOS REIS BARBOSA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9115-2275",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOAO PEDRO DOS SANTOS SOUZA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8831-4768",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 1650.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ABDIAS GOMES DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9111-0025",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ERALDO DOS SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 1403.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE WELLINGTON AMARAL LACERDA",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIO FLAVIO PATU SEVERINO",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "PAULO FERNANDO NUNES DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "WELLINGTON LEANDRO DE LIMA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9202-7529",
+        "funcao": "CAPINAÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GERCINO BATISTA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9143-4903",
+        "funcao": "COLETA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE DE MELO BARBOSA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9151-5339",
+        "funcao": "COLETA",
+        "remuneracao": 440.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALISSON DIEGO FARIAS PEREIRA",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA BEZERRA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8856-7416",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CREMILDA NUNES DOS SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9131-5167",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DAMIAO DE SOUZA E SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9139-8473",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GERLANDIA ALVES DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9154-7341",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IRENE TAVARES DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9199-3856",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JANAINA DA SILVA LIMA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9603-0952",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUCIANA CALISTA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9164-7586",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ALICE BATISTA RAMOS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9200-7745",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DA CONCEICAO PEREIRA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8877-2769",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE FATIMA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9924-9675",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE DE LIMA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.92020728",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE FERREIRA DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8825-1424",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA LAUDINEIDE FERREIRA DOS SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9146-8254",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA RITA DE CASSIA LIMA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9209-2400",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA TALUANA GOUVEIA DE SOUSA",
+        "localidade": "SECRETARIA",
+        "telefone": "44 9-8868-0307",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MIDIAN LEANDRO SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9131-5167",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSANGELA DA SILVA GOUVEIA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8858-3423",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSILDA DOS SANTOS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9132-7478",
+        "funcao": "VARRIÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADRIANO FRANCISCO DA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.9124-1253",
+        "funcao": "ROÇADEIRA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSILENE DE OLIVEIRA SILVA",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8161-2212",
+        "funcao": "ROÇADEIRA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE FRANCINALDO BARBOSA PEREIRA",
+        "localidade": "SECRETARIA",
+        "telefone": "",
+        "funcao": "SANEAMENTO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIO MAGNO TAVARES SOUSA",
+        "localidade": "VIA PARQUE",
+        "telefone": "",
+        "funcao": "VIGIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CARLOS EDUARDO PEREIRA SILVA",
+        "localidade": "PRAÇA",
+        "telefone": "87 9.9160-2874",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ERENILDO DA SILVA CALISTA",
+        "localidade": "PRAÇA",
+        "telefone": "87 9.8162-7531",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GEOVANE DOS SANTOS SEVERO",
+        "localidade": "PRAÇA",
+        "telefone": "87 9.9131-0875",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOCELIO BEZERRA DE GOIS",
+        "localidade": "PRAÇA",
+        "telefone": "87 99151-0590",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ADEMILSON DA SILVA",
+        "localidade": "PRAÇA",
+        "telefone": "",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MYCHEL DOUGLAS DOS SANTOS",
+        "localidade": "PRAÇA",
+        "telefone": "",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VIVIANE BANDEIRA DE SOUSA",
+        "localidade": "PRAÇA DA PREFEITURA",
+        "telefone": "87 9.9199-6442",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VICTOR TULIO ROQUE DA SILVA",
+        "localidade": "VIVEIRO DE MUDAS",
+        "telefone": "",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAIRO FERNADES SIMOES AZEVEDO",
+        "localidade": "VIVEIRO DE MUDAS",
+        "telefone": "",
+        "funcao": "JARDINAGEM",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "MEIO AMBIENTE",
+    "people": [
+      {
+        "nome": "JOSEILTON GOMES PESSÔA DE JESUS",
+        "localidade": "SECRETARIA",
+        "telefone": "87 9.8820-0980",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES DOS SANTOS",
+        "localidade": "VIVEIRO DE MUDAS",
+        "telefone": "87 9.9950-4238",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "SAÚDE",
+    "people": [
+      {
+        "nome": "EMANUELLY LUCIANA DE OLIVEIRA LOPES",
+        "localidade": "SECRETARIA DE SAÚDE",
+        "telefone": "",
+        "funcao": "RECEPÇÃO/A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EYMME CAROLINE PEREIRA BRITO DOS SANTOS",
+        "localidade": "SECRETARIA DE SAÚDE",
+        "telefone": "87 9.9803-8063",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IANNY INGRIDY PORFIRIO PENA",
+        "localidade": "SECRETARIA DE SAÚDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GILVANIA RODRIGUES DE SOUSA",
+        "localidade": "SECRETARIA DE SAÚDE",
+        "telefone": "87 9.9143-2408",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DARLANIA RODRIGUES SOBRAL",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.8118-8533",
+        "funcao": "AUX. DE FARMÁCIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CLEONICE FIRMINO DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9202-3874",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DENILSON RODRIGUES DE MIRANDA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9170-9813",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.11.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GENILDA MARTINS VIANA FEITOSA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9191-5981",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE ADELMO DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSEFA CRISTINA GREGORIO DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9145-8689",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LARISSA DE SOUSA MORAIS",
+        "localidade": "HOSPITAL",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LEIDIANE MARIA DA CONCEIÇÃO",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9143-9515",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA APARECIDA CAETANO DE LIRA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9168-8175",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSÉ FERREIRA DE ANDRADE",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9109-8983",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE GOMES DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9211-1344",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JOSE SILVA SANTOS",
+        "localidade": "HOSPITAL",
+        "telefone": "879.9184-3090",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA LUISA PEREIRA SOUZA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9173-7366",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROBERVANIA CANDIDO DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9646-8531",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROSA MARIA DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9173-7366",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ROZEANE DOS SANTOS",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.8818-2860",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDILMA MOREIRA DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9161-2509",
+        "funcao": "COZINHA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MICHELE DA SILVA RODRIGUES",
+        "localidade": "HOSPITAL",
+        "telefone": "11 9.9762-9626",
+        "funcao": "LAVANDERIA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOAO MANOEL LEITE DE SOUZA",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9119-6941",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JEFFERSON ALMEIDA SEVERO",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9936-9585",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MONIQUE IACHISLIS CORD. DOS SANTOS",
+        "localidade": "HOSPITAL",
+        "telefone": "87 9.9156-3761",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JURANDIR HENRIQUE DA SILVA",
+        "localidade": "HOSPITAL",
+        "telefone": "",
+        "funcao": "VIGILANTE",
+        "remuneracao": 825.0,
+        "data_inicio": "10.08.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "RAFAELA SANTOS LEAL",
+        "localidade": "CAPS",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.04.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CAMILA VITORIA SILVA BRITO",
+        "localidade": "CENT. S. DA MULHER",
+        "telefone": "87 9.9123-1302",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ELIANE APARECIDA DE SOUSA SANTOS",
+        "localidade": "CENT. S. DA MULHER",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.10.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "BARBARA SOFIA  SILVA ALVES GOIS",
+        "localidade": "FARMACIA",
+        "telefone": "87 9.9638-4658",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.07.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA REGINA ALVES DE SOUZA",
+        "localidade": "FARMACIA",
+        "telefone": "87 9.9149-6893",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARILIA ALVES PINHEIRO MAGALHÃES",
+        "localidade": "UBSF - ALBUQUERQUE",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ANGELICA DA SILVA MARIANO",
+        "localidade": "UBSF - ALBUQUERQUE",
+        "telefone": "87 9.9817-3741",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAQUELINE DE LIMA FREIRE VIEIRA",
+        "localidade": "UBSF - ALGODÕES",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JULIANA LEONARDO DA SILVA",
+        "localidade": "UBSF - ALGODÕES",
+        "telefone": "87 9.9204-9195",
+        "funcao": "A.S.G",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUEIDY ANDREZA LOPES DA SILVA",
+        "localidade": "UBSF - ALGODÕES",
+        "telefone": "87 9.9127-6472",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.06.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DO CARMO SIMÕES",
+        "localidade": "UBSF - ALTO  R. BRANCO",
+        "telefone": "87 9.9156-1269",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA RAISSA BATISTA DE MELO",
+        "localidade": "UBSF - CAROÁ  DE CIMA",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DE LOURDES B. DOS SANTOS",
+        "localidade": "UBSF - CAROÁ  DE CIMA",
+        "telefone": "87 9.9197-2149",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA CRISTINA DE SIQUEIRA LEITE",
+        "localidade": "UBSF - CAROALINA",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JULIANA RODRIGUES CHAVES",
+        "localidade": "UBSF - CAROALINA",
+        "telefone": "87 9.9938-7095",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SAWANY KARLA CARVALHO FELICIANO",
+        "localidade": "UBSF CERAMICA",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "EDNA MARIA DE ALMEIDA SOARES",
+        "localidade": "UBSF CERAMICA",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.12.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SUNAMITA SANTOS B. DA SILVA",
+        "localidade": "UBSF - C. DO NORDESTE",
+        "telefone": "87 9.9623-8951",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GHEYZA THAMARA MARCELINO N. SILVA",
+        "localidade": "UBSF - C. DO NORDESTE",
+        "telefone": "87 9.9129-2425",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VANESSA PEREIRA SILVA",
+        "localidade": "UBSF -  FERRO VELHO",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.11.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAINE VITORIA CORDEIRO LIMA",
+        "localidade": "UBSF -  HENRIQUE DIAS",
+        "telefone": "",
+        "funcao": "RECPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JANAINA PEREIRA DOS SANTOS",
+        "localidade": "UBSF -  HENRIQUE DIAS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.09.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "HELENA TAYNÁ DOS SANTOS SEVERO",
+        "localidade": "UBSF -  MARIO MELO",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSEFA DA SILVA",
+        "localidade": "UBSF -  MARIO MELO",
+        "telefone": "87 9.9138-2011",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADRIANA SILVA GUIMARÃES AMORIM",
+        "localidade": "UBSF - N. SERTÂNIA",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MÉRCIA FEITOSA E SILVA",
+        "localidade": "UBSF - N. SERTÂNIA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ALINE SANTANA TEXEIRA",
+        "localidade": "UBSF - PERNAMBUQUI.",
+        "telefone": "",
+        "funcao": "RECEPÇÃO/A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA JANAINA NEVES DA SILVA",
+        "localidade": "UBSF - PRESID. VARGAS",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "LUANA PATRIOTA GUSTAVO",
+        "localidade": "UBSF - RIO DA BARRA",
+        "telefone": "",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.05.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CATARINA DOS SANTOS FEITOSA",
+        "localidade": "UBSF - RIO DA BARRA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "SIMONE BATISTA SILVA",
+        "localidade": "UBSF - SÍTIO CAMPOS",
+        "telefone": "87 9.9106-4053",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.11.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JESSÍCA PERREIRA DA SILVA",
+        "localidade": "UBSF - SÍTIO CAMPOS",
+        "telefone": "87 9.96036466",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JULIANA SILVA DE LIMA",
+        "localidade": "UBSF - SÍTIO CAMPOS",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AYLA GISELE PEREIRA DOS SANTOS",
+        "localidade": "UBSF - 13 DE MAIO",
+        "telefone": "81 98165-0703",
+        "funcao": "RECEPÇÃO",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA FERREIRA DA SILVA SAMPAIO",
+        "localidade": "UBSF -  UBURANAS",
+        "telefone": "87 9.9121-6411",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JACILENE NOGUEIRA DE MELO",
+        "localidade": "UBSF - VARZEA VELHA",
+        "telefone": "",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.05.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CICERA GISELDA PEREIRA",
+        "localidade": "UBSF - VILA DA COHAB",
+        "telefone": "87 9.9140-3452",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "IDAIANE ROSA SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.07.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "SEGURANÇA E MOBILIDADE",
+    "people": [
+      {
+        "nome": "ABEL ALVES FEITOSA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "PINTURA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "ADILSON ALVES FEITOSA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "PINTURA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "AILSON ALVES FEITOSA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "PINTURA",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSÉ ADILSON DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "87 9.9636-1592",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE CARLOS DA SILVA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.10.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA DAS NEVES PEREIRA CHAVES PEDROZA",
+        "localidade": "SEDE",
+        "telefone": "",
+        "funcao": "",
+        "remuneracao": 825.0,
+        "data_inicio": "10.03.2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA APARECIDA DA SILVA",
+        "localidade": "BATALHÃO",
+        "telefone": "87 9.9210-1584",
+        "funcao": "A.S.G.",
+        "remuneracao": 550.0,
+        "data_inicio": "10.02.2025",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA ENILDA DE SOUSA",
+        "localidade": "DELEGACIA",
+        "telefone": "87 9.9143-5136",
+        "funcao": "A.S.G.",
+        "remuneracao": 825.0,
+        "data_inicio": "10.01.2025",
+        "mes": "06/2026"
+      }
+    ]
+  },
+  {
+    "name": "SAÍDAS DO BCC (JUNHO/2026)",
+    "people": [
+      {
+        "nome": "WANDSON MELO DOS SANTOS",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "CRISTIANE MARIA SOARES BEZERRA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "BEATRIZ CARDOSO FREIRE",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA EDNA LEITE DA SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIA VANESSA CAMPOS GOMES",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "MARIANA FABRICIA ALEIXO DOS SANTOS",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "VITORIA ELIANE CARVALHO DE MEDEIROS",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 550.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "DIEGO PEREIRA BOTO PORTO",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "GILSON ANTUNINO DA SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JACKSON HENRIQUE FREIRE SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JAIRO FERNADES SIMOES",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "JOSE WESLEY PEREIRA DA SILVA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      },
+      {
+        "nome": "NAIARA LEITE FERREIRA",
+        "localidade": "",
+        "telefone": "",
+        "funcao": "SAIU DO BCC EM 09/06/2026",
+        "remuneracao": 825.0,
+        "data_inicio": "09/06/2026",
+        "mes": "06/2026"
+      }
+    ]
+  }
+]
