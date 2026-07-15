@@ -40,7 +40,11 @@ COLLECTIONS = [
 
 FIELD_CONVERSIONS = {
     'secretariats': 'atividades',
+    'fieldTemplates': 'field_templates',
 }
+
+# Tabelas que possuem coluna extra_fields para receber campos desconhecidos
+TABLES_WITH_EXTRA = {'atividades', 'items', 'subitems', 'users'}
 
 
 def firebase_login():
@@ -131,13 +135,24 @@ def clean_for_supabase(table, row):
             row[k] = json.dumps(v, ensure_ascii=False)
         elif isinstance(v, list):
             row[k] = json.dumps(v, ensure_ascii=False)
-    # Para a tabela contas, mover campos desconhecidos para extra_fields
+    # Mover campos desconhecidos para extra_fields em tabelas que possuem essa coluna
     if table == 'contas':
         known = {'id', 'nome', 'valor', 'atividade_id', 'extra_fields', 'created_at', 'updated_at'}
-        extra = {}
-        for k in list(row.keys()):
-            if k not in known:
-                extra[k] = row.pop(k)
+        extra = {k: row.pop(k) for k in list(row.keys()) if k not in known}
+        if extra:
+            existing = json.loads(row.get('extra_fields', '{}') or '{}')
+            existing.update(extra)
+            row['extra_fields'] = json.dumps(existing, ensure_ascii=False)
+    elif table in TABLES_WITH_EXTRA:
+        # Para essas tabelas, consideramos o schema atual como conhecido
+        schema_known = {
+            'atividades': {'id', 'name', 'description', 'observacao', 'show_conclusion_date', 'show_documentacao', 'show_licitacao', 'icon', 'color', 'concluded', 'conclusion_date', 'status', 'cover_url', 'resp_url', 'extra_fields', 'created_at', 'updated_at'},
+            'items': {'id', 'atividade_id', 'description', 'secretaria_id', 'item_icon', 'item_color', 'order_num', 'concluded', 'conclusion_date', 'status', 'auto_concluded', 'cover_url', 'resp_url', 'deadline_date', 'extra_fields', 'created_at', 'updated_at'},
+            'subitems': {'id', 'atividade_id', 'item_id', 'parent_id', 'parent_type', 'description', 'extra_fields', 'deadline_date', 'order_num', 'concluded', 'conclusion_date', 'status', 'auto_concluded', 'cover_url', 'resp_url', 'created_at', 'updated_at'},
+            'users': {'id', 'display_name', 'email', 'email_contato', 'role', 'is_admin', 'setor_id', 'responsavel_id', 'created_at', 'updated_at'}
+        }
+        known = schema_known.get(table, set())
+        extra = {k: row.pop(k) for k in list(row.keys()) if k not in known}
         if extra:
             existing = json.loads(row.get('extra_fields', '{}') or '{}')
             existing.update(extra)

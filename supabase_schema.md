@@ -9,7 +9,8 @@
 CREATE TABLE IF NOT EXISTS secretarias (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Atividades (no Firebase chamada 'secretariats')
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS atividades (
   status TEXT DEFAULT 'pendente',
   cover_url TEXT,
   resp_url TEXT,
+  extra_fields JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -47,6 +49,8 @@ CREATE TABLE IF NOT EXISTS items (
   auto_concluded BOOLEAN DEFAULT false,
   cover_url TEXT,
   resp_url TEXT,
+  deadline_date TIMESTAMPTZ,
+  extra_fields JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -60,6 +64,7 @@ CREATE TABLE IF NOT EXISTS subitems (
   parent_type TEXT DEFAULT 'item',
   description TEXT NOT NULL,
   extra_fields JSONB DEFAULT '{}',
+  deadline_date TIMESTAMPTZ,
   order_num INTEGER DEFAULT 0,
   concluded INTEGER DEFAULT 0,
   conclusion_date TIMESTAMPTZ,
@@ -87,6 +92,7 @@ CREATE TABLE IF NOT EXISTS field_templates (
 CREATE TABLE IF NOT EXISTS responsaveis (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
+  cargo TEXT,
   setor_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -112,6 +118,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT,
   email_contato TEXT,
   role TEXT DEFAULT 'user',
+  is_admin BOOLEAN DEFAULT false,
   setor_id TEXT,
   responsavel_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
