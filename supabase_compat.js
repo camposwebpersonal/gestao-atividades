@@ -33,6 +33,18 @@ function toCamel(str) {
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
+// Tabelas que possuem coluna extra_fields para flexibilidade de schema
+const EXTRA_TABLES = new Set(['atividades', 'items', 'subitems', 'users', 'contas']);
+
+// Colunas conhecidas que devem ficar no nível superior de cada tabela
+const SCHEMA_FIELDS = {
+  atividades: new Set(['id','name','description','observacao','observacoes','show_conclusion_date','show_documentacao','show_licitacao','order_num','controle_contas','controle_pendencias','controle_distribuicao','icon','color','concluded','conclusion_date','status','cover_url','resp_url','extra_fields','created_at','updated_at','responsaveis','start_date','end_date','show_stats','show_verba','verba_on_subitems','verba_sum_subitems','verba_has_obs','show_origem_verba','origem_verba_on_subitems','origem_verba_has_obs','documentacao_on_subitems','documentacao_has_obs','licitacao_on_subitems','licitacao_has_obs']),
+  items: new Set(['id','atividade_id','description','secretaria_id','item_icon','item_color','order_num','concluded','conclusion_date','status','auto_concluded','cover_url','resp_url','deadline_date','extra_fields','created_at','updated_at']),
+  subitems: new Set(['id','atividade_id','item_id','parent_id','parent_type','description','extra_fields','deadline_date','order_num','concluded','conclusion_date','status','auto_concluded','cover_url','resp_url','created_at','updated_at']),
+  users: new Set(['id','display_name','email','email_contato','role','is_admin','setor_id','responsavel_id','created_at','updated_at']),
+  contas: new Set(['id','nome','valor','atividade_id','extra_fields','created_at','updated_at'])
+};
+
 function cleanPayload(payload) {
   for (const k in payload) {
     const v = payload[k];
@@ -43,6 +55,40 @@ function cleanPayload(payload) {
       // IDs de referência vazios viram null
       if (k.endsWith('_id')) payload[k] = null;
     }
+  }
+  return payload;
+}
+
+function mergeExtraFields(row) {
+  if (!row || !row.extra_fields) return row;
+  try {
+    const extra = typeof row.extra_fields === 'string' ? JSON.parse(row.extra_fields) : row.extra_fields;
+    if (extra && typeof extra === 'object') {
+      const merged = { ...extra, ...row };
+      delete merged.extra_fields;
+      return merged;
+    }
+  } catch (e) {
+    // ignora JSON inválido
+  }
+  const copy = { ...row };
+  delete copy.extra_fields;
+  return copy;
+}
+
+function moveUnknownToExtra(table, payload) {
+  if (!EXTRA_TABLES.has(table)) return payload;
+  const known = SCHEMA_FIELDS[table];
+  if (!known) return payload;
+  const extra = {};
+  for (const k of Object.keys(payload)) {
+    if (!known.has(k)) {
+      extra[k] = payload[k];
+      delete payload[k];
+    }
+  }
+  if (Object.keys(extra).length > 0) {
+    payload.extra_fields = JSON.stringify(extra);
   }
   return payload;
 }
@@ -201,7 +247,7 @@ export async function getDocs(queryRef) {
   const docs = (data || []).map(row => ({
     id: row.id,
     exists: () => true,
-    data: () => row
+    data: () => mergeExtraFields(row)
   }));
   return { docs, empty: docs.length === 0, size: docs.length };
 }
@@ -211,7 +257,7 @@ export async function getDoc(docRef) {
   const { data, error } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
   if (error) throw error;
   if (!data) return { exists: () => false, data: () => null, id: docRef._id };
-  return { exists: () => true, data: () => data, id: data.id };
+  return { exists: () => true, data: () => mergeExtraFields(data), id: data.id };
 }
 
 export async function addDoc(collectionRef, data) {
@@ -219,6 +265,7 @@ export async function addDoc(collectionRef, data) {
   const payload = {};
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   cleanPayload(payload);
+  moveUnknownToExtra(table, payload);
   const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
   if (error) throw error;
   return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
@@ -230,15 +277,17 @@ export async function setDoc(docRef, data, options) {
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   cleanPayload(payload);
   if (options?.merge) {
-    const { data: existing, error: e1 } = await supabase.from(table).select('*').eq('id', docRef._id).single();
-    if (!e1) {
-      for (const [k, v] of Object.entries(existing)) {
+    const { data: existing, error: e1 } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
+    if (!e1 && existing) {
+      const mergedExisting = mergeExtraFields(existing);
+      for (const [k, v] of Object.entries(mergedExisting)) {
         if (payload[k] === undefined) payload[k] = v;
       }
     }
   }
   payload.id = docRef._id;
   cleanPayload(payload);
+  moveUnknownToExtra(table, payload);
   const { error } = await supabase.from(table).upsert(payload);
   if (error) throw error;
 }
@@ -249,6 +298,7 @@ export async function updateDoc(docRef, data) {
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   delete payload.id;
   cleanPayload(payload);
+  moveUnknownToExtra(table, payload);
   const { error } = await supabase.from(table).update(payload).eq('id', docRef._id);
   if (error) throw error;
 }
