@@ -38,7 +38,7 @@ const EXTRA_TABLES = new Set(['atividades', 'items', 'subitems', 'users', 'conta
 
 // Colunas conhecidas que devem ficar no nível superior de cada tabela
 const SCHEMA_FIELDS = {
-  atividades: new Set(['id','name','description','observacao','observacoes','show_conclusion_date','show_documentacao','show_licitacao','order_num','controle_contas','controle_pendencias','controle_distribuicao','icon','color','concluded','conclusion_date','status','cover_url','resp_url','extra_fields','created_at','updated_at','responsaveis','start_date','end_date','show_stats','show_verba','verba_on_subitems','verba_sum_subitems','verba_has_obs','show_origem_verba','origem_verba_on_subitems','origem_verba_has_obs','documentacao_on_subitems','documentacao_has_obs','licitacao_on_subitems','licitacao_has_obs']),
+  atividades: new Set(['id','name','description','observacao','show_conclusion_date','show_documentacao','show_licitacao','order_num','controle_contas','icon','color','concluded','conclusion_date','status','cover_url','resp_url','extra_fields','created_at','updated_at']),
   items: new Set(['id','atividade_id','description','secretaria_id','item_icon','item_color','order_num','concluded','conclusion_date','status','auto_concluded','cover_url','resp_url','deadline_date','extra_fields','created_at','updated_at']),
   subitems: new Set(['id','atividade_id','item_id','parent_id','parent_type','description','extra_fields','deadline_date','order_num','concluded','conclusion_date','status','auto_concluded','cover_url','resp_url','created_at','updated_at']),
   users: new Set(['id','display_name','email','email_contato','role','is_admin','setor_id','responsavel_id','created_at','updated_at']),
