@@ -135,6 +135,14 @@ def clean_for_supabase(table, row):
             row[k] = json.dumps(v, ensure_ascii=False)
         elif isinstance(v, list):
             row[k] = json.dumps(v, ensure_ascii=False)
+    # Remover campos que causam erro de schema cache em algumas tabelas
+    if table == 'field_templates' and 'updated_at' in row:
+        del row['updated_at']
+    if table == 'users':
+        known_users = {'id', 'display_name', 'email', 'email_contato', 'role', 'is_admin', 'setor_id', 'responsavel_id', 'created_at', 'updated_at'}
+        for k in list(row.keys()):
+            if k not in known_users:
+                del row[k]
     # Mover campos desconhecidos para extra_fields em tabelas que possuem essa coluna
     if table == 'contas':
         known = {'id', 'nome', 'valor', 'atividade_id', 'extra_fields', 'created_at', 'updated_at'}
