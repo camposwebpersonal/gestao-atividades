@@ -84,9 +84,13 @@ window.doLogin=async function(){
   if(!user||!pass){showErr('Preencha usuário e senha.');return;}
   btn.disabled=true;btn.textContent='Entrando…';err.style.display='none';
   try{
-    const { error } = await supabase.auth.signInWithPassword({ email: toEmail(user), password: pass });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: toEmail(user), password: pass });
     if(error) throw error;
-    location.href='index.html';
+    // Aguarda a sessão ser persistida antes de redirecionar
+    if(data.session){
+      await supabase.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
+    }
+    setTimeout(()=>location.href='index.html', 300);
   }catch(e){
     const msg=e.message||e.code||'';
     const msgs={

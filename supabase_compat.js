@@ -68,11 +68,28 @@ function mapUser(su) {
 }
 
 export function onAuthStateChanged(auth, callback) {
+  let initialDone = false;
+  // Primeiro verifica sessão existente
   auth.getSession().then(({ data }) => {
-    if (data?.session?.user) callback(mapUser(data.session.user));
+    if (data?.session?.user) {
+      initialDone = true;
+      callback(mapUser(data.session.user));
+    }
   });
+  // Também escuta mudanças, mas evita chamar null antes de verificar a sessão
   const { subscription } = auth.onAuthStateChange((event, session) => {
-    callback(mapUser(session?.user || null));
+    const user = mapUser(session?.user || null);
+    if (!initialDone && !user) {
+      // Aguarda um pouco para a sessão ser recuperada do storage
+      setTimeout(() => {
+        auth.getSession().then(({ data }) => {
+          if (!data?.session?.user) callback(null);
+        });
+      }, 800);
+      return;
+    }
+    initialDone = true;
+    callback(user);
   });
   return () => subscription?.unsubscribe();
 }
