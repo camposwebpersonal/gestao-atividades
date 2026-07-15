@@ -1,18 +1,20 @@
 -- Schema SQL para Supabase
 -- Cole isso no SQL Editor do Supabase e execute.
 
--- Habilitar RLS (Row Level Security) será configurado depois. Por enquanto, público para facilitar migração.
+-- IMPORTANTE: Todos os IDs são TEXT porque os IDs do Firebase não são UUIDs.
+-- As referências (atividade_id, item_id, etc.) também são TEXT.
+-- Isso garante compatibilidade total com os dados migrados.
 
 -- Secretarias
 CREATE TABLE IF NOT EXISTS secretarias (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Atividades (no Firebase chamada 'secretariats')
 CREATE TABLE IF NOT EXISTS atividades (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   description TEXT,
   observacao TEXT,
@@ -32,10 +34,10 @@ CREATE TABLE IF NOT EXISTS atividades (
 
 -- Itens
 CREATE TABLE IF NOT EXISTS items (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atividade_id UUID NOT NULL REFERENCES atividades(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  atividade_id TEXT NOT NULL,
   description TEXT NOT NULL,
-  secretaria_id UUID REFERENCES secretarias(id),
+  secretaria_id TEXT,
   item_icon TEXT DEFAULT '📁',
   item_color TEXT DEFAULT '#3B82F6',
   order_num INTEGER DEFAULT 0,
@@ -51,10 +53,10 @@ CREATE TABLE IF NOT EXISTS items (
 
 -- Sub-itens
 CREATE TABLE IF NOT EXISTS subitems (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atividade_id UUID NOT NULL REFERENCES atividades(id) ON DELETE CASCADE,
-  item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  parent_id UUID REFERENCES subitems(id),
+  id TEXT PRIMARY KEY,
+  atividade_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  parent_id TEXT,
   parent_type TEXT DEFAULT 'item',
   description TEXT NOT NULL,
   extra_fields JSONB DEFAULT '{}',
@@ -71,8 +73,8 @@ CREATE TABLE IF NOT EXISTS subitems (
 
 -- Templates de campos extras
 CREATE TABLE IF NOT EXISTS field_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  atividade_id UUID REFERENCES atividades(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
+  atividade_id TEXT,
   scope TEXT NOT NULL DEFAULT 'subitem',
   field_name TEXT NOT NULL,
   field_type TEXT DEFAULT 'text',
@@ -83,17 +85,17 @@ CREATE TABLE IF NOT EXISTS field_templates (
 
 -- Responsáveis
 CREATE TABLE IF NOT EXISTS responsaveis (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
-  setor_id UUID REFERENCES secretarias(id),
+  setor_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Imagens de entidades
 CREATE TABLE IF NOT EXISTS entity_images (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   entity_type TEXT NOT NULL,
-  entity_id UUID NOT NULL,
+  entity_id TEXT NOT NULL,
   is_representative BOOLEAN DEFAULT false,
   imgbb_url TEXT NOT NULL,
   title TEXT,
@@ -110,15 +112,15 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT,
   email_contato TEXT,
   role TEXT DEFAULT 'user',
-  setor_id UUID REFERENCES secretarias(id),
-  responsavel_id UUID REFERENCES responsaveis(id),
+  setor_id TEXT,
+  responsavel_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Contatos
 CREATE TABLE IF NOT EXISTS contatos (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   nome TEXT,
   cargo TEXT,
   setor TEXT,
@@ -131,10 +133,10 @@ CREATE TABLE IF NOT EXISTS contatos (
 
 -- Galeria
 CREATE TABLE IF NOT EXISTS galeria (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   url TEXT NOT NULL,
   titulo TEXT,
-  atividade_id UUID REFERENCES atividades(id) ON DELETE CASCADE,
+  atividade_id TEXT,
   data TEXT,
   local TEXT,
   notas TEXT,
@@ -143,21 +145,22 @@ CREATE TABLE IF NOT EXISTS galeria (
 
 -- Chamados
 CREATE TABLE IF NOT EXISTS chamados (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   titulo TEXT,
   descricao TEXT,
   status TEXT DEFAULT 'aberto',
-  atividade_id UUID REFERENCES atividades(id),
+  atividade_id TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Contas
 CREATE TABLE IF NOT EXISTS contas (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY,
   nome TEXT,
   valor NUMERIC(12,2),
-  atividade_id UUID REFERENCES atividades(id),
+  atividade_id TEXT,
+  extra_fields JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

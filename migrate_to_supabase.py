@@ -19,12 +19,13 @@ FIREBASE_API_KEY = os.environ.get('FIREBASE_API_KEY', 'AIzaSyBy_k7nY2legV17h53Ga
 FIREBASE_EMAIL = os.environ.get('FIREBASE_EMAIL', 'rcampos@pms.sertania')
 FIREBASE_PASSWORD = os.environ.get('FIREBASE_PASSWORD', '')
 SUPABASE_URL = os.environ.get('SUPABASE_URL', 'https://xwlmpxypjheuhbxyfplo.supabase.co')
+SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU')
 SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '')
 
 # Coleções do Firebase Firestore (ordem importa para referências)
 COLLECTIONS = [
     'secretarias',
-    'atividades',  # no Firebase ainda é 'secretariats', mas mapeamos aqui
+    'secretariats',   # atividades no app
     'responsaveis',
     'items',
     'subitems',
@@ -130,8 +131,17 @@ def clean_for_supabase(table, row):
             row[k] = json.dumps(v, ensure_ascii=False)
         elif isinstance(v, list):
             row[k] = json.dumps(v, ensure_ascii=False)
-    # Remover campos que não existem na tabela (não deveria acontecer, mas por segurança)
-    # Mantemos id
+    # Para a tabela contas, mover campos desconhecidos para extra_fields
+    if table == 'contas':
+        known = {'id', 'nome', 'valor', 'atividade_id', 'extra_fields', 'created_at', 'updated_at'}
+        extra = {}
+        for k in list(row.keys()):
+            if k not in known:
+                extra[k] = row.pop(k)
+        if extra:
+            existing = json.loads(row.get('extra_fields', '{}') or '{}')
+            existing.update(extra)
+            row['extra_fields'] = json.dumps(existing, ensure_ascii=False)
     return row
 
 
@@ -139,26 +149,40 @@ def insert_to_supabase(table, rows):
     if not rows:
         return
     url = f"{SUPABASE_URL}/rest/v1/{table}"
+    key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
     headers = {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "apikey": key,
+        "Authorization": f"Bearer {key}",
         "Content-Type": "application/json",
         "Prefer": "resolution=merge-duplicates,return=minimal"
     }
+    # Normalizar chaves: todos os objetos do lote devem ter as mesmas chaves
+    all_keys = set()
+    for row in rows:
+        all_keys.update(row.keys())
+    all_keys.discard('id')
+    all_keys = ['id'] + sorted(all_keys)
+    normalized = []
+    for row in rows:
+        new_row = {}
+        for k in all_keys:
+            new_row[k] = row.get(k)
+        normalized.append(new_row)
     # Supabase REST aceita arrays para upsert
-    r = requests.post(url, headers=headers, json=rows)
+    r = requests.post(url, headers=headers, json=normalized)
     if r.status_code not in (200, 201, 204):
         print(f"❌ Erro inserindo em {table}: {r.status_code} {r.text[:500]}")
     else:
-        print(f"✅ {table}: {len(rows)} registros")
+        print(f"✅ {table}: {len(normalized)} registros")
 
 
 def migrate():
     if not FIREBASE_PASSWORD:
         print("❌ Defina FIREBASE_PASSWORD")
         sys.exit(1)
-    if not SUPABASE_SERVICE_KEY:
-        print("❌ Defina SUPABASE_SERVICE_KEY")
+    key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY
+    if not key:
+        print("❌ Defina SUPABASE_SERVICE_KEY ou SUPABASE_ANON_KEY")
         sys.exit(1)
 
     print("🔐 Logando no Firebase...")
