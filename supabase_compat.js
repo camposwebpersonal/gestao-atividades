@@ -208,11 +208,9 @@ export async function getDocs(queryRef) {
 
 export async function getDoc(docRef) {
   const table = tableName(docRef._path);
-  const { data, error } = await supabase.from(table).select('*').eq('id', docRef._id).single();
-  if (error) {
-    if (error.code === 'PGRST116') return { exists: () => false, data: () => null, id: docRef._id };
-    throw error;
-  }
+  const { data, error } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
+  if (error) throw error;
+  if (!data) return { exists: () => false, data: () => null, id: docRef._id };
   return { exists: () => true, data: () => data, id: data.id };
 }
 
