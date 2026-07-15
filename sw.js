@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v5';
+const CACHE_NAME = 'gestao-pms-v6';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -38,11 +38,11 @@ self.addEventListener('fetch', event => {
   if(request.method !== 'GET') return;
   const url = new URL(request.url);
 
-  // Firebase Firestore/API: network-first
-  if(url.hostname.includes('googleapis.com') || url.hostname.includes('firebase')){
+  // Firebase Firestore/API e Supabase: network-first, sem cache
+  if(url.hostname.includes('googleapis.com') || url.hostname.includes('firebase') || url.hostname.includes('supabase.co')){
     event.respondWith(
       fetch(request).then(response => {
-        if(response && response.status === 200){
+        if(response && response.status === 200 && !url.hostname.includes('supabase.co')){
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
         }
