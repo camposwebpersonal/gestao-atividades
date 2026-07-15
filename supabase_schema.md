@@ -103,8 +103,9 @@ CREATE TABLE IF NOT EXISTS entity_images (
 );
 
 -- Usuários (sincronizado com auth.users do Supabase)
+-- id como TEXT para permitir migração dos UIDs antigos do Firebase
 CREATE TABLE IF NOT EXISTS users (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY,
   display_name TEXT,
   email TEXT,
   email_contato TEXT,

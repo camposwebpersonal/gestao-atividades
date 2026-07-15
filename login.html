@@ -70,8 +70,11 @@ supabase.auth.getSession().then(({ data })=>{ if(data.session) location.href='in
 supabase.auth.onAuthStateChange((event, session)=>{ if(session) location.href='index.html'; });
 
 // Converte usuário → email interno
-// Ex: RCAMPOS → rcampos@pms.sertania
-function toEmail(user){return user.trim().toLowerCase()+'@pms.sertania';}
+function toEmail(user){
+  const u=user.trim().toLowerCase();
+  if(u==='rcampos') return 'camposweb.personal@gmail.com';
+  return u+'@pms.sertania';
+}
 
 window.doLogin=async function(){
   const user=document.getElementById('usuario').value.trim();
