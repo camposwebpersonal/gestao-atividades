@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS atividades (
   show_conclusion_date INTEGER DEFAULT 1,
   show_documentacao INTEGER DEFAULT 0,
   show_licitacao INTEGER DEFAULT 0,
+  order_num INTEGER DEFAULT 0,
   icon TEXT DEFAULT '📋',
   color TEXT DEFAULT '#3B82F6',
   concluded INTEGER DEFAULT 0,
