@@ -64,7 +64,10 @@ function mergeExtraFields(row) {
   try {
     const extra = typeof row.extra_fields === 'string' ? JSON.parse(row.extra_fields) : row.extra_fields;
     if (extra && typeof extra === 'object') {
-      const merged = { ...extra, ...row };
+      const merged = { ...row };
+      for (const [k, v] of Object.entries(extra)) {
+        if (merged[k] === null || merged[k] === undefined) merged[k] = v;
+      }
       delete merged.extra_fields;
       return merged;
     }
@@ -241,10 +244,27 @@ export async function getDocs(queryRef) {
     collectionRef = queryRef._collection;
     constraints = queryRef._constraints || [];
   }
-  const q = buildQuery(collectionRef, constraints);
-  const { data, error } = await q;
-  if (error) throw error;
-  const docs = (data || []).map(row => ({
+  const hasLimit = constraints.some(c => c._type === 'limit');
+  const PAGE = 1000;
+  let allRows = [];
+  if (hasLimit) {
+    const q = buildQuery(collectionRef, constraints);
+    const { data, error } = await q;
+    if (error) throw error;
+    allRows = data || [];
+  } else {
+    // Pagina para buscar TODOS os registros (Supabase limita a 1000 por requisição)
+    let offset = 0;
+    while (true) {
+      const q = buildQuery(collectionRef, constraints).range(offset, offset + PAGE - 1);
+      const { data, error } = await q;
+      if (error) throw error;
+      allRows = allRows.concat(data || []);
+      if (!data || data.length < PAGE) break;
+      offset += PAGE;
+    }
+  }
+  const docs = allRows.map(row => ({
     id: row.id,
     exists: () => true,
     data: () => mergeExtraFields(row)
