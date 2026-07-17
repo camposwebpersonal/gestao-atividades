@@ -68,22 +68,29 @@ function mergeExtraFields(row) {
       for (const [k, v] of Object.entries(extra)) {
         if (merged[k] === null || merged[k] === undefined) merged[k] = v;
       }
-      delete merged.extra_fields;
+      merged.extra_fields = extra;
       return merged;
     }
   } catch (e) {
     // ignora JSON inválido
   }
-  const copy = { ...row };
-  delete copy.extra_fields;
-  return copy;
+  return { ...row };
 }
 
-function moveUnknownToExtra(table, payload) {
+function moveUnknownToExtra(table, payload, existingExtra) {
   if (!EXTRA_TABLES.has(table)) return payload;
   const known = SCHEMA_FIELDS[table];
   if (!known) return payload;
   const extra = {};
+  if (existingExtra) {
+    const parsed = typeof existingExtra === 'string' ? JSON.parse(existingExtra) : existingExtra;
+    if (parsed && typeof parsed === 'object') Object.assign(extra, parsed);
+  }
+  if (payload.extra_fields !== undefined) {
+    const parsed = typeof payload.extra_fields === 'string' ? JSON.parse(payload.extra_fields) : payload.extra_fields;
+    if (parsed && typeof parsed === 'object') Object.assign(extra, parsed);
+    delete payload.extra_fields;
+  }
   for (const k of Object.keys(payload)) {
     if (!known.has(k)) {
       extra[k] = payload[k];
@@ -318,7 +325,12 @@ export async function updateDoc(docRef, data) {
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   delete payload.id;
   cleanPayload(payload);
-  moveUnknownToExtra(table, payload);
+  let existingExtra = null;
+  if (EXTRA_TABLES.has(table)) {
+    const { data: existing, error } = await supabase.from(table).select('extra_fields').eq('id', docRef._id).maybeSingle();
+    if (!error && existing?.extra_fields) existingExtra = existing.extra_fields;
+  }
+  moveUnknownToExtra(table, payload, existingExtra);
   const { error } = await supabase.from(table).update(payload).eq('id', docRef._id);
   if (error) throw error;
 }
