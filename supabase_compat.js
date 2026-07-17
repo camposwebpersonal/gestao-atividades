@@ -26,7 +26,7 @@ const TABLE_MAP = {
 
 function toSnake(str) {
   if (!str || typeof str !== 'string') return str;
-  return str.replace(/[A-Z]/g, c => '_' + c.toLowerCase()).replace(/^_/, '');
+  return str.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
 }
 
 function toCamel(str) {
