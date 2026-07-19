@@ -368,7 +368,7 @@ main{flex:1;overflow-y:auto}
     <button class="btn-logout" onclick="doLogout()">Sair</button>
   </nav>
   <div id="navmenu">
-    <button class="nav-btn active" id="nav-ativ" onclick="setView('ativ')">📅 Atividades</button>
+    <button class="nav-btn active" id="nav-ativ" onclick="setView('mod')">🏠 Início</button>
     <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
     <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
     <button class="nav-btn" id="nav-cham" onclick="setView('cham')">🎫 Chamados</button>
@@ -399,6 +399,7 @@ main{flex:1;overflow-y:auto}
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
+import './js/modulos.js';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -454,7 +455,7 @@ onAuthStateChanged(auth,async u=>{
   }catch(e){S.isAdmin=true;S.userRole='admin';S.userSetor=null;}
   if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-imp').style.display='';}
   await loadData();
-  setView('ativ');
+  setView('mod');
   const _sp=new URLSearchParams(location.search).get('setup');
   if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
   const _imp=new URLSearchParams(location.search).get('importar');
@@ -587,8 +588,9 @@ function flattenSubTree(tree,levelPrefix,out){
 
 // ── NAV ──
 window.setView=function(v){
-  ['ativ','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['ativ','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v || (v==='mod' && k==='ativ'));});
   if(v==='ativ')renderDash();
+  else if(v==='mod')window.renderModulos();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
   else if(v==='imp')renderImportar();
@@ -1113,7 +1115,7 @@ window.openActivity=function(secId){
     </div>`;
   })():'';
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn-action" onclick="setView('ativ')">← Voltar</button>
+    <button class="btn-action" onclick="setView('mod')">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
