@@ -262,7 +262,7 @@ window.renderControleContas = function(secId){
   </div>` : '';
 
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn-action" onclick="setView('mod')">← Voltar</button>
+    <button class="btn-action" onclick="window.renderModulo(window.modForSec(sec))">← Voltar</button>
     <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}

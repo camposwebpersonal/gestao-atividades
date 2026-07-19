@@ -194,3 +194,5 @@ window.gerarRelatorioModulo = async function(modId){
   doc.save(`relatorio-${mod.id}-${new Date().toISOString().slice(0,10)}.pdf`);
   toast('PDF do módulo gerado!','success');
 };
+
+window.modForSec = s => _md.modFor(s);

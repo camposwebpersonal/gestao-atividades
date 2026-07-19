@@ -1082,7 +1082,7 @@ window.openActivity=function(secId){
     </div>`;
   })():'';
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn-action" onclick="setView('mod')">← Voltar ao início</button>
+    <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
     ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
@@ -2084,7 +2084,7 @@ window.executarImportacaoJSON=async function(){
           ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
           ${updStatus>0?`<strong>Status atualizados:</strong> ${updStatus}<br>`:''}
         </div>
-        <div style="margin-top:12px"><button class="btn-action" onclick="setView('mod')">🏠 Voltar ao início</button></div>
+        <div style="margin-top:12px"><button class="btn-action" onclick="window.renderModulo(window.modForSec(act))">🏠 Voltar ao início</button></div>
       </div>`;
     }
     toast('Importação concluída!','success');
