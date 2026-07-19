@@ -27,10 +27,10 @@ img,iframe,video{max-width:100%;height:auto}
 .brand{font-size:16px;font-weight:800;color:#e2e8f0;display:flex;align-items:center;gap:8px}
 .brand img{height:30px;object-fit:contain}
 .spacer{flex:1}
-.user-chip{display:flex;align-items:center;gap:8px;background:#0e1729;border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 8px}
+.user-chip{display:flex;align-items:center;gap:8px;background:#0e1729;border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 8px;flex-shrink:0}
 .user-chip .av{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
 .user-chip span{font-size:12px;font-weight:600;color:#94a3b8}
-.btn-logout{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-logout{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
 .btn-logout:hover{background:rgba(239,68,68,.22)}
 .undo-btn,.redo-btn{background:#0e1729;border:1px solid var(--border);color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
 .undo-btn:hover,.redo-btn:hover{border-color:var(--accent);color:#e2e8f0;background:#1e293b}
@@ -240,8 +240,10 @@ main{flex:1;overflow-y:auto}
   .brand span{display:none}
   .user-chip{padding:4px 6px 4px 4px}
   .user-chip span{display:none}
-  #navbar .btn-system{font-size:10px;padding:5px 7px;white-space:nowrap}
-  #navbar .btn-logout{font-size:10px;padding:5px 7px;white-space:nowrap}
+  #navbar{padding:0 8px;gap:6px}
+  #undo-redo-bar{display:none}
+  #navbar .btn-system{display:none}
+  #navbar .btn-logout{font-size:10px;padding:6px 10px;white-space:nowrap}
   #navmenu{padding:0 6px;gap:1px}
   .nav-btn{font-size:11px;padding:7px 8px}
   .modal-overlay{padding:0;align-items:flex-end}
