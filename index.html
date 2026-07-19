@@ -525,7 +525,14 @@ onAuthStateChanged(auth,async u=>{
     },800);
   }
 });
-window.doLogout=()=>signOut(auth).then(()=>location.href='login.html');
+window.doLogout=async function doLogout(){
+  try{ await auth.signOut(); }catch(e){ console.warn('Logout ignorado:', e); }
+  for(let i=localStorage.length-1;i>=0;i--){
+    const k=localStorage.key(i);
+    if(k && (k.startsWith('sb-') || k.includes('auth-token') || k.includes('supabase.auth'))) localStorage.removeItem(k);
+  }
+  location.href='login.html';
+};
 
 // ── DATA ──
 window.loadData=async function loadData(){
