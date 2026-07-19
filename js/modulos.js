@@ -1,14 +1,39 @@
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
-  {id:'atividades', label:'Atividades', desc:'Controle de atividades, pendências e prazos da prefeitura.', icon:'📅', color:'#3b82f6', isAtividades:true},
-  {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet e demais contas.', icon:'💰', color:'#10b981', flag:'controle_contas'},
-  {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#8b5cf6', modulo:'alugueis'},
+  {id:'eventos', label:'Eventos', desc:'Exposições, seminários, agenda e programações especiais.', icon:'🎪', color:'#ec4899', modulo:'eventos'},
   {id:'projetos', label:'Controle de Projetos', desc:'Projetos que a Prefeitura está trabalhando atualmente.', icon:'🚀', color:'#f59e0b', modulo:'projetos'},
-  {id:'rh', label:'Controle de RH', desc:'BCC, efetivos, comissionados e folha de salários.', icon:'👥', color:'#ec4899', modulo:'rh'},
-  {id:'cadastros', label:'Listas de Cadastros', desc:'Veículos, associações, líderes e cadastros diversos.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
-  {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', flag:'controle_distribuicao'}
+  {id:'obras', label:'Obras e Infraestrutura', desc:'Cisternas, barragens, barreiros e demandas de infraestrutura.', icon:'🏗️', color:'#a16207', modulo:'obras'},
+  {id:'frota', label:'Frota e Veículos', desc:'IPVA, seguros e aluguéis dos veículos municipais.', icon:'🚗', color:'#6366f1', modulo:'frota'},
+  {id:'atendimentos', label:'Atendimentos', desc:'Serviços de urgência e demandas da população.', icon:'🆘', color:'#ef4444', modulo:'atendimentos'},
+  {id:'rh', label:'RH e Empregos', desc:'BCCS, comissionados, contratos e gestão de pessoas.', icon:'👥', color:'#8b5cf6', modulo:'rh'},
+  {id:'cadastros', label:'Cadastros', desc:'Associações, lideranças e listas diversas.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
+  {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'�', color:'#10b981', modulo:'contas', flag:'controle_contas'},
+  {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', modulo:'distribuicao', flag:'controle_distribuicao'},
+  {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#f97316', modulo:'alugueis'},
+  {id:'atividades', label:'Outros / Geral', desc:'Demandas e itens não classificados em outro módulo.', icon:'⚙️', color:'#3b82f6', isAtividades:true}
 ];
 window.MODULOS = MODULOS;
+
+const NOME_MODULO = {
+  eventos:['expocose','expo','seminário','seminario','agenda','evento','eventos','festa','palestra'],
+  projetos:['projetos','projeto'],
+  obras:['cisterna','cisternas','barreiro','barreiros','barragem','barragens','infraestrutura','pontos de cisterna','demandas de barreiros','obras'],
+  frota:['veiculo','veículos','frota','ipva','seguro dos veiculos','seguro dos veículos'],
+  atendimentos:['urgencia','urgência','atendimento','atendimentos','ouvidoria','serviços de urgencia','servicos de urgencia','retro'],
+  rh:['rh','empregos','vereadores','bcc s','bcc','comissionados','contratos','igespe','genesis','vigia','vigias'],
+  cadastros:['associações','associacoes','lideranças','liderancas','lideres','cadastro'],
+  contas:['controle de contas','contas','seguro','seguros'],
+  distribuicao:['distribuição','distribuicao','distribuicao de leite','leite'],
+  alugueis:['aluguel','alugueis','aluguéis']
+};
+function _modFromName(name){
+  const n=String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  for(const id of MODULOS){
+    const keys=NOME_MODULO[id.id];
+    if(keys&&keys.some(k=>n.includes(k))) return id.id;
+  }
+  return 'atividades';
+}
 
 function _myPerms(){ if(!window.S) return {modulos:{}}; if(window.S.isAdmin) return {modulos:{}, all:true}; return window.S.permissoes || {modulos:{}}; }
 window.userCan = function(modId, action='acesso'){
@@ -27,13 +52,10 @@ const _md = {
   fmtD: d => { if(!d) return '—'; try { let s=String(d); if(!s.includes('T') && !s.includes(' ')) s+='T00:00'; return new Date(s).toLocaleDateString('pt-BR'); } catch { return String(d); } },
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
   extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
+  modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
   pct: g => { const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
   ativTotal: g => { return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
-  grupos: mod => (window.S && S.secs || []).filter(s=>{
-    if(mod.flag) return s[mod.flag]==1;
-    if(mod.isAtividades) return !s.controle_contas && !s.controle_distribuicao && !_md.extra(s).modulo;
-    return _md.extra(s).modulo === mod.modulo;
-  }).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
+  grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 
 function _mdCard(mod){
