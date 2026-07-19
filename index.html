@@ -1001,13 +1001,19 @@ window.openActivity=function(secId){
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias!==0;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
+  const ftItem=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='item');
   const ftSubs=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');
-  const useTableAtiv=tableModeAtiv&&ftSubs.length>0;
-  const hasResumoField=ftSubs.some(t=>t.field_name==='Mês')&&ftSubs.some(t=>t.field_name==='Remuneração');
+  const extraKeys=new Set();
+  const addEf=ent=>{const ef=ent.extra_fields||{};if(ef&&typeof ef==='object')Object.keys(ef).forEach(k=>extraKeys.add(k));};
+  items.forEach(addEf);
+  S.subitems.filter(s=>items.some(i=>i.id===s.item_id)).forEach(addEf);
+  const tableFields=[...new Set([...ftItem.map(t=>t.field_name),...ftSubs.map(t=>t.field_name),...extraKeys])].filter(f=>!['description','observacao','responsaveis','secretaria_id','item_icon','item_color','concluded','conclusion_date','status','show_conclusion_date','order_num','created_at','updated_at','atividade_id','item_id','parent_id','parent_type','auto_concluded','cover_url','resp_url','deadline_date','start_date'].includes(f));
+  const useTableAtiv=tableModeAtiv&&(tableFields.length>0||items.length>0);
+  const hasResumoField=tableFields.includes('Mês')&&tableFields.includes('Remuneração');
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
-    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];ftSubs.forEach(t=>th.push(t.field_name));if(_cp){th.push('Prog.');th.push('Status');}
+    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){th.push('Prog.');th.push('Status');}
     let tbl='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
@@ -1019,7 +1025,7 @@ window.openActivity=function(secId){
       tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${esc(item.description||'')}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(item.responsaveis||'')}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(item.observacao||'')}</td>`;
-      ftSubs.forEach(t=>{const v=(item.extra_fields||{})[t.field_name];tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(v||'')}</td>`;});
+      tableFields.forEach(fn=>{const raw=(item.extra_fields||{})[fn]!=null?(item.extra_fields||{})[fn]:item[fn]; tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(raw!=null?String(raw):'')}</td>`;});
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td><td style="padding:8px 10px;color:${done?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${done?'✅ Concluído':late?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
       tbl+='</tr>';
       const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -1034,7 +1040,7 @@ window.openActivity=function(secId){
           tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.description||'')}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.responsaveis||'')}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.observacao||'')}</td>`;
-          ftSubs.forEach(t=>{const v=(c.extra_fields||{})[t.field_name];tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${esc(v||'')}</td>`;});
+          tableFields.forEach(fn=>{const raw=(c.extra_fields||{})[fn]!=null?(c.extra_fields||{})[fn]:c[fn]; tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${esc(raw!=null?String(raw):'')}</td>`;});
           if(_cp){tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td><td style="padding:5px 10px;color:${cD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b;font-size:11px">${cD?'✅ Concluído':'⏳ Pendente'}</td>`;}
           tbl+='</tr>';
           _tblSubSubs(c.id,num,depth+1);
@@ -1048,7 +1054,7 @@ window.openActivity=function(secId){
         tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(s.description||'')}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(s.responsaveis||'')}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(s.observacao||'')}</td>`;
-        ftSubs.forEach(t=>{const v=(s.extra_fields||{})[t.field_name];tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(v||'')}</td>`;});
+        tableFields.forEach(fn=>{const raw=(s.extra_fields||{})[fn]!=null?(s.extra_fields||{})[fn]:s[fn]; tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(raw!=null?String(raw):'')}</td>`;});
         if(_cp){tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;color:${sD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${sD?'✅ Concluído':sL?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
         tbl+='</tr>';
         _tblSubSubs(s.id,subNum,1);
