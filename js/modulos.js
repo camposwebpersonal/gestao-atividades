@@ -7,7 +7,7 @@ const MODULOS = [
   {id:'atendimentos', label:'Atendimentos', desc:'Serviços de urgência e demandas da população.', icon:'🆘', color:'#ef4444', modulo:'atendimentos'},
   {id:'rh', label:'RH e Empregos', desc:'BCCS, comissionados, contratos e gestão de pessoas.', icon:'👥', color:'#8b5cf6', modulo:'rh'},
   {id:'cadastros', label:'Cadastros', desc:'Associações, lideranças e listas diversas.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
-  {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'�', color:'#10b981', modulo:'contas', flag:'controle_contas'},
+  {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'💰', color:'#10b981', modulo:'contas', flag:'controle_contas'},
   {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', modulo:'distribuicao', flag:'controle_distribuicao'},
   {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#f97316', modulo:'alugueis'},
   {id:'atividades', label:'Outros / Geral', desc:'Demandas e itens não classificados em outro módulo.', icon:'⚙️', color:'#3b82f6', isAtividades:true}

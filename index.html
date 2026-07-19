@@ -1846,35 +1846,63 @@ window.openUserModal=function(id){
     `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email de contato</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"><div style="font-size:11px;color:var(--muted);margin-top:4px">Pode ser o mesmo de outro usuário. Não é usado para login.</div></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div>${permMatrix}</div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveUser=async function(id){
-  const name=document.getElementById('usr-name')?.value.trim();
-  const emailContato=document.getElementById('usr-email-contato')?.value.trim().toLowerCase()||'';
-  const role=document.getElementById('usr-role')?.value||'usuario';
-  const setor_id=document.getElementById('usr-setor')?.value||'';
-  const responsavel_id=document.getElementById('usr-resp')?.value||'';
-  const permissoes=_readPermMatrix();
-  if(!name){toast('Nome é obrigatório','error');return;}
-  if(id){
-    await updateDoc(doc(db,'users',id),{displayName:name,email_contato:emailContato,role,setor_id,responsavel_id,permissoes,updated_at:serverTimestamp()});
-    await loadData();closeModal();toast('Atualizado!');renderAdmin();
-  }else{
-    const user=document.getElementById('usr-user')?.value.trim();
-    if(!user){toast('Usuário é obrigatório','error');return;}
-    if(!/^[a-zA-Z0-9]+$/.test(user)){toast('Usuário deve conter apenas letras e números, sem espaços','error');return;}
+  if(window._savingUser){toast('Aguarde a operação atual','warn');return;}
+  window._savingUser=true;
+  try{
+    const name=document.getElementById('usr-name')?.value.trim();
+    const emailContato=document.getElementById('usr-email-contato')?.value.trim()||'';
+    const role=document.getElementById('usr-role')?.value||'usuario';
+    const setor_id=document.getElementById('usr-setor')?.value||'';
+    const responsavel_id=document.getElementById('usr-resp')?.value||'';
+    const permissoes=_readPermMatrix();
+    if(!name){toast('Nome é obrigatório','error');return;}
+    if(id){
+      await updateDoc(doc(db,'users',id),{displayName:name,email_contato:emailContato.toLowerCase(),role,setor_id,responsavel_id,permissoes,updated_at:serverTimestamp()});
+      await loadData();closeModal();toast('Atualizado!');renderAdmin();return;
+    }
+    const userRaw=document.getElementById('usr-user')?.value.trim();
+    if(!userRaw){toast('Usuário é obrigatório','error');return;}
+    const user=userRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    if(!user||user.length<2){toast('Usuário inválido. Use pelo menos 2 letras/números.','error');return;}
     const password=document.getElementById('usr-password')?.value||'';
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
     const email=_toEmail(user);
+    const existing=(window.S&&S.users||[]).find(u=>(u.email||'').toLowerCase()===email);
+    if(existing){toast('Este nome de usuário já existe. Escolha outro.','error');return;}
     const {data:{session:adminSession}}=await auth.getSession();
+    let uid=null; let created=false;
     try{
       const cred=await createUserWithEmailAndPassword(auth,email,password);
-      const uid=cred.user.uid;
-      await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato,role,setor_id,responsavel_id,permissoes,created_at:serverTimestamp()});
-      if(adminSession&&adminSession.access_token){await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}
-      await loadData();closeModal();toast('Usuário criado!');renderAdmin();
-    }catch(e){
-      if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-      const msgs={'auth/email-already-in-use':'Este nome de usuário já existe.','auth/invalid-email':'Usuário inválido.','auth/weak-password':'Senha muito fraca.'};
-      toast(msgs[e.code]||'Erro ao criar usuário: '+e.message,'error');return;
+      uid=cred.user.uid||cred.user.id; created=true;
+    }catch(createErr){
+      const msg=String(createErr.message||createErr.error||'');
+      console.warn('signup error:',createErr);
+      if(/already\s*registered|already\s*exists|email.*in\s*use|user_already_exists/i.test(msg)){
+        try{
+          const {data:{user}}=await auth.signInWithPassword({email,password});
+          if(user){uid=user.id;}
+          else{throw createErr;}
+        }catch(loginErr){
+          if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+          toast('Este nome de usuário já está em uso ou a senha está incorreta.','error');return;
+        }
+      }else{
+        if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+        toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');return;
+      }
     }
+    if(!uid){toast('Não foi possível obter o ID do usuário.','error');return;}
+    try{
+      await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato.toLowerCase(),role,setor_id,responsavel_id,permissoes,created_at:serverTimestamp()});
+      if(adminSession&&adminSession.access_token){await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}
+      await loadData();closeModal();toast(created?'Usuário criado!':'Usuário recuperado e salvo!');renderAdmin();
+    }catch(saveErr){
+      console.error(saveErr);
+      if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+      toast('Usuário criou login, mas falhou ao salvar dados. Tente editar e salvar novamente.','error');
+    }
+  }finally{
+    window._savingUser=false;
   }
 };
 window.sendUserPasswordReset=async function(id){
