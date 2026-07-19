@@ -3,7 +3,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0';
 
-const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
+export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -160,6 +160,21 @@ export async function createUserWithEmailAndPassword(auth, email, password) {
   const { data, error } = await auth.signUp({ email, password });
   if (error) throw error;
   return { user: mapUser(data.user) };
+}
+
+export async function createUserAdmin(email, password, serviceKey, metadata={}) {
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: {
+      'apikey': serviceKey,
+      'Authorization': 'Bearer ' + serviceKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email, password, email_confirm: true, user_metadata: metadata })
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(json.message || json.error || `HTTP ${resp.status}`);
+  return json.id || json.user?.id || json.users?.[0]?.id;
 }
 
 export async function sendPasswordResetEmail(auth, email) {

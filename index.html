@@ -397,7 +397,7 @@ main{flex:1;overflow-y:auto}
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,sendPasswordResetEmail}from"./supabase_compat.js";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
 import './js/modulos.js';
 
@@ -1791,8 +1791,19 @@ function renderAdmin(){
     const perms=permLabels(u.permissoes);
     return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="max-width:200px;white-space:normal">${perms}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#2563eb" onclick="sendUserPasswordReset('${u.id}')">🔑</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
   }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
+  const svcKey=localStorage.getItem('sb_service_role_key')||'';
+  const svcBox=`<div style="margin-bottom:18px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px">
+    <label style="font-weight:600;display:block;margin-bottom:6px">Chave de serviço do Supabase (service_role)</label>
+    <input type="password" id="admin-svc-key" value="${esc(svcKey)}" placeholder="Cole a chave service_role para criar usuários sem rate limit" style="width:100%;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <button type="button" class="btn-action" onclick="localStorage.setItem('sb_service_role_key',document.getElementById('admin-svc-key').value.trim());toast('Chave salva no navegador','info')">💾 Salvar chave</button>
+      <button type="button" class="btn-cancel" onclick="localStorage.removeItem('sb_service_role_key');document.getElementById('admin-svc-key').value='';toast('Chave removida','info')">🗑️ Remover</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Fica salva apenas neste navegador. Não é enviada para o GitHub nem para o código.</div>
+  </div>`;
   setC(`<div class="page-title">⚙️ Administração de Usuários</div>
     <div class="page-sub">Crie usuários, defina permissões por módulo e redefina senhas</div>
+    ${svcBox}
     <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
     <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th>Módulos</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="margin-top:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;font-size:13px;color:#93c5fd;line-height:1.6">
@@ -1872,29 +1883,30 @@ window.saveUser=async function(id){
     const email=_toEmail(user);
     const existing=(window.S&&S.users||[]).find(u=>(u.email||'').toLowerCase()===email);
     if(existing){toast('Este nome de usuário já existe no cadastro. Escolha outro.','error');return;}
-    const {data:{session:adminSession}}=await auth.getSession();
+    let adminSession=null;
+    const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
     let uid=null; let created=false;
-    try{
-      const cred=await createUserWithEmailAndPassword(auth,email,password);
-      uid=cred.user.uid||cred.user.id; created=true;
-    }catch(createErr){
-      const msg=String(createErr.message||createErr.error||'');
-      console.warn('signup error:',createErr);
-      if(/rate|limite|too many|too_many_requests/i.test(msg)){
-        if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-        toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');return;
+    if(serviceKey){
+      try{
+        uid=await createUserAdmin(email,password,serviceKey,{display_name:name});
+        created=true;
+      }catch(adminErr){
+        console.error(adminErr);
+        const msg=String(adminErr.message||'');
+        if(/rate|limite|too many|too_many_requests/i.test(msg)){toast('Muitas tentativas. Aguarde alguns minutos e tente novamente.','error');}
+        else{toast('Erro ao criar usuário: '+msg,'error');}
+        return;
       }
-      if(/already\s*registered|already\s*exists|email.*in\s*use|user_already_exists/i.test(msg)){
-        try{
-          const {data:{user}}=await auth.signInWithPassword({email,password});
-          if(user&&user.id){uid=user.id;}
-          else{throw createErr;}
-        }catch(loginErr){
-          if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-          toast('Este nome de usuário já existe no login. Escolha outro ou use a senha correta.','error');return;
-        }
-      }else{
+    }else{
+      adminSession=(await auth.getSession()).data.session;
+      try{
+        const cred=await createUserWithEmailAndPassword(auth,email,password);
+        uid=cred.user.uid||cred.user.id; created=true;
+      }catch(createErr){
+        const msg=String(createErr.message||createErr.error||'');
+        console.warn('signup error:',createErr);
         if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+        if(/rate|limite|too many|too_many_requests/i.test(msg)){toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');return;}
         toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');return;
       }
     }
