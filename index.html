@@ -368,7 +368,7 @@ main{flex:1;overflow-y:auto}
     <button class="btn-logout" onclick="doLogout()">Sair</button>
   </nav>
   <div id="navmenu">
-    <button class="nav-btn active" id="nav-ativ" onclick="setView('mod')">🏠 Início</button>
+    <button class="nav-btn active" id="nav-mod" onclick="setView('mod')">🏠 Início</button>
     <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
     <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
     <button class="nav-btn" id="nav-cham" onclick="setView('cham')">🎫 Chamados</button>
@@ -428,9 +428,6 @@ let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 // ── STATE ──
 let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[]};window.S=S;
 let _importando=false;
-const DASH_VIEW_KEY='gestao_dash_view';
-function getDashView(){const v=localStorage.getItem(DASH_VIEW_KEY);return v==='grid'?'grid':'list';}
-function setDashView(v){localStorage.setItem(DASH_VIEW_KEY,v);}
 let curSecId=null,_pRT={};
 
 // ── PWA SERVICE WORKER ──
@@ -590,9 +587,8 @@ function flattenSubTree(tree,levelPrefix,out){
 
 // ── NAV ──
 window.setView=function(v){
-  ['ativ','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v || (v==='mod' && k==='ativ'));});
-  if(v==='ativ')renderDash();
-  else if(v==='mod')window.renderModulos();
+  ['mod','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  if(v==='mod')window.renderModulos();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
   else if(v==='imp')renderImportar();
@@ -920,55 +916,7 @@ window.gerarPDFGaleria=async function(){
 };
 
 // ── DASHBOARD ──
-function renderDash(){
-  const view=getDashView();
-  const total=S.secs.length;
-  const prgs=S.secs.map(s=>{const its=S.items.filter(i=>i.atividade_id===s.id);if(!its.length)return 0;const d=its.filter(i=>iProg(i).pct===100).length;return Math.round(d/its.length*100);});
-  const done=prgs.filter(p=>p===100).length;
-  const avg=total?Math.round(prgs.reduce((a,b)=>a+b,0)/total):0;
-  const toggle=`<div class="view-toggle">
-    <span style="font-size:12px;color:var(--muted);font-weight:600">Visualização:</span>
-    <button class="view-toggle-btn ${view==='list'?'active':''}" onclick="setDashView('list');renderDash();">☰ Lista</button>
-    <button class="view-toggle-btn ${view==='grid'?'active':''}" onclick="setDashView('grid');renderDash();">⊞ Grade</button>
-  </div>`;
-  const itemsHtml=S.secs.map((s,i)=>{
-    const p=prgs[i],col=pColor(p);
-    if(view==='list'){
-      return`<div class="list-row" onclick="openActivity('${s.id}')">
-        <div class="lr-icon">${s.cover_url?`<img src="${esc(s.cover_url)}" style="width:36px;height:36px;object-fit:cover;border-radius:6px">`:`<img src="img/logo_sertania.png" style="width:36px;height:36px;object-fit:contain;border-radius:6px">`}</div>
-        <div class="lr-body">
-          <div class="lr-title">${esc(s.name)}</div>
-          <div class="lr-meta">${s.observacoes?esc(s.observacoes):''}</div>
-        </div>
-        <div class="lr-prog">
-          <div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div>
-          <div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div>
-        </div>
-        <div class="lr-btns">
-          ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openSecModal('${s.id}')">✏️</button>`:''}
-          <button class="card-btn" onclick="event.stopPropagation();gerarPdf('${s.id}')">📄</button>
-        </div>
-      </div>`;
-    }
-    return`<div class="activity-card" onclick="openActivity('${s.id}')">
-      ${s.cover_url?`<img class="card-thumb" src="${esc(s.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph"><img src="img/logo_sertania.png" style="width:64px;height:64px;object-fit:contain;opacity:.7"></div>`}
-      <div class="card-title">${esc(s.name)}</div>
-      ${s.observacoes?`<div class="card-obs">${esc(s.observacoes)}</div>`:''}
-      <div class="card-foot">
-        <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
-        <div class="card-btns">
-          ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openSecModal('${s.id}')">✏️</button>`:''}
-          <button class="card-btn" onclick="event.stopPropagation();gerarPdf('${s.id}')">📄</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('')||'<div class="empty">Nenhuma atividade cadastrada.</div>';
-  setC(`<div class="page-title">📅 Atividades</div>
-    <div class="page-sub">Atividades da Prefeitura</div>
-    ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openSecModal()">+ Nova Atividade</button></div>`:''}
-    ${toggle}
-    <div class="${view==='list'?'list-view':'cards-grid'}">${itemsHtml}</div>`);
-}
+// Tela antiga de Atividades removida; use renderModulos() / Central de Lançamentos.
 
 function _parseValor(v){
   if(v==null||v==='')return 0;
@@ -1356,7 +1304,7 @@ window.deleteSec=async function(id){
   for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
   const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
   await deleteDoc(doc(db,'secretariats',id));
-  await loadData();closeModal();toast('Atividade excluída!');renderDash();
+  await loadData();closeModal();toast('Atividade excluída!');setView('mod');
 };
 window.deleteItem=async function(id,isSub){
   if(!confirm('Excluir este '+(isSub?'sub-item':'item')+(isSub?'':' e todos os seus sub-itens')+'?'))return;
@@ -1548,7 +1496,7 @@ window.saveSec=async function(id){
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
   await saveRT('activity',did);
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');
-  if(id&&curSecId===id){openActivity(id);}else{renderDash();}
+  if(id&&curSecId===id){openActivity(id);}else{setView('mod');}
 };
 
 // ── ITEM MODAL ──
@@ -2118,7 +2066,7 @@ window.executarImportacaoJSON=async function(){
           ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
           ${updStatus>0?`<strong>Status atualizados:</strong> ${updStatus}<br>`:''}
         </div>
-        <div style="margin-top:12px"><button class="btn-action" onclick="setView('ativ')">📅 Ver Atividades</button></div>
+        <div style="margin-top:12px"><button class="btn-action" onclick="setView('mod')">🏠 Voltar ao início</button></div>
       </div>`;
     }
     toast('Importação concluída!','success');
@@ -3424,7 +3372,7 @@ window._setupBccs=async function(){
   const actId=r.id;
   const flds=[{n:'Nome',t:'text'},{n:'Telefone',t:'text'},{n:'Função',t:'text'},{n:'Jornada',t:'combobox',o:['4 Horas','6 Horas']},{n:'Salário',t:'number'},{n:'Localização',t:'text'},{n:'Sede / Distrito',t:'combobox',o:['Sede','Distrito']},{n:'Secretaria',t:'text'},{n:'Data de Admissão',t:'date'},{n:'Situação',t:'combobox',o:['Ativo','Demitido']},{n:'Data de Demissão',t:'date'},{n:'Indicado por',t:'text'}];
   for(let i=0;i<flds.length;i++){await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope:'subitem',field_name:flds[i].n,field_type:flds[i].t,options:flds[i].o||[],order_num:i,created_at:serverTimestamp()});}
-  await loadData();toast('✅ Atividade BCCS criada com sucesso!');renderDash();
+  await loadData();toast('✅ Atividade BCCS criada com sucesso!');setView('mod');
   history.replaceState(null,'',location.pathname);
 };
 
