@@ -1868,27 +1868,25 @@ window.saveUser=async function(id){
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
     const email=_toEmail(user);
     const existing=(window.S&&S.users||[]).find(u=>(u.email||'').toLowerCase()===email);
-    if(existing){toast('Este nome de usuário já existe. Escolha outro.','error');return;}
+    if(existing){toast('Este nome de usuário já existe no cadastro. Escolha outro.','error');return;}
     const {data:{session:adminSession}}=await auth.getSession();
     let uid=null; let created=false;
     try{
-      const cred=await createUserWithEmailAndPassword(auth,email,password);
-      uid=cred.user.uid||cred.user.id; created=true;
-    }catch(createErr){
-      const msg=String(createErr.message||createErr.error||'');
-      console.warn('signup error:',createErr);
-      if(/already\s*registered|already\s*exists|email.*in\s*use|user_already_exists/i.test(msg)){
-        try{
-          const {data:{user}}=await auth.signInWithPassword({email,password});
-          if(user){uid=user.id;}
-          else{throw createErr;}
-        }catch(loginErr){
-          if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-          toast('Este nome de usuário já está em uso ou a senha está incorreta.','error');return;
-        }
-      }else{
+      const {data:{user:preflight}}=await auth.signInWithPassword({email,password});
+      if(preflight&&preflight.id){ uid=preflight.id; }
+    }catch(e){ console.warn('preflight login:', e); }
+    if(!uid){
+      try{
+        const cred=await createUserWithEmailAndPassword(auth,email,password);
+        uid=cred.user.uid||cred.user.id; created=true;
+      }catch(createErr){
+        const msg=String(createErr.message||createErr.error||'');
+        console.warn('signup error:',createErr);
         if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-        toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');return;
+        if(/rate|limite|too many/i.test(msg)){toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');}
+        else if(/already|existe|registered/i.test(msg)){toast('Este nome de usuário já existe no login. Escolha outro ou use a senha correta.','error');}
+        else {toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');}
+        return;
       }
     }
     if(!uid){toast('Não foi possível obter o ID do usuário.','error');return;}
