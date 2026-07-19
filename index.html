@@ -1847,6 +1847,9 @@ window.openUserModal=function(id){
 };
 window.saveUser=async function(id){
   if(window._savingUser){toast('Aguarde a operação atual','warn');return;}
+  const now=Date.now();
+  if(!id && window._lastUserAttempt && now-window._lastUserAttempt<10000){toast('Aguarde 10 segundos antes de tentar criar outro usuário.','warn');return;}
+  window._lastUserAttempt=now;
   window._savingUser=true;
   try{
     const name=document.getElementById('usr-name')?.value.trim();
@@ -1872,21 +1875,27 @@ window.saveUser=async function(id){
     const {data:{session:adminSession}}=await auth.getSession();
     let uid=null; let created=false;
     try{
-      const {data:{user:preflight}}=await auth.signInWithPassword({email,password});
-      if(preflight&&preflight.id){ uid=preflight.id; }
-    }catch(e){ console.warn('preflight login:', e); }
-    if(!uid){
-      try{
-        const cred=await createUserWithEmailAndPassword(auth,email,password);
-        uid=cred.user.uid||cred.user.id; created=true;
-      }catch(createErr){
-        const msg=String(createErr.message||createErr.error||'');
-        console.warn('signup error:',createErr);
+      const cred=await createUserWithEmailAndPassword(auth,email,password);
+      uid=cred.user.uid||cred.user.id; created=true;
+    }catch(createErr){
+      const msg=String(createErr.message||createErr.error||'');
+      console.warn('signup error:',createErr);
+      if(/rate|limite|too many|too_many_requests/i.test(msg)){
         if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-        if(/rate|limite|too many/i.test(msg)){toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');}
-        else if(/already|existe|registered/i.test(msg)){toast('Este nome de usuário já existe no login. Escolha outro ou use a senha correta.','error');}
-        else {toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');}
-        return;
+        toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');return;
+      }
+      if(/already\s*registered|already\s*exists|email.*in\s*use|user_already_exists/i.test(msg)){
+        try{
+          const {data:{user}}=await auth.signInWithPassword({email,password});
+          if(user&&user.id){uid=user.id;}
+          else{throw createErr;}
+        }catch(loginErr){
+          if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+          toast('Este nome de usuário já existe no login. Escolha outro ou use a senha correta.','error');return;
+        }
+      }else{
+        if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
+        toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');return;
       }
     }
     if(!uid){toast('Não foi possível obter o ID do usuário.','error');return;}
