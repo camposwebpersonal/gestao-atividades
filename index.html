@@ -1789,8 +1789,8 @@ function renderAdmin(){
     const usuario=_usernameFromEmail(u.email||'');
     const emailContato=u.email_contato?esc(u.email_contato):'—';
     const perms=permLabels(u.permissoes);
-    return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="max-width:200px;white-space:normal">${perms}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#2563eb" onclick="sendUserPasswordReset('${u.id}')">🔑</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
-  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
+    return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="max-width:200px;white-space:normal">${perms}</td><td style="white-space:nowrap"><input type="password" id="usr-nova-senha-${u.id}" placeholder="Nova senha" style="width:120px;font-size:12px;padding:6px;border-radius:6px;border:1px solid #334155;background:#0a1222;color:#e2e8f0"><button class="card-btn" style="background:#2563eb;margin-left:6px" onclick="changeUserPassword('${u.id}')">🔑</button></td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
   const svcKey=localStorage.getItem('sb_service_role_key')||'';
   const svcBox=`<div style="margin-bottom:18px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px">
     <label style="font-weight:600;display:block;margin-bottom:6px">Chave de serviço do Supabase (service_role)</label>
@@ -1805,7 +1805,7 @@ function renderAdmin(){
     <div class="page-sub">Crie usuários, defina permissões por módulo e redefina senhas</div>
     ${svcBox}
     <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th>Módulos</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th>Módulos</th><th>Nova senha</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="margin-top:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;font-size:13px;color:#93c5fd;line-height:1.6">
       <strong>Regras:</strong><br>
       👑 <strong>Admin</strong> — acesso total e pode gerenciar usuários.<br>
@@ -1933,13 +1933,14 @@ window.saveUser=async function(id){
 window.changeUserPassword=async function(id){
   const u=S.users.find(x=>x.id===id);
   if(!u)return;
-  const pwd=document.getElementById('usr-nova-senha')?.value||'';
+  const input=document.getElementById('usr-nova-senha-'+id)||document.getElementById('usr-nova-senha');
+  const pwd=(input?.value||'').trim();
   if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return;}
   const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
   if(!serviceKey){toast('Salve a chave de serviço no painel admin primeiro','error');return;}
   try{
     await updateUserPassword(u.id,pwd,serviceKey);
-    document.getElementById('usr-nova-senha').value='';
+    input.value='';
     toast('Senha alterada com sucesso!','info');
   }catch(e){
     console.error(e);
