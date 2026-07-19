@@ -549,6 +549,8 @@ window.loadData=async function loadData(){
   S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
+  S.me=S.users.find(u=>u.id===S.user?.uid)||{};
+  S.permissoes=S.me.permissoes||{modulos:{},pode_criar:false,pode_editar:false};
   S.chamados=ch.docs.map(d=>({id:d.id,...d.data()}));
   S.galeria=gal.docs.map(d=>({id:d.id,...d.data()}));
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
@@ -1779,24 +1781,46 @@ async function mkThumb(dataUrl,w,h,q){return new Promise(res=>{const img=new Ima
 // ── ADMIN ──
 function renderAdmin(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
+  const permLabels=(p)=>Object.entries(p?.modulos||{}).filter(([_,v])=>v.acesso).map(([k,v])=>{const m=window.MODULOS?.find(x=>x.id===k);const lbl=m?m.icon+' '+m.label:k;return `<span style="display:inline-block;font-size:10px;background:#0f172a;border:1px solid #1e3a5f;border-radius:6px;padding:3px 7px;margin:2px">${lbl}${v.gerenciar||v.criar||v.editar?' ✎':''}</span>`;}).join('')||'—';
   const rows=S.users.map(u=>{
     const roleLbl={admin:'👑 Admin',gestor:'📋 Gestor',usuario:'👤 Usuário'}[u.role]||u.role;
     const setorName=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'—';
     const respName=S.responsaveis.find(r=>r.id===u.responsavel_id)?.name||'—';
     const usuario=_usernameFromEmail(u.email||'');
     const emailContato=u.email_contato?esc(u.email_contato):'—';
-    return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
-  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
-  setC(`<div class="page-title">⚙️ Administração</div>
-    <div class="page-sub">Gerencie usuários e níveis de acesso</div>
+    const perms=permLabels(u.permissoes);
+    return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td style="max-width:200px;white-space:normal">${perms}</td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#2563eb" onclick="sendUserPasswordReset('${u.id}')">🔑</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
+  setC(`<div class="page-title">⚙️ Administração de Usuários</div>
+    <div class="page-sub">Crie usuários, defina permissões por módulo e redefina senhas</div>
     <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th>Módulos</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div style="margin-top:20px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:16px;font-size:13px;color:#93c5fd;line-height:1.6">
-      <strong>Níveis de acesso:</strong><br>
-      👑 <strong>Admin</strong> — acesso total<br>
-      📋 <strong>Gestor</strong> — pode criar/editar itens e gerenciar sua secretaria<br>
-      👤 <strong>Usuário</strong> — apenas visualizar e adicionar chamados
+      <strong>Regras:</strong><br>
+      👑 <strong>Admin</strong> — acesso total e pode gerenciar usuários.<br>
+      📋 <strong>Gestor</strong> — permissões conforme módulos marcados.<br>
+      👤 <strong>Usuário</strong> — apenas consulta nos módulos liberados.<br>
+      O login é feito pelo <strong>nome de usuário</strong>. Vários usuários podem compartilhar o mesmo e-mail de contato.
     </div>`);
+}
+function _buildPermMatrix(u){
+  const p=u?.permissoes||{modulos:{}};
+  const rows=window.MODULOS.map(m=>{
+    const mp=p.modulos?.[m.id]||{};
+    const a=mp.acesso?'checked':'';
+    const g=mp.gerenciar?'checked':'';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${m.icon}</span><div><div style="font-weight:700">${esc(m.label)}</div><div style="font-size:11px;color:#64748b">${esc(m.desc)}</div></div></div><div style="display:flex;align-items:center;gap:14px;font-size:12px"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="perm-${m.id}-acesso" ${a}> Acessar</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="perm-${m.id}-ger" ${g}> Gerenciar</label></div></div>`;
+  }).join('');
+  return `<div class="form-group full"><label>Permissões por módulo</label><div>${rows}</div><div style="font-size:11px;color:var(--muted);margin-top:6px">"Acessar" permite visualizar. "Gerenciar" permite criar e editar.</div></div>`;
+}
+function _readPermMatrix(){
+  const modulos={};
+  (window.MODULOS||[]).forEach(m=>{
+    const a=document.getElementById('perm-'+m.id+'-acesso')?.checked;
+    const g=document.getElementById('perm-'+m.id+'-ger')?.checked;
+    if(a||g) modulos[m.id]={acesso:!!a,criar:!!g,editar:!!g,gerenciar:!!g};
+  });
+  return {modulos};
 }
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
@@ -1814,11 +1838,12 @@ window.openUserModal=function(id){
     ?`<div class="form-group full"><label>Usuário</label><input id="usr-user" value="${esc(usuario)}" disabled style="background:#0a1222;color:#64748b"></div>`
     :`<div class="form-group full"><label>Usuário *</label><input id="usr-user" value="" placeholder="Ex: RCAMPOS" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:4px">Use apenas letras e números. O login será feito com este nome.</div></div>`;
   const senhaSection=id
-    ?`<div class="form-group full" style="background:#0a1222;border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:8px">A senha não pode ser alterada diretamente por segurança. Envie um link de redefinição para o email de contato.</div><button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')">🔑 Enviar redefinição de senha</button></div>`
+    ?`<div class="form-group full" style="background:#0a1222;border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:8px">Envie um link de redefinição de senha para o e-mail de contato. Para definir uma senha manualmente, é necessária a chave de serviço (service_role) do Supabase.</div><button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')">🔑 Enviar redefinição por e-mail</button></div>`
     :`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" style="width:100%"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:400;cursor:pointer"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')" style="width:auto"><span>Mostrar senha</span></label></div>`;
+  const permMatrix=_buildPermMatrix(u);
   const actions=id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:'';
   openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
-    `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email de contato</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div></div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
+    `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email de contato</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"><div style="font-size:11px;color:var(--muted);margin-top:4px">Pode ser o mesmo de outro usuário. Não é usado para login.</div></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div>${permMatrix}</div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveUser=async function(id){
   const name=document.getElementById('usr-name')?.value.trim();
@@ -1826,9 +1851,10 @@ window.saveUser=async function(id){
   const role=document.getElementById('usr-role')?.value||'usuario';
   const setor_id=document.getElementById('usr-setor')?.value||'';
   const responsavel_id=document.getElementById('usr-resp')?.value||'';
+  const permissoes=_readPermMatrix();
   if(!name){toast('Nome é obrigatório','error');return;}
   if(id){
-    await updateDoc(doc(db,'users',id),{displayName:name,email_contato:emailContato,role,setor_id,responsavel_id,updated_at:serverTimestamp()});
+    await updateDoc(doc(db,'users',id),{displayName:name,email_contato:emailContato,role,setor_id,responsavel_id,permissoes,updated_at:serverTimestamp()});
     await loadData();closeModal();toast('Atualizado!');renderAdmin();
   }else{
     const user=document.getElementById('usr-user')?.value.trim();
@@ -1837,14 +1863,15 @@ window.saveUser=async function(id){
     const password=document.getElementById('usr-password')?.value||'';
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
     const email=_toEmail(user);
+    const {data:{session:adminSession}}=await auth.getSession();
     try{
       const cred=await createUserWithEmailAndPassword(auth,email,password);
       const uid=cred.user.uid;
-      await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato,role,setor_id,responsavel_id,created_at:serverTimestamp()});
-      toast('Usuário criado! Faça login novamente com sua conta de admin.','info',4000);
-      await signOut(auth);
-      location.href='login.html';
+      await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato,role,setor_id,responsavel_id,permissoes,created_at:serverTimestamp()});
+      if(adminSession&&adminSession.access_token){await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}
+      await loadData();closeModal();toast('Usuário criado!');renderAdmin();
     }catch(e){
+      if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
       const msgs={'auth/email-already-in-use':'Este nome de usuário já existe.','auth/invalid-email':'Usuário inválido.','auth/weak-password':'Senha muito fraca.'};
       toast(msgs[e.code]||'Erro ao criar usuário: '+e.message,'error');return;
     }

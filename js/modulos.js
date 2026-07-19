@@ -8,6 +8,18 @@ const MODULOS = [
   {id:'cadastros', label:'Listas de Cadastros', desc:'Veículos, associações, líderes e cadastros diversos.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
   {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', flag:'controle_distribuicao'}
 ];
+window.MODULOS = MODULOS;
+
+function _myPerms(){ if(!window.S) return {modulos:{}}; if(window.S.isAdmin) return {modulos:{}, all:true}; return window.S.permissoes || {modulos:{}}; }
+window.userCan = function(modId, action='acesso'){
+  const p = _myPerms();
+  if(p.all) return true;
+  const m = (p.modulos && p.modulos[modId]) || {};
+  if(action==='acesso') return m.acesso === true;
+  if(action==='criar') return m.criar === true || m.gerenciar === true;
+  if(action==='editar') return m.editar === true || m.gerenciar === true;
+  return false;
+};
 
 const _md = {
   esc: s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
@@ -27,7 +39,9 @@ const _md = {
 function _mdCard(mod){
   const grupos = _md.grupos(mod);
   const total = grupos.reduce((a,g)=>a+_md.ativTotal(g),0);
-  return `<div class="activity-card" onclick="window.renderModulo('${mod.id}')" style="border-top:4px solid ${mod.color};cursor:pointer">
+  const disabled = !window.userCan(mod.id,'acesso');
+  const style = disabled ? 'opacity:.45;pointer-events:none;filter:grayscale(.8)' : 'cursor:pointer';
+  return `<div class="activity-card" ${disabled?'':'onclick="window.renderModulo(\''+mod.id+'\')"'} style="border-top:4px solid ${mod.color};${style}">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
       <div style="width:60px;height:60px;border-radius:16px;background:${mod.color}22;display:flex;align-items:center;justify-content:center;font-size:32px">${mod.icon}</div>
       <div style="flex:1;min-width:0">
@@ -43,22 +57,25 @@ function _mdCard(mod){
 }
 
 window.renderModulos = function(){
-  const html = MODULOS.map(_mdCard).join('');
+  const html = MODULOS.filter(m=>window.userCan(m.id,'acesso')).map(_mdCard).join('');
   _md.setC(`<div class="page-title" style="font-size:clamp(20px,3.2vw,34px);font-weight:800;margin-bottom:4px">🏠 Central de Lançamentos</div>
     <div class="page-sub">Escolha abaixo o tipo de controle que deseja acessar</div>
-    <div class="cards-grid">${html}</div>`);
+    <div class="cards-grid">${html || '<div class="empty" style="grid-column:1/-1">Nenhum módulo liberado para o seu usuário.</div>'}</div>`);
 };
 
 window.renderModulo = function(id){
   const mod = MODULOS.find(x=>x.id===id);
   if(!mod){ toast('Módulo não encontrado','error'); return; }
+  if(!window.userCan(id,'acesso')){ toast('Acesso negado a este módulo','error'); return; }
   renderModuloGrupos(mod);
 };
 
 function renderModuloGrupos(mod){
   const grupos = _md.grupos(mod);
   const title = `${mod.icon} ${mod.label}`;
-  const novo = (window.S && S.isAdmin) ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
+  const podeCriar = window.userCan(mod.id,'criar');
+  const podeEditar = window.userCan(mod.id,'editar');
+  const novo = (window.S && S.isAdmin) || podeCriar ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
   const cards = grupos.map(g=>{
     const p=_md.pct(g), col=_md.pColor(p);
     return `<div class="activity-card" onclick="window.openActivity('${g.id}')" style="border-top:4px solid ${mod.color};cursor:pointer">
@@ -68,7 +85,7 @@ function renderModuloGrupos(mod){
       <div class="card-foot">
         <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
         <div class="card-btns">
-          ${(window.S&&S.isAdmin)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${g.id}')">✏️</button>`:''}
+          ${((window.S&&S.isAdmin)||podeEditar)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${g.id}')">✏️</button>`:''}
           <button class="card-btn" onclick="event.stopPropagation();window.gerarPdf('${g.id}')">📄</button>
         </div>
       </div>
@@ -86,6 +103,7 @@ function renderModuloGrupos(mod){
 
 window.criarGrupoModulo = async function(modId){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod) return;
+  if(!window.userCan(modId,'criar')){ toast('Sem permissão para criar neste módulo','error'); return; }
   const base = {
     name: `Novo ${mod.label}`,
     description: mod.desc,
