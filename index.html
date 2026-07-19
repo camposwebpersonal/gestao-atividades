@@ -1200,7 +1200,11 @@ function renderItem(item,today,itemNum){
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
         const tags=[];
-        ks.forEach(k=>{const label=k.replace(/^item_show_/,'');tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(label)}:</strong> ${esc(ef[k])}</span>`);});
+        ks.forEach(k=>{
+          let label=k.replace(/^item_show_/,''), raw=ef[k];
+          if(k==='show_conclusion_date'){label='Data de Demissão'; raw=s.conclusion_date!=null?fmtD(s.conclusion_date):(raw==1?'Sim':'Não');}
+          tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(label)}:</strong> ${esc(raw!=null?String(raw):'')}</span>`);
+        });
         if((_sec?.show_verba&&_sec?.verba_on_subitems||s.item_show_verba)&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
         if((_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems||s.item_show_verba)&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
         if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||s.item_show_documentacao)&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
@@ -1250,7 +1254,11 @@ function renderItem(item,today,itemNum){
       ${(()=>{
         const ef=item.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
         const tags=[];
-        ks.forEach(k=>{const label=k.replace(/^item_show_/,'');tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(label)}:</strong> ${esc(ef[k])}</span>`);});
+        ks.forEach(k=>{
+          let label=k.replace(/^item_show_/,''), raw=ef[k];
+          if(k==='show_conclusion_date'){label='Data de Demissão'; raw=item.conclusion_date!=null?fmtD(item.conclusion_date):(raw==1?'Sim':'Não');}
+          tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(label)}:</strong> ${esc(raw!=null?String(raw):'')}</span>`);
+        });
         if((_sec?.show_verba||item.item_show_verba)&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
         if((_sec?.show_origem_verba||item.item_show_verba)&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
         if((_sec?.show_documentacao||item.item_show_documentacao)&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
@@ -1602,8 +1610,9 @@ window.openItemModal=function(id,secId,isSub,parentId){
     if(!tpls.length)return '';
     const ef=it?.extra_fields||{};
     return`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">🗂️ Campos Personalizados</div><div style="display:flex;flex-direction:column;gap:8px">${tpls.map(t=>{
-      const val=ef[t.field_name]||'';
-      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${_tplOpts(t).map(o=>`<option value="${esc(o)}"${val===o?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
+      let raw=ef[t.field_name]; if(raw===null||raw===undefined) raw=it?.[t.field_name];
+      const val=raw===null||raw===undefined?'':String(raw);
+      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
       return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
