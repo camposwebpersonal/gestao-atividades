@@ -397,7 +397,7 @@ main{flex:1;overflow-y:auto}
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,sendPasswordResetEmail}from"./supabase_compat.js";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
 import './js/modulos.js';
 
@@ -1849,7 +1849,13 @@ window.openUserModal=function(id){
     ?`<div class="form-group full"><label>Usuário</label><input id="usr-user" value="${esc(usuario)}" disabled style="background:#0a1222;color:#64748b"></div>`
     :`<div class="form-group full"><label>Usuário *</label><input id="usr-user" value="" placeholder="Ex: RCAMPOS" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:4px">Use apenas letras e números. O login será feito com este nome.</div></div>`;
   const senhaSection=id
-    ?`<div class="form-group full" style="background:#0a1222;border:1px solid var(--border);border-radius:8px;padding:12px"><div style="font-size:12px;color:var(--muted);margin-bottom:8px">Envie um link de redefinição de senha para o e-mail de contato. Para definir uma senha manualmente, é necessária a chave de serviço (service_role) do Supabase.</div><button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')">🔑 Enviar redefinição por e-mail</button></div>`
+    ?`<div class="form-group full" style="background:#0a1222;border:1px solid var(--border);border-radius:8px;padding:12px">
+      <label style="font-weight:600;display:block;margin-bottom:6px">Nova senha</label>
+      <input type="password" id="usr-nova-senha" placeholder="Mínimo 6 caracteres" style="width:100%;margin-bottom:10px">
+      <button class="btn-action" type="button" onclick="changeUserPassword('${id}')">🔑 Alterar senha agora</button>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px">Ou envie redefinição por e-mail:</div>
+      <button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')" style="margin-top:8px">📧 Enviar redefinição por e-mail</button>
+    </div>`
     :`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" style="width:100%"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:400;cursor:pointer"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')" style="width:auto"><span>Mostrar senha</span></label></div>`;
   const permMatrix=_buildPermMatrix(u);
   const actions=id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:'';
@@ -1922,6 +1928,22 @@ window.saveUser=async function(id){
     }
   }finally{
     window._savingUser=false;
+  }
+};
+window.changeUserPassword=async function(id){
+  const u=S.users.find(x=>x.id===id);
+  if(!u)return;
+  const pwd=document.getElementById('usr-nova-senha')?.value||'';
+  if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return;}
+  const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
+  if(!serviceKey){toast('Salve a chave de serviço no painel admin primeiro','error');return;}
+  try{
+    await updateUserPassword(u.id,pwd,serviceKey);
+    document.getElementById('usr-nova-senha').value='';
+    toast('Senha alterada com sucesso!','info');
+  }catch(e){
+    console.error(e);
+    toast('Erro ao alterar senha: '+(e.message||''),'error');
   }
 };
 window.sendUserPasswordReset=async function(id){

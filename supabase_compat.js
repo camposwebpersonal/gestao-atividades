@@ -177,6 +177,21 @@ export async function createUserAdmin(email, password, serviceKey, metadata={}) 
   return json.id || json.user?.id || json.users?.[0]?.id;
 }
 
+export async function updateUserPassword(uid, password, serviceKey) {
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
+    method: 'PUT',
+    headers: {
+      'apikey': serviceKey,
+      'Authorization': 'Bearer ' + serviceKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ password })
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(json.message || json.error || `HTTP ${resp.status}`);
+  return true;
+}
+
 export async function sendPasswordResetEmail(auth, email) {
   const { error } = await auth.resetPasswordForEmail(email);
   if (error) throw error;
