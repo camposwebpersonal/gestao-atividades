@@ -321,6 +321,9 @@ export async function addDoc(collectionRef, data) {
   const table = tableName(collectionRef._path);
   const payload = {};
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
+  if (!payload.id) {
+    payload.id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
   cleanPayload(payload);
   moveUnknownToExtra(table, payload);
   const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
