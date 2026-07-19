@@ -536,18 +536,21 @@ window.doLogout=async function doLogout(){
 
 // ── DATA ──
 window.loadData=async function loadData(){
+  const safeGet=async(label,fn)=>{
+    try{return await fn();}catch(e){console.warn('Erro ao carregar '+label+':',e);return{docs:[]};}
+  };
   const[a,b,c,ft,se,resp,usr,ch,gal,cont,contas]=await Promise.all([
-    getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc'))),
-    getDocs(query(collection(db,'items'),orderBy('order_num','asc'))),
-    getDocs(query(collection(db,'subitems'),orderBy('order_num','asc'))),
-    getDocs(query(collection(db,'fieldTemplates'),orderBy('order_num','asc'))),
-    getDocs(query(collection(db,'secretarias'),orderBy('name','asc'))),
-    getDocs(query(collection(db,'responsaveis'),orderBy('name','asc'))),
-    getDocs(query(collection(db,'users'),orderBy('displayName','asc'))),
-    getDocs(query(collection(db,'chamados'),orderBy('created_at','desc'))),
-    getDocs(query(collection(db,'galeria'),orderBy('created_at','desc'))),
-    getDocs(query(collection(db,'contatos'),orderBy('nome','asc'))),
-    getDocs(query(collection(db,'contas'),orderBy('created_at','desc')))
+    safeGet('secretariats',()=>getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
+    safeGet('items',()=>getDocs(query(collection(db,'items'),orderBy('order_num','asc')))),
+    safeGet('subitems',()=>getDocs(query(collection(db,'subitems'),orderBy('order_num','asc')))),
+    safeGet('fieldTemplates',()=>getDocs(query(collection(db,'fieldTemplates'),orderBy('order_num','asc')))),
+    safeGet('secretarias',()=>getDocs(query(collection(db,'secretarias'),orderBy('name','asc')))),
+    safeGet('responsaveis',()=>getDocs(query(collection(db,'responsaveis'),orderBy('name','asc')))),
+    safeGet('users',()=>getDocs(query(collection(db,'users'),orderBy('displayName','asc')))),
+    safeGet('chamados',()=>getDocs(query(collection(db,'chamados'),orderBy('created_at','desc')))),
+    safeGet('galeria',()=>getDocs(query(collection(db,'galeria'),orderBy('created_at','desc')))),
+    safeGet('contatos',()=>getDocs(query(collection(db,'contatos'),orderBy('nome','asc')))),
+    safeGet('contas',()=>getDocs(query(collection(db,'contas'),orderBy('created_at','desc'))))
   ]);
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -624,14 +627,18 @@ window.openSecretariaModal=function(id){
 window.saveSecretaria=async function(id){
   const name=document.getElementById('secr-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
-  if(id){await updateDoc(doc(db,'secretarias',id),{name,updated_at:serverTimestamp()});}
-  else{await addDoc(collection(db,'secretarias'),{name,created_at:serverTimestamp()});}
-  await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderSecretarias();
+  try{
+    if(id){await updateDoc(doc(db,'secretarias',id),{name});}
+    else{await addDoc(collection(db,'secretarias'),{name});}
+    await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderSecretarias();
+  }catch(e){console.error(e);toast('Erro ao salvar secretaria: '+(e.message||e),'error');}
 };
 window.deleteSecretaria=async function(id){
   if(!confirm('Excluir esta secretaria?'))return;
-  await deleteDoc(doc(db,'secretarias',id));
-  await loadData();closeModal();toast('Excluído!');renderSecretarias();
+  try{
+    await deleteDoc(doc(db,'secretarias',id));
+    await loadData();closeModal();toast('Excluído!');renderSecretarias();
+  }catch(e){console.error(e);toast('Erro ao excluir secretaria: '+(e.message||e),'error');}
 };
 
 // ── RESPONSÁVEIS ──
