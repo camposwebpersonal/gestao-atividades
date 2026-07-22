@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=12';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=13';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -1031,20 +1031,23 @@ window.openActivity=function(secId){
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
-    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){th.push('Prog.');th.push('Status');}
+    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
     let tbl='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
+    const _tblAct=(id,isSub,parentEdit)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button></div>`:'';
+    const _tblCell=(txt,focus,id,isSub,parentEdit)=>_can?`<span style="position:relative;cursor:pointer" onmouseenter="this.querySelector('.pen').style.display='inline'" onmouseleave="this.querySelector('.pen').style.display='none'" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}',${focus?JSON.stringify(focus):'null'})">${txt}<span class="pen" style="display:none;position:absolute;right:-4px;top:0;font-size:10px;color:#94a3b8;padding-left:4px;background:#0a1222">✏️</span></span>`:txt;
     items.forEach((item,itemNum)=>{
       const pr=iProg(item);const done=pr.pct===100;const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
       tbl+=`<tr style="background:#0e1729">`;
       tbl+=`<td style="padding:8px 10px;color:#38bdf8;font-weight:700;border-bottom:1px solid #1e293b">${itemNum+1}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#34d399;font-weight:700;border-bottom:1px solid #1e293b">Item</td>`;
-      tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${esc(item.description||'')}</td>`;
-      tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(item.responsaveis||'')}</td>`;
-      tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(item.observacao||'')}</td>`;
-      tableFields.forEach(fn=>{const raw=(item.extra_fields||{})[fn]!=null?(item.extra_fields||{})[fn]:item[fn]; tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(raw!=null?String(raw):'')}</td>`;});
+      tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${_tblCell(esc(item.description||''),'it-name',item.id,false,null)}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(item.responsaveis||''),null,item.id,false,null)}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(item.observacao||''),'it-obs',item.id,false,null)}</td>`;
+      tableFields.forEach(fn=>{const raw=(item.extra_fields||{})[fn]!=null?(item.extra_fields||{})[fn]:item[fn]; tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td><td style="padding:8px 10px;color:${done?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${done?'✅ Concluído':late?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
+      if(_can) tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(item.id,false,null)}</td>`;
       tbl+='</tr>';
       const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
       function _tblSubSubs(parentId,prefix,depth){
@@ -1055,11 +1058,12 @@ window.openActivity=function(secId){
           tbl+=`<tr style="background:${depth%2===0?'#060c18':'#0a1222'}">`;
           tbl+=`<td style="padding:5px 10px;color:#475569;border-bottom:1px solid #1e293b;font-size:11px">${num}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#475569;border-bottom:1px solid #1e293b;font-size:11px">${'›'.repeat(depth+1)}</td>`;
-          tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.description||'')}</td>`;
-          tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.responsaveis||'')}</td>`;
-          tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${esc(c.observacao||'')}</td>`;
-          tableFields.forEach(fn=>{const raw=(c.extra_fields||{})[fn]!=null?(c.extra_fields||{})[fn]:c[fn]; tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${esc(raw!=null?String(raw):'')}</td>`;});
+          tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.description||''),'it-name',c.id,true,parentId)}</td>`;
+          tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.responsaveis||''),null,c.id,true,parentId)}</td>`;
+          tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.observacao||''),'it-obs',c.id,true,parentId)}</td>`;
+          tableFields.forEach(fn=>{const raw=(c.extra_fields||{})[fn]!=null?(c.extra_fields||{})[fn]:c[fn]; tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
           if(_cp){tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td><td style="padding:5px 10px;color:${cD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b;font-size:11px">${cD?'✅ Concluído':'⏳ Pendente'}</td>`;}
+          if(_can) tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px;text-align:right">${_tblAct(c.id,true,parentId)}</td>`;
           tbl+='</tr>';
           _tblSubSubs(c.id,num,depth+1);
         });
@@ -1069,11 +1073,12 @@ window.openActivity=function(secId){
         tbl+=`<tr style="background:#0a1222">`;
         tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">${subNum}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">›</td>`;
-        tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(s.description||'')}</td>`;
-        tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${esc(s.responsaveis||'')}</td>`;
-        tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${esc(s.observacao||'')}</td>`;
-        tableFields.forEach(fn=>{const raw=(s.extra_fields||{})[fn]!=null?(s.extra_fields||{})[fn]:s[fn]; tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${esc(raw!=null?String(raw):'')}</td>`;});
+        tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(s.description||''),'it-name',s.id,true,item.id)}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(s.responsaveis||''),null,s.id,true,item.id)}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(s.observacao||''),'it-obs',s.id,true,item.id)}</td>`;
+        tableFields.forEach(fn=>{const raw=(s.extra_fields||{})[fn]!=null?(s.extra_fields||{})[fn]:s[fn]; tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
         if(_cp){tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;color:${sD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${sD?'✅ Concluído':sL?'⚠️ Atrasado':'⏳ Pendente'}</td>`;}
+        if(_can) tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(s.id,true,item.id)}</td>`;
         tbl+='</tr>';
         _tblSubSubs(s.id,subNum,1);
       });
@@ -1552,7 +1557,7 @@ window.saveSec=async function(id){
 };
 
 // ── ITEM MODAL ──
-window.openItemModal=function(id,secId,isSub,parentId){
+window.openItemModal=function(id,secId,isSub,parentId,focusField){
   const col=isSub?'subitem':'item';
   const it=id?(isSub?S.subitems.find(x=>x.id===id):S.items.find(x=>x.id===id)):null;
   const sec=S.secs.find(s=>s.id===(secId||curSecId));
@@ -1628,6 +1633,13 @@ window.openItemModal=function(id,secId,isSub,parentId){
   </div>`);
   // (moved loadImgs call after)
   if(id)loadImgs(col,id);
+  if(focusField){
+    setTimeout(()=>{
+      let el=document.getElementById(focusField);
+      if(!el)el=document.querySelector('[data-ef-key="'+focusField+'"]');
+      if(el){el.focus();if(el.select)el.select();}
+    },50);
+  }
 };
 
 window.saveItem=async function(id,secId,isSub,parentId){
