@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=10';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=11';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -2116,7 +2116,7 @@ window.executarImportacaoJSON=async function(){
           ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
           ${updStatus>0?`<strong>Status atualizados:</strong> ${updStatus}<br>`:''}
         </div>
-        <div style="margin-top:12px"><button class="btn-action" onclick="window.renderModulo(window.modForSec(act))">🏠 Voltar ao início</button></div>
+        <div style="margin-top:12px"><button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${act.id}')))">🏠 Voltar ao início</button></div>
       </div>`;
     }
     toast('Importação concluída!','success');
