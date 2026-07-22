@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=11';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=12';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -996,6 +996,7 @@ function _renderResumoFinanceiro(secId){
 window.openActivity=function(secId){
   curSecId=secId;
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -1107,13 +1108,13 @@ window.openActivity=function(secId){
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
-    ${S.isAdmin?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
-    ${S.isAdmin&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
-    ${S.isAdmin&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
-    ${S.isAdmin&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
+    ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
+    ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
+    ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
+    ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
+    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
     ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
@@ -1142,6 +1143,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
   const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!kids.length)return '';
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
+  const _can=S.isAdmin||window.userCan(window.modForSec(_sec),'editar');
   const lvlClass='lvl-'+Math.min(lvl,5);
   const indent=Math.min(lvl,5)*18;
   const branchIcon=lvl===1?'>':lvl===2?'  >':lvl===3?'    >':lvl===4?'      >':'        >';
@@ -1155,8 +1157,8 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
-    return`<div class="sub-row ${lvlClass}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
-      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
+    return`<div class="sub-row ${lvlClass}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+      ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
       <span class="hier-num">${num}.</span>
@@ -1166,11 +1168,11 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
         ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
       </div>
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
-      ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
+      ${_can?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
+      ${_can?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(c.id,item,today,num,lvl)}`;
   }).join('');
   const subTotColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
@@ -1180,6 +1182,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
 function renderItem(item,today,itemNum){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
+  const _can=S.isAdmin||window.userCan(window.modForSec(_sec),'editar');
   const _nt=_sec?.controle_pendencias===0;
   const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=_nt?'':done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
@@ -1189,8 +1192,8 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="sub-row lvl-1" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
-      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
+    return`<div class="sub-row lvl-1" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+      ${_can?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
       <span class="hier-num">${subNum}.</span>
@@ -1215,17 +1218,17 @@ function renderItem(item,today,itemNum){
       ${s.resp_url?`<img src="${esc(s.resp_url)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8" loading="lazy">`:''}
       ${s.cover_url?`<img src="${esc(s.cover_url)}" style="height:26px;border-radius:4px;object-fit:contain;background:transparent" loading="lazy">`:''}
       ${_nt?'':statusBadge(s.status,s.id,'subitem')}
-      ${S.isAdmin?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
-      ${S.isAdmin&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
+      ${_can?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
+      ${_can&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
+      ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(s.id,item,today,subNum)}`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${S.isAdmin?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
-      ${S.isAdmin?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
+      ${_can?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
@@ -1241,13 +1244,13 @@ function renderItem(item,today,itemNum){
       ${_nt?'':statusBadge(item.status,item.id,'item')}
       ${_nt?'':pRing(pr.pct)}
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
-      ${S.isAdmin?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
-      ${S.isAdmin&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
-      ${S.isAdmin&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="background:#1e3a5f;color:#60a5fa" onclick="event.stopPropagation();duplicarItem('${item.id}',false,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
+      ${_can?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
+      ${_can&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
+      ${_can&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
+      ${_can?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
+      ${_can?`<button class="card-btn" style="background:#1e3a5f;color:#60a5fa" onclick="event.stopPropagation();duplicarItem('${item.id}',false,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
+      ${_can?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
+      ${_can?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
     <div id="ib-${item.id}" style="padding:0 16px 14px;border-top:1px solid var(--border);display:none">
       ${item.observacao?`<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:#0a1222;border-radius:6px;margin:8px 0">${esc(item.observacao)}</div>`:''}
@@ -1268,9 +1271,9 @@ function renderItem(item,today,itemNum){
       })()}
       ${subsHtml}
       ${_topSubs.length?`<div style="padding:3px 8px;font-size:11px;color:#475569;text-align:right;border-top:1px dashed #1e3a5f;margin-top:2px">∑ Subtotal: ${_topSubs.length} sub-item(ns)</div>`:''}
-      ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
-      ${S.isAdmin&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
-      ${S.isAdmin?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
+      ${_can&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
+      ${_can&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
+      ${_can?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
   </div>`;
 }
@@ -2992,6 +2995,7 @@ window._doLimparAtividade=async function(secId){
 // ── RENDER CADASTROS (LISTAGEM PLANA AVANÇADA) ──
 window.renderCadastros=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias!==0;
@@ -3015,7 +3019,7 @@ window.renderCadastros=function(secId){
     return h;
   }
   function _itemActions(it,idx){
-    if(!S.isAdmin)return'';
+    if(!_can)return'';
     return`<div style="display:flex;gap:4px;flex-wrap:wrap">
       <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaOpenEdit('${it.id}',false,null,'${secId}')" title="Editar">✏️</button>
       <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddItemAfter('${it.id}','${secId}')" title="Novo Item abaixo">+ Item</button>
@@ -3023,7 +3027,7 @@ window.renderCadastros=function(secId){
     </div>`;
   }
   function _subActions(sb,it,prefix,isNested){
-    if(!S.isAdmin)return'';
+    if(!_can)return'';
     const parentForNew=isNested?sb.id:it.id;
     const parentTypeForNew=isNested?'subitem':'item';
     return`<div style="display:flex;gap:4px;flex-wrap:wrap">
@@ -3036,7 +3040,7 @@ window.renderCadastros=function(secId){
     const iD=it.concluded==1,iL=!iD&&it.deadline_date&&new Date(it.deadline_date)<today;
     const iSt=_ST.find(x=>x.v===(it.status||'pendente'))||_ST[0];
     const respId='r-it-'+it.id; const statId='s-it-'+it.id; const prazoId='p-it-'+it.id;
-    return`<tr style="background:#0a1222;border-bottom:2px solid ${it.item_color||'#3B82F6'}22" draggable="${S.isAdmin?'true':'false'}" ondragstart="listaDragStart(event,'item','${it.id}')" ondragend="listaDragEnd(event)" ondragover="listaDragOver(event,'item','${it.id}')" ondragleave="listaDragLeave(event)" ondrop="listaDrop(event,'item','${it.id}','${secId}')" data-lista-type="item" data-lista-id="${it.id}">
+    return`<tr style="background:#0a1222;border-bottom:2px solid ${it.item_color||'#3B82F6'}22" draggable="${_can?'true':'false'}" ondragstart="listaDragStart(event,'item','${it.id}')" ondragend="listaDragEnd(event)" ondragover="listaDragOver(event,'item','${it.id}')" ondragleave="listaDragLeave(event)" ondrop="listaDrop(event,'item','${it.id}','${secId}')" data-lista-type="item" data-lista-id="${it.id}">
       <td style="padding:10px 12px;font-size:13px;font-weight:700;color:${it.item_color||'#60a5fa'};border-left:4px solid ${it.item_color||'#3B82F6'}">
         <span style="color:#64748b;font-weight:800;font-size:11px;margin-right:4px">${num}.</span>
         ${/^\?+$/.test(it.item_icon||'')?'📋':esc(it.item_icon||'📋')}
@@ -3064,7 +3068,7 @@ window.renderCadastros=function(secId){
     const numPrefix=prefix?prefix+'.':'';
     const respId='r-sb-'+sb.id; const statId='s-sb-'+sb.id; const prazoId='p-sb-'+sb.id;
     const isNested=level>0;
-    let row=`<tr style="background:${level%2===0?'#080e1a':'#060c18'}" draggable="${S.isAdmin?'true':'false'}" ondragstart="listaDragStart(event,'subitem','${sb.id}')" ondragend="listaDragEnd(event)" ondragover="listaDragOver(event,'subitem','${sb.id}')" ondragleave="listaDragLeave(event)" ondrop="listaDrop(event,'subitem','${sb.id}','${secId}')" data-lista-type="subitem" data-lista-id="${sb.id}">
+    let row=`<tr style="background:${level%2===0?'#080e1a':'#060c18'}" draggable="${_can?'true':'false'}" ondragstart="listaDragStart(event,'subitem','${sb.id}')" ondragend="listaDragEnd(event)" ondragover="listaDragOver(event,'subitem','${sb.id}')" ondragleave="listaDragLeave(event)" ondrop="listaDrop(event,'subitem','${sb.id}','${secId}')" data-lista-type="subitem" data-lista-id="${sb.id}">
       <td style="padding:${level>0?'5px':'6px'} 12px ${level>0?'5px':'6px'} ${indent}px;font-size:12px;color:var(--text);border-left:4px solid ${item.item_color||'#3B82F6'}44">
         <span style="color:#475569;font-weight:700;font-size:10px;margin-right:3px">${numPrefix}</span>
         <span class="hier-branch" style="color:${['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(level,4)]}">${level===0?'>':level===1?'  >':level===2?'    >':level===3?'      >':'        >'}</span>
@@ -3099,7 +3103,7 @@ window.renderCadastros=function(secId){
   setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="openActivity('${secId}')">← Voltar</button>
     <div style="font-size:15px;font-weight:800">📋 ${esc(sec.name)}</div>
-    ${S.isAdmin?`<button class="btn-action" style="margin-left:auto" onclick="listaAddItem('${secId}')">+ Item</button>`:''}
+    ${_can?`<button class="btn-action" style="margin-left:auto" onclick="listaAddItem('${secId}')">+ Item</button>`:''}
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="overflow-x:auto">
