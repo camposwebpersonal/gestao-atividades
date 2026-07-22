@@ -261,6 +261,42 @@ window.renderControleContas = function(secId){
     ${linhasHtml}
   </div>` : '';
 
+  const pctPago = totalGeral ? (totalPago / totalGeral * 100) : 0;
+  const pctPend = totalGeral ? (totalPendente / totalGeral * 100) : 0;
+  const dashHtml = `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px'>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>💰</div><div><div class='stat-val' style='color:#60a5fa'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Total em Contas</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>✅</div><div><div class='stat-val' style='color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pago</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>⏳</div><div><div class='stat-val' style='color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pendente</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>📊</div><div><div class='stat-val' style='color:#f59e0b'>${qtdPago} / ${qtdTotal}</div><div class='stat-lbl'>Contas Pagas</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px;position:relative;overflow:hidden'>
+    <div style='position:relative;width:64px;height:64px'>
+      <svg width='64' height='64' viewBox='0 0 100 100' style='transform:rotate(-90deg)'><circle cx='50' cy='50' r='42' fill='none' stroke='#1e3a5f' stroke-width='12'/><circle cx='50' cy='50' r='42' fill='none' stroke='#10b981' stroke-width='12' stroke-dasharray='${Math.min(264, Math.round(pctPago*2.64))} 264' stroke-linecap='round'/></svg>
+      <div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#10b981'>${Math.round(pctPago)}%</div>
+    </div>
+    <div><div class='stat-val' style='color:#10b981'>${Math.round(pctPago)}%</div><div class='stat-lbl'>Percentual Pago</div></div>
+  </div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px;position:relative;overflow:hidden'>
+    <div style='position:relative;width:64px;height:64px'>
+      <svg width='64' height='64' viewBox='0 0 100 100' style='transform:rotate(-90deg)'><circle cx='50' cy='50' r='42' fill='none' stroke='#1e3a5f' stroke-width='12'/><circle cx='50' cy='50' r='42' fill='none' stroke='#f87171' stroke-width='12' stroke-dasharray='${Math.min(264, Math.round(pctPend*2.64))} 264' stroke-linecap='round'/></svg>
+      <div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#f87171'>${Math.round(pctPend)}%</div>
+    </div>
+    <div><div class='stat-val' style='color:#f87171'>${Math.round(pctPend)}%</div><div class='stat-lbl'>Percentual Pendente</div></div>
+  </div>
+</div>`;
+  const catsProgressHtml = resumoCats.length?`<div style='margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px'>
+  <div style='display:flex;align-items:center;gap:10px;margin-bottom:12px'><div style='font-size:18px'>📊</div><div style='font-size:14px;font-weight:700;color:#60a5fa'>Progresso por Categoria</div></div>
+  <div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px'>
+    ${resumoCats.map(c=>{
+      const pct = c.total ? (c.pago/c.total*100) : 0;
+      return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
+        <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'><span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(c.nome)}</span><span style='font-size:12px;color:#10b981;font-weight:700'>${Math.round(pct)}% pago</span></div>
+        <div style='background:#1e293b;border-radius:999px;height:10px;overflow:hidden;margin-bottom:6px'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:999px;transition:width .5s ease'></div></div>
+        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8'><span>${c.qPago} de ${c.qtd} pagos</span><span>R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+      </div>`;
+    }).join('')}
+  </div>
+</div>`:'';
+
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
     <div style="flex:1;min-width:60px"></div>
@@ -274,12 +310,8 @@ window.renderControleContas = function(secId){
     <div class="page-title">${esc(sec.name)}</div>
     <div class="page-sub">${esc(sec.observacoes||'Controle de pagamento de contas por local')}</div>
   </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-    <div class="stat-card"><div class="stat-val" style="color:#60a5fa">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#10b981">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Pago</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="stat-lbl">Pendente</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:#f59e0b">${qtdPago}/${qtdTotal}</div><div class="stat-lbl">Pagas</div></div>
-  </div>
+  ${dashHtml}
+  ${catsProgressHtml}
   ${resumoCats.length?`<div class="cc-table-wrap" style="margin-bottom:14px">
     <table class="cc-table">
       <thead><tr>
@@ -578,52 +610,75 @@ window.ccGerarPdf = async function(secId, opts){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF...','info',8000);
   const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210, mx=14, cw=W-mx*2;
+  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const W=297, mx=12, cw=W-mx*2;
+  const fmtMoney=v=>parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const now = new Date().toLocaleDateString('pt-BR');
-  let y = 22;
+  let y = 18;
   doc.setFillColor(13,34,64); doc.rect(mx,12,cw,0.7,'F');
-  sf(15,true,[13,34,64]); doc.text(sec.name||'CONTROLE DE CONTAS', mx, y);
-  y+=8;
+  sf(18,true,[13,34,64]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
   sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertânia - PE • Controle PMS • '+now, mx, y);
-  y+=12;
-  if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*4 + 4; }
+  y+=6;
+  const filtros=[]; if(opts.ano) filtros.push('Ano: '+opts.ano); if(opts.apenasPagas) filtros.push('Apenas contas pagas');
+  if(filtros.length){ sf(8,false,[100,116,139]); doc.text('Filtros: '+filtros.join(' | '), mx, y); y+=5; }
+  if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*3.5 + 4; }
 
-  let totalGeral=0, totalPago=0, totalPendente=0, qtdPago=0, qtdTotal=0;
-  const rows = [];
-  const items = [...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
+  const rows=[];
+  const catMap={};
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   items.forEach(item=>{
-    const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const locais=[...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     locais.forEach(local=>{
-      let lancs = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{const da=(a.mes_ano||'').split('/').reverse().join('-');const db=(b.mes_ano||'').split('/').reverse().join('-');return da.localeCompare(db);});
-      if(opts.ano) lancs = lancs.filter(c=>String(c.mes_ano||'').includes('/'+opts.ano));
-      if(opts.apenasPagas) lancs = lancs.filter(c=>c.pago);
+      let lancs=S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{const da=(a.mes_ano||'').split('/').reverse().join('-');const db=(b.mes_ano||'').split('/').reverse().join('-');return da.localeCompare(db);});
+      if(opts.ano) lancs=lancs.filter(c=>String(c.mes_ano||'').includes('/'+opts.ano));
+      if(opts.apenasPagas) lancs=lancs.filter(c=>c.pago);
+      if(!catMap[item.id]) catMap[item.id]={nome:item.description||'—',qtd:0,qPago:0,total:0,pago:0};
+      const cat=catMap[item.id];
       lancs.forEach(c=>{
-        totalGeral += parseFloat(c.valor)||0;
-        qtdTotal++;
-        if(c.pago){ totalPago += parseFloat(c.valor)||0; qtdPago++; }
-        rows.push([
-          item.description||'—',
-          local.description||'—',
-          c.mes_ano||'—',
-          c.tipo||'—',
-          c.leitura_relogio||'—',
-          c.consumo_kwh||'—',
-          'R$ '+((parseFloat(c.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})),
-          c.pago?'SIM':'NÃO',
-          fmtD(c.data_vencimento),
-          fmtD(c.data_pagamento),
-          c.observacao||'—'
-        ]);
+        const v=parseFloat(c.valor)||0;
+        totalGeral+=v; qtdTotal++; cat.total+=v; cat.qtd++;
+        if(c.pago){ totalPago+=v; qtdPago++; cat.pago+=v; cat.qPago++; }
+        rows.push([item.description||'—',local.description||'—',c.mes_ano||'—',c.tipo||'—',c.leitura_relogio||'—',c.consumo_kwh||'—','R$ '+fmtMoney(v),c.pago?'SIM':'NÃO',fmtD(c.data_vencimento),fmtD(c.data_pagamento),c.observacao||'—']);
       });
     });
   });
-  totalPendente = totalGeral - totalPago;
+  const totalPendente=totalGeral-totalPago;
+  const qtdPendente=qtdTotal-qtdPago;
+  const pctPago=totalGeral ? (totalPago/totalGeral*100) : 0;
 
+  const summaryRows=Object.values(catMap).sort((a,b)=>b.total-a.total).map(c=>{
+    const pend=c.total-c.pago;
+    const pct=c.total ? (c.pago/c.total*100).toFixed(1) : '0.0';
+    return [c.nome,c.qtd,c.qPago,c.qtd-c.qPago,'R$ '+fmtMoney(c.total),'R$ '+fmtMoney(c.pago),'R$ '+fmtMoney(pend),pct+'%'];
+  });
+  summaryRows.push(['TOTAL GERAL',qtdTotal,qtdPago,qtdPendente,'R$ '+fmtMoney(totalGeral),'R$ '+fmtMoney(totalPago),'R$ '+fmtMoney(totalPendente),pctPago.toFixed(1)+'%']);
+
+  sf(12,true,[13,34,64]); doc.text('📊 RESUMO POR CATEGORIA', mx, y); y+=8;
+  doc.autoTable({
+    startY:y,
+    margin:{left:mx,right:mx},
+    head:[['Categoria','Lanç.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
+    body:summaryRows,
+    theme:'grid',
+    headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+    bodyStyles:{fontSize:9,textColor:[40,40,40]},
+    alternateRowStyles:{fillColor:[245,250,245]},
+    styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
+    columnStyles:{0:{cellWidth:50},1:{cellWidth:18},2:{cellWidth:18},3:{cellWidth:22},4:{cellWidth:32,halign:'right'},5:{cellWidth:32,halign:'right'},6:{cellWidth:32,halign:'right'},7:{cellWidth:20,halign:'center'}},
+    didParseCell:(data)=>{
+      if(data.row.raw[0]==='TOTAL GERAL'){ data.cell.styles.fontStyle='bold'; data.cell.styles.fillColor=[224,242,254]; }
+      if(data.column.index===5) data.cell.styles.textColor=[16,185,129];
+      if(data.column.index===6) data.cell.styles.textColor=[239,68,68];
+    }
+  });
+
+  const startDetailY=doc.lastAutoTable?doc.lastAutoTable.finalY+12:y+30;
   if(rows.length){
+    sf(12,true,[13,34,64]); doc.text('📝 DETALHAMENTO POR LANÇAMENTO', mx, startDetailY-6);
     doc.autoTable({
-      startY:y,
+      startY:startDetailY,
       margin:{left:mx,right:mx},
       head:[['Categoria','Local','Mês/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
       body:rows,
@@ -632,17 +687,19 @@ window.ccGerarPdf = async function(secId, opts){
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       alternateRowStyles:{fillColor:[245,250,245]},
       styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
-      columnStyles:{6:{halign:'right'},7:{halign:'center'}},
-      didParseCell:(data)=>{ if(data.row.raw[7]==='SIM') data.cell.styles.textColor=[16,185,129]; }
+      columnStyles:{0:{cellWidth:32},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:18},4:{cellWidth:22},5:{cellWidth:18},6:{cellWidth:24,halign:'right'},7:{cellWidth:14,halign:'center'},8:{cellWidth:20},9:{cellWidth:20},10:{cellWidth:80}},
+      didParseCell:(data)=>{ if(data.row.raw[7]==='SIM'){ data.cell.styles.textColor=[16,185,129]; data.cell.styles.fontStyle='bold'; } }
     });
   } else {
-    sf(10,false,[120,120,120]); doc.text('Nenhum lançamento encontrado para os filtros selecionados.', mx, y+10);
+    sf(10,false,[120,120,120]); doc.text('Nenhum lançamento encontrado para os filtros selecionados.', mx, startDetailY+10);
   }
 
-  const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : y+30;
-  doc.setFillColor(235,255,235); doc.roundedRect(mx, finalY, cw, 24, 3, 3, 'F');
-  sf(10,true,[20,82,20]); doc.text('Resumo', mx+6, finalY+8);
-  sf(9,false,[40,60,40]); doc.text(`Total: R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}   |   Pago: R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}   |   Pendente: R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}   |   ${qtdPago}/${qtdTotal} pagas`, mx+6, finalY+18);
+  const finalY=doc.lastAutoTable?doc.lastAutoTable.finalY+10:startDetailY+30;
+  const footerText=`TOTAL GERAL: R$ ${fmtMoney(totalGeral)}   |   PAGO: R$ ${fmtMoney(totalPago)}   |   PENDENTE: R$ ${fmtMoney(totalPendente)}   |   ${qtdPago}/${qtdTotal} CONTAS PAGAS (${pctPago.toFixed(1)}%)`;
+  const ftLines=doc.splitTextToSize(footerText, cw-12);
+  const fh=10+ftLines.length*4.5;
+  doc.setFillColor(13,34,64); doc.roundedRect(mx, finalY, cw, fh, 2, 2, 'F');
+  sf(9,true,[255,255,255]); doc.text(ftLines, mx+6, finalY+6);
 
   doc.save((sec.name||'controle-contas').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_relatorio_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!','success');
