@@ -32,6 +32,7 @@ window.renderControleContas = function(secId){
 
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
+  const globalMax = Math.max(...S.contas.filter(c=>c.atividade_id===secId && c.valor).map(c=>parseFloat(c.valor)||0), 1);
   const colsOff = new Set(sec.cc_cols_ocultas || []);
   const resumoCats = [];
   const tipoMap = {};
@@ -75,6 +76,10 @@ window.renderControleContas = function(secId){
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
       const tableRows = locRows.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
+        const vLanc = parseFloat(c.valor)||0;
+        const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
+        const corLanc = c.pago ? '#10b981' : '#f87171';
+        const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<tr class="${pagoCls}">
           ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
@@ -85,11 +90,16 @@ window.renderControleContas = function(secId){
           <td><input type="date" value="${esc(c.data_pagamento||'')}" onchange="ccSalvarCampo('${c.id}','data_pagamento',this.value)"></td>
           <td class="cc-col-pago"><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></td>
           <td><input type="text" value="${esc(c.observacao||'')}" onchange="ccSalvarCampo('${c.id}','observacao',this.value)" placeholder="Obs."></td>
+          <td style="text-align:center">${situacaoSvg}</td>
           <td style="white-space:nowrap">${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
         </tr>`;
       }).join('');
 
       const mobileRows = locRows.map(c=>{
+        const vLanc = parseFloat(c.valor)||0;
+        const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
+        const corLanc = c.pago ? '#10b981' : '#f87171';
+        const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<div class="cc-mobile-card">
           <div class="cc-mobile-title">${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
           ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
@@ -98,6 +108,7 @@ window.renderControleContas = function(secId){
           <div class="cc-mobile-row"><span>Vencimento</span><span>${fmtD(c.data_vencimento)}</span></div>
           <div class="cc-mobile-row"><span>Pagamento</span><span>${fmtD(c.data_pagamento)}</span></div>
           <div class="cc-mobile-row"><span>Pago</span><span><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></span></div>
+          <div class="cc-mobile-row"><span>Situação</span><span>${situacaoSvg}</span></div>
           <div class="cc-mobile-row"><span>Obs.</span><span>${esc(c.observacao||'—')}</span></div>
         </div>`;
       }).join('');
@@ -117,9 +128,9 @@ window.renderControleContas = function(secId){
           <div class="cc-table-wrap">
             <table class="cc-table">
               <thead><tr>
-                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th></th>
+                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th>Situação</th><th></th>
               </tr></thead>
-              <tbody>${tableRows || `<tr><td colspan="${10-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
+              <tbody>${tableRows || `<tr><td colspan="${11-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
             </table>
           </div>
           ${mobileRows}
@@ -696,6 +707,7 @@ window.ccGerarPdf = async function(secId, opts){
   if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*3.5 + 4; }
 
   let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
+  const maxValor = S.contas.filter(c=>c.atividade_id===secId && c.valor).reduce((a,c)=>Math.max(a, parseFloat(c.valor)||0), 1);
   const rows=[];
   const catMap={};
   const tipoMap={};
@@ -711,20 +723,25 @@ window.ccGerarPdf = async function(secId, opts){
       lancs.forEach(c=>{
         const v=parseFloat(c.valor)||0;
         const tipo=c.tipo||'N/A';
+        const pctLanc = maxValor ? Math.round(v/maxValor*100) : 0;
+        const situacao=pctLanc+'%';
         totalGeral+=v; qtdTotal++; catTotal+=v; catQtd++; locTotal+=v; locQtd++;
         if(c.pago){ totalPago+=v; qtdPago++; catPago+=v; locPago++; }
         if(!catMap[item.id]) catMap[item.id]={nome:item.description||'-',qtd:0,qPago:0,total:0,pago:0};
-        catMap[item.id].qtd++; catMap[item.id].total+=v; if(c.pago) catMap[item.id].qPago++;
+        catMap[item.id].qtd++; catMap[item.id].total+=v; if(c.pago){ catMap[item.id].qPago++; catMap[item.id].pago+=v; }
         if(!tipoMap[tipo]) tipoMap[tipo]={qtd:0,qPago:0,total:0,pago:0};
         tipoMap[tipo].qtd++; tipoMap[tipo].total+=v; if(c.pago){ tipoMap[tipo].qPago++; tipoMap[tipo].pago+=v; }
-        rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-']);
+        rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-', situacao]);
       });
       if(locQtd>0){
-        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '']);
+        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '', '']);
+        rows.push(['','','','','','','','','','','','']);
       }
     });
     if(catQtd>0){
-      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '']);
+      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '', '']);
+      rows.push(['','','','','','','','','','','','']);
+      rows.push(['','','','','','','','','','','','']);
     }
   });
   const totalPendente=totalGeral-totalPago;
@@ -788,18 +805,28 @@ window.ccGerarPdf = async function(secId, opts){
     doc.autoTable({
       startY:startDetailY,
       margin:{left:mx,right:mx},
-      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
+      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.','Situacao']],
       body:rows,
       theme:'grid',
       headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:8},
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       alternateRowStyles:{fillColor:[245,250,245]},
       styles:{cellPadding:1.5,overflow:'linebreak',font:'helvetica'},
-      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:24,halign:'right'},7:{cellWidth:14,halign:'center'},8:{cellWidth:20},9:{cellWidth:20},10:{cellWidth:60}},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:22,halign:'right'},7:{cellWidth:12,halign:'center'},8:{cellWidth:18},9:{cellWidth:18},10:{cellWidth:43},11:{cellWidth:18,halign:'center'}},
       didParseCell:(data)=>{
         if(data.section!=='body') return;
-        const isSub = typeof data.row.raw[1]==='string' && data.row.raw[1].includes('SUBTOTAL LOCAL');
-        const isCat = typeof data.row.raw[0]==='string' && data.row.raw[0].includes('TOTAL UNIDADE');
+        const isBlank = Array.isArray(data.row.raw) && data.row.raw.every(x=>String(x).trim()==='');
+        const isSub = !isBlank && typeof data.row.raw[1]==='string' && data.row.raw[1].includes('SUBTOTAL LOCAL');
+        const isCat = !isBlank && typeof data.row.raw[0]==='string' && data.row.raw[0].includes('TOTAL UNIDADE');
+        if(isBlank){
+          data.cell.styles.minCellHeight=5;
+          data.cell.styles.fillColor=[255,255,255];
+          data.cell.styles.lineColor=[255,255,255];
+          data.cell.styles.textColor=[255,255,255];
+          data.cell.styles.cellPadding=1;
+          data.cell.styles.fontSize=1;
+          return;
+        }
         if(isSub || isCat){
           data.cell.styles.fontStyle='bold';
           data.cell.styles.fillColor = isCat ? [200,230,255] : [230,255,235];
@@ -808,6 +835,18 @@ window.ccGerarPdf = async function(secId, opts){
           [2,6,8,9].forEach(idx=>{ if(data.column.index===idx) data.cell.styles.fontStyle='bold'; });
           if(data.column.index===7 && data.row.raw[7]==='SIM') data.cell.styles.textColor=[0,0,0];
         }
+      },
+      didDrawCell:(data)=>{
+        if(data.section!=='body' || data.column.index!==11) return;
+        const txt = data.row.raw[11];
+        if(!txt) return;
+        const pct = parseInt(txt);
+        if(isNaN(pct)) return;
+        const isPaid = data.row.raw[7]==='SIM';
+        const col = isPaid ? [16,185,129] : [248,113,113];
+        doc.setFillColor(col[0],col[1],col[2]);
+        const barW = Math.max(0.5,(data.cell.width-2)*(pct/100));
+        doc.rect(data.cell.x+1, data.cell.y+2, barW, data.cell.height-4, 'F');
       }
     });
   } else {
