@@ -34,6 +34,8 @@ window.renderControleContas = function(secId){
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
   const colsOff = new Set(sec.cc_cols_ocultas || []);
   const resumoCats = [];
+  const tipoMap = {};
+  const locaisResumo = [];
 
   const categoriasHtml = items.map((item, idx)=>{
     const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -56,6 +58,14 @@ window.renderControleContas = function(secId){
       const locTotal = locRows.reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPago = locRows.filter(c=>c.pago).reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPendente = locTotal - locPago;
+      if(locRows.length) locaisResumo.push({categoria:item.description||'Categoria', local:local.description||'Local', qtd:locRows.length, qPago:locRows.filter(c=>c.pago).length, total:locTotal, pago:locPago, pendente:locPendente});
+      for(const c of locRows){
+        const tipo = c.tipo || 'N/A';
+        const v = parseFloat(c.valor) || 0;
+        if(!tipoMap[tipo]) tipoMap[tipo] = {qtd:0, qPago:0, total:0, pago:0};
+        tipoMap[tipo].qtd++; tipoMap[tipo].total += v;
+        if(c.pago){ tipoMap[tipo].qPago++; tipoMap[tipo].pago += v; }
+      }
       totalGeral += locTotal; totalPago += locPago; totalPendente += locPendente;
       qtdTotal += locRows.length; qtdPago += locRows.filter(c=>c.pago).length; qtdPendente += locRows.filter(c=>!c.pago).length;
       catTotal += locTotal; catPago += locPago; catPendente += locPendente; catQtd += locRows.length;
@@ -145,6 +155,64 @@ window.renderControleContas = function(secId){
       ${S.isAdmin?`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="ccOpenLocalModal(null,'${item.id}')">+ Local</button>`:''}
     </div>`;
   }).join('');
+
+  const tipoResumoHtml = (()=>{
+    const tipos = Object.entries(tipoMap).sort((a,b)=>b[1].total-a[1].total);
+    if(!tipos.length) return '';
+    const max = Math.max(...tipos.map(x=>x[1].total));
+    return `<div style='margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px'>
+  <div style='display:flex;align-items:center;gap:10px;margin-bottom:12px'><div style='font-size:18px'>📑</div><div style='font-size:14px;font-weight:700;color:#60a5fa'>Relatorio por Tipo de Conta</div></div>
+  <div style='display:grid;gap:10px'>
+    ${tipos.map(([t,v])=>{
+      const pct = max ? (v.total/max*100) : 0;
+      return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
+        <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px'>
+          <span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(t)}</span>
+          <span style='font-size:12px;color:#94a3b8'>${v.qtd} lanc. · R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+        </div>
+        <div style='display:flex;align-items:center;gap:10px'>
+          <div style='flex:1;background:#1e293b;border-radius:999px;height:12px;overflow:hidden'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:999px'></div></div>
+          <span style='font-size:12px;font-weight:700;color:#60a5fa;min-width:60px;text-align:right'>${Math.round(pct)}% do total</span>
+        </div>
+        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:6px'>
+          <span>${v.qPago} pagos · R$ ${v.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span style='color:#f87171'>${v.qtd-v.qPago} pendentes · R$ ${(v.total-v.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>
+</div>`;
+  })();
+  const locaisResumoHtml = (()=>{
+    if(!locaisResumo.length) return '';
+    return `<div class='cc-table-wrap' style='margin-bottom:14px'>
+    <table class='cc-table'>
+      <thead><tr>
+        <th>Categoria</th><th>Local</th><th style='text-align:center'>Lanc.</th>
+        <th style='text-align:center'>Pagos</th><th style='text-align:center'>Pendentes</th>
+        <th style='text-align:right'>Valor Total</th><th style='text-align:right'>Valor Pago</th><th style='text-align:right'>Valor Pendente</th>
+      </tr></thead>
+      <tbody>${locaisResumo.map(l=>`<tr>
+        <td>${esc(l.categoria)}</td><td>${esc(l.local)}</td>
+        <td style='text-align:center'>${l.qtd}</td>
+        <td style='text-align:center;color:#10b981'>${l.qPago}</td>
+        <td style='text-align:center;color:#f87171'>${l.qtd-l.qPago}</td>
+        <td style='text-align:right;font-weight:700'>R$ ${l.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right;color:#10b981'>R$ ${l.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right;color:#f87171'>R$ ${l.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      </tr>`).join('')}</tbody>
+      <tfoot><tr style='background:rgba(13,34,64,.35);font-weight:700'>
+        <td colspan='2'>TOTAL GERAL</td>
+        <td style='text-align:center'>${qtdTotal}</td>
+        <td style='text-align:center;color:#10b981'>${qtdPago}</td>
+        <td style='text-align:center;color:#f87171'>${qtdPendente}</td>
+        <td style='text-align:right'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right;color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right;color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      </tr></tfoot>
+    </table>
+  </div>`;
+  })();
 
   const anos = [...new Set(S.contas.filter(c=>c.atividade_id===secId && c.mes_ano).map(c=>String(c.mes_ano).split('/')[1]).filter(Boolean))].sort();
   const anoOptions = anos.map(a=>`<option value="${esc(a)}" ${a===anoFiltro?'selected':''}>${esc(a)}</option>`).join('');
@@ -312,6 +380,8 @@ window.renderControleContas = function(secId){
   </div>
   ${dashHtml}
   ${catsProgressHtml}
+  ${tipoResumoHtml}
+  ${locaisResumoHtml}
   ${resumoCats.length?`<div class="cc-table-wrap" style="margin-bottom:14px">
     <table class="cc-table">
       <thead><tr>
@@ -613,12 +683,13 @@ window.ccGerarPdf = async function(secId, opts){
   const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const W=297, mx=12, cw=W-mx*2;
   const fmtMoney=v=>parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const fmtPdfD=d=>d?fmtD(d):'-';
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const now = new Date().toLocaleDateString('pt-BR');
   let y = 18;
   doc.setFillColor(13,34,64); doc.rect(mx,12,cw,0.7,'F');
   sf(18,true,[13,34,64]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
-  sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertânia - PE • Controle PMS • '+now, mx, y);
+  sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertania - PE - Controle PMS - '+now, mx, y);
   y+=6;
   const filtros=[]; if(opts.ano) filtros.push('Ano: '+opts.ano); if(opts.apenasPagas) filtros.push('Apenas contas pagas');
   if(filtros.length){ sf(8,false,[100,116,139]); doc.text('Filtros: '+filtros.join(' | '), mx, y); y+=5; }
@@ -627,22 +698,34 @@ window.ccGerarPdf = async function(secId, opts){
   let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
   const rows=[];
   const catMap={};
+  const tipoMap={};
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   items.forEach(item=>{
     const locais=[...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    let catQtd=0, catPago=0, catTotal=0;
     locais.forEach(local=>{
       let lancs=S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{const da=(a.mes_ano||'').split('/').reverse().join('-');const db=(b.mes_ano||'').split('/').reverse().join('-');return da.localeCompare(db);});
       if(opts.ano) lancs=lancs.filter(c=>String(c.mes_ano||'').includes('/'+opts.ano));
       if(opts.apenasPagas) lancs=lancs.filter(c=>c.pago);
-      if(!catMap[item.id]) catMap[item.id]={nome:item.description||'—',qtd:0,qPago:0,total:0,pago:0};
-      const cat=catMap[item.id];
+      let locQtd=0, locPago=0, locTotal=0;
       lancs.forEach(c=>{
         const v=parseFloat(c.valor)||0;
-        totalGeral+=v; qtdTotal++; cat.total+=v; cat.qtd++;
-        if(c.pago){ totalPago+=v; qtdPago++; cat.pago+=v; cat.qPago++; }
-        rows.push([item.description||'—',local.description||'—',c.mes_ano||'—',c.tipo||'—',c.leitura_relogio||'—',c.consumo_kwh||'—','R$ '+fmtMoney(v),c.pago?'SIM':'NÃO',fmtD(c.data_vencimento),fmtD(c.data_pagamento),c.observacao||'—']);
+        const tipo=c.tipo||'N/A';
+        totalGeral+=v; qtdTotal++; catTotal+=v; catQtd++; locTotal+=v; locQtd++;
+        if(c.pago){ totalPago+=v; qtdPago++; catPago+=v; locPago++; }
+        if(!catMap[item.id]) catMap[item.id]={nome:item.description||'-',qtd:0,qPago:0,total:0,pago:0};
+        catMap[item.id].qtd++; catMap[item.id].total+=v; if(c.pago) catMap[item.id].qPago++;
+        if(!tipoMap[tipo]) tipoMap[tipo]={qtd:0,qPago:0,total:0,pago:0};
+        tipoMap[tipo].qtd++; tipoMap[tipo].total+=v; if(c.pago){ tipoMap[tipo].qPago++; tipoMap[tipo].pago+=v; }
+        rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-']);
       });
+      if(locQtd>0){
+        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '']);
+      }
     });
+    if(catQtd>0){
+      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '']);
+    }
   });
   const totalPendente=totalGeral-totalPago;
   const qtdPendente=qtdTotal-qtdPago;
@@ -655,11 +738,11 @@ window.ccGerarPdf = async function(secId, opts){
   });
   summaryRows.push(['TOTAL GERAL',qtdTotal,qtdPago,qtdPendente,'R$ '+fmtMoney(totalGeral),'R$ '+fmtMoney(totalPago),'R$ '+fmtMoney(totalPendente),pctPago.toFixed(1)+'%']);
 
-  sf(12,true,[13,34,64]); doc.text('📊 RESUMO POR CATEGORIA', mx, y); y+=8;
+  sf(12,true,[13,34,64]); doc.text('RESUMO POR CATEGORIA', mx, y); y+=8;
   doc.autoTable({
     startY:y,
     margin:{left:mx,right:mx},
-    head:[['Categoria','Lanç.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
+    head:[['Categoria','Lanc.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
     body:summaryRows,
     theme:'grid',
     headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
@@ -669,29 +752,66 @@ window.ccGerarPdf = async function(secId, opts){
     columnStyles:{0:{cellWidth:50},1:{cellWidth:18},2:{cellWidth:18},3:{cellWidth:22},4:{cellWidth:32,halign:'right'},5:{cellWidth:32,halign:'right'},6:{cellWidth:32,halign:'right'},7:{cellWidth:20,halign:'center'}},
     didParseCell:(data)=>{
       if(data.row.raw[0]==='TOTAL GERAL'){ data.cell.styles.fontStyle='bold'; data.cell.styles.fillColor=[224,242,254]; }
+      if(data.column.index===4) data.cell.styles.fontStyle='bold';
+      if(data.column.index===5) data.cell.styles.textColor=[16,185,129];
+      if(data.column.index===6) data.cell.styles.textColor=[239,68,68];
+    }
+  });
+
+  const tipoRows=Object.entries(tipoMap).sort((a,b)=>b[1].total-a[1].total).map(([t,v])=>{
+    const pend=v.total-v.pago;
+    return [t, v.qtd, v.qPago, v.qtd-v.qPago, 'R$ '+fmtMoney(v.total), 'R$ '+fmtMoney(v.pago), 'R$ '+fmtMoney(pend)];
+  });
+  const startTipoY=doc.lastAutoTable?doc.lastAutoTable.finalY+12:y+30;
+  sf(12,true,[13,34,64]); doc.text('RESUMO POR TIPO DE CONTA', mx, startTipoY-6);
+  doc.autoTable({
+    startY:startTipoY,
+    margin:{left:mx,right:mx},
+    head:[['Tipo de Conta','Quant.','Pagas','Pendentes','Valor Total','Valor Pago','Valor Pendente']],
+    body:tipoRows,
+    theme:'grid',
+    headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+    bodyStyles:{fontSize:9,textColor:[40,40,40]},
+    alternateRowStyles:{fillColor:[245,250,245]},
+    styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
+    columnStyles:{0:{cellWidth:50},1:{cellWidth:22,halign:'center'},2:{cellWidth:22,halign:'center'},3:{cellWidth:22,halign:'center'},4:{cellWidth:34,halign:'right'},5:{cellWidth:34,halign:'right'},6:{cellWidth:34,halign:'right'}},
+    didParseCell:(data)=>{
+      if(data.column.index===4) data.cell.styles.fontStyle='bold';
       if(data.column.index===5) data.cell.styles.textColor=[16,185,129];
       if(data.column.index===6) data.cell.styles.textColor=[239,68,68];
     }
   });
 
   const startDetailY=doc.lastAutoTable?doc.lastAutoTable.finalY+12:y+30;
+  sf(12,true,[13,34,64]); doc.text('DETALHAMENTO POR LANCAMENTO', mx, startDetailY-6);
   if(rows.length){
-    sf(12,true,[13,34,64]); doc.text('📝 DETALHAMENTO POR LANÇAMENTO', mx, startDetailY-6);
     doc.autoTable({
       startY:startDetailY,
       margin:{left:mx,right:mx},
-      head:[['Categoria','Local','Mês/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
+      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
       body:rows,
       theme:'grid',
       headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:8},
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       alternateRowStyles:{fillColor:[245,250,245]},
-      styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
-      columnStyles:{0:{cellWidth:32},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:18},4:{cellWidth:22},5:{cellWidth:18},6:{cellWidth:24,halign:'right'},7:{cellWidth:14,halign:'center'},8:{cellWidth:20},9:{cellWidth:20},10:{cellWidth:80}},
-      didParseCell:(data)=>{ if(data.row.raw[7]==='SIM'){ data.cell.styles.textColor=[16,185,129]; data.cell.styles.fontStyle='bold'; } }
+      styles:{cellPadding:1.5,overflow:'linebreak',font:'helvetica'},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:24,halign:'right'},7:{cellWidth:14,halign:'center'},8:{cellWidth:20},9:{cellWidth:20},10:{cellWidth:60}},
+      didParseCell:(data)=>{
+        if(data.section!=='body') return;
+        const isSub = typeof data.row.raw[1]==='string' && data.row.raw[1].includes('SUBTOTAL LOCAL');
+        const isCat = typeof data.row.raw[0]==='string' && data.row.raw[0].includes('TOTAL UNIDADE');
+        if(isSub || isCat){
+          data.cell.styles.fontStyle='bold';
+          data.cell.styles.fillColor = isCat ? [200,230,255] : [230,255,235];
+          data.cell.styles.textColor = [0,0,0];
+        } else {
+          [2,6,8,9].forEach(idx=>{ if(data.column.index===idx) data.cell.styles.fontStyle='bold'; });
+          if(data.column.index===7 && data.row.raw[7]==='SIM') data.cell.styles.textColor=[0,0,0];
+        }
+      }
     });
   } else {
-    sf(10,false,[120,120,120]); doc.text('Nenhum lançamento encontrado para os filtros selecionados.', mx, startDetailY+10);
+    sf(10,false,[120,120,120]); doc.text('Nenhum lancamento encontrado para os filtros selecionados.', mx, startDetailY+10);
   }
 
   const finalY=doc.lastAutoTable?doc.lastAutoTable.finalY+10:startDetailY+30;
