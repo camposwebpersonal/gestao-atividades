@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=16';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=17';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -1042,7 +1042,7 @@ window.openActivity=function(secId){
       tbl+=`<tr style="background:#0e1729">`;
       tbl+=`<td style="padding:8px 10px;color:#38bdf8;font-weight:700;border-bottom:1px solid #1e293b">${itemNum+1}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#34d399;font-weight:700;border-bottom:1px solid #1e293b">Item</td>`;
-      tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${_tblCell(esc(item.description||''),'it-name',item.id,false,null)}</td>`;
+      tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${_tblCell(esc(item.description||''),'it-name',item.id,false,null)}${childBadge(item.id,false)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(item.responsaveis||''),null,item.id,false,null)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(item.observacao||''),'it-obs',item.id,false,null)}</td>`;
       tableFields.forEach(fn=>{const raw=(item.extra_fields||{})[fn]!=null?(item.extra_fields||{})[fn]:item[fn]; tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
@@ -1058,7 +1058,7 @@ window.openActivity=function(secId){
           tbl+=`<tr style="background:${depth%2===0?'#060c18':'#0a1222'}">`;
           tbl+=`<td style="padding:5px 10px;color:#475569;border-bottom:1px solid #1e293b;font-size:11px">${num}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#475569;border-bottom:1px solid #1e293b;font-size:11px">${'›'.repeat(depth+1)}</td>`;
-          tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.description||''),'it-name',c.id,true,parentId)}</td>`;
+          tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.description||''),'it-name',c.id,true,parentId)}${childBadge(c.id,true)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.responsaveis||''),null,c.id,true,parentId)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.observacao||''),'it-obs',c.id,true,parentId)}</td>`;
           tableFields.forEach(fn=>{const raw=(c.extra_fields||{})[fn]!=null?(c.extra_fields||{})[fn]:c[fn]; tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
@@ -1073,7 +1073,7 @@ window.openActivity=function(secId){
         tbl+=`<tr style="background:#0a1222">`;
         tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">${subNum}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#475569;border-bottom:1px solid #1e293b">›</td>`;
-        tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(s.description||''),'it-name',s.id,true,item.id)}</td>`;
+        tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(s.description||''),'it-name',s.id,true,item.id)}${childBadge(s.id,true)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(s.responsaveis||''),null,s.id,true,item.id)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(s.observacao||''),'it-obs',s.id,true,item.id)}</td>`;
         tableFields.forEach(fn=>{const raw=(s.extra_fields||{})[fn]!=null?(s.extra_fields||{})[fn]:s[fn]; tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
@@ -1110,6 +1110,8 @@ window.openActivity=function(secId){
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
     </div>`;
   })():'';
+  const isBccs=sec.name.toUpperCase().includes('BCC');
+  const bccsHtml=isBccs?_renderBccsResumo(secId):'';
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
@@ -1139,6 +1141,7 @@ window.openActivity=function(secId){
   ${resumoAtiv&&hasResumoField?`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:8px">📊 Resumo Financeiro — Valores por Secretaria e Mês</div>${_renderResumoFinanceiro(secId)}</div>`:''}
   ${expandirHtml}
   ${statsHtml}
+  ${bccsHtml}
   <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
   window._refreshAtivTable=()=>openActivity(secId);
 };
@@ -1168,7 +1171,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
       <span class="hier-num">${num}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
-      <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}${childBadge(c.id,true)}</div>
         ${c.responsaveis||c.observacao||c.secretaria_id?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id?' · ':''}${c.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
         ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
       </div>
@@ -1203,7 +1206,7 @@ function renderItem(item,today,itemNum){
       <span class="hier-branch" style="color:#3b82f6">></span>
       <span class="hier-num">${subNum}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}${childBadge(s.id,true)}</div>
         ${(s.responsaveis||s.observacao||s.secretaria_id||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id?' · ':''}${s.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
@@ -1237,7 +1240,7 @@ function renderItem(item,today,itemNum){
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
       <span style="font-size:20px;flex-shrink:0">${/^\?+$/.test(item.item_icon||'')?'📋':esc(item.item_icon||'📋')}</span>
       <div class="item-info">
-        <div class="item-name"><span style="color:#64748b;font-weight:800;font-size:12px;margin-right:2px">${itemNum!=null?itemNum+'.':''}</span>${esc(item.description)} ${badge}
+        <div class="item-name"><span style="color:#64748b;font-weight:800;font-size:12px;margin-right:2px">${itemNum!=null?itemNum+'.':''}</span>${esc(item.description)}${childBadge(item.id,false)} ${badge}
           ${!_nt&&item.deadline_date?`<span style="font-size:11px;color:${late?'#f87171':'#64748b'}">📅 ${fmtD(item.deadline_date)}</span>`:''}
           ${!_nt&&item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
         </div>
@@ -2236,6 +2239,23 @@ function _buildResumoMatrix(secId){
   body.push(totalRow);
   return {monthArr, body, grandCount, grandTotal};
 }
+function _renderBccsResumo(secId){
+  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  if(!items.length)return '';
+  let total=0;
+  let html='<div style="margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">';
+  html+='<div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:10px">👥 Colaboradores Ativos por Secretaria</div>';
+  html+='<div style="display:grid;gap:6px">';
+  items.forEach(it=>{
+    const subs=S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem');
+    const ativos=subs.filter(s=>s.concluded!=1).length;
+    total+=ativos;
+    const resp=it.responsaveis?' · 👤 '+esc(it.responsaveis):'';
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#0e1729;border-radius:6px;padding:8px 10px"><div style="font-size:13px;color:#e2e8f0"><span style="color:#fbbf24">🏛️</span> ${esc(it.description)}${resp}</div><div style="font-size:13px;font-weight:700;color:#34d399">${ativos}</div></div>`;
+  });
+  html+=`</div><div style="margin-top:10px;text-align:right;font-size:13px;color:#94a3b8">Total ativos: <span style="font-size:14px;font-weight:800;color:#34d399">${total}</span></div></div>`;
+  return html;
+}
 window.gerarPdfResumoBCCS=async function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
@@ -2853,6 +2873,11 @@ window.toggleConcluidoPendente=async function(id,isSub){
   if(!obj)return;
   if(obj.concluded==1){await setItemStatus(id,col,'pendente');}
   else{openConclusaoModal(col,id);}
+};
+window.childBadge=function(id,isSub){
+  const n=isSub?S.subitems.filter(s=>s.parent_id===id&&s.parent_type==='subitem').length:S.subitems.filter(s=>s.item_id===id&&s.parent_type!=='subitem').length;
+  if(!n)return '';
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:999px;background:#1e3a5f;color:#60a5fa;font-size:10px;font-weight:700;padding:0 5px;margin-left:4px" title="${n} sub-item(ns)">${n}</span>`;
 };
 window.markActivityConcluded=function(secId){
   const today=new Date().toISOString().split('T')[0];
