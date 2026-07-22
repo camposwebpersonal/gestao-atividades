@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=18';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=19';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -1319,6 +1319,7 @@ window.toggleDone=async function(col,id,val){
       await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false},sbOld,'Desmarcar sub-item');
     }
   }
+  if(col==='subitem') await _unmarkSubChildren(id);
   await loadData();openActivity(curSecId);
 };
 window.openConclusaoModal=function(col,id){
@@ -1338,6 +1339,32 @@ window.openConclusaoModal=function(col,id){
       <button class="btn-save" onclick="saveConclusao('${col}','${id}')">✅ Confirmar</button>
     </div>`);
 };
+function _allSubDescendants(parentId){
+  const out=[];
+  function walk(pid){
+    const kids=S.subitems.filter(s=>s.parent_id===pid&&s.parent_type==='subitem');
+    for(const k of kids){out.push(k);walk(k.id);}
+  }
+  walk(parentId);
+  return out;
+}
+async function _markSubChildren(subId,d){
+  for(const c of _allSubDescendants(subId)){
+    if(c.concluded!=1){
+      const cOld={concluded:c.concluded,conclusion_date:c.conclusion_date,status:c.status,auto_concluded:c.auto_concluded};
+      await wUpdateDoc(doc(db,'subitems',c.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},cOld,'Concluir sub-item');
+    }
+  }
+}
+async function _unmarkSubChildren(subId){
+  const desc=_allSubDescendants(subId).filter(s=>s.concluded==1);
+  const hasFlag=desc.some(s=>s.auto_concluded===true);
+  const toReset=hasFlag?desc.filter(s=>s.auto_concluded===true):desc;
+  for(const c of toReset){
+    const cOld={concluded:c.concluded,conclusion_date:c.conclusion_date,status:c.status,auto_concluded:c.auto_concluded};
+    await wUpdateDoc(doc(db,'subitems',c.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false},cOld,'Desmarcar sub-item');
+  }
+}
 window.saveConclusao=async function(col,id){
   const _ud=document.getElementById('conc-use-date')?.checked!==false;
   const d=_ud?document.getElementById('conc-date')?.value||null:null;
@@ -1350,6 +1377,7 @@ window.saveConclusao=async function(col,id){
     const sbOld={concluded:sb.concluded,conclusion_date:sb.conclusion_date,status:sb.status,auto_concluded:sb.auto_concluded};
     await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},sbOld,'Concluir sub-item');
   }}
+  if(col==='subitem') await _markSubChildren(id,d);
   await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.confirmarExcluirAtividade=function(id){
@@ -2855,6 +2883,7 @@ window.setItemStatus=async function(id,col,status){
     const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
     for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
   }
+  if(col==='subitem'&&wasConcluded) await _unmarkSubChildren(id);
   await loadData();openActivity(curSecId);
 };
 window._doSetStatus=async function(id,col,status,wasConcluded){
@@ -2871,6 +2900,7 @@ window._doSetStatus=async function(id,col,status,wasConcluded){
     const toReset=hasFlag?allConc.filter(s=>s.auto_concluded===true):allConc;
     for(const sb of toReset)await updateDoc(doc(db,'subitems',sb.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false});
   }
+  if(col==='subitem'&&wasConcluded) await _unmarkSubChildren(id);
   await loadData();closeModal();openActivity(curSecId);
 };
 window.toggleConcluidoPendente=async function(id,isSub){
