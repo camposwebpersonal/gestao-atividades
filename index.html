@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=13';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=14';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -1036,7 +1036,7 @@ window.openActivity=function(secId){
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
     const _tblAct=(id,isSub,parentEdit)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button></div>`:'';
-    const _tblCell=(txt,focus,id,isSub,parentEdit)=>_can?`<span style="position:relative;cursor:pointer" onmouseenter="this.querySelector('.pen').style.display='inline'" onmouseleave="this.querySelector('.pen').style.display='none'" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}',${focus?JSON.stringify(focus):'null'})">${txt}<span class="pen" style="display:none;position:absolute;right:-4px;top:0;font-size:10px;color:#94a3b8;padding-left:4px;background:#0a1222">✏️</span></span>`:txt;
+    const _tblCell=(txt,focus,id,isSub,parentEdit)=>_can?`<span style="position:relative;cursor:pointer" onmouseenter="this.querySelector('.pen').style.display='inline'" onmouseleave="this.querySelector('.pen').style.display='none'" onclick='openItemModal("${id}","${secId}",${isSub},"${parentEdit||''}",${focus?JSON.stringify(focus):'null'})'>${txt}<span class="pen" style="display:none;position:absolute;right:-4px;top:0;font-size:10px;color:#94a3b8;padding-left:4px;background:#0a1222">✏️</span></span>`:txt;
     items.forEach((item,itemNum)=>{
       const pr=iProg(item);const done=pr.pct===100;const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
       tbl+=`<tr style="background:#0e1729">`;
