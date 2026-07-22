@@ -436,7 +436,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=17';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=18';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -576,7 +576,7 @@ const setC=h=>document.getElementById('content').innerHTML=h;
 const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
   return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
-function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:item.concluded==1?100:0,total:0,subs:[]};if(item.concluded==1)return{hasSubs:true,total:subs.length,concluded:subs.length,pct:100,subs};const done=subs.filter(s=>s.concluded==1).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs};}
+function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:item.concluded==1?100:0,total:0,subs:[]};const done=subs.filter(s=>s.concluded==1).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs:subs};}
 
 // ── HIERARQUIA DE SUBITENS ──
 function getSubTree(itemId){
@@ -1111,7 +1111,9 @@ window.openActivity=function(secId){
     </div>`;
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
-  const bccsHtml=isBccs?_renderBccsResumo(secId):'';
+  const qField=(sec.quantitativo_campo||'').trim()||(isBccs&&tableFields.includes('Remuneração')?'Remuneração':'');
+  const showQuant=isBccs?sec.show_quantitativo!==0:sec.show_quantitativo==1;
+  const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,isBccs?'Colaboradores Ativos por Secretaria':'Resumo Quantitativo'):'';
   setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
@@ -1514,6 +1516,8 @@ window.openSecModal=function(id){
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-table" ${s?.show_table?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 🗂️ Sempre exibir lançamentos em tabela</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-quant" ${s?.show_quantitativo==1 || (s?.name||'').toUpperCase().includes('BCC')?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar quantitativo com soma</label>
+      <div style="display:flex;align-items:center;gap:8px;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="text" id="s-qt-campo" placeholder="Nome do campo de valor (ex: Remuneração)" value="${esc(s?.quantitativo_campo || ((s?.name||'').toUpperCase().includes('BCC')?'Remuneração':''))}" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:13px"></div>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
         const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
         const extraHtml=field==='verba'?`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="s-verba-sum" ${s?.verba_sum_subitems?'checked':''} style="width:12px;height:12px;accent-color:#38bdf8"> Somar verbas dos sub-itens no total do item</label>`:''
@@ -1550,7 +1554,7 @@ window.saveSec=async function(id){
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
   const respStr=_getRespFromCombos('s-resp-wrap');
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
@@ -2239,21 +2243,23 @@ function _buildResumoMatrix(secId){
   body.push(totalRow);
   return {monthArr, body, grandCount, grandTotal};
 }
-function _renderBccsResumo(secId){
+function _renderQuantitativo(secId,valField,title){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!items.length)return '';
-  let total=0;
+  let totalAtivos=0,totalValor=0;
   let html='<div style="margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">';
-  html+='<div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:10px">👥 Colaboradores Ativos por Secretaria</div>';
+  html+=`<div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:10px">📊 ${esc(title||'Resumo Quantitativo')}</div>`;
   html+='<div style="display:grid;gap:6px">';
   items.forEach(it=>{
     const subs=S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem');
-    const ativos=subs.filter(s=>s.concluded!=1).length;
-    total+=ativos;
+    const ativos=subs.filter(s=>s.concluded!=1);
+    totalAtivos+=ativos.length;
+    let sum=0;
+    if(valField){sum=ativos.reduce((a,s)=>a+_parseValor((s.extra_fields||{})[valField]),0);totalValor+=sum;}
     const resp=it.responsaveis?' · 👤 '+esc(it.responsaveis):'';
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#0e1729;border-radius:6px;padding:8px 10px"><div style="font-size:13px;color:#e2e8f0"><span style="color:#fbbf24">🏛️</span> ${esc(it.description)}${resp}</div><div style="font-size:13px;font-weight:700;color:#34d399">${ativos}</div></div>`;
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#0e1729;border-radius:6px;padding:8px 10px"><div style="font-size:13px;color:#e2e8f0">${esc(it.description)}${resp}</div><div style="font-size:13px;font-weight:700;color:#34d399">${ativos.length}${valField?' · '+_fmtMoney(sum):''}</div></div>`;
   });
-  html+=`</div><div style="margin-top:10px;text-align:right;font-size:13px;color:#94a3b8">Total ativos: <span style="font-size:14px;font-weight:800;color:#34d399">${total}</span></div></div>`;
+  html+=`</div><div style="margin-top:10px;text-align:right;font-size:13px;color:#94a3b8">Total: <span style="font-size:14px;font-weight:800;color:#34d399">${totalAtivos} ativo(s)${valField?' · '+_fmtMoney(totalValor):''}</span></div></div>`;
   return html;
 }
 window.gerarPdfResumoBCCS=async function(secId){
