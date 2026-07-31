@@ -118,3 +118,16 @@ CREATE INDEX IF NOT EXISTS idx_requisicoes_numero ON requisicoes(numero);
 CREATE TRIGGER update_requisicoes_updated_at
 BEFORE UPDATE ON requisicoes
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Políticas de acesso (RLS) para requisicoes e estoque
+ALTER TABLE requisicoes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "requisicoes_all" ON requisicoes;
+CREATE POLICY "requisicoes_all" ON requisicoes
+FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
+
+ALTER TABLE estoque ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "estoque_all" ON estoque;
+CREATE POLICY "estoque_all" ON estoque
+FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
