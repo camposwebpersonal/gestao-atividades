@@ -271,8 +271,9 @@ window.renderControleEstoque=function(secId){
       <div class="ce-tab" id="ce-tab-relatorio" onclick="ceSetTab('relatorio')">Relatório</div>
     </div>
     <div class="ce-sec" id="ce-sec-requisicoes">
-      <div style="margin-bottom:14px">
+      <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
         ${can?`<button class="ce-btn ce-btn-pri" onclick="ceOpenRequisicaoModal()">+ Nova Requisição</button>`:''}
+        ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarRequisicoesPdf()">📥 Importar PDF 31/07</button>`:''}
       </div>
       ${reqCards}
     </div>
@@ -537,4 +538,32 @@ window.ceGerarPdf=async function(secId){
 
   doc.save((_ceEsc((sec.name||'controle-estoque').replace(/[^a-zA-Z0-9À-ú ]/g,'_'))).trim()+'_estoque_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!','success');
+};
+
+window.ceImportarRequisicoesPdf=async function(){
+  if(!curSecId){toast('Abra o Controle de Estoque primeiro','error');return;}
+  if(!confirm('Importar 3 requisições do PDF 31/07/2026?')) return;
+  try{
+    const res=await fetch('js/requisicoes-pdf.json');
+    if(!res.ok){toast('Arquivo de requisições não encontrado','error');return;}
+    const data=await res.json();
+    let next=Math.max(0,...S.requisicoes.filter(r=>r.atividade_id===curSecId).map(r=>parseInt(r.numero)||0));
+    for(const req of data){
+      const itens=[];
+      for(const it of (req.itens||[])){
+        const qtd=parseFloat(it.qtd)||0;
+        itens.push({id:_ceNovaReqId(),subitem_id:'',descricao:it.descricao||'',qtd:qtd,unidade:String(it.unidade||'UNIDADE').toUpperCase().trim(),fator:1,qtd_base:qtd,preco_unitario:parseFloat(it.preco_unitario)||0});
+      }
+      if(!itens.length) continue;
+      const num=req.numero!=null?parseInt(req.numero):(++next);
+      const docData={atividade_id:curSecId,numero:num,data:req.data||'',origem:req.origem||'',destino:req.destino||'',observacao:req.observacao||'',itens,status:'PENDENTE',updated_at:serverTimestamp(),created_at:serverTimestamp()};
+      await addDoc(collection(db,'requisicoes'),docData);
+    }
+    await loadData();
+    toast('Requisições importadas com sucesso!');
+    renderControleEstoque(curSecId);
+  }catch(e){
+    console.error(e);
+    toast('Erro ao importar: '+e.message,'error');
+  }
 };

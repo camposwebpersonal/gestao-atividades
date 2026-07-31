@@ -1,0 +1,197 @@
+[
+  {
+    "numero": null,
+    "data": "2026-07-31",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades odontológicas",
+    "observacao": "Requisição de compras - Odontologia",
+    "itens": [
+      {
+        "qtd": 20,
+        "unidade": "PCT",
+        "preco_unitario": 0,
+        "descricao": "Acido gel | ÁCIDO CONDICIONADOR GEL 37% 2,5 ML - KIT COM 03 SERINGAS COMPOSTO POR ÁCIDO FOSFÓRICO 37% CONTENDO EXTERNAMENTE MARCA COMERCIAL, CONTENDO DADOS DE IDENTIFICAÇÃO, PROCEDÊNCIA, VALIDADE, LOTE, RECOMENDAÇÕES PARA ARMAZENAMENTO, VALIDADE MÍNIMA DE 2 ANOS A PARTIR DA DATA DE ENTREGA."
+      },
+      {
+        "qtd": 15,
+        "unidade": "PCT",
+        "preco_unitario": 0,
+        "descricao": "Capote | Avental descartável contendo 10 pacotes em cada unidade"
+      },
+      {
+        "qtd": 5,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Hollembak | Instrumental hollembak"
+      },
+      {
+        "qtd": 15,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "Luva de procedimento em látex natural | sOFT+AID UNIDADE (caixa com 100 unidades) produto de uso único não estéril luva PP"
+      }
+    ]
+  },
+  {
+    "numero": null,
+    "data": "2026-07-31",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades odontológicas",
+    "observacao": "Requisição de compras - Odontologia",
+    "itens": [
+      {
+        "qtd": 50,
+        "unidade": "F",
+        "preco_unitario": 0,
+        "descricao": "Fio de sutura 4-0 | nilon 4.0 agulhas 1/2, cx com 24 - FIOS DONATI"
+      },
+      {
+        "qtd": 2,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Broca cirúrgica 702 | Unidades (FG 702)"
+      },
+      {
+        "qtd": 20,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "Agulha gengival descartável - calibre g - 23mm,3 0g curta. Confeccionada em | SR – agulha gengival caixa com 100 unidades"
+      },
+      {
+        "qtd": 40,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "Anestésico local injetável - a base de cloridrato de lidocaína 2% e fenilefrina | DLA Pharmaceutica - embalagem com 50 unidades com 1,8ml cada"
+      },
+      {
+        "qtd": 20,
+        "unidade": "UNI",
+        "preco_unitario": 0,
+        "descricao": "Aplicador descartável, tipo microbrush, para adesivo dentário embalados em | microdont"
+      },
+      {
+        "qtd": 80,
+        "unidade": "PCT",
+        "preco_unitario": 0,
+        "descricao": "Sugador descartável confeccionado em pvc latoxico, tubo transparente com fio de aço | Sugador plastico descartavel com 40 unidades max clean"
+      },
+      {
+        "qtd": 40,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Adesivo fotopolimerizavel monocomponente em frasco unico de 4ml composto | BIODINAMICA"
+      },
+      {
+        "qtd": 8,
+        "unidade": "CY",
+        "preco_unitario": 0,
+        "descricao": "LENÇOL DE BORRACHA PARA ISOLAMENTO ABSOLUTO, 26 FOLHAS | MK LIFE"
+      },
+      {
+        "qtd": 15,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "PAPEL GRAÚ CIRÚRGICO; BRANCO ATÓXICO, RESISTENTE A ESTERILIZAÇÃO E MANUSEIO, GRAMATURA 60 A 80G/M², ROLO C/0,30 X 100M. (AUTOCLAVE) | Estéril care"
+      },
+      {
+        "qtd": 50,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "MÁSCARA CIRÚRGICA DESCARTÁVEL TRIPLA CAMADA PARA EXAMES E PROCEDIMENTOS CIRÚRGICOS, COM ELÁSTICO. CAIXA C/ 50 | ecomax"
+      },
+      {
+        "qtd": 40,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Resina flow | Resina flow na cor A2"
+      },
+      {
+        "qtd": 10,
+        "unidade": "F",
+        "preco_unitario": 0,
+        "descricao": "Saco de lixo infectante 50L"
+      },
+      {
+        "qtd": 15,
+        "unidade": "PCT",
+        "preco_unitario": 0,
+        "descricao": "Babador descartável"
+      },
+      {
+        "qtd": 12,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Papel grau cirúrgico tamanho 400x100"
+      },
+      {
+        "qtd": 30,
+        "unidade": "PCT",
+        "preco_unitario": 0,
+        "descricao": "ROLETES DENTAIS | ROLETES DENTAIS, CONFECCIONADOS EM ALGODÃO PURO, LEVEMENTE ENGOMADO, PACOTE CONTENDO 100 UNIDADES"
+      },
+      {
+        "qtd": 25,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Obturador provisório | Restaurador provisório obtur refil frasco com 25g"
+      }
+    ]
+  },
+  {
+    "numero": 65,
+    "data": "2026-07-31",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades odontológicas",
+    "observacao": "Requisição de nº 65/2026 - Requisição de compras",
+    "itens": [
+      {
+        "qtd": 50,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "ÁLCOOL 70% (LIQUIDO) | Álcool etílico com teor alcoólico entre 70 graus, embalado em conteúdo de 1 - VIC PHARMA"
+      },
+      {
+        "qtd": 50,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "Luva de procedimento em látex natural - produto de uso único não estéril luva P | sOFT+AID UNIDADE (caixa com 100 unidades)"
+      },
+      {
+        "qtd": 20,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "Luva de procedimento em látex natural - produto de uso único não estéril luva M | sOFT+AID UNIDADE (caixacom 100 unidades)"
+      },
+      {
+        "qtd": 20,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "GRAU CIRÚRGICO 200MM X 100M | branco atóxico, resistente a esterilização e manuseio - ESTERIL CARE"
+      },
+      {
+        "qtd": 3,
+        "unidade": "CX",
+        "preco_unitario": 0,
+        "descricao": "FILME RADIOGRÁFICO DENTAL INTRA ORAL E-SPEED | PERIAPICAL ADULTO CAIXA COM 150, Filme para radiografia - periapical para adultos, 3 x 4 cm"
+      },
+      {
+        "qtd": 30,
+        "unidade": "UNI",
+        "preco_unitario": 0,
+        "descricao": "ALGODÃO EM ROLOS - ALGODÃO PARA USO ODONTOLÓGICO EMBALADO EM PACOTE DE 500G CONTENDO EM SEU EXTERIOR MARCA COMERCIAL, PROCEDÊNCIA E DATA DE VALIDADE COM NO MÍNIMO DE 2 ANOS A PARTIR DA DATA DE ENTREGA. | NEVOA"
+      },
+      {
+        "qtd": 15,
+        "unidade": "UNI",
+        "preco_unitario": 0,
+        "descricao": "E.D.T.A, FRASCO C/ 100 ML. | E.D.T.A, FRASCO C/100 ML. VALIDADE MÍNIMA DE 2 ANOS DA DATA DE ENTREGA."
+      },
+      {
+        "qtd": 15,
+        "unidade": "UN",
+        "preco_unitario": 0,
+        "descricao": "Otosporin | Otosporin hidrocortisona 10ml"
+      }
+    ]
+  }
+]
