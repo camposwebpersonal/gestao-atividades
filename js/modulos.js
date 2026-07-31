@@ -54,7 +54,7 @@ const _md = {
   fmtD: d => { if(!d) return '—'; try { let s=String(d); if(!s.includes('T') && !s.includes(' ')) s+='T00:00'; return new Date(s).toLocaleDateString('pt-BR'); } catch { return String(d); } },
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
   extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
-  modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
+  modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1||s.controle_estoque_modelo==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
   pct: g => { const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
   ativTotal: g => { return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
   grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
