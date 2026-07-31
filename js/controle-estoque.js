@@ -513,6 +513,7 @@ window.ceConfirmarCompra=function(requisicaoId,itemId){
       <div><label style="font-size:11px;color:#94a3b8">Data</label><input type="date" class="ce-input" id="ce-comp-data" value="${_ceHoje()}"></div>
     </div>
     <input type="hidden" id="ce-comp-qtd-limite" value="${qtdLimite.toFixed(2)}">
+    <div style="font-size:13px;font-weight:700;padding:4px 0">Já comprado: <span style="color:#0ea5e9">${_ceFmtNum(qtdComprada)} ${_ceEsc(it.unidade||'')}</span></div>
     <div style="font-size:13px;font-weight:700;padding:4px 0" id="ce-comp-saldo">Saldo restante: ${_ceFmtNum(saldo)} ${it.unidade}</div>
     <div class="ce-form-row"><div style="grid-column:1/-1"><label style="font-size:11px;color:#94a3b8">Observação</label><textarea class="ce-input" id="ce-comp-obs" rows="2" placeholder="Fornecedor, nota fiscal, diferenças"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ceSaveCompra('${requisicaoId}','${itemId}')">💾 Confirmar</button></div>`);
