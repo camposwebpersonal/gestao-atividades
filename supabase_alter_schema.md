@@ -92,3 +92,29 @@ CREATE INDEX IF NOT EXISTS idx_estoque_created_at ON estoque(created_at DESC);
 CREATE TRIGGER update_estoque_updated_at
 BEFORE UPDATE ON estoque
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Vínculo entre movimentações de estoque e requisições de compra
+ALTER TABLE estoque ADD COLUMN IF NOT EXISTS requisicao_id TEXT;
+ALTER TABLE estoque ADD COLUMN IF NOT EXISTS requisicao_item_id TEXT;
+
+-- Requisições de compra (pedidos)
+CREATE TABLE IF NOT EXISTS requisicoes (
+  id TEXT PRIMARY KEY,
+  atividade_id TEXT,
+  numero INTEGER,
+  data DATE,
+  origem TEXT,
+  destino TEXT,
+  observacao TEXT,
+  itens JSONB DEFAULT '[]',
+  status TEXT DEFAULT 'PENDENTE',
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_requisicoes_atividade_id ON requisicoes(atividade_id);
+CREATE INDEX IF NOT EXISTS idx_requisicoes_numero ON requisicoes(numero);
+
+CREATE TRIGGER update_requisicoes_updated_at
+BEFORE UPDATE ON requisicoes
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
