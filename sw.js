@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v32';
+const CACHE_NAME = 'gestao-pms-v33';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -10,6 +10,7 @@ const STATIC_ASSETS = [
   'js/controle-distribuicao.js',
   'js/controle-estoque.js',
   'js/requisicoes-pdf.json',
+  'js/requisicoes-licitacao.json',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
 ];

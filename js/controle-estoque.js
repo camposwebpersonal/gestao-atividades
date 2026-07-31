@@ -274,6 +274,7 @@ window.renderControleEstoque=function(secId){
       <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
         ${can?`<button class="ce-btn ce-btn-pri" onclick="ceOpenRequisicaoModal()">+ Nova Requisição</button>`:''}
         ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarRequisicoesPdf()">📥 Importar PDF 31/07</button>`:''}
+        ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarArquivo('js/requisicoes-licitacao.json','a Licitação de Medicamentos (Pregão 028/2022, 144 itens)')">💊 Importar Licitação Medicamentos</button>`:''}
       </div>
       ${reqCards}
     </div>
@@ -540,11 +541,15 @@ window.ceGerarPdf=async function(secId){
   toast('PDF gerado!','success');
 };
 
-window.ceImportarRequisicoesPdf=async function(){
+window.ceImportarRequisicoesPdf=function(){
+  return ceImportarArquivo('js/requisicoes-pdf.json','a Requisição nº 65/2026 do PDF 31/07/2026 (28 itens)');
+};
+
+window.ceImportarArquivo=async function(url,label){
   if(!curSecId){toast('Abra o Controle de Estoque primeiro','error');return;}
-  if(!confirm('Importar a Requisição nº 65/2026 do PDF 31/07/2026 (28 itens)?')) return;
+  if(!confirm('Importar '+label+'?')) return;
   try{
-    const res=await fetch('js/requisicoes-pdf.json');
+    const res=await fetch(url);
     if(!res.ok){toast('Arquivo de requisições não encontrado','error');return;}
     const data=await res.json();
     let next=Math.max(0,...S.requisicoes.filter(r=>r.atividade_id===curSecId).map(r=>parseInt(r.numero)||0));
