@@ -428,15 +428,31 @@ window.ceDeleteRequisicao=async function(id){
   renderControleEstoque(curSecId);
 };
 
+function _ceNormDesc(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+async function _ceFindOrCreateProduto(desc){
+  const norm=_ceNormDesc(desc);
+  let prod=S.subitems.find(s=>s.atividade_id===curSecId && s.parent_type!=='subitem' && _ceNormDesc(s.description)===norm);
+  if(prod) return prod.id;
+  let item=S.items.find(i=>i.atividade_id===curSecId);
+  if(!item){
+    const itemRef=await addDoc(collection(db,'items'),{atividade_id:curSecId,description:'PRODUTOS',concluded:0,extra_fields:{},order_num:0,created_at:serverTimestamp(),updated_at:serverTimestamp()});
+    item={id:itemRef.id,atividade_id:curSecId,description:'PRODUTOS'};
+  }
+  const subRef=await addDoc(collection(db,'subitems'),{atividade_id:curSecId,item_id:item.id,parent_id:item.id,parent_type:'item',description:desc,concluded:0,extra_fields:{},order_num:S.subitems.filter(s=>s.item_id===item.id).length,created_at:serverTimestamp(),updated_at:serverTimestamp()});
+  return subRef.id;
+}
+
 window.ceConfirmarCompra=function(requisicaoId,itemId){
   const req=S.requisicoes.find(r=>r.id===requisicaoId); if(!req) return;
   const it=(Array.isArray(req.itens)?req.itens:[]).find(x=>x.id===itemId); if(!it) return;
-  const prods=[...S.subitems].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const opts=`<option value="">Selecione o produto</option>`+prods.map(p=>`<option value="${p.id}" ${p.id===it.subitem_id?'selected':''}>${_ceEsc(p.description||'')}</option>`).join('');
+  const nomeProd=(it.descricao.split('|').pop()||it.descricao).trim();
+  const prod=it.subitem_id?S.subitems.find(s=>s.id===it.subitem_id):null;
+  const prodName=_ceEsc(prod?prod.description:nomeProd);
+  const prodId=_ceEsc(it.subitem_id||'');
   const un=CE_UNIDADES.map(u=>`<option value="${u}" ${u===it.unidade?'selected':''}>${u}</option>`).join('');
   openModal('✅ Confirmar Compra - Item #'+_ceEsc(itemId.slice(-6)),'',`
     <div class="ce-form-row">
-      <div><label style="font-size:11px;color:#94a3b8">Produto no estoque *</label><select class="ce-input" id="ce-comp-prod">${opts}</select></div>
+      <div><label style="font-size:11px;color:#94a3b8">Produto *</label><input type="hidden" id="ce-comp-prod" value="${prodId}"><input type="text" class="ce-input" disabled value="${prodName}"></div>
       <div><label style="font-size:11px;color:#94a3b8">Qtd recebida *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-qtd" value="${_ceFmtNum(it.qtd||1)}"></div>
       <div><label style="font-size:11px;color:#94a3b8">Unidade</label><select class="ce-input" id="ce-comp-un">${un}</select></div>
       <div><label style="font-size:11px;color:#94a3b8">Preço unit. R$</label><input type="number" step="0.01" class="ce-input" id="ce-comp-preco" value="${_ceFmtNum(it.preco_unitario||0)}"></div>
@@ -447,17 +463,27 @@ window.ceConfirmarCompra=function(requisicaoId,itemId){
 };
 
 window.ceSaveCompra=async function(requisicaoId,itemId){
-  const prodId=document.getElementById('ce-comp-prod')?.value||'';
+  const req=S.requisicoes.find(r=>r.id===requisicaoId); if(!req) return;
+  const it=(Array.isArray(req.itens)?req.itens:[]).find(x=>x.id===itemId); if(!it){toast('Item não encontrado','error'); return;}
+  let prodId=document.getElementById('ce-comp-prod')?.value||'';
   const qtd=parseFloat(document.getElementById('ce-comp-qtd')?.value)||0;
   const unidade=String(document.getElementById('ce-comp-un')?.value||'UNIDADE').toUpperCase().trim();
   const preco=parseFloat(document.getElementById('ce-comp-preco')?.value)||0;
   const data=document.getElementById('ce-comp-data')?.value||'';
   const obs=document.getElementById('ce-comp-obs')?.value?.trim()||'';
+  if(!prodId){
+    const nomeProd=(it.descricao.split('|').pop()||it.descricao).trim();
+    prodId=await _ceFindOrCreateProduto(nomeProd);
+    it.subitem_id=prodId;
+    await updateDoc(doc(db,'requisicoes',requisicaoId),{itens:req.itens,updated_at:serverTimestamp()});
+  }
   if(!prodId || qtd<=0 || !data){toast('Produto, quantidade e data são obrigatórios','error'); return;}
-  const prod=S.subitems.find(s=>s.id===prodId);
+  const prodSnap=await getDoc(doc(db,'subitems',prodId));
+  const prod=prodSnap.data()||{};
+  prod.id=prodId;
   const fator=_ceFator(prod,unidade);
   const qtd_base=qtd*fator;
-  const docData={atividade_id:curSecId,item_id:prod?.item_id||'',subitem_id:prodId,produto:prod?.description||'',tipo:'ENTRADA',quantidade:qtd,unidade,fator,qtd_base,preco_unitario:preco,valor_total:qtd*preco,data,destino:'',observacao:obs,requisicao_id:requisicaoId,requisicao_item_id:itemId,updated_at:serverTimestamp(),created_at:serverTimestamp()};
+  const docData={atividade_id:curSecId,item_id:prod?.item_id||'',subitem_id:prodId,produto:prod?.description||it.descricao||'',tipo:'ENTRADA',quantidade:qtd,unidade,fator,qtd_base,preco_unitario:preco,valor_total:qtd*preco,data,destino:'',observacao:obs,requisicao_id:requisicaoId,requisicao_item_id:itemId,updated_at:serverTimestamp(),created_at:serverTimestamp()};
   await addDoc(collection(db,'estoque'),docData);
   await loadData(); closeModal(); toast('Compra registrada no estoque!');
   renderControleEstoque(curSecId);
