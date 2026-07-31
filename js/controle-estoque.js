@@ -275,6 +275,7 @@ window.renderControleEstoque=function(secId){
         ${can?`<button class="ce-btn ce-btn-pri" onclick="ceOpenRequisicaoModal()">+ Nova Requisição</button>`:''}
         ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarRequisicoesPdf()">📥 Importar PDF 31/07</button>`:''}
         ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarArquivo('js/requisicoes-licitacao.json','a Licitação de Medicamentos (Pregão 028/2022, 144 itens)')">💊 Importar Licitação Medicamentos</button>`:''}
+        ${can?`<button class="ce-btn ce-btn-ghost" onclick="ceImportarArquivo('js/requisicoes-contratos.json','os Contratos 30,31,32,33 e MELO (5 requisições)')">📑 Importar Contratos</button>`:''}
       </div>
       ${reqCards}
     </div>

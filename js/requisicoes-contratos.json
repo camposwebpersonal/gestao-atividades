@@ -1,0 +1,845 @@
+[
+  {
+    "numero": 30,
+    "data": "2026-07-15",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades de Saúde",
+    "observacao": "Contrato 30 - Processo 0070/2026 - CONTRATO 30 GENEROS ALIMENTICIOS.pdf",
+    "itens": [
+      {
+        "qtd": 2700.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.28,
+        "descricao": "Contrato 30 - Item 1 | AÇÚCAR TIPO CRISTAL Textura em grânulos finos e coloração branca. Isento de impurezas e empedramento. Embalagem plástica, atóxica, transparente, não violada, contendo dados do produto: identificação, procedência, ingredientes, informações nutricionais, lote, gramatura, datas de fabricação e vencimento. Validade mínima de 6 (seis) meses a contar da data de entrega do produto. PACOTE COM 1 KG. Marca Referência:União, igual ou superior."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.25,
+        "descricao": "Contrato 30 - Item 3 | Aveia, em flocos finos, integral, rica em fibras. Embalagem com identificação do produto, peso líquido de 170g e com prazo de validade."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.25,
+        "descricao": "Contrato 30 - Item 10 | Colorífico, Colorau, Condimento, Aspecto Físico Pó, Tipo Industrial, Embalagem Plástica De 100G."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.49,
+        "descricao": "Contrato 30 - Item 15 | Goma De Tapioca, Feita De Mandioca, Embalagem Contendo 1Kg Com Dados De Identificação Do Produto, Marca DoFabricante, Prazo De Validade."
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.15,
+        "descricao": "Contrato 30 - Item 21 | SAL Refinado, iodado, com no mínimo 96,95% de cloreto de sódio e sais de iodo (no mínimo 10 mg e máximo de 15 mg) conforme legislação específica. 1kg"
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.49,
+        "descricao": "Contrato 30 - Item 44 | Milho verde em conserva, embalagem de 200g (peso líquido), validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.69,
+        "descricao": "Contrato 30 - Item 47 | Adoçante, embalagem de 100ml, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 120.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.99,
+        "descricao": "Contrato 30 - Item 48 | Batata Palha, embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 80.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 20.49,
+        "descricao": "Contrato 30 - Item 50 | Caldo de Frango, CX com 24 und. de 19g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente. Sabor Frango (ingredientes): sal, gordura vegetal, açúcar, alho, carne bovina, salsa, pimenta vermelha, louro, realçadores de sabor de glutamato monossódico e inosinato dissódico, aromatizantes e corantes caramelo e natural urucum,acidulante ácido cítrico."
+      },
+      {
+        "qtd": 80.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 20.49,
+        "descricao": "Contrato 30 - Item 51 | Caldo de Carne, CX com 24 und. de 19g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente. Sabor Frango (ingredientes): sal, gordura vegetal, açúcar, alho, carne bovina, salsa, pimenta vermelha, louro, realçadores de sabor de glutamato monossódico e inosinato dissódico, aromatizantes e corantes caramelo e natural urucum,acidulante ácido cítrico."
+      },
+      {
+        "qtd": 200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.99,
+        "descricao": "Contrato 30 - Item 52 | Catchup, em embalagem de 1kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.99,
+        "descricao": "Contrato 30 - Item 53 | Maionese, embalagem de 200g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.19,
+        "descricao": "Contrato 30 - Item 54 | Mostarda, embalagem de 200g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 450.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.65,
+        "descricao": "Contrato 30 - Item 61 | Farinha de Trigo com fermento, embalagem de 1Kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 100.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.2,
+        "descricao": "Contrato 30 - Item 64 | Macarrão para lasanha, embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.8,
+        "descricao": "Contrato 30 - Item 65 | Fermento em pó, embalagem de 100g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.49,
+        "descricao": "Contrato 30 - Item 96 | Azeitona verde s/caroço, embalagem de 240g (peso líquido), informações nutricionais na embalagem, validade mínima de 06 meses a 01ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.0,
+        "descricao": "Contrato 30 - Item 100 | Biscoito Integral, embalagem de 350g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 50.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.4,
+        "descricao": "Contrato 30 - Item 101 | Cafésolúvel, embalagem de 50g,informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 1200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.99,
+        "descricao": "Contrato 30 - Item 108 | Rapadura, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.49,
+        "descricao": "Contrato 30 - Item 114 | Coco ralado, embalagem de 100g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.9,
+        "descricao": "Contrato 30 - Item 121 | Gelatina em pó de diversos com sabores variados, embalagem de 12g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no"
+      },
+      {
+        "qtd": 100.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 29.5,
+        "descricao": "Contrato 30 - Item 130 | QUEIJO DE COALHO. INGREDIENTES: LEITE DE VACA E SAL, CONSERVAÇÃO 0 A 10ºC, PEÇA. PRODUTO COM CONSISTÊNCIA SEMIDURA, RÍGIDA E TEXTURA FECHADA, DATA DE FABRICAÇÃO E VALIDADE. PROCESSADO EM CONDIÇÕES HIGIÊNICAS SANITÁRIAS, COM"
+      },
+      {
+        "qtd": 200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 12.49,
+        "descricao": "Contrato 30 - Item 133 | MORTADELA DE FRANGO, SEM CUBOS DE GORDURA. O PRODUTO DEVERÁ SER EMBALADO A VÁCUO EM EMBALAGEM PLÁSTICA FLEXÍVEL, ATÓXICO, RESISTENTE, PESO MÉDIO DE 3.300KG, ROTULADO DE ACORDO COM A LEGISLAÇÃO VIGENTE. O PRODUTO NÃO PODERÁ TER VALIDADE INFERIOR A 3 MESES A CONTAR NO DIA DA ENTREGA."
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 24.8,
+        "descricao": "Contrato 30 - Item 134 | PRESUNTO DE PERU (FATIADO). EMBALADO COM DADOS DE IDENTIFICAÇÃO DO PRODUTO, MARCA DO FABRICANTE, LOTE, VALIDADE, PESO LÍQUIDO E REGISTRO NO PRODUTO. TEMPERATURAS CORRETAS E ADEQUADAS, RESPEITANDO A CARACTERÍSTICAS DOMINISTÉRIO DA AGRICULTURA. DEVERÁ SER TRANSPORTADO EM CARROS FECHADOS REFRIGERADOS, EM EMBALAGENS E PRODUTO."
+      },
+      {
+        "qtd": 4500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.98,
+        "descricao": "Contrato 30 - Item 136 | FRANGO IN NATURA DO TIPO INTEIRO, CARACTERÍSTICAS ADICIONAIS CONGELADO. APRESENTAÇÃO SEM TEMPEROS, DE PRIMEIRA QUALIDADE, LIMPA, EMBALADA À VÁCUO, ISENTAS DE ADITIVOS OU SUBSTÂNCIAS ESTRANHAS AO PRODUTO, QUE SEJAM IMPRÓPRIAS AO CONSUMO E QUE ALTERAM SUAS CARACTERÍSTICAS NATURAIS (FÍSICAS, QUÍMICASE ORGANOLÉPTICAS), INSPECIONADASPELO MINISTÉRIO DA AGRICULTURA. ACOMODADAS EM CAIXAS DE PAPELÃO EM PERFEITAS CONDIÇÕES ESTRUTURAIS, PADRONIZADAS E LACRADAS. DEVERÁ SER TRANSPORTADO EM CARROS FECHADOS REFRIGERADOS, EM EMBALAGEM E TEMPERATURAS CORRETAS EADEQUADAS, RESPEITANDO A CARACTERÍSTICAS DO PRODUTO, DE MODO QUE AS EMBALAGENS NÃO SE APRESENTE ALTERADAS."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.49,
+        "descricao": "Contrato 30 - Item 137 | FRANGO IN NATURA DO TIPO INTEIRO, CARACTERÍSTICAS ADICIONAIS CONGELADO. APRESENTAÇÃO SEM TEMPEROS, DE PRIMEIRA QUALIDADE, LIMPA, EMBALADA À VÁCUO, ISENTAS DE ADITIVOS OU SUBSTÂNCIAS ESTRANHAS AO PRODUTO, QUE SEJAM IMPRÓPRIAS AO CONSUMO E QUE ALTERAM SUAS CARACTERÍSTICAS NATURAIS (FÍSICAS, QUÍMICAS E ORGANOLÉPTICAS), INSPECIONADAS PELO MINISTÉRIO DA AGRICULTURA. ACOMODADAS EM CAIXAS DE PAPELÃO EM PERFEITAS CONDIÇÕES ESTRUTURAIS, PADRONIZADAS E LACRADAS. DEVERÁ SER TRANSPORTADO EM CARROS FECHADOS REFRIGERADOS, EM EMBALAGEM E TEMPERATURAS CORRETAS E ADEQUADAS, RESPEITANDO A CARACTERÍSTICAS DO PRODUTO, DE MODO QUE AS EMBALAGENS NÃO SE APRESENTE ALTERADAS."
+      }
+    ]
+  },
+  {
+    "numero": 31,
+    "data": "2026-07-15",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades de Saúde",
+    "observacao": "Contrato 31 - Processo 0070/2026 - CONTRATO 31 GENEROS ALIMENTICIOS.pdf",
+    "itens": [
+      {
+        "qtd": 2000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.09,
+        "descricao": "Contrato 31 - Item 5 | BISCOITO, TIPO CREAM CRACKER, com dados de identificacao do produto, marca do fabricante, prazo de validade, peso líquido, embalagem dupla, resolucao 12/78 da comissão nacional de normas e padrões para alimentos - cnnpa, pacote 400 gramas"
+      },
+      {
+        "qtd": 1800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.2,
+        "descricao": "Contrato 31 - Item 6 | BISCOITO, TIPO MARIA, valor calórico mínimo 450 kcal por 100 g, dados de identificacao do produto, marca do fabricante, data de fabricacao, prazo de validade, peso liquido, resolução 12/78 da comissão nacional de normas e padrões para alimentos ​cnnpa, embalagem dupla, pacote 400"
+      },
+      {
+        "qtd": 120.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.64,
+        "descricao": "Contrato 31 - Item 7 | Achocolatado- Em Pó Instantâneo Á Base De Cacau, Enriquecido Com Vitaminas, Embalagens Intactas, Acondicionadas Em Pacotes De 400G. Prazo De Validade Mínimo De 6 Meses A Partir Da Entrega."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.65,
+        "descricao": "Contrato 31 - Item 12 | FARINHADE MANDIOCA- Torrada, seca, fina, tipo 1, branca, isenta de sujidades. Acondicionada em embalagens plásticas transparentes atóxicas com 1 KG."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.89,
+        "descricao": "Contrato 31 - Item 13 | FEIJÃO CARIOQUINHA em grãos embalagem com 1k. embalagem com identificação do produto, validade, quantidade e registro no órgão competente."
+      },
+      {
+        "qtd": 1000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.14,
+        "descricao": "Contrato 31 - Item 14 | Feijão preto, novo, constituído de grãos inteiros e sacos, com teor de umidade máxima de 15%, isento de material terroso, sujidades e mistura de outras variedades e espécies, acondicionado em saco plástico atóxico, enfardamento (30x 1 kg), validade mínima de 06 (seis) meses a contar da data da entrega, pacote c/ 01 kg integro e isento de avarias, de acordo com as normas da ABNT."
+      },
+      {
+        "qtd": 2400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.15,
+        "descricao": "Contrato 31 - Item 16 | LEITE EM PÓINTEGRAL instantâneo, produto obtido por desidratação do leite de vaca integral. Composto 100% de leite. Sem adição de açúcar, soro e aditivos alimentares. Acondicionado em embalagem de 200g. Rotulagem contendo no mínimo as seguintes informações: denominação do produto, ingredientes, tabela nutricional, prazo de validade, peso, lote e fabricante. Registro no SIM, CISPOA ou SIF. Produto com validade mínima de 5 meses no momento da entrega."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 12.85,
+        "descricao": "Contrato 31 - Item 27 | PEITO DE FRANGO,limpo, magro, não temperado, congelado, proveniente de aves sadias, abatidas sob inspeção veterinária, apresentando cor e odor característicos. Isento de: vestígio de descongelamento, cor esverdeada, odor forte e desagradável, parasitas, sujidades, larvas e qualquer substância contaminante. Acondicionado em embalagem de polietileno atóxica, resistente, peso líquido de 1 kg, contendo na embalagem a identificação do produto, peso, marca do fabricante, prazo de validade, carimbos oficiais e selo de inspeção sanitária do órgão competente. Validade mínima de 06 (seis) meses no ato da entrega."
+      },
+      {
+        "qtd": 200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 12.8,
+        "descricao": "Contrato 31 - Item 28 | PEITO DE FRANGO,limpo, magro, não temperado, congelado, proveniente de aves sadias, abatidas sob inspeção veterinária, apresentando cor e odor característicos. Isento de: vestígio de descongelamento, cor esverdeada, odor forte e desagradável, parasitas, sujidades, larvas e qualquer substância contaminante. Acondicionado em embalagem de polietileno atóxica, resistente, peso líquido de 1 kg, contendo na embalagem a identificação do produto, peso, marca do fabricante, prazo de validade, carimbos oficiais e selo de inspeção sanitária do órgão competente. Validade mínima de 06 (seis) meses no ato da entrega."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.29,
+        "descricao": "Contrato 31 - Item 43 | Ervilha reidratada em conserva, embalagem de 200g (peso líquido), validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.99,
+        "descricao": "Contrato 31 - Item 45 | Milho para pipoca: possuir grãos pequenos e duros que tem a capacidade de estourar quando aquecidos em torno de 180º C, sendo classificado em grupos, classes e tipos, segundo sua consistência, coloração e qualidade. NÃO CONTÉM GLÚTEN. Pacote com 500g."
+      },
+      {
+        "qtd": 1000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.34,
+        "descricao": "Contrato 31 - Item 46 | Sardinha, embalagem de 125g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.65,
+        "descricao": "Contrato 31 - Item 59 | Amido de milho, embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 17.99,
+        "descricao": "Contrato 31 - Item 95 | Ameixa em calda, embalagem de 400g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.99,
+        "descricao": "Contrato 31 - Item 97 | Arroz integral do tipo parboilizado, embalagem de 1 kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.19,
+        "descricao": "Contrato 31 - Item 98 | Feijão Macassa, embalagem de 1Kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.15,
+        "descricao": "Contrato 31 - Item 99 | Proteína de soja, embalagem de 400g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 33.03,
+        "descricao": "Contrato 31 - Item 104 | Leite de Soja s/lactose, embalagem de 300g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 2000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.99,
+        "descricao": "Contrato 31 - Item 105 | Leite em pó desnatado, embalagem de 200g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 350.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.99,
+        "descricao": "Contrato 31 - Item 106 | Doce de bananada, embalagem de 500g, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 350.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.8,
+        "descricao": "Contrato 31 - Item 107 | Doce de goiabada, embalagem de 500g,validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.99,
+        "descricao": "Contrato 31 - Item 109 | Cereal infantil de arroz, embalagem de 600g informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.02,
+        "descricao": "Contrato 31 - Item 110 | Flocão de arroz, embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 120.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 36.33,
+        "descricao": "Contrato 31 - Item 111 | Formula infantil em pó para Lactentes de 0-6 meses, embalagem com 400g. Contém: Prebióticos, DHA e ARA, Nucleotídeos, validade minina de 06 meses, com registri no ministério competente."
+      },
+      {
+        "qtd": 120.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 47.0,
+        "descricao": "Contrato 31 - Item 112 | Fórmula infantil em pó de seguimento para lactentes de 6- 12, embalagem de 400g. Contém: Prebióticos, DHA e ARA, Nucleotídeos, validade minina de 06 meses, com registri no ministério competente."
+      },
+      {
+        "qtd": 250.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 45.25,
+        "descricao": "Contrato 31 - Item 113 | Formula infantil em pó instantaneo para crianças maiores de 1 ano, embalagem 400g. Contém: Ferro, Zinco, Vitaminas (A, C, D, e E) E Cálcio, validade mínima d 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.99,
+        "descricao": "Contrato 31 - Item 115 | Macarrão de arroz do tipo espaguete sem ovos, embalagem de 400g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.99,
+        "descricao": "Contrato 31 - Item 116 | Macarrão integral do tipo espaguete, embalagem de 400g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 150.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 74.26,
+        "descricao": "Contrato 31 - Item 118 | Suplemento nutritivo, completo e balanceado, em pó para diluição em água, normocalórica e normoprotéica, rica em vitaminas e minerais. Isento de glúten e lactose. Com adição de FOS, um tipo de fibra que traz benefícios clinicamente comprovados, como a melhora da função intestinal e do sistema imune, por impedir a proliferação de bactérias maléficas. Embalagem de 400g, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 80.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 104.69,
+        "descricao": "Contrato 31 - Item 119 | Suplementonutritivo, enriquecido com 27 vitaminas e minerais. Uma alimentação saudável e balanceada é fundamental para o bom funcionamento do corpo e crescimento saudável. Embalagem de 380g, validade mínima de 06 meses a 01 ano, comregistro no ministério competente."
+      },
+      {
+        "qtd": 120.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 92.6,
+        "descricao": "Contrato 31 - Item 120 | Suplemento nutritivo, enriquecido com alto teor nutricional especialmente desenvolvido para crianças que precisam de um maior reforço de vitaminas e minerais em sua alimentação. Sua fórmula balanceada é rica em cálcio, proteínas, vitamina C, ferro, zinco e cobre, que auxiliam no desenvolvimento saudável das crianças. Embalagem de 420g, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 141.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 170.0,
+        "descricao": "Contrato 31 - Item 140 | COALHADA DIET, EMBALAGEM DE 140G 500,0000 3,8300 1.915,0000 0,0000 0,0000 500,0000"
+      }
+    ]
+  },
+  {
+    "numero": 32,
+    "data": "2026-07-15",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades de Saúde",
+    "observacao": "Contrato 32 - Processo 0070/2026 - CONTRATO 32 GENEROS ALIMENTICIOS.pdf",
+    "itens": [
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 31.52,
+        "descricao": "Contrato 32 - Item 122 | CARNE BOVINA IN NATURA, TIPO (COSTELA), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS APARADA E RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) RESPEITANDO-SEAS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS. DEVERÁ APRESENTAR AS SEGUINTES CARACTERÍSTICAS: COR VERMELHO VIVO, ASPECTO BRILHANTE E CHEIRO SUAVE."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 44.07,
+        "descricao": "Contrato 32 - Item 123 | CARNE BOVINA IN NATURA, DE 1ª TIPO (COLCHÃO MOLE, ALCATRA, PATINHO, FRALDINHA), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS SEM OSSO, APARADAE RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURAOU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOSREFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS,- 18ºC, REFRIGERADAS 6ºC) RESPEITANDO-SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS. DEVERÁ APRESENTAR AS SEGUINTES CARACTERÍSTICAS: COR VERMELHO VIVO, ASPECTO BRILHANTE E CHEIRO SUAVE."
+      },
+      {
+        "qtd": 1000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 30.87,
+        "descricao": "Contrato 32 - Item 124 | CARNE BOVINA IN NATURA, DO TIPO (MÚSCULO), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS APARADA E RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA RESPEITANDO-SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS. DEVERÁ APRESENTAR AS SEGUINTES CARACTERÍSTICAS: COR VERMELHO VIVO, ASPECTOIDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) BRILHANTE E CHEIRO SUAVE."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 34.31,
+        "descricao": "Contrato 32 - Item 125 | CARNE CAPRINA (BODE), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS APARADA E RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) RESPEITANDO-SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS, COMO: COR E ODOR. NÂO APRESENTAR MANCHAS VERDES OU ESCURAS."
+      },
+      {
+        "qtd": 350.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 32.11,
+        "descricao": "Contrato 32 - Item 128 | CARNE SUÍNA DO TIPO (COSTELA DE PORCO S/COURO), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS APARADA E RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) RESPEITANDO-SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS."
+      },
+      {
+        "qtd": 100.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 11.92,
+        "descricao": "Contrato 32 - Item 129 | CARNE SUÍNA DO TIPO (PÉ DE PORCO) - SALGADO, APRESENTAÇÃO CORTADA, CONGELADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) RESPEITANDO- SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS"
+      },
+      {
+        "qtd": 700.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 23.0,
+        "descricao": "Contrato 32 - Item 138 | PEIXE DO CONGELADO (TIPO POSTA DE TILÁPIA), EM TEMPERATURA DE -18ºC COM TOLERÂNCIA DE ATÉ -15ºC. EMBALAGEM EM PLÁSTICO FILME PVC TRANSPARENTE OU SACO PLÁSTICO TRANSPARENTE, COM DADOS DE IDENTIFICAÇÃO DO PRODUTO, MARCA DO FABRICANTE, PRAZO DE VALIDADE, PESO LÍQUIDO. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS. DEVERÁ APRESENTAR AS SEGUINTES CARACTERÍSTICAS: COR BRANCO-ROSADO, CARNE FIRME E ELÁSTICA, CHEIRO PRÓPRIO DE PEIXE."
+      }
+    ]
+  },
+  {
+    "numero": 33,
+    "data": "2026-07-15",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades de Saúde",
+    "observacao": "Contrato 33 - Processo 0070/2026 - CONTRATO 33 GENEROS ALIMENTICIOS.pdf",
+    "itens": [
+      {
+        "qtd": 3500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.57,
+        "descricao": "Contrato 33 - Item 4 | Arroz parbolizado: tipo: 1 classe: longo fino, peso líquido: 1kg, enfardamento: 1x 30 kg, isento de sujidades e materiais estranhos, validade mínima de 06 (seis) meses a contar da data da entrega, embalagem integra e isenta de avarias, rotulagem segundo os padrões da resolução nº259 de 20/09/2002 da Anvisa., lote acompanhado do certificado de classificação de origem vegetal expedido por órgão oficial."
+      },
+      {
+        "qtd": 2000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.93,
+        "descricao": "Contrato 33 - Item 8 | Café tipo superior, torrado e mopido podendo conter 15% grãos conillon, 10% pretos- verdes-ardidos, isento de grãos pretos - verdes-fermentados bebida dura ou melhor, aroma, sabor, sabor residual bons e tipicos, cor castanho-claro a media, qualidade global superior 6,51% e 7,6% pontos na escala sensorial, dispensando analise se certificando no sistema de qualidadedo produto. Embalagem com 250g."
+      },
+      {
+        "qtd": 3200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.3,
+        "descricao": "Contrato 33 - Item 19 | Macarrão espaguete 500g ​Sem ovos, massa alimentícia seca para macarronada, formato espaguete, cor amarela, obtida pelo amassamento da farinha de trigo especial, e demais substâncias permitidas, isenta de corantes artificiais, sujidades, parasitas, admitindo umidade máxima de 13%, acondicionada em saco de plástico transparente, atóxico, íntegro e isento de avarias com validade mínima de 18 meses a partir da data de entrega. Pctc/500 gramas."
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.94,
+        "descricao": "Contrato 33 - Item 22 | XERÉM DE MILHO - Composto de milho seco processado, em grãos crus triturados, de matéria prima sã e limpa, não pode estar mofados, carunchados, com aspecto, cor, cheiro e sabor próprios, livre de fertilizantes, sujidades, parasitos, larvas e detritos animais ou vegetais, com umidade máxima de 15%, acondicionado em saco plástico resistente com 500g."
+      },
+      {
+        "qtd": 900.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.63,
+        "descricao": "Contrato 33 - Item 23 | CARNEBOVINAMOÍDA, proveniente de cortes de dianteiro e/ou traseiro, de acordo com padrão higiênico- sanitário estabelecido pelo mapa. composição: 100% carne bovina, sem adição de miúdos, conservantes, aditivos, corantes ou água. coloração vermelho vivo, odor e sabor característicos de carne fresca. livre de ossos, cartilagens, nervos, glândulas, gordura em excesso e sujidades.apresentação: produto moído, embalado em pacotes de 500g, a vácuo ou em embalagem plástica transparente, atóxica, resistente e lacrada."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.63,
+        "descricao": "Contrato 33 - Item 24 | CARNEBOVINAMOÍDA, proveniente de cortes de dianteiro e/ou traseiro, de acordo com padrão higiênico- sanitário estabelecido pelo mapa. composição: 100% carne bovina, sem adição de miúdos, conservantes, aditivos, corantes ou água. coloração vermelho vivo, odor e sabor característicos de carne fresca. livre de ossos, cartilagens, nervos, glândulas, gordura em excesso e sujidades.apresentação: produto moído, embalado em pacotes de 500g, a vácuo ou em embalagem plástica transparente, atóxica, resistente e lacrada."
+      },
+      {
+        "qtd": 900.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.14,
+        "descricao": "Contrato 33 - Item 29 | Coxa e sobrecoxa de frango ​1 kg (sem gordura aparente, livre de aparas, resfriada, aspecto firme, cor viva, registro no SIF) com etiqueta identificadora contendo tipo da carne e data de validade. Embalagem plástica,semacúmulo de líquidos em seu interior."
+      },
+      {
+        "qtd": 300.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.14,
+        "descricao": "Contrato 33 - Item 30 | Coxa e sobrecoxa de frango ​1 kg (sem gordura aparente, livre de aparas, resfriada, aspecto firme, cor viva, registro no SIF) com etiqueta identificadora contendo tipo da carne e data de validade. Embalagem plástica, sem acúmulo de líquidos em seu interior"
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 22.43,
+        "descricao": "Contrato 33 - Item 31 | CARNEDE CHARQUE (EMB. MÍNIMA 500 GR ), Especificação: Curada e seca. ponta de agulha, de 1ª qualidade, com baixo teor de gordura, embalado à vácuo em pacotes de 500g. A embalagem deve conter selo de inspeção federal (SIF), estadual (SIE) ou municipal (SIM), dados de identificação do produto, validade, fabricação. Acondicionadoem caixa de papelão lacrada."
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.27,
+        "descricao": "Contrato 33 - Item 32 | VINAGRE - Produto composto de Fermento acético de álcool, água. Acondicionado em embalagem plástica transparente FRASCO C/ 500ML."
+      },
+      {
+        "qtd": 1200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.27,
+        "descricao": "Contrato 33 - Item 33 | Tempero Tipo Cominho - Condimento Tempero Misto Contendo Cominho E Pimenta Do Reino Em Pó. Pacote Com 100 G."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.38,
+        "descricao": "Contrato 33 - Item 34 | FLOCOS DE MILHO PRÉ-COZIDO, P/ CUSCUZ: Flocos finos, cor amarela isento de sujidades, parasitas, larva se material estranho. Embalado em saco plástico transparente com peso líquido de 500g, com identificação na embalagem (rótulo) dos ingredientes, valor nutricional, peso, fornecedor, data de fabricação e validade. Validadede nomínimo 06 meses a partir da data de entrega."
+      },
+      {
+        "qtd": 20000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 0.58,
+        "descricao": "Contrato 33 - Item 36 | OVOS DE GALINHA - Branco, médio, pesando de 45 a 50 gramas cada isento de sujidades, fungos e substâncias tóxicas. Acondicionado em embalagem específica."
+      },
+      {
+        "qtd": 720.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.45,
+        "descricao": "Contrato 33 - Item 55 | Creme de leite em caixinha, embalagem de 200g, validade mínima de 06 meses a 01 ano, com registro noministério competente"
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.18,
+        "descricao": "Contrato 33 - Item 56 | Leite Condensado em caixinha, embalagem de 395g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 350.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 4.49,
+        "descricao": "Contrato 33 - Item 62 | Farinha de Trigo sem fermento, embalagem de 1Kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente"
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.38,
+        "descricao": "Contrato 33 - Item 63 | Leite de coco, embalagem de 200ml, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 600.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.3,
+        "descricao": "Contrato 33 - Item 102 | Canjiquinha/Curau de milho, em embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.38,
+        "descricao": "Contrato 33 - Item 103 | Farinha de milho pré-cozido (fubá), embalagem de 500g, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 400.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 33.81,
+        "descricao": "Contrato 33 - Item 117 | Margarina, embalagem de 3kg, informações nutricionais na embalagem, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
+      },
+      {
+        "qtd": 800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 16.1,
+        "descricao": "Contrato 33 - Item 126 | FÍGADO BOVINO, APRESENTAÇÃO RESFRIADO OU CONGELADO, ASPECTO PRÓPRIO, FIRME, NÃO PEGAJOSO, ISENTO DE MANCHAS ESVERDEADAS, COM CHEIRO E SABOR PRÓPRIO. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, ACONDICIONADO EM SACO PLÁSTICO TRANSPARENTE, ATÓXICO."
+      },
+      {
+        "qtd": 200.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 34.5,
+        "descricao": "Contrato 33 - Item 131 | QUEIJO MUSSARELA (FATIADO). PRODUTO LIVRE DE PARASITAS E DE QUALQUER SUBSTÂNCIA CONTAMINANTE QUE POSSA ALTERAR OS ASPECTOS NORMAIS DO PRODUTO OU QUALQUER APARATO QUE VENHA ENCOBRIR POSSÍVEIS ALTERAÇÕES. EMBALADO COM DADOS DE IDENTIFICAÇÃO DO PRODUTO, MARCA DO FABRICANTE, LOTE, VALIDADE, PESO LÍQUIDO E REGISTRO NO MINISTÉRIO DA AGRICULTURA. DEVERÁ SER TRANSPORTADO EM CARROS FECHADOS REFRIGERADOS, EM EMBALAGENS E TEMPERATURAS CORRETAS E ADEQUADAS, RESPEITANDO A CARACTERÍSTICAS DO PRODUTO."
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 17.14,
+        "descricao": "Contrato 33 - Item 132 | LINGUIÇA CALABRESA, PREPARADA COM CARNE SUÍNA E CONDIMENTOS, SEM PIMENTA, COM ASPECTO NORMAL, FIRME, SEM UMIDADE, ISENTA DE SUJIDADES, PARASITAS E LARVAS. MANTIDA EM TEMPERATURA DE REFRIGERAÇÃO ADEQUADA. O PRODUTONÃO DEVERÁ APRESENTAR A SUPERFÍCIE PEGAJOSA OU DE CONSISTÊNCIA ANORMAL. ACONDICIONADA EM SACO PLÁSTICO ATÓXICO COM VALIDADE MÍNIMA DE 6 MESES A CONTAR DA ENTREGA."
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.94,
+        "descricao": "Contrato 33 - Item 135 | SALSICHA, ORIGEM SUÍNA E BOVINA, TEMPERATURA DE CONSERVAÇÃO 4ºC, PRAZO DE VALIDADE DE 180 DIAS, CARACTERÍSTICAS ADICIONAIS EMBALADA E RESFRIADA. DEVE CONTER NA EMBALAGEM DATA DE FABRICAÇÃO, PESO LÍQUIDO E REGISTRO NO MINISTÉRIO DA AGRICULTURA. DEVERÁ SER TRANSPORTADO EM CARROS FECHADOS REFRIGERADOS, EM EMBALAGENS E TEMPERATURAS CORRETAS E ADEQUADAS, RESPEITANDO AS CARACTERÍSTICAS DO PRODUTO DE MODO QUE AS EMBALAGENS NÃO SE APRESENTEESTUFADASOU ALTERADAS."
+      },
+      {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 21.85,
+        "descricao": "Contrato 33 - Item 139 | PEIXE DO CONGELADO (TIPO FILÉ), EM TEMPERATURA DE - 18ºC COM TOLERÂNCIA DE ATÉ - 15ºC. EMBALAGEM EM PLÁSTICO FILME PVC TRANSPARENTE OU SACO PLÁSTICO TRANSPARENTE, COM DADOS DE IDENTIFICAÇÃO DO PRODUTO, MARCA DO FABRICANTE, PRAZO DE VALIDADE, PESO LÍQUIDO. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS. DEVERÁ APRESENTAR AS SEGUINTES CARACTERÍSTICAS: COR BRANCO-ROSADO, CARNE FIRME E ELÁSTICA, CHEIRO PRÓPRIO DE PEIXE."
+      }
+    ]
+  },
+  {
+    "numero": 28,
+    "data": "2026-07-23",
+    "origem": "Secretaria de Saúde",
+    "destino": "Unidades de Saúde",
+    "observacao": "Contrato 28 - Processo 0106/2026 - CONTRATO MELO SAUDE (1).pdf",
+    "itens": [
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 20.0,
+        "descricao": "Contrato 28 - Item 3 | Fralda descartável infantil G com no mínimo 24 unidades com fita 15,0000 38,5000 577,5000 4,0000 154,0000 11,0000"
+      },
+      {
+        "qtd": 30.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 18.4,
+        "descricao": "Contrato 28 - Item 6 | SHAMPOO INFANTIL, TAMANHO DE EMABALAGEM 210ML. PARA TODOS TIPOS DE CABELOS, FRAGÂNCIAS DIVERSAS."
+      },
+      {
+        "qtd": 38.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 137.13,
+        "descricao": "Contrato 28 - Item 11 | Copo descartável 180ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável )"
+      },
+      {
+        "qtd": 13.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 137.13,
+        "descricao": "Contrato 28 - Item 12 | Copo descartável 180ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável )"
+      },
+      {
+        "qtd": 13.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 162.63,
+        "descricao": "Contrato 28 - Item 14 | Copo descartável 100ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável ) COM TAMPA"
+      },
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 231.63,
+        "descricao": "Contrato 28 - Item 15 | Copo descartável 450ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável)"
+      },
+      {
+        "qtd": 25.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 130.68,
+        "descricao": "Contrato 28 - Item 17 | Copo descartável 150ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável ) COM TAMPA"
+      },
+      {
+        "qtd": 20.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 30.0,
+        "descricao": "Contrato 28 - Item 18 | Garfo descartável (pct c 50 unid) 13,0000 6,7700 88,0100 13,0000 88,0100 0,0000"
+      },
+      {
+        "qtd": 25.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 149.08,
+        "descricao": "Contrato 28 - Item 22 | Papel toalha - fardo com 12 pacote e cada pacote com 2 (dois) rolos com 50 folhas cada rolo , dupla face , dimensões mínimas: 20cm x 18cm fardos com 16 pacotes"
+      },
+      {
+        "qtd": 580.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.42,
+        "descricao": "Contrato 28 - Item 29 | Detergente líquido 500 ml Neutro - composição e características mínimas: glicerinado, concentrado, componente ativo: linear alquibenzeno sulfonato de sódio, com tensoativo biodegradável e sequestrante, testado dermatologicamente, para aplicação na remoção de gorduras, sujeiras de louças, talheres e panela. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei. FARDO COM 24 UND"
+      },
+      {
+        "qtd": 375.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.55,
+        "descricao": "Contrato 28 - Item 30 | Desinfetante líquido para uso geral - frasco com 500 ML - composição e características mínimas: ingrediente ativo, tensoativo não -iônico, sequestrante, componente ativo cloreto de alquil dimetil benzil amônio e cloreto de dialquil dimetil amônio que elimine germes e bactérias. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei."
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.55,
+        "descricao": "Contrato 28 - Item 31 | Desinfetante líquido para uso geral - frasco com 500 ML - composição e características mínimas: ingrediente ativo, tensoativo não -iônico, sequestrante, componente ativo cloreto de alquil dimetil benzil amônio e cloreto de dialquil dimetil amônio que elimine germes e bactérias. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei."
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.49,
+        "descricao": "Contrato 28 - Item 32 | Esponja (lã de aço) pacote pequeno com 8 buchas de aço. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei. Marca de referência: bom bril, assolan ou equivalente/similar ou de melhor qualidade."
+      },
+      {
+        "qtd": 34.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.0,
+        "descricao": "Contrato 28 - Item 33 | Esponja para lavar louça dupla face caixa com 60 unidades 25,0000 68,4200 1.710,5000 25,0000 1.710,5000 0,0000"
+      },
+      {
+        "qtd": 39.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 625.0,
+        "descricao": "Contrato 28 - Item 36 | Limpa Vidros com Pulverizador que remova a sujeira de vidros, espelhos 25,0000 15,5100 387,7500 25,0000 387,7500 0,0000"
+      },
+      {
+        "qtd": 282.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 21.68,
+        "descricao": "Contrato 28 - Item 42 | PAPEL HIGIÊNICO BRANCO, MACIO, PICOTADO E GOFRADO OU TEXTURIZADO, 100% FIBRA CELULÓSICAS, FOLHAS SIMPLES, COM 30M X 10 CM, EMBALAGEM PLÁSTICA COM QUATRO ROLOS. FARDO C/16 ROLOS."
+      },
+      {
+        "qtd": 94.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 21.68,
+        "descricao": "Contrato 28 - Item 43 | PAPEL HIGIÊNICO BRANCO, MACIO, PICOTADO E GOFRADO OU TEXTURIZADO, 100% FIBRA CELULÓSICAS, FOLHAS SIMPLES, COM 30M X 10 CM, EMBALAGEM PLÁSTICA COM QUATRO ROLOS. FARDO C/16 ROLOS."
+      },
+      {
+        "qtd": 50.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.55,
+        "descricao": "Contrato 28 - Item 45 | POLIDOR DE ALUMíNIO LIMPADOR, LIMPEZA DOMESTICA, PRODUTO LIQUIDO USADO PARA POLIR ALUMINIO. EMBALAGEM CONTENDO 500 ML"
+      },
+      {
+        "qtd": 47.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 1.0,
+        "descricao": "Contrato 28 - Item 46 | Purificador de ar aerosol (aromas diversos) - suave frangrânciacom 360 ml 50,0000 13,6600 683,0000 24,0000 327,8400 26,0000"
+      },
+      {
+        "qtd": 1250.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.32,
+        "descricao": "Contrato 28 - Item 48 | Sabão em pó 500 gramas ​composição e características mínimas: aspecto físico pó, composição tensoativo aniônico, características branqueador"
+      },
+      {
+        "qtd": 50.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 450.0,
+        "descricao": "Contrato 28 - Item 49 | Sabonete líquido 1 litro com glicerina para mão 50,0000 14,6100 730,5000 30,0000 438,3000 20,0000"
+      },
+      {
+        "qtd": 50.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.76,
+        "descricao": "Contrato 28 - Item 51 | ABSORVENTE HIGIÊNICO COBERTURA SECA, USO EXTERNO NORMAL COM ABAS, COM GEL TRIPLA PROTEÇÃO, FORMATO RETANGULAR COM ABAS. PACOTE COM NO MÍNIMO 8 UNIDADES"
+      },
+      {
+        "qtd": 53.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 60.0,
+        "descricao": "Contrato 28 - Item 52 | Rodo min 30cm com cabo de madeira 125,0000 17,6300 2.203,7500 73,0000 1.286,9900 52,0000"
+      },
+      {
+        "qtd": 55.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 30.0,
+        "descricao": "Contrato 28 - Item 54 | Vassoura comum com cerdas sintética com cabo de madeira 125,0000 18,4100 2.301,2500 76,0000 1.399,1600 49,0000"
+      },
+      {
+        "qtd": 57.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 14.0,
+        "descricao": "Contrato 28 - Item 56 | Balde plástico de alça capacidade 20 lts 5,0000 28,3000 141,5000 5,0000 141,5000 0,0000"
+      },
+      {
+        "qtd": 75.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 18.4,
+        "descricao": "Contrato 28 - Item 59 | ESCOVA SANITARIA COM SUPORTE, BASE DE CORPO EM POLIPROPILENO, MEDINDO BASE DA BOLA COM 11CM E 9CM DE PROFUNDIDADE, MEDINDO CABO COM 38CM DE COMPRIMENTO, NA COR BRANCA"
+      },
+      {
+        "qtd": 30.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 11.12,
+        "descricao": "Contrato 28 - Item 60 | AVENTAL - TIPO BATA EM PLÁSTICO RESISTENTE, COM VIÉS NAS BORDAS PARA USO DOMESTICOPENDURA NO PESCOÇO E CORDÃO PARA AMARRAR NAS COSTAS, CORES DIVERSAS"
+      },
+      {
+        "qtd": 113.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 65.02,
+        "descricao": "Contrato 28 - Item 70 | SACO DE LIXO 100L, 100UN REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 50 UNIDADES"
+      },
+      {
+        "qtd": 38.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 65.02,
+        "descricao": "Contrato 28 - Item 71 | SACO DE LIXO 100L, 100UN REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 50 UNIDADES"
+      },
+      {
+        "qtd": 73.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 50.0,
+        "descricao": "Contrato 28 - Item 72 | SACO DE LIXO 30L, REFORÇADO ESPESSURA 0,10 125,0000 23,9300 2.991,2500 124,0000 2.967,3200 1,0000"
+      },
+      {
+        "qtd": 76.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.0,
+        "descricao": "Contrato 28 - Item 74 | SACO DE LIXO 50L, REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 100 UNIDADES 32,0000 28,8000 921,6000 32,0000 921,6000 0,0000"
+      },
+      {
+        "qtd": 15.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 57.85,
+        "descricao": "Contrato 28 - Item 93 | BOBINA PICOTADA DE SACO PLÁTICO TRANSPARENTE DE ALTA DENSIDADE COM 500 SACOS COMPOSIÇÃO POLIETILENO VIRGEM MEDIDAS: 12 CM X 24 CM (UNIDADE COM 500 SACOS)"
+      },
+      {
+        "qtd": 96.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 22.0,
+        "descricao": "Contrato 28 - Item 95 | SACO TALHER POLIETILENO 08X 25X 0,006 - 1KG 3,0000 29,5100 88,5300 3,0000 88,5300 0,0000"
+      },
+      {
+        "qtd": 99.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 50.0,
+        "descricao": "Contrato 28 - Item 97 | Saco de papel para pipoca marrom ou branco, pacote com 100 und 50,0000 6,2100 310,5000 10,0000 62,1000 40,0000"
+      },
+      {
+        "qtd": 101.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 540.0,
+        "descricao": "Contrato 28 - Item 100 | GARFO DESCARTÁVEL GRANDE PARA REFEIÇÕES (PCT C 50 UNID) 250,0000 6,4500 1.612,5000 100,0000 645,0000 150,0000"
+      },
+      {
+        "qtd": 8.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 15.34,
+        "descricao": "Contrato 28 - Item 102 | Cera tipo: líquida, composição: A base de água, antiderrapante, impermeabilizante, Aplicação: , limpeza de pisos. Fracos 750ml"
+      },
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 29.21,
+        "descricao": "Contrato 28 - Item 103 | Desentupidor Vaso Sanitário Material: Borracha Flexível , Cor: Preta , Altura: 10 CM, Diâmetro: 16 CM, Material Cabo: Madeira , Comprimento Cabo: 50 Cm"
+      },
+      {
+        "qtd": 10.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 120.06,
+        "descricao": "Contrato 28 - Item 117 | Detergente Desinfectante Concentrado Bactericida 5 litros de uso hospitalar: principio ativo: cloridrato de polihexametileno biguanida (phmb) faixa de concentração entre 4 - 5%, cloreto de alquil dimetil neutrobenzil amônio faixa de concentração entre 35 - 40%, ph. Possui Alta Concentração De Ativos Em Sua Formulação Que Permite Maiores Diluições Com Maior Rendimento De Até 1:100. Registro Da Anvisa"
+      },
+      {
+        "qtd": 10.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 222.58,
+        "descricao": "Contrato 28 - Item 118 | Desinfetante Uso Hospitalar Concentrado Concentração De 0,5 À 1,0%. Superfícies: Concentração De 5,0 %, Fragância Floral. Desinfetante A Base De Quaternário De Amônio Galão 5 Litros. Registro Da Anvisa."
+      },
+      {
+        "qtd": 10.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 563.7,
+        "descricao": "Contrato 28 - Item 119 | Detergente Alcalino Em Pó De Uso Hospitalar 20Kg Ativador Alcalino Para Desagregação, Lavagem E Pre Lavagem De Roupas. Solução 1%: 10,00 - 11,40. Registro Da Anvisa."
+      },
+      {
+        "qtd": 10.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 431.38,
+        "descricao": "Contrato 28 - Item 120 | Alvejante Desinfetante A Base De Ácido Paracetico Para Área Hospitalar. Baldo Com 20 Lt. Registro Da Anvisa."
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.0,
+        "descricao": "Contrato 28 - Item 124 | MOP PÓ 40CM 8,0000 81,1300 649,0400 8,0000 649,0400 0,0000"
+      }
+    ]
+  }
+]
