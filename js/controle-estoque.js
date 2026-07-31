@@ -542,13 +542,17 @@ window.ceGerarPdf=async function(secId){
 
 window.ceImportarRequisicoesPdf=async function(){
   if(!curSecId){toast('Abra o Controle de Estoque primeiro','error');return;}
-  if(!confirm('Importar 3 requisições do PDF 31/07/2026?')) return;
+  if(!confirm('Importar a Requisição nº 65/2026 do PDF 31/07/2026 (28 itens)?')) return;
   try{
     const res=await fetch('js/requisicoes-pdf.json');
     if(!res.ok){toast('Arquivo de requisições não encontrado','error');return;}
     const data=await res.json();
     let next=Math.max(0,...S.requisicoes.filter(r=>r.atividade_id===curSecId).map(r=>parseInt(r.numero)||0));
     for(const req of data){
+      if(req.numero!=null && S.requisicoes.some(r=>r.atividade_id===curSecId && parseInt(r.numero)===parseInt(req.numero))){
+        toast('Requisição nº '+req.numero+' já existe, ignorada','info');
+        continue;
+      }
       const itens=[];
       for(const it of (req.itens||[])){
         const qtd=parseFloat(it.qtd)||0;
