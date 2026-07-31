@@ -59,3 +59,36 @@ ALTER TABLE field_templates ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFA
 -- Users
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS extra_fields JSONB DEFAULT '{}';
+
+-- Controle de Estoque (novo módulo)
+ALTER TABLE atividades ADD COLUMN IF NOT EXISTS controle_estoque INTEGER DEFAULT 0;
+ALTER TABLE atividades ADD COLUMN IF NOT EXISTS ce_nome_secretaria TEXT;
+ALTER TABLE atividades ADD COLUMN IF NOT EXISTS ce_titulo_controle TEXT;
+
+CREATE TABLE IF NOT EXISTS estoque (
+  id TEXT PRIMARY KEY,
+  atividade_id TEXT,
+  item_id TEXT,
+  subitem_id TEXT,
+  produto TEXT,
+  tipo TEXT,
+  quantidade NUMERIC(12,3),
+  unidade TEXT,
+  fator NUMERIC(12,4) DEFAULT 1,
+  qtd_base NUMERIC(12,3),
+  preco_unitario NUMERIC(12,2) DEFAULT 0,
+  valor_total NUMERIC(12,2) DEFAULT 0,
+  data DATE,
+  destino TEXT,
+  observacao TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_estoque_atividade_id ON estoque(atividade_id);
+CREATE INDEX IF NOT EXISTS idx_estoque_subitem_id ON estoque(subitem_id);
+CREATE INDEX IF NOT EXISTS idx_estoque_created_at ON estoque(created_at DESC);
+
+CREATE TRIGGER update_estoque_updated_at
+BEFORE UPDATE ON estoque
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
