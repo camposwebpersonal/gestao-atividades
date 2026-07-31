@@ -9,6 +9,7 @@ const MODULOS = [
   {id:'cadastros', label:'Cadastros', desc:'Associações, lideranças e listas diversas.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
   {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'💰', color:'#10b981', modulo:'contas', flag:'controle_contas'},
   {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', modulo:'distribuicao', flag:'controle_distribuicao'},
+  {id:'estoque', label:'Controle de Estoque', desc:'Entradas, saídas e estoque crítico de produtos.', icon:'📦', color:'#0ea5e9', modulo:'estoque', flag:'controle_estoque'},
   {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#f97316', modulo:'alugueis'},
   {id:'atividades', label:'Outros / Geral', desc:'Demandas e itens não classificados em outro módulo.', icon:'⚙️', color:'#3b82f6', isAtividades:true}
 ];
@@ -24,6 +25,7 @@ const NOME_MODULO = {
   cadastros:['associações','associacoes','lideranças','liderancas','lideres','cadastro'],
   contas:['controle de contas','contas','seguro','seguros'],
   distribuicao:['distribuição','distribuicao','distribuicao de leite','leite'],
+  estoque:['estoque','controle de estoque','secretaria de saude','secretaria de saúde','farmacia','farmácia','insumos'],
   alugueis:['aluguel','alugueis','aluguéis']
 };
 function _modFromName(name){
@@ -52,7 +54,7 @@ const _md = {
   fmtD: d => { if(!d) return '—'; try { let s=String(d); if(!s.includes('T') && !s.includes(' ')) s+='T00:00'; return new Date(s).toLocaleDateString('pt-BR'); } catch { return String(d); } },
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
   extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
-  modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
+  modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
   pct: g => { const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
   ativTotal: g => { return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
   grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
