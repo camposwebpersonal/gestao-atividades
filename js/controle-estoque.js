@@ -461,6 +461,19 @@ async function _ceFindOrCreateProduto(desc){
   return subRef.id;
 }
 
+window.ceAtualizarCompraTotal=function(){
+  const qtd=parseFloat(document.getElementById('ce-comp-qtd')?.value)||0;
+  const preco=parseFloat(document.getElementById('ce-comp-preco')?.value)||0;
+  const solicitada=parseFloat(document.getElementById('ce-comp-qtd-solicitada')?.value)||0;
+  const total=qtd*preco;
+  const saldo=solicitada-qtd;
+  const un=String(document.getElementById('ce-comp-un')?.value||'').trim();
+  const elTotal=document.getElementById('ce-comp-total');
+  if(elTotal) elTotal.value=total.toFixed(2);
+  const elSaldo=document.getElementById('ce-comp-saldo');
+  if(elSaldo) elSaldo.innerHTML='Saldo restante: <span style="color:'+(saldo<0?'#f87171':(saldo>0?'#0ea5e9':'#10b981'))+'">'+_ceFmtNum(saldo)+' '+_ceEsc(un)+'</span>';
+};
+
 window.ceConfirmarCompra=function(requisicaoId,itemId){
   const req=S.requisicoes.find(r=>r.id===requisicaoId); if(!req) return;
   const it=(Array.isArray(req.itens)?req.itens:[]).find(x=>x.id===itemId); if(!it) return;
@@ -469,14 +482,25 @@ window.ceConfirmarCompra=function(requisicaoId,itemId){
   const prodName=_ceEsc(prod?prod.description:nomeProd);
   const prodId=_ceEsc(it.subitem_id||'');
   const un=CE_UNIDADES.map(u=>`<option value="${u}" ${u===it.unidade?'selected':''}>${u}</option>`).join('');
+  const qtdSolicitada=parseFloat(it.qtd)||0;
+  const qtdRecebida=qtdSolicitada;
+  const preco=parseFloat(it.preco_unitario)||0;
+  const total=qtdRecebida*preco;
+  const saldo=qtdSolicitada-qtdRecebida;
   openModal('✅ Confirmar Compra - Item #'+_ceEsc(itemId.slice(-6)),'',`
     <div class="ce-form-row">
-      <div><label style="font-size:11px;color:#94a3b8">Produto *</label><input type="hidden" id="ce-comp-prod" value="${prodId}"><input type="text" class="ce-input" disabled value="${prodName}"></div>
-      <div><label style="font-size:11px;color:#94a3b8">Qtd recebida *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-qtd" value="${_ceFmtNum(it.qtd||1)}"></div>
-      <div><label style="font-size:11px;color:#94a3b8">Unidade</label><select class="ce-input" id="ce-comp-un">${un}</select></div>
-      <div><label style="font-size:11px;color:#94a3b8">Preço unit. R$</label><input type="number" step="0.01" class="ce-input" id="ce-comp-preco" value="${_ceFmtNum(it.preco_unitario||0)}"></div>
+      <div style="grid-column:1/-1"><label style="font-size:11px;color:#94a3b8">Produto *</label><input type="hidden" id="ce-comp-prod" value="${prodId}"><input type="text" class="ce-input" disabled value="${prodName}"></div>
+    </div>
+    <div class="ce-form-row">
+      <div><label style="font-size:11px;color:#94a3b8">Qtd solicitada</label><input type="number" class="ce-input" disabled value="${qtdSolicitada.toFixed(2)}"></div>
+      <div><label style="font-size:11px;color:#94a3b8">Qtd recebida *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-qtd" value="${qtdRecebida.toFixed(2)}" oninput="ceAtualizarCompraTotal()"></div>
+      <div><label style="font-size:11px;color:#94a3b8">Unidade</label><select class="ce-input" id="ce-comp-un" onchange="ceAtualizarCompraTotal()">${un}</select></div>
+      <div><label style="font-size:11px;color:#94a3b8">Preço unit. R$ *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-preco" value="${preco.toFixed(2)}" oninput="ceAtualizarCompraTotal()"></div>
+      <div><label style="font-size:11px;color:#94a3b8">Total R$</label><input type="number" step="0.01" class="ce-input" id="ce-comp-total" disabled value="${total.toFixed(2)}"></div>
       <div><label style="font-size:11px;color:#94a3b8">Data</label><input type="date" class="ce-input" id="ce-comp-data" value="${_ceHoje()}"></div>
     </div>
+    <input type="hidden" id="ce-comp-qtd-solicitada" value="${qtdSolicitada.toFixed(2)}">
+    <div style="font-size:13px;font-weight:700;padding:4px 0" id="ce-comp-saldo">Saldo restante: ${_ceFmtNum(saldo)} ${it.unidade}</div>
     <div class="ce-form-row"><div style="grid-column:1/-1"><label style="font-size:11px;color:#94a3b8">Observação</label><textarea class="ce-input" id="ce-comp-obs" rows="2" placeholder="Fornecedor, nota fiscal, diferenças"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ceSaveCompra('${requisicaoId}','${itemId}')">💾 Confirmar</button></div>`);
 };
