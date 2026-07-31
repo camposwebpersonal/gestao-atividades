@@ -437,7 +437,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=26';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=27';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -570,8 +570,8 @@ window.loadData=async function loadData(){
   S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
   S.estoque=estq.docs.map(d=>({id:d.id,...d.data()}));
   S.requisicoes=req.docs.map(d=>({id:d.id,...d.data()}));
-  if(S.isAdmin && !S.secs.some(s=>s.controle_estoque && (s.name||'').toUpperCase().includes('SECRETARIA DE SAÚDE'))){
-    const novo={name:'Controle de Estoque de Itens da Secretaria de Saúde',observacoes:'',responsaveis:'',start_date:null,end_date:null,order_num:S.secs.length,controle_estoque:1,controle_pendencias:0,ce_nome_secretaria:'Secretaria de Saúde',ce_titulo_controle:'Controle de Estoque de Itens da Secretaria de Saúde',created_at:serverTimestamp(),updated_at:serverTimestamp()};
+  if(S.isAdmin && !S.secs.some(s=>s.controle_estoque_modelo || (s.name||'').toUpperCase()==='CONTROLE DE ESTOQUE DE ITENS DA SECRETARIA DE SAÚDE')){
+    const novo={name:'Controle de Estoque de Itens da Secretaria de Saúde',observacoes:'',responsaveis:'',start_date:null,end_date:null,order_num:S.secs.length,controle_estoque:1,controle_estoque_modelo:1,controle_pendencias:0,ce_nome_secretaria:'Secretaria de Saúde',ce_titulo_controle:'Controle de Estoque de Itens da Secretaria de Saúde',created_at:serverTimestamp(),updated_at:serverTimestamp()};
     const r=await addDoc(collection(db,'secretariats'),novo);
     S.secs.push({...novo,id:r.id});
   }
