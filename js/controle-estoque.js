@@ -197,7 +197,7 @@ window.renderControleEstoque=function(secId){
       <td>${isEnt?'R$ '+_ceFmtMoney(e.preco_unitario):'—'}</td>
       <td>${isEnt?'R$ '+_ceFmtMoney(e.valor_total):'—'}</td>
       <td>${_ceEsc(e.destino||'—')}</td>
-      <td>${can && !e.requisicao_id?`<button class="ce-btn ce-btn-ghost" onclick="ceDeleteLancamento('${e.id}')">🗑️</button>`:''}</td>
+      <td>${can?(e.requisicao_id && e.tipo==='ENTRADA'?`<button class="ce-btn ce-btn-dan" style="font-size:11px" onclick="ceCancelarCompra('${e.id}')">Cancelar</button>`:`<button class="ce-btn ce-btn-ghost" onclick="ceDeleteLancamento('${e.id}')">🗑️</button>`):''}</td>
     </tr>`;
   }).join('');
 
@@ -388,6 +388,14 @@ window.ceDeleteLancamento=async function(id){
   const e=S.estoque.find(x=>x.id===id);
   await deleteDoc(doc(db,'estoque',id));
   await loadData(); toast('Excluído!');
+  renderControleEstoque(e?.atividade_id||curSecId);
+};
+
+window.ceCancelarCompra=async function(id){
+  if(!confirm('Cancelar esta compra? O item voltará para o saldo pendente.')) return;
+  const e=S.estoque.find(x=>x.id===id);
+  await deleteDoc(doc(db,'estoque',id));
+  await loadData(); toast('Compra cancelada!');
   renderControleEstoque(e?.atividade_id||curSecId);
 };
 
