@@ -472,6 +472,12 @@
         "descricao": "Contrato 33 - Item 19 | Macarrão espaguete 500g ​Sem ovos, massa alimentícia seca para macarronada, formato espaguete, cor amarela, obtida pelo amassamento da farinha de trigo especial, e demais substâncias permitidas, isenta de corantes artificiais, sujidades, parasitas, admitindo umidade máxima de 13%, acondicionada em saco de plástico transparente, atóxico, íntegro e isento de avarias com validade mínima de 18 meses a partir da data de entrega. Pctc/500 gramas."
       },
       {
+        "qtd": 1500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 7.99,
+        "descricao": "Contrato 33 - Item 20 | ÓLEO DE SOJA REFINADO 900ML - tipo 1, que sofreu processo tecnológico adequado como degomagem, neutralização, clarificação, frigorificação e não de desodorização, não contendo glúten, acondicionado em embalagem pet de 900ml, original do fabricante, com prazo de validade e lote, especificações do produto e informações do fabricante, produto isento de registro no Ministério da Agricultura."
+      },
+      {
         "qtd": 800.0,
         "unidade": "UNIDADE",
         "preco_unitario": 1.94,
@@ -685,6 +691,12 @@
         "descricao": "Contrato 28 - Item 22 | Papel toalha - fardo com 12 pacote e cada pacote com 2 (dois) rolos com 50 folhas cada rolo , dupla face , dimensões mínimas: 20cm x 18cm fardos com 16 pacotes"
       },
       {
+        "qtd": 625.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 3.14,
+        "descricao": "Contrato 28 - Item 28 | Água sanitária frasco 1 litro (cloro ativo) composição e características mínimas: composição química hipoclorito de sódio hidróxido de sódio cloreto teor cloro. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei."
+      },
+      {
         "qtd": 580.0,
         "unidade": "UNIDADE",
         "preco_unitario": 2.42,
@@ -851,6 +863,18 @@
         "unidade": "UNIDADE",
         "preco_unitario": 11.12,
         "descricao": "Contrato 28 - Item 60 | AVENTAL - TIPO BATA EM PLÁSTICO RESISTENTE, COM VIÉS NAS BORDAS PARA USO DOMESTICOPENDURA NO PESCOÇO E CORDÃO PARA AMARRAR NAS COSTAS, CORES DIVERSAS"
+      },
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.14,
+        "descricao": "Contrato 28 - Item 64 | Álcool em gel 70% Liquido de 1 Litros"
+      },
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.14,
+        "descricao": "Contrato 28 - Item 65 | Álcool em gel 70% de 1 litros"
       },
       {
         "qtd": 500.0,
