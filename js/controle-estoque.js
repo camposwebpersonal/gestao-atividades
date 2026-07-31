@@ -218,7 +218,7 @@ window.renderControleEstoque=function(secId){
   const relReqProds=requisicoes.flatMap(r=>(Array.isArray(r.itens)?r.itens:[]).map(it=>{
     const prod=produtos.find(p=>p.id===it.subitem_id);
     const comp=_ceReqComprado(r.id,it.id,lancs);
-    const total=(parseFloat(it.qtd_base)||0)*(parseFloat(it.preco_unitario)||0);
+    const total=(parseFloat(it.qtd)||0)*(parseFloat(it.preco_unitario)||0);
     return {req:r.numero, prod:prod?prod.description:(it.descricao||'—'), qtd:it.qtd, unid:it.unidade, preco:parseFloat(it.preco_unitario)||0, total, comp, base:parseFloat(it.qtd_base)||0};
   })).sort((a,b)=>b.req-a.req || a.prod.localeCompare(b.prod));
   const relReqProdsHtml=relReqProds.length?`<div class="ce-card" style="margin-top:14px"><div class="ce-card-title" style="color:#0ea5e9">Produtos Solicitados nas Requisições</div><div class="ce-table-wrap"><table class="ce-table"><thead><tr><th>Req</th><th>Produto</th><th>Qtd</th><th>Unid.</th><th>Preço</th><th>Total</th><th>Comprado</th></tr></thead><tbody>${relReqProds.map(it=>`<tr><td style="text-align:center">#${it.req}</td><td>${_ceEsc(it.prod)}</td><td>${_ceFmtNum(it.qtd)} ${it.unid}</td><td>${_ceEsc(it.unid)}</td><td>R$ ${_ceFmtMoney(it.preco)}</td><td>R$ ${_ceFmtMoney(it.total)}</td><td>${_ceFmtNum(it.comp)}</td></tr>`).join('')}</tbody></table></div></div>`:'<div class="ce-card ce-empty" style="margin-top:14px">Nenhum produto solicitado</div>';
@@ -230,7 +230,7 @@ window.renderControleEstoque=function(secId){
     const [stLabel,stColor]=stMap[status]||stMap.PENDENTE;
     const totalItens=itens.length;
     const totalBase=itens.reduce((a,it)=>a+(parseFloat(it.qtd_base)||0),0);
-    const totalOrcado=itens.reduce((a,it)=>a+((parseFloat(it.qtd_base)||0)*(parseFloat(it.preco_unitario)||0)),0);
+    const totalOrcado=itens.reduce((a,it)=>a+((parseFloat(it.qtd)||0)*(parseFloat(it.preco_unitario)||0)),0);
     const itemRows=itens.map((it,i)=>{
       const prod=produtos.find(p=>p.id===it.subitem_id);
       const comp=_ceReqComprado(r.id,it.id,lancs);
@@ -238,11 +238,14 @@ window.renderControleEstoque=function(secId){
       const st=_ceReqItemStatus(r.id,it,lancs);
       const diff=comp-reqBase;
       const diffTxt=diff===0?'<span style="color:#10b981">ok</span>':(diff>0?`<span style="color:#f87171">+${_ceFmtNum(diff)} base</span>`:`<span style="color:#f59e0b">falta ${_ceFmtNum(Math.abs(diff))} base</span>`);
+      const itemTotal=(parseFloat(it.qtd)||0)*(parseFloat(it.preco_unitario)||0);
       return `<tr>
         <td style="text-align:center;font-weight:700;color:#60a5fa">${i+1}</td>
         <td>${_ceEsc(prod?prod.description:(it.descricao||'—'))}</td>
         <td>${_ceFmtNum(it.qtd||0)} ${_ceEsc(it.unidade||'')}</td>
         <td>${_ceFmtNum(reqBase)} ${_ceEsc(prod?_ceUnidadeBase(prod):'base')}</td>
+        <td>R$ ${_ceFmtMoney(it.preco_unitario||0)}</td>
+        <td>R$ ${_ceFmtMoney(itemTotal)}</td>
         <td>${_ceFmtNum(comp)}</td>
         <td>${diffTxt}</td>
         <td><span class="ce-badge" style="background:${stColor}22;color:${stColor}">${st}</span></td>
@@ -266,7 +269,7 @@ window.renderControleEstoque=function(secId){
         </div>
       </div>
       <div class="ce-card-sub">Data: ${r.data?fmtD(r.data):'—'} · Origem: ${_ceEsc(r.origem||'—')} → Destino: ${_ceEsc(r.destino||'—')}${r.observacao?' · Obs: '+_ceEsc(r.observacao):''} · <strong>${totalItens}</strong> itens · Base <strong>${_ceFmtNum(totalBase)}</strong> · Orçado <strong>R$ ${_ceFmtMoney(totalOrcado)}</strong></div>
-      ${itens.length?`<table class="ce-table"><thead><tr><th style="width:40px;text-align:center">SEQ</th><th>Produto</th><th>Solicitado</th><th>Base</th><th>Comprado</th><th>Diferença</th><th>Status</th><th></th></tr></thead><tbody>${itemRows}</tbody></table>${totaisHtml}`:'<div class="ce-empty">Nenhum item nesta requisição</div>'}
+      ${itens.length?`<table class="ce-table"><thead><tr><th style="width:40px;text-align:center">SEQ</th><th>Produto</th><th>Solicitado</th><th>Base</th><th>Preço Unit.</th><th>Total</th><th>Comprado</th><th>Diferença</th><th>Status</th><th></th></tr></thead><tbody>${itemRows}</tbody></table>${totaisHtml}`:'<div class="ce-empty">Nenhum item nesta requisição</div>'}
     </div>`;
   }).join('') || '<div class="ce-empty">Nenhuma requisição cadastrada</div>';
 
