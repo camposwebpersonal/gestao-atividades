@@ -99,19 +99,25 @@ function renderModuloGrupos(mod){
   const title = `${mod.icon} ${mod.label}`;
   const podeCriar = window.userCan(mod.id,'criar');
   const podeEditar = window.userCan(mod.id,'editar');
-  const novo = (window.S && S.isAdmin) || podeCriar ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
+  const admin = window.S && S.isAdmin;
+  const pode = admin || podeEditar;
+  const novo = admin || podeCriar ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
+  const mass = pode ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto"><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ce-sel-all" onchange="window._ceToggleAllGrupos(this.checked)"> Selecionar todos</label><button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="window._ceExcluirSelecionados('${mod.id}')">🗑️ Excluir selecionados</button></div>` : '';
   const cards = grupos.map(g=>{
     const p=_md.pct(g), col=_md.pColor(p);
-    return `<div class="activity-card" onclick="window.openActivity('${g.id}')" style="border-top:4px solid ${mod.color};cursor:pointer">
+    return `<div class="activity-card" style="border-top:4px solid ${mod.color};cursor:pointer;position:relative" data-gid="${_md.esc(g.id)}">
+      <input type="checkbox" class="cb-grupo" value="${_md.esc(g.id)}" style="position:absolute;top:10px;right:10px;width:18px;height:18px;cursor:pointer;z-index:2" onchange="event.stopPropagation()" onclick="event.stopPropagation()">
+      <div onclick="window.openActivity('${_md.esc(g.id)}')">
       ${g.cover_url?`<img class="card-thumb" src="${_md.esc(g.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph"><img src="img/logo_sertania.png" style="width:64px;height:64px;object-fit:contain;opacity:.7"></div>`}
       <div class="card-title">${_md.esc(g.name||'Sem nome')}</div>
       ${g.observacoes?`<div class="card-obs">${_md.esc(g.observacoes)}</div>`:''}
       <div class="card-foot">
         <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
         <div class="card-btns">
-          ${((window.S&&S.isAdmin)||podeEditar)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${g.id}')">✏️</button>`:''}
-          <button class="card-btn" onclick="event.stopPropagation();window.gerarPdf('${g.id}')">📄</button>
+          ${(admin||podeEditar)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${_md.esc(g.id)}')">✏️</button>`:''}
+          <button class="card-btn" onclick="event.stopPropagation();window.gerarPdf('${_md.esc(g.id)}')">📄</button>
         </div>
+      </div>
       </div>
     </div>`;
   }).join('') || `<div class="empty" style="grid-column:1/-1">Nenhum grupo de <strong>${_md.esc(mod.label)}</strong> cadastrado ainda.<br>Clique em <strong>+ Novo Grupo</strong> para começar.</div>`;
@@ -121,9 +127,35 @@ function renderModuloGrupos(mod){
       ${novo}
       <button class="btn-action" onclick="window.setView('mod')">← Voltar ao início</button>
       <button class="btn-action" onclick="window.gerarRelatorioModulo('${mod.id}')">📄 PDF do módulo</button>
+      ${mass}
     </div>
     <div class="cards-grid">${cards}</div>`);
 }
+
+window._ceToggleAllGrupos=function(checked){
+  document.querySelectorAll('.cb-grupo').forEach(cb=>cb.checked=checked);
+};
+
+window._ceExcluirSelecionados=async function(modId){
+  const ids=[...document.querySelectorAll('.cb-grupo:checked')].map(cb=>cb.value);
+  if(!ids.length){toast('Selecione ao menos um grupo','error'); return;}
+  const nomes=ids.map(id=>_md.esc(S.secs.find(s=>s.id===id)?.name||'Grupo')).slice(0,20).join('\n');
+  const mais=ids.length>20?`\n... e mais ${ids.length-20}`:'';
+  if(!confirm(`Excluir ${ids.length} grupo(s) deste módulo?\n\n${nomes}${mais}\n\nAtenção: todos os itens, sub-itens e lançamentos vinculados também serão excluídos. Esta ação não pode ser desfeita.`)) return;
+  for(const id of ids){
+    const its=S.items.filter(i=>i.atividade_id===id);
+    for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await window.wDeleteDoc(doc(db,'subitems',sb.id),{...sb},'Excluir sub-item');const orig=S.items.find(i=>i.id===it.id);if(orig)await window.wDeleteDoc(doc(db,'items',it.id),{...orig},'Excluir item');}
+    const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await window.wDeleteDoc(doc(db,'fieldTemplates',ft.id),{...ft},'Excluir campo');
+    const estqs=S.estoque.filter(e=>e.atividade_id===id);for(const e of estqs)await window.wDeleteDoc(doc(db,'estoque',e.id),{...e},'Excluir lançamento');
+    const reqs=S.requisicoes.filter(r=>r.atividade_id===id);for(const r of reqs)await window.wDeleteDoc(doc(db,'requisicoes',r.id),{...r},'Excluir requisição');
+    const contas=S.contas.filter(c=>c.atividade_id===id);for(const c of contas)await window.wDeleteDoc(doc(db,'contas',c.id),{...c},'Excluir conta');
+    const distrs=(S.distribuicao||[]).filter(d=>d.atividade_id===id);for(const d of distrs)await window.wDeleteDoc(doc(db,'distribuicao',d.id),{...d},'Excluir distribuição');
+    const sec=S.secs.find(s=>s.id===id); if(sec) await window.wDeleteDoc(doc(db,'secretariats',id),{...sec},'Excluir grupo');
+  }
+  await loadData();
+  toast(ids.length+' grupo(s) excluído(s)!','success');
+  window.renderModulo(modId);
+};
 
 window.criarGrupoModulo = async function(modId){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod) return;

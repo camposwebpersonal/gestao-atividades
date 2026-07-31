@@ -437,7 +437,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=27';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=28';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
   });
 }
@@ -1404,6 +1404,10 @@ window.deleteSec=async function(id){
   const its=S.items.filter(i=>i.atividade_id===id);
   for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
   const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
+  const estqs=S.estoque.filter(e=>e.atividade_id===id);for(const e of estqs)await deleteDoc(doc(db,'estoque',e.id));
+  const reqs=S.requisicoes.filter(r=>r.atividade_id===id);for(const r of reqs)await deleteDoc(doc(db,'requisicoes',r.id));
+  const contas=S.contas.filter(c=>c.atividade_id===id);for(const c of contas)await deleteDoc(doc(db,'contas',c.id));
+  const distrs=(S.distribuicao||[]).filter(d=>d.atividade_id===id);for(const d of distrs)await deleteDoc(doc(db,'distribuicao',d.id));
   await deleteDoc(doc(db,'secretariats',id));
   await loadData();closeModal();toast('Atividade excluída!');setView('mod');
 };
@@ -1587,7 +1591,7 @@ window.openSecModal=function(id){
     </div>
   </div>`:'<!-- sem id -->'}
   <div class="modal-actions">
-    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteSec('${id}')">🗑️ Excluir</button>`:''}
+    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button>
   </div>`);
