@@ -196,6 +196,12 @@
         "descricao": "Contrato 31 - Item 7 | Achocolatado- Em Pó Instantâneo Á Base De Cacau, Enriquecido Com Vitaminas, Embalagens Intactas, Acondicionadas Em Pacotes De 400G. Prazo De Validade Mínimo De 6 Meses A Partir Da Entrega."
       },
       {
+        "qtd": 1800.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.05,
+        "descricao": "Contrato 31 - Item 11 | Extrato Tomate sachê (310g)"
+      },
+      {
         "qtd": 600.0,
         "unidade": "UNIDADE",
         "preco_unitario": 3.65,
@@ -364,10 +370,16 @@
         "descricao": "Contrato 31 - Item 120 | Suplemento nutritivo, enriquecido com alto teor nutricional especialmente desenvolvido para crianças que precisam de um maior reforço de vitaminas e minerais em sua alimentação. Sua fórmula balanceada é rica em cálcio, proteínas, vitamina C, ferro, zinco e cobre, que auxiliam no desenvolvimento saudável das crianças. Embalagem de 420g, validade mínima de 06 meses a 01 ano, com registro no ministério competente."
       },
       {
-        "qtd": 141.0,
+        "qtd": 500.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 170.0,
-        "descricao": "Contrato 31 - Item 140 | COALHADA DIET, EMBALAGEM DE 140G 500,0000 3,8300 1.915,0000 0,0000 0,0000 500,0000"
+        "preco_unitario": 3.83,
+        "descricao": "Contrato 31 - Item 140 | COALHADA DIET, EMBALAGEM DE 140G"
+      },
+      {
+        "qtd": 1000.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.05,
+        "descricao": "Contrato 31 - Item 141 | IORGUTE DIET, EMBALAGEM DE 170G"
       }
     ]
   },
@@ -401,6 +413,12 @@
         "unidade": "UNIDADE",
         "preco_unitario": 34.31,
         "descricao": "Contrato 32 - Item 125 | CARNE CAPRINA (BODE), APRESENTAÇÃO PEÇA INTEIRA, CARACTERÍSTICAS ADICIONAIS APARADA E RESFRIADA. DEVERÁ SER DE PROCEDÊNCIA IDÔNEA, COM CARIMBO DE FISCALIZAÇÃO DO SIF, MINISTÉRIO DA AGRICULTURA OU ÓRGÃO COMPETENTE, TRANSPORTADOS EM CARROS FECHADOS REFRIGERADOS, ACONDICIONADOS EM MONOBLOCOS OU CAIXAS DE PAPELÃO LACRADAS, EMBALADOS EM SACOS PLÁSTICOS OU A VÁCUO, EM CONDIÇÕES CORRETAS E ADEQUADAS DE TEMPERATURA (CONGELADAS, - 18ºC, REFRIGERADAS 6ºC) RESPEITANDO-SE AS CARACTERÍSTICAS ORGANOLÉPTICAS PRÓPRIAS, COMO: COR E ODOR. NÂO APRESENTAR MANCHAS VERDES OU ESCURAS."
+      },
+      {
+        "qtd": 100.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 44.13,
+        "descricao": "Contrato 32 - Item 127 | BACON DEFUMADO, MANTA, INGREDIENTES CARNE SUÍNA, APRESENTAÇÃO DEFUMADA."
       },
       {
         "qtd": 350.0,
@@ -440,6 +458,12 @@
         "unidade": "UNIDADE",
         "preco_unitario": 10.93,
         "descricao": "Contrato 33 - Item 8 | Café tipo superior, torrado e mopido podendo conter 15% grãos conillon, 10% pretos- verdes-ardidos, isento de grãos pretos - verdes-fermentados bebida dura ou melhor, aroma, sabor, sabor residual bons e tipicos, cor castanho-claro a media, qualidade global superior 6,51% e 7,6% pontos na escala sensorial, dispensando analise se certificando no sistema de qualidadedo produto. Embalagem com 250g."
+      },
+      {
+        "qtd": 650.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.17,
+        "descricao": "Contrato 33 - Item 18 | Milho Mungunzá, 1º Qualidade (500g)"
       },
       {
         "qtd": 3200.0,
@@ -589,10 +613,16 @@
     "observacao": "Contrato 28 - Processo 0106/2026 - CONTRATO MELO SAUDE (1).pdf",
     "itens": [
       {
-        "qtd": 5.0,
+        "qtd": 15.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 20.0,
-        "descricao": "Contrato 28 - Item 3 | Fralda descartável infantil G com no mínimo 24 unidades com fita 15,0000 38,5000 577,5000 4,0000 154,0000 11,0000"
+        "preco_unitario": 38.5,
+        "descricao": "Contrato 28 - Item 3 | Fralda descartável infantil G com no mínimo 24 unidades com fita"
+      },
+      {
+        "qtd": 10.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 38.5,
+        "descricao": "Contrato 28 - Item 5 | Fralda descartável infantil tamanho xg com no mínimo 20 unidades"
       },
       {
         "qtd": 30.0,
@@ -631,10 +661,22 @@
         "descricao": "Contrato 28 - Item 17 | Copo descartável 150ml Branco (caixa contendo 25 pacotes e cada pacote contendo 100 unidades de copo descartável ) COM TAMPA"
       },
       {
-        "qtd": 20.0,
+        "qtd": 13.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 30.0,
-        "descricao": "Contrato 28 - Item 18 | Garfo descartável (pct c 50 unid) 13,0000 6,7700 88,0100 13,0000 88,0100 0,0000"
+        "preco_unitario": 6.77,
+        "descricao": "Contrato 28 - Item 18 | Garfo descartável (pct c 50 unid)"
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.52,
+        "descricao": "Contrato 28 - Item 20 | Papel alumínio 30m x 7,5"
+      },
+      {
+        "qtd": 50.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.08,
+        "descricao": "Contrato 28 - Item 21 | Papel filme pvc 28cm 30m"
       },
       {
         "qtd": 25.0,
@@ -667,16 +709,34 @@
         "descricao": "Contrato 28 - Item 32 | Esponja (lã de aço) pacote pequeno com 8 buchas de aço. O produto deverá ter estampado na embalagem/rótulo: o que se exige por lei. Marca de referência: bom bril, assolan ou equivalente/similar ou de melhor qualidade."
       },
       {
-        "qtd": 34.0,
+        "qtd": 25.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 10.0,
-        "descricao": "Contrato 28 - Item 33 | Esponja para lavar louça dupla face caixa com 60 unidades 25,0000 68,4200 1.710,5000 25,0000 1.710,5000 0,0000"
+        "preco_unitario": 68.42,
+        "descricao": "Contrato 28 - Item 33 | Esponja para lavar louça dupla face caixa com 60 unidades"
       },
       {
-        "qtd": 39.0,
+        "qtd": 25.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 625.0,
-        "descricao": "Contrato 28 - Item 36 | Limpa Vidros com Pulverizador que remova a sujeira de vidros, espelhos 25,0000 15,5100 387,7500 25,0000 387,7500 0,0000"
+        "preco_unitario": 4.61,
+        "descricao": "Contrato 28 - Item 34 | Fósforo (pacote com 10 unidades)"
+      },
+      {
+        "qtd": 25.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 15.51,
+        "descricao": "Contrato 28 - Item 36 | Limpa Vidros com Pulverizador que remova a sujeira de vidros, espelhos"
+      },
+      {
+        "qtd": 625.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.76,
+        "descricao": "Contrato 28 - Item 39 | Luva de borracha - par (duas) para limpeza pesada - borracha de látex natural, tamanho g"
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.14,
+        "descricao": "Contrato 28 - Item 41 | Pá p/ lixo de plástico com cabo longo, altura mínima 60 cm"
       },
       {
         "qtd": 282.0,
@@ -691,16 +751,28 @@
         "descricao": "Contrato 28 - Item 43 | PAPEL HIGIÊNICO BRANCO, MACIO, PICOTADO E GOFRADO OU TEXTURIZADO, 100% FIBRA CELULÓSICAS, FOLHAS SIMPLES, COM 30M X 10 CM, EMBALAGEM PLÁSTICA COM QUATRO ROLOS. FARDO C/16 ROLOS."
       },
       {
+        "qtd": 1250.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 2.46,
+        "descricao": "Contrato 28 - Item 44 | Pastilha sanitária para banheiro - pedra sanitária com suporte, peso 20 gramas."
+      },
+      {
         "qtd": 50.0,
         "unidade": "UNIDADE",
         "preco_unitario": 3.55,
         "descricao": "Contrato 28 - Item 45 | POLIDOR DE ALUMíNIO LIMPADOR, LIMPEZA DOMESTICA, PRODUTO LIQUIDO USADO PARA POLIR ALUMINIO. EMBALAGEM CONTENDO 500 ML"
       },
       {
-        "qtd": 47.0,
+        "qtd": 50.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 1.0,
-        "descricao": "Contrato 28 - Item 46 | Purificador de ar aerosol (aromas diversos) - suave frangrânciacom 360 ml 50,0000 13,6600 683,0000 24,0000 327,8400 26,0000"
+        "preco_unitario": 13.66,
+        "descricao": "Contrato 28 - Item 46 | Purificador de ar aerosol (aromas diversos) - suave frangrânciacom 360 ml"
+      },
+      {
+        "qtd": 13.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 8.56,
+        "descricao": "Contrato 28 - Item 47 | Sabão em barra neutro pacote 1 kg (com 05 unidades - 200 g cada)"
       },
       {
         "qtd": 1250.0,
@@ -711,8 +783,14 @@
       {
         "qtd": 50.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 450.0,
-        "descricao": "Contrato 28 - Item 49 | Sabonete líquido 1 litro com glicerina para mão 50,0000 14,6100 730,5000 30,0000 438,3000 20,0000"
+        "preco_unitario": 14.61,
+        "descricao": "Contrato 28 - Item 49 | Sabonete líquido 1 litro com glicerina para mão"
+      },
+      {
+        "qtd": 13.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 21.6,
+        "descricao": "Contrato 28 - Item 50 | Soda cáustica peso 450 gramas"
       },
       {
         "qtd": 50.0,
@@ -721,22 +799,46 @@
         "descricao": "Contrato 28 - Item 51 | ABSORVENTE HIGIÊNICO COBERTURA SECA, USO EXTERNO NORMAL COM ABAS, COM GEL TRIPLA PROTEÇÃO, FORMATO RETANGULAR COM ABAS. PACOTE COM NO MÍNIMO 8 UNIDADES"
       },
       {
-        "qtd": 53.0,
+        "qtd": 125.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 60.0,
-        "descricao": "Contrato 28 - Item 52 | Rodo min 30cm com cabo de madeira 125,0000 17,6300 2.203,7500 73,0000 1.286,9900 52,0000"
+        "preco_unitario": 17.63,
+        "descricao": "Contrato 28 - Item 52 | Rodo min 30cm com cabo de madeira"
       },
       {
-        "qtd": 55.0,
+        "qtd": 40.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 30.0,
-        "descricao": "Contrato 28 - Item 54 | Vassoura comum com cerdas sintética com cabo de madeira 125,0000 18,4100 2.301,2500 76,0000 1.399,1600 49,0000"
+        "preco_unitario": 23.96,
+        "descricao": "Contrato 28 - Item 53 | Rodo 60 cm com cabo de madeira"
       },
       {
-        "qtd": 57.0,
+        "qtd": 125.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 14.0,
-        "descricao": "Contrato 28 - Item 56 | Balde plástico de alça capacidade 20 lts 5,0000 28,3000 141,5000 5,0000 141,5000 0,0000"
+        "preco_unitario": 18.41,
+        "descricao": "Contrato 28 - Item 54 | Vassoura comum com cerdas sintética com cabo de madeira"
+      },
+      {
+        "qtd": 30.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 37.9,
+        "descricao": "Contrato 28 - Item 55 | Vassourão reforçado tipo gari com cabo"
+      },
+      {
+        "qtd": 5.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 28.3,
+        "descricao": "Contrato 28 - Item 56 | Balde plástico de alça capacidade 20 lts"
+      },
+      {
+        "qtd": 33.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 22.55,
+        "descricao": "Contrato 28 - Item 57 | Balde plástico de alça capacidade 14 lts"
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 10.9,
+        "descricao": "Contrato 28 - Item 58 | Balde plástico de alça capacidade 5 litros"
       },
       {
         "qtd": 75.0,
@@ -751,6 +853,12 @@
         "descricao": "Contrato 28 - Item 60 | AVENTAL - TIPO BATA EM PLÁSTICO RESISTENTE, COM VIÉS NAS BORDAS PARA USO DOMESTICOPENDURA NO PESCOÇO E CORDÃO PARA AMARRAR NAS COSTAS, CORES DIVERSAS"
       },
       {
+        "qtd": 500.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 9.39,
+        "descricao": "Contrato 28 - Item 66 | Pano de chão 60 x 80 cm algodão"
+      },
+      {
         "qtd": 113.0,
         "unidade": "UNIDADE",
         "preco_unitario": 65.02,
@@ -763,16 +871,34 @@
         "descricao": "Contrato 28 - Item 71 | SACO DE LIXO 100L, 100UN REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 50 UNIDADES"
       },
       {
-        "qtd": 73.0,
+        "qtd": 125.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 50.0,
-        "descricao": "Contrato 28 - Item 72 | SACO DE LIXO 30L, REFORÇADO ESPESSURA 0,10 125,0000 23,9300 2.991,2500 124,0000 2.967,3200 1,0000"
+        "preco_unitario": 23.93,
+        "descricao": "Contrato 28 - Item 72 | SACO DE LIXO 30L, REFORÇADO ESPESSURA 0,10"
       },
       {
-        "qtd": 76.0,
+        "qtd": 94.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 10.0,
-        "descricao": "Contrato 28 - Item 74 | SACO DE LIXO 50L, REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 100 UNIDADES 32,0000 28,8000 921,6000 32,0000 921,6000 0,0000"
+        "preco_unitario": 28.8,
+        "descricao": "Contrato 28 - Item 73 | SACO DE LIXO 50L, REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 100 UNIDADES"
+      },
+      {
+        "qtd": 32.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 28.8,
+        "descricao": "Contrato 28 - Item 74 | SACO DE LIXO 50L, REFORÇADO ESPESSURA 0,10 MICRAS, EMBALAGEM COM 100 UNIDADES"
+      },
+      {
+        "qtd": 125.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 17.29,
+        "descricao": "Contrato 28 - Item 76 | Lixeiro telado 10 l em plastico"
+      },
+      {
+        "qtd": 25.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 12.94,
+        "descricao": "Contrato 28 - Item 77 | Escova de unha com cerdas de naylon"
       },
       {
         "qtd": 15.0,
@@ -781,22 +907,40 @@
         "descricao": "Contrato 28 - Item 93 | BOBINA PICOTADA DE SACO PLÁTICO TRANSPARENTE DE ALTA DENSIDADE COM 500 SACOS COMPOSIÇÃO POLIETILENO VIRGEM MEDIDAS: 12 CM X 24 CM (UNIDADE COM 500 SACOS)"
       },
       {
-        "qtd": 96.0,
+        "qtd": 3.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 22.0,
-        "descricao": "Contrato 28 - Item 95 | SACO TALHER POLIETILENO 08X 25X 0,006 - 1KG 3,0000 29,5100 88,5300 3,0000 88,5300 0,0000"
+        "preco_unitario": 29.51,
+        "descricao": "Contrato 28 - Item 95 | SACO TALHER POLIETILENO 08X 25X 0,006 - 1KG"
       },
       {
-        "qtd": 99.0,
+        "qtd": 50.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 50.0,
-        "descricao": "Contrato 28 - Item 97 | Saco de papel para pipoca marrom ou branco, pacote com 100 und 50,0000 6,2100 310,5000 10,0000 62,1000 40,0000"
+        "preco_unitario": 5.86,
+        "descricao": "Contrato 28 - Item 96 | O SACO PLÁSTICO BRANCO 22X 12 PARA HOT DOG , PACOTE COM 100 UND"
       },
       {
-        "qtd": 101.0,
+        "qtd": 50.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 540.0,
-        "descricao": "Contrato 28 - Item 100 | GARFO DESCARTÁVEL GRANDE PARA REFEIÇÕES (PCT C 50 UNID) 250,0000 6,4500 1.612,5000 100,0000 645,0000 150,0000"
+        "preco_unitario": 6.21,
+        "descricao": "Contrato 28 - Item 97 | Saco de papel para pipoca marrom ou branco, pacote com 100 und"
+      },
+      {
+        "qtd": 250.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 5.82,
+        "descricao": "Contrato 28 - Item 99 | FACA DESCARTÁVEL GRANDE PARA REFEIÇÕES (PCT C 50 UNID)"
+      },
+      {
+        "qtd": 250.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 6.45,
+        "descricao": "Contrato 28 - Item 100 | GARFO DESCARTÁVEL GRANDE PARA REFEIÇÕES (PCT C 50 UNID)"
+      },
+      {
+        "qtd": 8.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 14.49,
+        "descricao": "Contrato 28 - Item 101 | CANUDO BIODEGRADÁVEL FLEXÍVEL CB 540 200X 5,8MM PACOTE COM 100 UNIDADES"
       },
       {
         "qtd": 8.0,
@@ -835,10 +979,16 @@
         "descricao": "Contrato 28 - Item 120 | Alvejante Desinfetante A Base De Ácido Paracetico Para Área Hospitalar. Baldo Com 20 Lt. Registro Da Anvisa."
       },
       {
-        "qtd": 125.0,
+        "qtd": 8.0,
         "unidade": "UNIDADE",
-        "preco_unitario": 8.0,
-        "descricao": "Contrato 28 - Item 124 | MOP PÓ 40CM 8,0000 81,1300 649,0400 8,0000 649,0400 0,0000"
+        "preco_unitario": 81.13,
+        "descricao": "Contrato 28 - Item 124 | MOP PÓ 40CM"
+      },
+      {
+        "qtd": 8.0,
+        "unidade": "UNIDADE",
+        "preco_unitario": 84.7,
+        "descricao": "Contrato 28 - Item 125 | MOP ÚMIDO ESFREGÃO"
       }
     ]
   }
