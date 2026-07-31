@@ -464,9 +464,9 @@ async function _ceFindOrCreateProduto(desc){
 window.ceAtualizarCompraTotal=function(){
   const qtd=parseFloat(document.getElementById('ce-comp-qtd')?.value)||0;
   const preco=parseFloat(document.getElementById('ce-comp-preco')?.value)||0;
-  const solicitada=parseFloat(document.getElementById('ce-comp-qtd-solicitada')?.value)||0;
+  const limite=parseFloat(document.getElementById('ce-comp-qtd-limite')?.value)||0;
   const total=qtd*preco;
-  const saldo=solicitada-qtd;
+  const saldo=limite-qtd;
   const un=String(document.getElementById('ce-comp-un')?.value||'').trim();
   const elTotal=document.getElementById('ce-comp-total');
   if(elTotal) elTotal.value=total.toFixed(2);
@@ -483,23 +483,28 @@ window.ceConfirmarCompra=function(requisicaoId,itemId){
   const prodId=_ceEsc(it.subitem_id||'');
   const un=CE_UNIDADES.map(u=>`<option value="${u}" ${u===it.unidade?'selected':''}>${u}</option>`).join('');
   const qtdSolicitada=parseFloat(it.qtd)||0;
-  const qtdRecebida=qtdSolicitada;
+  const comp=S.estoque.filter(e=>e.atividade_id===curSecId && e.requisicao_id===requisicaoId && e.requisicao_item_id===itemId && e.tipo==='ENTRADA').reduce((a,e)=>a+(parseFloat(e.qtd_base)||0),0);
+  const fator=_ceFator(prod||{},it.unidade);
+  const qtdComprada=comp/fator;
+  const qtdLimite=Math.max(0,qtdSolicitada-qtdComprada);
+  if(qtdLimite<=0){toast('Este item já atingiu a quantidade solicitada','error'); return;}
+  const qtdRecebida=qtdLimite;
   const preco=parseFloat(it.preco_unitario)||0;
   const total=qtdRecebida*preco;
-  const saldo=qtdSolicitada-qtdRecebida;
+  const saldo=qtdLimite-qtdRecebida;
   openModal('✅ Confirmar Compra - Item #'+_ceEsc(itemId.slice(-6)),'',`
     <div class="ce-form-row">
       <div style="grid-column:1/-1"><label style="font-size:11px;color:#94a3b8">Produto *</label><input type="hidden" id="ce-comp-prod" value="${prodId}"><input type="text" class="ce-input" disabled value="${prodName}"></div>
     </div>
     <div class="ce-form-row">
       <div><label style="font-size:11px;color:#94a3b8">Qtd solicitada</label><input type="number" class="ce-input" disabled value="${qtdSolicitada.toFixed(2)}"></div>
-      <div><label style="font-size:11px;color:#94a3b8">Qtd recebida *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-qtd" value="${qtdRecebida.toFixed(2)}" oninput="ceAtualizarCompraTotal()"></div>
+      <div><label style="font-size:11px;color:#94a3b8">Qtd recebida *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-qtd" value="${qtdRecebida.toFixed(2)}" max="${qtdLimite.toFixed(2)}" oninput="ceAtualizarCompraTotal()"></div>
       <div><label style="font-size:11px;color:#94a3b8">Unidade</label><select class="ce-input" id="ce-comp-un" onchange="ceAtualizarCompraTotal()">${un}</select></div>
       <div><label style="font-size:11px;color:#94a3b8">Preço unit. R$ *</label><input type="number" step="0.01" class="ce-input" id="ce-comp-preco" value="${preco.toFixed(2)}" oninput="ceAtualizarCompraTotal()"></div>
       <div><label style="font-size:11px;color:#94a3b8">Total R$</label><input type="number" step="0.01" class="ce-input" id="ce-comp-total" disabled value="${total.toFixed(2)}"></div>
       <div><label style="font-size:11px;color:#94a3b8">Data</label><input type="date" class="ce-input" id="ce-comp-data" value="${_ceHoje()}"></div>
     </div>
-    <input type="hidden" id="ce-comp-qtd-solicitada" value="${qtdSolicitada.toFixed(2)}">
+    <input type="hidden" id="ce-comp-qtd-limite" value="${qtdLimite.toFixed(2)}">
     <div style="font-size:13px;font-weight:700;padding:4px 0" id="ce-comp-saldo">Saldo restante: ${_ceFmtNum(saldo)} ${it.unidade}</div>
     <div class="ce-form-row"><div style="grid-column:1/-1"><label style="font-size:11px;color:#94a3b8">Observação</label><textarea class="ce-input" id="ce-comp-obs" rows="2" placeholder="Fornecedor, nota fiscal, diferenças"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ceSaveCompra('${requisicaoId}','${itemId}')">💾 Confirmar</button></div>`);
@@ -521,6 +526,8 @@ window.ceSaveCompra=async function(requisicaoId,itemId){
     await updateDoc(doc(db,'requisicoes',requisicaoId),{itens:req.itens,updated_at:serverTimestamp()});
   }
   if(!prodId || qtd<=0 || !data){toast('Produto, quantidade e data são obrigatórios','error'); return;}
+  const limite=parseFloat(document.getElementById('ce-comp-qtd-limite')?.value)||0;
+  if(qtd>limite){toast('Quantidade recebida ('+_ceFmtNum(qtd)+' '+unidade+') é maior que o saldo restante ('+_ceFmtNum(limite)+' '+unidade+')','error'); return;}
   const prodSnap=await getDoc(doc(db,'subitems',prodId));
   const prod=prodSnap.data()||{};
   prod.id=prodId;
