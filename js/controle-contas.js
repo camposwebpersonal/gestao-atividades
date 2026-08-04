@@ -22,6 +22,14 @@ function _ccLocalExtraFields(local){
   };
 }
 
+function _ccLocalMatchesBusca(item, local, buscaTokens){
+  if(!buscaTokens || !buscaTokens.length) return true;
+  const efLocal = (local && local.extra_fields) || {};
+  const obsTodas = S.contas.filter(c=>c.subitem_id===local.id).map(c=>c.observacao||'');
+  const partesBusca = [item?.description, local?.description, ...Object.values(efLocal), ...obsTodas];
+  const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
+  return buscaTokens.every(tok => searchable.includes(tok));
+}
 function _ccTokenHit(text, tokens){
   if(!tokens || !tokens.length) return false;
   const norm = _ccNorm(text);
@@ -95,18 +103,11 @@ window.renderControleContas = function(secId){
     let locaisHtml = '';
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
-      if(buscaTokens.length){
-        // Busca em TUDO: categoria, local, todos os campos extras do local
-        // (ex: Distrito/Povoado/Sitio/Vila, Conta Contrato, Endereço, etc.)
-        // e a observação de cada lançamento. Se bater em qualquer lugar,
-        // o local inteiro aparece com todos os seus lançamentos.
-        const efLocal = (local && local.extra_fields) || {};
-        const obsTodas = S.contas.filter(c=>c.subitem_id===local.id).map(c=>c.observacao||'');
-        const partesBusca = [item.description, local.description, ...Object.values(efLocal), ...obsTodas];
-        const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
-        const bate = buscaTokens.every(tok => searchable.includes(tok));
-        if(!bate) return;
-      }
+      // Busca em TUDO: categoria, local, todos os campos extras do local
+      // (ex: Distrito/Povoado/Sitio/Vila, Conta Contrato, Endereço, etc.)
+      // e a observação de cada lançamento. Se bater em qualquer lugar,
+      // o local inteiro aparece com todos os seus lançamentos.
+      if(!_ccLocalMatchesBusca(item, local, buscaTokens)) return;
       const lancamentos = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{
         const da = (a.mes_ano||'').split('/').reverse().join('-');
         const db = (b.mes_ano||'').split('/').reverse().join('-');
@@ -453,7 +454,6 @@ window.renderControleContas = function(secId){
     ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${S.isAdmin?`<button class="btn-action" onclick="ccOpenColunasModal('${secId}')">⚙️ Colunas</button>`:''}
-    <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;display:block;background:transparent">`:''}
@@ -467,6 +467,8 @@ window.renderControleContas = function(secId){
       <select id="cc-filtro-ano" onchange="renderControleContas('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
       <select id="cc-filtro-pago" onchange="renderControleContas('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
       <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';renderControleContas('${secId}')">Limpar</button>
+      <div style="flex:1;min-width:8px"></div>
+      <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF${(tipoFiltro||anoFiltro||pagoFiltro||buscaFiltro.trim())?' (filtrado)':''}</button>
     </div>
   </div>
   ${dashHtml}
@@ -756,11 +758,35 @@ window.ccSaveRenovacao = async function(subitemId){
   renderControleContas(loc.atividade_id||curSecId);
 };
 
+function _ccFiltrosTela(secId){
+  const tipo = document.getElementById('cc-filtro-tipo')?.value || '';
+  const ano = document.getElementById('cc-filtro-ano')?.value || '';
+  const pago = document.getElementById('cc-filtro-pago')?.value || '';
+  const busca = document.getElementById('cc-busca')?.value || '';
+  const buscaTokens = _ccNorm(busca).split(/\s+/).filter(Boolean);
+  return { tipo, ano, pago, busca: busca.trim(), buscaTokens };
+}
+
 window.ccOpenPdfOpts = function(secId){
   _pdfOptsSecId = secId;
   const anos = [...new Set(S.contas.filter(c=>c.atividade_id===secId && c.mes_ano).map(c=>String(c.mes_ano).split('/')[1]).filter(Boolean))].sort();
   const currentYear = String(new Date().getFullYear());
-  document.getElementById('cc-pdf-ano').innerHTML = anos.map(a=>`<option value="${esc(a)}" ${a===currentYear?'selected':''}>${esc(a)}</option>`).join('');
+  const ft = _ccFiltrosTela(secId);
+  document.getElementById('cc-pdf-ano').innerHTML = anos.map(a=>`<option value="${esc(a)}" ${a===(ft.ano||currentYear)?'selected':''}>${esc(a)}</option>`).join('');
+  document.getElementById('cc-pdf-todos').checked = !ft.ano;
+  document.getElementById('cc-pdf-pagas').checked = ft.pago === 'pago';
+  const avisoEl = document.getElementById('cc-pdf-filtro-ativo');
+  const ativos = [];
+  if(ft.busca) ativos.push('busca: "'+ft.busca+'"');
+  if(ft.tipo) ativos.push('tipo: '+ft.tipo);
+  if(ft.ano) ativos.push('ano: '+ft.ano);
+  if(ft.pago) ativos.push(ft.pago==='pago'?'apenas pagas':'apenas pendentes');
+  if(ativos.length){
+    avisoEl.style.display = 'block';
+    avisoEl.innerHTML = '⚠️ Há filtro(s) ativo(s) na tela (' + esc(ativos.join(', ')) + '). O PDF sairá apenas com esse resultado filtrado.';
+  } else {
+    avisoEl.style.display = 'none';
+  }
   document.getElementById('cc-pdf-overlay').style.display = 'flex';
 };
 
@@ -770,8 +796,16 @@ window.ccConfirmarPdf = function(){
   const ano = document.getElementById('cc-pdf-ano')?.value;
   const todos = document.getElementById('cc-pdf-todos')?.checked;
   const apenasPagas = document.getElementById('cc-pdf-pagas')?.checked;
+  const ft = _ccFiltrosTela(_pdfOptsSecId);
   ccFecharPdfOpts();
-  ccGerarPdf(_pdfOptsSecId, {ano: todos ? null : ano, apenasPagas});
+  ccGerarPdf(_pdfOptsSecId, {
+    ano: todos ? null : ano,
+    apenasPagas,
+    tipo: ft.tipo,
+    pago: apenasPagas ? 'pago' : ft.pago,
+    busca: ft.busca,
+    buscaTokens: ft.buscaTokens
+  });
 };
 
 window.ccGerarPdf = async function(secId, opts){
@@ -790,8 +824,13 @@ window.ccGerarPdf = async function(secId, opts){
   sf(18,true,[13,34,64]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
   sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertania - PE - Controle PMS - '+now, mx, y);
   y+=6;
-  const filtros=[]; if(opts.ano) filtros.push('Ano: '+opts.ano); if(opts.apenasPagas) filtros.push('Apenas contas pagas');
-  if(filtros.length){ sf(8,false,[100,116,139]); doc.text('Filtros: '+filtros.join(' | '), mx, y); y+=5; }
+  const filtros=[];
+  if(opts.busca) filtros.push('Busca: "'+opts.busca+'"');
+  if(opts.tipo) filtros.push('Tipo: '+opts.tipo);
+  if(opts.ano) filtros.push('Ano: '+opts.ano);
+  if(opts.pago==='pago') filtros.push('Apenas contas pagas');
+  if(opts.pago==='pendente') filtros.push('Apenas contas pendentes');
+  if(filtros.length){ sf(8,false,[180,60,20]); doc.text('Filtros aplicados: '+filtros.join(' | '), mx, y); y+=5; }
   if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*3.5 + 4; }
 
   let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
@@ -804,9 +843,12 @@ window.ccGerarPdf = async function(secId, opts){
     const locais=[...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     let catQtd=0, catPago=0, catTotal=0;
     locais.forEach(local=>{
+      if(!_ccLocalMatchesBusca(item, local, opts.buscaTokens)) return;
       let lancs=S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{const da=(a.mes_ano||'').split('/').reverse().join('-');const db=(b.mes_ano||'').split('/').reverse().join('-');return da.localeCompare(db);});
+      if(opts.tipo) lancs=lancs.filter(c=>c.tipo===opts.tipo);
       if(opts.ano) lancs=lancs.filter(c=>String(c.mes_ano||'').includes('/'+opts.ano));
-      if(opts.apenasPagas) lancs=lancs.filter(c=>c.pago);
+      if(opts.pago==='pago') lancs=lancs.filter(c=>c.pago);
+      if(opts.pago==='pendente') lancs=lancs.filter(c=>!c.pago);
       let locQtd=0, locPago=0, locTotal=0;
       lancs.forEach(c=>{
         const v=parseFloat(c.valor)||0;
