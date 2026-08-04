@@ -148,7 +148,7 @@ window.renderControleContas = function(secId){
         return `<tr class="${pagoCls}">
           ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
-          ${colsOff.has('contrato')?'':`<td>${_ccHighlight(contaContrato||'—', buscaTokens)}</td>`}
+          ${colsOff.has('contrato')?'':`<td><input type="text" class="${_ccTokenHit(contaContrato,buscaTokens)?'cc-obs-match':''}" value="${esc(contaContrato||'')}" onchange="ccSalvarContaContratoLocal('${local.id}',this.value)" placeholder="Conta Contrato"></td>`}
           ${colsOff.has('leitura')?'':`<td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>`}
           ${colsOff.has('consumo')?'':`<td><input type="text" value="${esc(c.consumo_kwh||'')}" onchange="ccSalvarCampo('${c.id}','consumo_kwh',this.value)" placeholder="kWh"></td>`}
           <td><input type="number" step="0.01" value="${esc(String(c.valor||''))}" onchange="ccSalvarCampo('${c.id}','valor',this.value)" placeholder="R$"></td>
@@ -157,7 +157,7 @@ window.renderControleContas = function(secId){
           <td class="cc-col-pago"><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></td>
           <td><input type="text" class="${_ccTokenHit(c.observacao,buscaTokens)?'cc-obs-match':''}" value="${esc(c.observacao||'')}" onchange="ccSalvarCampo('${c.id}','observacao',this.value)" placeholder="Obs."></td>
           <td style="text-align:center">${situacaoSvg}</td>
-          <td style="white-space:nowrap">${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
+          <td style="white-space:nowrap"><button class="card-btn" onclick="ccOpenLancamentoModal('${c.id}','${local.id}')" title="Editar lançamento completo">✏️</button>${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
         </tr>`;
       }).join('');
 
@@ -177,6 +177,10 @@ window.renderControleContas = function(secId){
           <div class="cc-mobile-row"><span>Pago</span><span><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></span></div>
           <div class="cc-mobile-row"><span>Situação</span><span>${situacaoSvg}</span></div>
           <div class="cc-mobile-row"><span>Obs.</span><span>${_ccHighlight(c.observacao||'—', buscaTokens)}</span></div>
+          <div class="cc-mobile-row" style="justify-content:flex-end;gap:8px;margin-top:4px">
+            <button class="card-btn" onclick="ccOpenLancamentoModal('${c.id}','${local.id}')" title="Editar lançamento completo">✏️ Editar</button>
+            ${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}
+          </div>
         </div>`;
       }).join('');
 
@@ -689,6 +693,20 @@ window.ccSalvarCampo = async function(id, campo, valor){
 
 window.ccTogglePago = async function(id, checked){
   await ccSalvarCampo(id,'pago',checked);
+};
+
+// Conta Contrato pertence ao cadastro do LOCAL (compartilhado por todos os
+// lancamentos daquele local), entao a edicao inline salva no subitem.
+window.ccSalvarContaContratoLocal = async function(localId, valor){
+  const local = S.subitems.find(s=>s.id===localId);
+  if(!local) return;
+  const ef = { ...(local.extra_fields||{}) };
+  const chave = _ccFindKey(ef, 'CONTA CONTRATO') || _ccFindKey(ef, 'CONTRATO') || 'Conta Contrato';
+  ef[chave] = valor;
+  await updateDoc(doc(db,'subitems',localId), { extra_fields: ef, updated_at: serverTimestamp() });
+  await loadData();
+  renderControleContas(local.atividade_id || curSecId);
+  toast('Conta Contrato atualizada','success',1200);
 };
 
 // ── Configuração de colunas visíveis da tabela ──
