@@ -22,6 +22,18 @@ function _ccLocalExtraFields(local){
   };
 }
 
+let _ccBuscaTimer = null;
+window.ccBuscaInput = function(secId){
+  clearTimeout(_ccBuscaTimer);
+  const inp = document.getElementById('cc-busca');
+  const pos = inp ? inp.selectionStart : null;
+  _ccBuscaTimer = setTimeout(()=>{
+    renderControleContas(secId);
+    const novo = document.getElementById('cc-busca');
+    if(novo){ novo.focus(); if(pos!=null){ try{ novo.setSelectionRange(pos,pos); }catch(e){} } }
+  }, 220);
+};
+
 window.renderControleContas = function(secId){
   const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
   curSecId = secId;
@@ -29,6 +41,8 @@ window.renderControleContas = function(secId){
   const tipoFiltro = document.getElementById('cc-filtro-tipo')?.value || '';
   const anoFiltro = document.getElementById('cc-filtro-ano')?.value || '';
   const pagoFiltro = document.getElementById('cc-filtro-pago')?.value || '';
+  const buscaFiltro = document.getElementById('cc-busca')?.value || '';
+  const buscaTokens = _ccNorm(buscaFiltro).split(/\s+/).filter(Boolean);
 
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
@@ -43,6 +57,12 @@ window.renderControleContas = function(secId){
     let locaisHtml = '';
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
+      if(buscaTokens.length){
+        const locEf = _ccLocalExtraFields(local);
+        const searchable = _ccNorm([item.description, local.description, locEf.endereco, locEf.conta_contrato, locEf.numero_relogio, locEf.medidor].filter(Boolean).join(' '));
+        const bate = buscaTokens.every(tok => searchable.includes(tok));
+        if(!bate) return;
+      }
       const lancamentos = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{
         const da = (a.mes_ano||'').split('/').reverse().join('-');
         const db = (b.mes_ano||'').split('/').reverse().join('-');
@@ -74,6 +94,7 @@ window.renderControleContas = function(secId){
       const efAll = (local && local.extra_fields) || {};
       const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
+      const contaContrato = _ccLocalExtraFields(local).conta_contrato;
       const tableRows = locRows.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
         const vLanc = parseFloat(c.valor)||0;
@@ -83,6 +104,7 @@ window.renderControleContas = function(secId){
         return `<tr class="${pagoCls}">
           ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
+          ${colsOff.has('contrato')?'':`<td>${esc(contaContrato||'—')}</td>`}
           ${colsOff.has('leitura')?'':`<td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>`}
           ${colsOff.has('consumo')?'':`<td><input type="text" value="${esc(c.consumo_kwh||'')}" onchange="ccSalvarCampo('${c.id}','consumo_kwh',this.value)" placeholder="kWh"></td>`}
           <td><input type="number" step="0.01" value="${esc(String(c.valor||''))}" onchange="ccSalvarCampo('${c.id}','valor',this.value)" placeholder="R$"></td>
@@ -102,6 +124,7 @@ window.renderControleContas = function(secId){
         const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<div class="cc-mobile-card">
           <div class="cc-mobile-title">${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
+          ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${esc(contaContrato||'—')}</span></div>`}
           ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
           ${colsOff.has('consumo')?'':`<div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>`}
           <div class="cc-mobile-row"><span>Valor</span><span>R$ ${esc(String((parseFloat(c.valor)||0).toFixed(2)))}</span></div>
@@ -128,9 +151,9 @@ window.renderControleContas = function(secId){
           <div class="cc-table-wrap">
             <table class="cc-table">
               <thead><tr>
-                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th>Situação</th><th></th>
+                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('contrato')?'':'<th>Conta Contrato</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th>Situação</th><th></th>
               </tr></thead>
-              <tbody>${tableRows || `<tr><td colspan="${11-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
+              <tbody>${tableRows || `<tr><td colspan="${12-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
             </table>
           </div>
           ${mobileRows}
@@ -389,6 +412,15 @@ window.renderControleContas = function(secId){
     <div class="page-title">${esc(sec.name)}</div>
     <div class="page-sub">${esc(sec.observacoes||'Controle de pagamento de contas por local')}</div>
   </div>
+  <div class="cc-filtros-fixas">
+    <input id="cc-busca" type="text" value="${esc(buscaFiltro)}" placeholder="🔍 Buscar por local, endereço, conta contrato, categoria... (combine vários termos)" oninput="ccBuscaInput('${secId}')" class="cc-busca-input">
+    <div class="cc-filtros">
+      <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
+      <select id="cc-filtro-ano" onchange="renderControleContas('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
+      <select id="cc-filtro-pago" onchange="renderControleContas('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
+      <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';renderControleContas('${secId}')">Limpar</button>
+    </div>
+  </div>
   ${dashHtml}
   ${catsProgressHtml}
   ${tipoResumoHtml}
@@ -426,12 +458,6 @@ window.renderControleContas = function(secId){
   </div>`:''}
   ${vigPanel}
   ${alertPanel}
-  <div class="cc-filtros">
-    <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
-    <select id="cc-filtro-ano" onchange="renderControleContas('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
-    <select id="cc-filtro-pago" onchange="renderControleContas('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
-    <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';renderControleContas('${secId}')">Limpar</button>
-  </div>
   ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}`);
 };
 
@@ -625,7 +651,7 @@ window.ccTogglePago = async function(id, checked){
 window.ccOpenColunasModal = function(secId){
   const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
   const off = new Set(sec.cc_cols_ocultas || []);
-  const opts = [['mes','Mês/Ano'],['tipo','Tipo'],['leitura','Leitura'],['consumo','Consumo']];
+  const opts = [['mes','Mês/Ano'],['tipo','Tipo'],['contrato','Conta Contrato'],['leitura','Leitura'],['consumo','Consumo']];
   const checks = opts.map(([k,lbl])=>`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 0"><input type="checkbox" class="cc-col-chk" data-col="${k}" ${off.has(k)?'':'checked'}> ${lbl}</label>`).join('');
   openModal('⚙️ Colunas da Tabela', 'Desmarque as colunas que não fazem sentido para esta atividade. Valor, Vencimento, Pagamento, Pago e Obs. são fixas.',
     `<div class="form-grid"><div class="form-group full">${checks}</div></div>
