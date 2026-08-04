@@ -448,19 +448,19 @@ window.renderControleContas = function(secId){
   </div>
 </div>`:'';
 
-  setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
-    <div style="flex:1;min-width:60px"></div>
-    ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${S.isAdmin?`<button class="btn-action" onclick="ccOpenColunasModal('${secId}')">⚙️ Colunas</button>`:''}
-  </div>
-  <div style="margin-bottom:18px">
+  setC(`<div style="margin-bottom:14px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;display:block;background:transparent">`:''}
     <div class="page-title">${esc(sec.name)}</div>
     <div class="page-sub">${esc(sec.observacoes||'Controle de pagamento de contas por local')}</div>
   </div>
   <div class="cc-filtros-fixas">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
+      <div style="flex:1;min-width:20px"></div>
+      ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
+      ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+      ${S.isAdmin?`<button class="btn-action" onclick="ccOpenColunasModal('${secId}')">⚙️ Colunas</button>`:''}
+    </div>
     <input id="cc-busca" type="text" value="${esc(buscaFiltro)}" placeholder="🔍 Buscar por local, endereço, conta contrato, categoria... (combine vários termos)" oninput="ccBuscaInput('${secId}')" class="cc-busca-input">
     <div class="cc-filtros">
       <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
