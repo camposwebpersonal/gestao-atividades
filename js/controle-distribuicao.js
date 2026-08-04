@@ -55,6 +55,21 @@ function _distGetExtra(it, chave){
   return (it && it.extra_fields && it.extra_fields[chave]) || '';
 }
 
+function _distNorm(s){ return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function _distMatchesBusca(it, buscaNorm){
+  if(!buscaNorm) return true;
+  const ef = it.extra_fields || {};
+  const text = _distNorm([
+    it.description || '',
+    ef['CPF do Paciente'] || '',
+    ef['Nome do Responsável'] || '',
+    ef['CPF do Responsável'] || '',
+    ef['Fórmula'] || '',
+    ef['Número do Processo'] || '',
+    ef['Telefone'] || ''
+  ].join(' '));
+  return text.includes(buscaNorm);
+}
 function _distStats(itens){
   const total = itens.length;
   let criancas = 0, adultos = 0, idosos = 0, qtdTotal = 0;
@@ -73,22 +88,9 @@ function _distStats(itens){
 window.renderControleDistribuicao = function(secId){
   const sec = S.secs.find(s => s.id === secId); if (!sec) return;
   curSecId = secId;
-  const busca = (document.getElementById('dist-busca')?.value || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const busca = _distNorm(document.getElementById('dist-busca')?.value || '');
   const itens = [...S.items.filter(i => i.atividade_id === secId)].sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
-  const filtrados = itens.filter(it => {
-    if (!busca) return true;
-    const ef = it.extra_fields || {};
-    const text = [
-      it.description || '',
-      ef['CPF do Paciente'] || '',
-      ef['Nome do Responsável'] || '',
-      ef['CPF do Responsável'] || '',
-      ef['Fórmula'] || '',
-      ef['Número do Processo'] || '',
-      ef['Telefone'] || ''
-    ].join(' ').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    return text.includes(busca);
-  });
+  const filtrados = itens.filter(it => _distMatchesBusca(it, busca));
 
   const stats = _distStats(itens);
   const statsHtml = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
@@ -144,22 +146,25 @@ window.renderControleDistribuicao = function(secId){
     </div>`;
   }).join('');
 
-  const headerHtml = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
-    <div style="flex:1;min-width:60px"></div>
-    ${S.isAdmin ? `<button class="btn-action primary" onclick="distOpenModal(null, '${secId}')">+ Beneficiário</button>` : ''}
-    ${S.isAdmin ? `<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>` : ''}
-    <button class="btn-action" onclick="distExportarPDF('${secId}')">📄 PDF</button>
-  </div>
-  <div style="margin-bottom:18px">
+  const headerHtml = `<div style="margin-bottom:14px">
     <div class="page-title">🎁 ${_distEsc(sec.name)}</div>
     <div class="page-sub">${_distEsc(sec.observacoes || 'Controle de distribuição de beneficiários/pacientes')}</div>
+  </div>
+  <div class="top-actions-fixed" style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
+      <div style="flex:1;min-width:20px"></div>
+      ${S.isAdmin ? `<button class="btn-action primary" onclick="distOpenModal(null, '${secId}')">+ Beneficiário</button>` : ''}
+      ${S.isAdmin ? `<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>` : ''}
+      <button class="btn-action" onclick="distExportarPDF('${secId}')">📄 PDF${busca ? ' (filtrado)' : ''}</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input type="text" id="dist-busca" placeholder="🔍 Buscar por nome, CPF, responsável, fórmula, processo ou telefone..." value="${busca ? _distEsc(busca) : ''}" oninput="distBusca('${secId}')" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px">
+      <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('dist-busca').value='';distBusca('${secId}')">Limpar</button>
+    </div>
   </div>`;
 
-  const searchHtml = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-    <input type="text" id="dist-busca" placeholder="🔍 Buscar por nome, CPF, responsável, fórmula, processo ou telefone..." value="${busca ? _distEsc(busca) : ''}" oninput="distBusca('${secId}')" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px">
-    <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('dist-busca').value='';distBusca('${secId}')">Limpar</button>
-  </div>`;
+  const searchHtml = '';
 
   const tableHtml = `<div style="overflow-x:auto">
     <table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden">
@@ -361,7 +366,8 @@ window.distExportarPDF = function(secId){
   if (!window.jspdf?.jsPDF) { toast('jsPDF não carregado', 'error'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const itens = [...S.items.filter(i => i.atividade_id === secId)].sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
+  const buscaAtiva = _distNorm(document.getElementById('dist-busca')?.value || '');
+  const itens = [...S.items.filter(i => i.atividade_id === secId)].filter(it => _distMatchesBusca(it, buscaAtiva)).sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
   const agora = new Date().toLocaleDateString('pt-BR');
 
   doc.setFillColor(13, 34, 64);
@@ -373,7 +379,7 @@ window.distExportarPDF = function(secId){
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(180, 210, 255);
-  doc.text('Relatório de distribuição  •  ' + agora, 14, 19);
+  doc.text('Relatório de distribuição  •  ' + agora + (buscaAtiva ? '  •  Busca ativa (resultado filtrado)' : ''), 14, 19);
 
   const header = ['#', 'Paciente', ...DIST_CAMPOS.map(c => c.label), 'Idade'];
   const body = itens.map((it, idx) => {

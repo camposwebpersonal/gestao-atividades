@@ -122,6 +122,7 @@ main{flex:1;overflow-y:auto}
 .cc-filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .cc-filtros select,.cc-filtros input{background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:13px}
 .cc-filtros-fixas{position:sticky;top:0;z-index:20;background:var(--bg);padding:12px 0;margin:0 0 16px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:10px}
+.top-actions-fixed{position:sticky;top:0;z-index:20;background:var(--bg);padding:12px 0;margin:0 0 16px;border-bottom:1px solid var(--border)}
 .cc-busca-input{width:100%;background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:14px}
 .cc-busca-input:focus{outline:none;border-color:var(--accent)}
 mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font-weight:700}
@@ -1131,7 +1132,7 @@ window.openActivity=function(secId){
   const qField=(sec.quantitativo_campo||'').trim()||(isBccs&&tableFields.includes('Remuneração')?'Remuneração':'');
   const showQuant=isBccs?sec.show_quantitativo!==0:sec.show_quantitativo==1;
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,isBccs?'Colaboradores Ativos por Secretaria':'Resumo Quantitativo'):'';
-  setC(`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
@@ -3213,10 +3214,11 @@ window.renderCadastros=function(secId){
     const topSubs=[...S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     topSubs.forEach((sb,si)=>{rows+=_rowSub(sb,num+'.'+(si+1),it,0);});
   });
-  setC(`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+  setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <button class="btn-action" onclick="openActivity('${secId}')">← Voltar</button>
     <div style="font-size:15px;font-weight:800">📋 ${esc(sec.name)}</div>
     ${_can?`<button class="btn-action" style="margin-left:auto" onclick="listaAddItem('${secId}')">+ Item</button>`:''}
+    <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>
   <div style="overflow-x:auto">

@@ -53,6 +53,7 @@ function ceInjectStyles(){
     .ce-header{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
     .ce-header h2{margin:0;font-size:20px;color:#e2e8f0}
     .ce-sub{font-size:13px;color:#94a3b8}
+    .ce-sticky-top{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:6px}
     .ce-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
     .ce-tab{padding:8px 16px;border-radius:8px;background:#0e1729;border:1px solid #1e3a5f;color:#94a3b8;cursor:pointer;font-size:13px}
     .ce-tab.active{background:#0ea5e9;color:#fff;border-color:#0ea5e9;font-weight:700}
@@ -274,21 +275,23 @@ window.renderControleEstoque=function(secId){
   }).join('') || '<div class="ce-empty">Nenhuma requisição cadastrada</div>';
 
   const html=`<div class="ce-wrap">
-    <div class="ce-header">
-      <div>
-        <h2>${titulo}</h2>
-        ${secretaria?`<div class="ce-sub">${secretaria}</div>`:''}
+    <div class="ce-sticky-top">
+      <div class="ce-header">
+        <div>
+          <h2>${titulo}</h2>
+          ${secretaria?`<div class="ce-sub">${secretaria}</div>`:''}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${can?`<button class="ce-btn ce-btn-ok" onclick="openItemModal(null,curSecId)">+ Categoria</button><button class="ce-btn ce-btn-ghost" onclick="openItemModal(null,curSecId)">+ Produto</button>`:''}
+          <button class="ce-btn ce-btn-pri" onclick="ceGerarPdf(curSecId)">📄 PDF</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${can?`<button class="ce-btn ce-btn-ok" onclick="openItemModal(null,curSecId)">+ Categoria</button><button class="ce-btn ce-btn-ghost" onclick="openItemModal(null,curSecId)">+ Produto</button>`:''}
-        <button class="ce-btn ce-btn-pri" onclick="ceGerarPdf(curSecId)">📄 PDF</button>
+      <div class="ce-tabs">
+        <div class="ce-tab" id="ce-tab-requisicoes" onclick="ceSetTab('requisicoes')">Requisições</div>
+        <div class="ce-tab" id="ce-tab-estoque" onclick="ceSetTab('estoque')">Estoque</div>
+        <div class="ce-tab" id="ce-tab-movimentacoes" onclick="ceSetTab('movimentacoes')">Movimentações</div>
+        <div class="ce-tab" id="ce-tab-relatorio" onclick="ceSetTab('relatorio')">Relatório</div>
       </div>
-    </div>
-    <div class="ce-tabs">
-      <div class="ce-tab" id="ce-tab-requisicoes" onclick="ceSetTab('requisicoes')">Requisições</div>
-      <div class="ce-tab" id="ce-tab-estoque" onclick="ceSetTab('estoque')">Estoque</div>
-      <div class="ce-tab" id="ce-tab-movimentacoes" onclick="ceSetTab('movimentacoes')">Movimentações</div>
-      <div class="ce-tab" id="ce-tab-relatorio" onclick="ceSetTab('relatorio')">Relatório</div>
     </div>
     <div class="ce-sec" id="ce-sec-requisicoes">
       <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
@@ -605,13 +608,24 @@ window.ceGerarPdf=async function(secId){
     y=doc.lastAutoTable.finalY+12;
   }
 
-  const movRows=lancs.map(e=>{
+  // Respeita o filtro de Movimentacoes ativo na tela (tipo/periodo)
+  const filtTipoPdf=document.getElementById('ce-filtro-tipo')?.value||'';
+  const filtIniPdf=document.getElementById('ce-filtro-ini')?.value||'';
+  const filtFimPdf=document.getElementById('ce-filtro-fim')?.value||'';
+  const lancsFiltrados=lancs.filter(e=>{
+    if(filtTipoPdf && e.tipo!==filtTipoPdf) return false;
+    if(filtIniPdf && (e.data||'')<filtIniPdf) return false;
+    if(filtFimPdf && (e.data||'')>filtFimPdf) return false;
+    return true;
+  });
+  const movRows=lancsFiltrados.map(e=>{
     const prod=produtos.find(p=>p.id===e.subitem_id);
     const isEnt=e.tipo==='ENTRADA';
     return [fmtD(e.data), e.tipo, _ceEsc(prod?.description||e.produto||''), _ceFmtNum(e.quantidade||0)+' '+_ceEsc(e.unidade||''), _ceFmtNum(e.qtd_base||0), isEnt?('R$ '+_ceFmtMoney(e.valor_total)):'—'];
   });
   if(movRows.length){
-    doc.setTextColor(226,232,240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('MOVIMENTAÇÕES',mx,y); y+=8;
+    const filtrosAtivosPdf=[]; if(filtTipoPdf) filtrosAtivosPdf.push('Tipo: '+filtTipoPdf); if(filtIniPdf) filtrosAtivosPdf.push('De: '+fmtD(filtIniPdf)); if(filtFimPdf) filtrosAtivosPdf.push('Até: '+fmtD(filtFimPdf));
+    doc.setTextColor(226,232,240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('MOVIMENTAÇÕES'+(filtrosAtivosPdf.length?' (filtrado: '+filtrosAtivosPdf.join(', ')+')':''),mx,y); y+=8;
     doc.autoTable({startY:y,margin:{left:mx,right:mx},theme:'grid',
       head:[['Data','Tipo','Produto','Qtd','Base','Total']],
       body:movRows,
