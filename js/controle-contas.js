@@ -58,8 +58,14 @@ window.renderControleContas = function(secId){
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
       if(buscaTokens.length){
-        const locEf = _ccLocalExtraFields(local);
-        const searchable = _ccNorm([item.description, local.description, locEf.endereco, locEf.conta_contrato, locEf.numero_relogio, locEf.medidor].filter(Boolean).join(' '));
+        // Busca em TUDO: categoria, local, todos os campos extras do local
+        // (ex: Distrito/Povoado/Sitio/Vila, Conta Contrato, Endereço, etc.)
+        // e a observação de cada lançamento. Se bater em qualquer lugar,
+        // o local inteiro aparece com todos os seus lançamentos.
+        const efLocal = (local && local.extra_fields) || {};
+        const obsTodas = S.contas.filter(c=>c.subitem_id===local.id).map(c=>c.observacao||'');
+        const partesBusca = [item.description, local.description, ...Object.values(efLocal), ...obsTodas];
+        const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
         const bate = buscaTokens.every(tok => searchable.includes(tok));
         if(!bate) return;
       }
