@@ -22,6 +22,44 @@ function _ccLocalExtraFields(local){
   };
 }
 
+function _ccTokenHit(text, tokens){
+  if(!tokens || !tokens.length) return false;
+  const norm = _ccNorm(text);
+  return tokens.some(tok => norm.includes(tok));
+}
+function _ccHighlight(text, tokens){
+  const raw = String(text==null?'':text);
+  if(!tokens || !tokens.length) return esc(raw);
+  // mapeia cada caractere original para sua versao normalizada (sem acento, maiuscula)
+  let norm = '', idxMap = [];
+  for(let i=0;i<raw.length;i++){
+    const ch = raw[i].normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+    for(let k=0;k<ch.length;k++){ norm += ch[k]; idxMap.push(i); }
+  }
+  const ranges = [];
+  tokens.forEach(tok=>{
+    if(!tok) return;
+    let from = 0;
+    while(true){
+      const pos = norm.indexOf(tok, from);
+      if(pos === -1) break;
+      ranges.push([idxMap[pos], idxMap[pos+tok.length-1]+1]);
+      from = pos + 1;
+    }
+  });
+  if(!ranges.length) return esc(raw);
+  ranges.sort((a,b)=>a[0]-b[0]);
+  const merged = [];
+  ranges.forEach(r=>{
+    if(merged.length && r[0] <= merged[merged.length-1][1]) merged[merged.length-1][1] = Math.max(merged[merged.length-1][1], r[1]);
+    else merged.push([...r]);
+  });
+  let out = '', last = 0;
+  merged.forEach(([s,e])=>{ out += raw.slice(last,s) + '\u0001' + raw.slice(s,e) + '\u0002'; last = e; });
+  out += raw.slice(last);
+  return esc(out).replace(/\u0001/g,'<mark class="cc-hl">').replace(/\u0002/g,'</mark>');
+}
+
 let _ccBuscaTimer = null;
 window.ccBuscaInput = function(secId){
   clearTimeout(_ccBuscaTimer);
@@ -110,14 +148,14 @@ window.renderControleContas = function(secId){
         return `<tr class="${pagoCls}">
           ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
-          ${colsOff.has('contrato')?'':`<td>${esc(contaContrato||'—')}</td>`}
+          ${colsOff.has('contrato')?'':`<td>${_ccHighlight(contaContrato||'—', buscaTokens)}</td>`}
           ${colsOff.has('leitura')?'':`<td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>`}
           ${colsOff.has('consumo')?'':`<td><input type="text" value="${esc(c.consumo_kwh||'')}" onchange="ccSalvarCampo('${c.id}','consumo_kwh',this.value)" placeholder="kWh"></td>`}
           <td><input type="number" step="0.01" value="${esc(String(c.valor||''))}" onchange="ccSalvarCampo('${c.id}','valor',this.value)" placeholder="R$"></td>
           <td><input type="date" value="${esc(c.data_vencimento||'')}" onchange="ccSalvarCampo('${c.id}','data_vencimento',this.value)"></td>
           <td><input type="date" value="${esc(c.data_pagamento||'')}" onchange="ccSalvarCampo('${c.id}','data_pagamento',this.value)"></td>
           <td class="cc-col-pago"><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></td>
-          <td><input type="text" value="${esc(c.observacao||'')}" onchange="ccSalvarCampo('${c.id}','observacao',this.value)" placeholder="Obs."></td>
+          <td><input type="text" class="${_ccTokenHit(c.observacao,buscaTokens)?'cc-obs-match':''}" value="${esc(c.observacao||'')}" onchange="ccSalvarCampo('${c.id}','observacao',this.value)" placeholder="Obs."></td>
           <td style="text-align:center">${situacaoSvg}</td>
           <td style="white-space:nowrap">${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
         </tr>`;
@@ -130,7 +168,7 @@ window.renderControleContas = function(secId){
         const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<div class="cc-mobile-card">
           <div class="cc-mobile-title">${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
-          ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${esc(contaContrato||'—')}</span></div>`}
+          ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${_ccHighlight(contaContrato||'—', buscaTokens)}</span></div>`}
           ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
           ${colsOff.has('consumo')?'':`<div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>`}
           <div class="cc-mobile-row"><span>Valor</span><span>R$ ${esc(String((parseFloat(c.valor)||0).toFixed(2)))}</span></div>
@@ -138,15 +176,15 @@ window.renderControleContas = function(secId){
           <div class="cc-mobile-row"><span>Pagamento</span><span>${fmtD(c.data_pagamento)}</span></div>
           <div class="cc-mobile-row"><span>Pago</span><span><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></span></div>
           <div class="cc-mobile-row"><span>Situação</span><span>${situacaoSvg}</span></div>
-          <div class="cc-mobile-row"><span>Obs.</span><span>${esc(c.observacao||'—')}</span></div>
+          <div class="cc-mobile-row"><span>Obs.</span><span>${_ccHighlight(c.observacao||'—', buscaTokens)}</span></div>
         </div>`;
       }).join('');
 
       locaisHtml += `<div class="cc-local-card">
         <div class="cc-local-head">
           <div class="cc-local-title">
-            <div class="cc-local-name">${esc(local.description||'Local')}</div>
-            <div class="cc-local-meta">${esc(headMetaStr)}</div>
+            <div class="cc-local-name">${_ccHighlight(local.description||'Local', buscaTokens)}</div>
+            <div class="cc-local-meta">${_ccHighlight(headMetaStr, buscaTokens)}</div>
           </div>
           <div class="cc-local-actions">
             ${S.isAdmin?`<button class="card-btn" onclick="ccOpenLocalModal('${local.id}','${item.id}')">✏️</button>`:''}
@@ -181,7 +219,7 @@ window.renderControleContas = function(secId){
     if(catQtd > 0) resumoCats.push({ nome: item.description || 'Categoria', qtd: catQtd, qPago: catQPago, qPendente: catQPendente, total: catTotal, pago: catPago, pendente: catPend });
     return `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-        <div style="font-size:15px;font-weight:800;color:#60a5fa">${esc(item.description||'Categoria')}</div>
+        <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
           <span class="cc-badge" style="font-weight:700">Total: R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
