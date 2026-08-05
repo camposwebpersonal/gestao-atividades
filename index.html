@@ -2239,7 +2239,6 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
       rows.push([
         {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
         {content:sc,styles:txtStyles},
-        {content:'',styles:{fillColor:fill,textColor:txt,fontSize:7}},
         {content:sD?'100%':'0%',styles:{halign:'center',fillColor:fill,textColor:txt,fontSize:7.5}},
         {content:sD?'✓ Concluído':sL?'⚠ Atrasado':'Pendente',styles:{fillColor:fill,textColor:txt,fontSize:7}},
         {content:s.deadline_date?fmtD(s.deadline_date):'—',styles:{fillColor:fill,textColor:txt,fontSize:7}}
@@ -2374,9 +2373,13 @@ window.gerarPdf=async function(secId,opts){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF\u2026','info',8000);
   const{jsPDF}=window.jspdf;
-  let doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,mx=14,cw=W-mx*2;
-  const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const _cp=sec.controle_pendencias!==0;
+  const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
+  const totalCols=(useTable?5:(_cp?5:2))+(opts.efFields?opts.efFields.length:0);
+  const useLandscape=totalCols>6;
+  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
+  const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
+  const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const lhf=pt=>(pt||9)*0.3528*1.5;
   const now=new Date().toLocaleDateString('pt-BR');
@@ -2472,7 +2475,6 @@ window.gerarPdf=async function(secId,opts){
   }
 
   y+=2;
-  const _cp=sec.controle_pendencias!==0;
 
   if(_cp){
   // ── Stats boxes ──
@@ -2546,15 +2548,10 @@ window.gerarPdf=async function(secId,opts){
     if(allCards.length){const cW=allCards.length>0?(cw-(Math.min(allCards.length,2)-1)*3)/Math.min(allCards.length,2):cw;let cardY=y;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=17;const cx=mx+col*(cW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cW/2,cardY+8,{align:'center'});if(card.title){sf(7,true,card.c);doc.text(card.title,cx+cW/2,cardY+11,{align:'center'});sf(6,false,[100,116,139]);doc.text(card.l,cx+cW/2,cardY+14,{align:'center'});}else{sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cW/2,cardY+12,{align:'center'});}});y=cardY+17+2;}
   }
 
-  const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
-  const totalCols=(useTable?5:(_cp?6:2))+(opts.efFields?opts.efFields.length:0);
-  const useLandscape=totalCols>6;
-  if(useLandscape){doc.deletePage(doc.internal.getNumberOfPages());doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});}
-
   // Identifica campos numéricos selecionados
   const numFields=(opts.efFields||[]).filter(fn=>{const t=S.fieldTemplates.find(x=>x.atividade_id===secId&&x.scope==='subitem'&&x.field_name===fn);return t&&t.field_type==='number';});
   const sumVal=v=>{const n=parseFloat(String(v||'').replace(/[^\d,\-]/g,'').replace(',','.'));return isNaN(n)?0:n;};
-  const colStyles=useTable?{}:(_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:14,halign:'center'},4:{cellWidth:26},5:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}});
+  const colStyles=useTable?{}:(_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:26},4:{cellWidth:28}}:{0:{cellWidth:8,halign:'center'}});
   if(useTable){colStyles[0]={cellWidth:8,halign:'center'};colStyles[1]={cellWidth:14,halign:'center'};colStyles[2]={cellWidth:42};colStyles[3]={cellWidth:26};colStyles[4]={cellWidth:30};}
 
   // ── Tabela de itens ──
@@ -2569,7 +2566,7 @@ window.gerarPdf=async function(secId,opts){
   if(useTable){
     const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];
     (opts.efFields||[]).forEach(fn=>h.push(fn));
-    if(_cp){h.push('Subs');h.push('Prog.');h.push('Status');h.push('Prazo');}
+    if(_cp){h.push('Prog.');h.push('Status');h.push('Prazo');}
     tblH=[h];
     const totalCols=h.length;
     for(let ii=0;ii<items.length;ii++){
@@ -2582,10 +2579,10 @@ window.gerarPdf=async function(secId,opts){
       if(item.responsaveis)itemContent+='\nResp: '+item.responsaveis;
       if(item.observacao)itemContent+='\nObs: '+item.observacao;
       if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+ef[fn];});}
-      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';itemContent+='\nSubs: '+subCnt+'  |  Prog: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
+      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);itemContent+='\nProg: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
       tblB.push([
-        {content:String(rowNum),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},
-        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}
+        {content:String(rowNum),styles:{fontSize:7.5,textColor:[13,34,64],halign:'center'}},
+        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
       if(pr.hasSubs){const subR=_pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal);subR.rows.forEach(r=>tblB.push(r));subR.imgs.forEach(e=>tblE.push(e));
@@ -2596,7 +2593,7 @@ window.gerarPdf=async function(secId,opts){
     tblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);tblE.push({cu:null,ru:null});
     const totRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}}));totRow[0]={content:'\u03a3',styles:{fillColor:[13,34,64],textColor:[255,255,255],halign:'center'}};totRow[1]={content:'Total: '+items.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8}};numFields.forEach(fn=>{const v=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);totRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8,halign:'right'}};}});tblB.push(totRow);tblE.push({cu:null,ru:null});
   }else{
-    tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
+    tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
     for(let ii=0;ii<items.length;ii++){
       const item=items[ii];const pr=itemProgs[ii].prog;
       const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
@@ -2608,17 +2605,15 @@ window.gerarPdf=async function(secId,opts){
       if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
       if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
       const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
-      const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
       const itemRow=_cp?[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:subCnt,styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:pct+'%',styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:st,styles:{fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[13,64,20],textColor:[215,255,215]}}
+        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+        {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+        {content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},
+        {content:st,styles:{fillColor:[219,234,254],textColor:[13,34,64]}},
+        {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[219,234,254],textColor:[13,34,64]}}
       ]:[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}}
+        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+        {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}}
       ];
       tblB.push(itemRow);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
@@ -2628,15 +2623,14 @@ window.gerarPdf=async function(secId,opts){
           {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
-          {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}
         ]:[
           {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
           {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}}
         ];
         tblB.push(subRow);tblE.push({cu:null,ru:null});
-        if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
-      }else if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
+        if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
+      }else if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
     }
     const allSums=numFields.map(fn=>items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);
     const totSumTxt=allSums.length?'  |  '+allSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
@@ -2645,13 +2639,12 @@ window.gerarPdf=async function(secId,opts){
       {content:'Total: '+items.length+' item(ns)'+totSumTxt,styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
       {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
       {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
-      {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
       {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}}
     ]:[
       {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
       {content:'Total: '+items.length+' item(ns)'+totSumTxt,styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}}
     ];
-    const spTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
+    const spTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
     tblB.push(spTot);tblE.push({cu:null,ru:null});
     tblB.push(totRow);tblE.push({cu:null,ru:null});
   }
@@ -2699,48 +2692,46 @@ window.gerarPdf=async function(secId,opts){
     });
     if(sepItems.length>0){
       y=(doc.lastAutoTable?doc.lastAutoTable.finalY:y)+5;chk(12);
-      doc.setFillColor(13,64,20);doc.roundedRect(mx,y,cw,9,2,2,'F');
+      doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');
       sf(10,true,[255,255,255]);doc.text(opts.sepField.toUpperCase()+': '+opts.sepVal,mx+5,y+6.5);y+=13;
       let sTblH,sTblB=[],sTblE=[];
       if(useTable){
-        const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];(opts.efFields||[]).forEach(fn=>h.push(fn));if(_cp){h.push('Subs');h.push('Prog.');h.push('Status');h.push('Prazo');}sTblH=[h];const totalCols=h.length;
+        const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];(opts.efFields||[]).forEach(fn=>h.push(fn));if(_cp){h.push('Prog.');h.push('Status');h.push('Prazo');}sTblH=[h];const totalCols=h.length;
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
           const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
           let itemContent=item.description||'';if(item.responsaveis)itemContent+='\nResp: '+item.responsaveis;if(item.observacao)itemContent+='\nObs: '+item.observacao;
           if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+ef[fn];});}
-          if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';itemContent+='\nSubs: '+subCnt+'  |  Prog: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
-          sTblB.push([{content:String(sii+1),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},{content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}]);sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const sr=['',String(si+1)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push('',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}sTblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
+          if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);itemContent+='\nProg: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
+          sTblB.push([{content:String(sii+1),styles:{fontSize:7.5,textColor:[13,34,64],halign:'center'}},{content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}]);sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const sr=['',String(si+1)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push(sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}sTblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
           const sepSubRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}));sepSubRow[0]={content:'\u2211',styles:{fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'center'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)',styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
           if(sii<sepItems.length-1){sTblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);sTblE.push({cu:null,ru:null});}
         });
         sTblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);sTblE.push({cu:null,ru:null});
         const sepTotRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}}));sepTotRow[0]={content:'\u03a3',styles:{fillColor:[13,34,64],textColor:[255,255,255],halign:'center'}};sepTotRow[1]={content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8}};numFields.forEach(fn=>{const v=sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);sepTotRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255],fontSize:8,halign:'right'}};}});sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
       }else{
-        sTblH=_cp?[['#','Item / Sub-item / Respons\u00e1veis','Subs','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Sub-item / Respons\u00e1veis']];
+        sTblH=_cp?[['#','Item / Sub-item / Respons\u00e1veis','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Sub-item / Respons\u00e1veis']];
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
           const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
           let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;if(item.observacao)cell1+='\nObs: '+item.observacao;
           if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
-          const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);const subCnt=pr.hasSubs?(pr.subs.filter(s=>s.concluded==1).length+'/'+pr.total):'—';
+          const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
           const sepItemRow=_cp?[
-            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:subCnt,styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:pct+'%',styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:st,styles:{fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[13,64,20],textColor:[215,255,215]}}
+            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+            {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+            {content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},
+            {content:st,styles:{fillColor:[219,234,254],textColor:[13,34,64]}},
+            {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[219,234,254],textColor:[13,34,64]}}
           ]:[
-            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},
-            {content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}}
+            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
+            {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}}
           ];
           sTblB.push(sepItemRow);
           sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){sTblB.push(['',sc,'',sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
+          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){sTblB.push(['',sc,sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
           const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const sepSubRow=_cp?[
             {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
             {content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}},
-            {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
             {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
             {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}},
             {content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}
@@ -2749,12 +2740,11 @@ window.gerarPdf=async function(secId,opts){
             {content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[230,245,230],textColor:[20,82,20]}}
           ];
           sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
-          if(sii<sepItems.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];sTblB.push(sp);sTblE.push({cu:null,ru:null});}
+          if(sii<sepItems.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];sTblB.push(sp);sTblE.push({cu:null,ru:null});}
         });
         const sepTotRow=_cp?[
           {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
-          {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'',styles:{fillColor:[13,34,64],textColor:[255,255,255]}}
@@ -2763,7 +2753,7 @@ window.gerarPdf=async function(secId,opts){
           {content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}}
         ];
         const _sepTotSums=numFields.map(fn=>sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);const _sepTotSumTxt=_sepTotSums.length?'  |  '+_sepTotSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';if(_cp){sepTotRow[1].content+=_sepTotSumTxt;}else{sepTotRow[1].content+=_sepTotSumTxt;}
-        const spSepTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
+        const spSepTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
         sTblB.push(spSepTot);sTblE.push({cu:null,ru:null});
         sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
       }
@@ -3578,7 +3568,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
     for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';if(item.secretaria_id){const secName=S.secretarias.find(s=>s.id===item.secretaria_id)?.name;if(secName)dados+='Secretaria: '+secName;}for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+ef[t.field_name];}tblB.push([String(rn),item.description||'',dados]);}
     tblB.push(['Σ','Subtotal: '+grpItems.length+' registro(s)','']);
     totalReg+=grpItems.length;
-    doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:52}},didParseCell:function(dat){if(dat.section!=='body')return;const r0=dat.row.raw[0];if(r0!==''&&r0!=='Σ'){dat.cell.styles.fillColor=[13,64,20];dat.cell.styles.textColor=[215,255,215];dat.cell.styles.fontStyle='bold';}else if(r0==='Σ'){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontStyle='italic';dat.cell.styles.fontSize=7;if(dat.column.index===0)dat.cell.text=[];}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+    doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:52}},didParseCell:function(dat){if(dat.section!=='body')return;const r0=dat.row.raw[0];if(r0!==''&&r0!=='Σ'){dat.cell.styles.fillColor=[219,234,254];dat.cell.styles.textColor=[13,34,64];dat.cell.styles.fontStyle='bold';}else if(r0==='Σ'){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontStyle='italic';dat.cell.styles.fontSize=7;if(dat.column.index===0)dat.cell.text=[];}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
     y=doc.lastAutoTable?doc.lastAutoTable.finalY+8:y+8;
   }
   chk(14);doc.setFillColor(13,34,64);doc.roundedRect(mx,y,cw,10,2,2,'F');sf(9,true,[180,210,255]);doc.text('Σ TOTAL GERAL: '+totalReg+' registro(s) em '+groups.size+' grupo(s)',mx+6,y+7);y+=14;
@@ -4225,21 +4215,6 @@ async function gerarPdfBusca(){
   if(!sec||!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
   window.toast('Gerando PDF\u2026','info',8000);
   const {jsPDF}=window.jspdf;
-  let doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,mx=14,cw=W-mx*2;
-  const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const lhf=pt=>(pt||9)*0.3528*1.5;
-  const now=new Date().toLocaleDateString('pt-BR');
-  const campoLabel={todos:'Todos os campos',nome:'Nome/Descri\u00e7\u00e3o',resp:'Respons\u00e1veis',obs:'Observa\u00e7\u00e3o'};
-  const lObj=await window.loadB64('img/logo_sertania.png','png',120);
-  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
-  function bgTextura(){doc.setFillColor(215,242,215);for(let gx=14;gx<=196;gx+=7)for(let gy=HDR_H+4;gy<=FTR_Y-2;gy+=7)doc.circle(gx,gy,0.22,'F');}
-  function cabecalho(){bgTextura();doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RESULTADOS DA BUSCA',mx+10,14);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania \u2014 PE  \u2022  Controle PMS  \u2022  '+now,mx+10,23);}
-  function rodape(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');if(lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}sf(7,true,[185,245,185]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA \u2014 PE',mx+16,FTR_Y+7);sf(6.5,false,[180,240,180]);doc.text('Sert\u00e2nia \u2014 PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});}
-  let y=BODY_TOP,pageNum=1;
-  const chk=n=>{if(y+n>BODY_BOT){rodape();doc.addPage();pageNum++;cabecalho();y=BODY_TOP;}};
-  cabecalho();
   const chkAllSubsItem=document.getElementById('bchk-allsubs-item')?.checked||false;
   const chkAllSubsSub=document.getElementById('bchk-allsubs-sub')?.checked||false;
   const chkImgCov=document.getElementById('bchk-img-cov')?.checked!==false;
@@ -4253,6 +4228,24 @@ async function gerarPdfBusca(){
   const sumFields=[];
   document.querySelectorAll('#busca-pdf-sum input[data-ef]').forEach(cb=>{if(cb.checked)sumFields.push(cb.getAttribute('data-ef'));});
   const _cp=sec.controle_pendencias!==0;
+  const useTable=tableMode&&efFields.length>0;
+  const totalCols=(useTable?5:(_cp?5:3))+efFields.length;
+  const useLandscape=totalCols>6;
+  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
+  const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
+  const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const lhf=pt=>(pt||9)*0.3528*1.5;
+  const now=new Date().toLocaleDateString('pt-BR');
+  const campoLabel={todos:'Todos os campos',nome:'Nome/Descri\u00e7\u00e3o',resp:'Respons\u00e1veis',obs:'Observa\u00e7\u00e3o'};
+  const lObj=await window.loadB64('img/logo_sertania.png','png',120);
+  function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
+  function bgTextura(){doc.setFillColor(215,242,215);for(let gx=14;gx<=196;gx+=7)for(let gy=HDR_H+4;gy<=FTR_Y-2;gy+=7)doc.circle(gx,gy,0.22,'F');}
+  function cabecalho(){bgTextura();doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RESULTADOS DA BUSCA',mx+10,14);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania \u2014 PE  \u2022  Controle PMS  \u2022  '+now,mx+10,23);}
+  function rodape(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');if(lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}sf(7,true,[185,245,185]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA \u2014 PE',mx+16,FTR_Y+7);sf(6.5,false,[180,240,180]);doc.text('Sert\u00e2nia \u2014 PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});}
+  let y=BODY_TOP,pageNum=1;
+  const chk=n=>{if(y+n>BODY_BOT){rodape();doc.addPage();pageNum++;cabecalho();y=BODY_TOP;}};
+  cabecalho();
   // Title block
   doc.setFillColor(13,34,64);doc.rect(mx,y,cw,0.7,'F');y+=3;
   sf(15,true,[13,34,64]);doc.text(sec.name||'ATIVIDADE',mx,y+8);
@@ -4277,10 +4270,6 @@ async function gerarPdfBusca(){
   // Table header
   chk(12);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');sf(10,true,[255,255,255]);doc.text('ITENS E SUBITENS ENCONTRADOS',mx+5,y+6.5);y+=13;
   // Build rows
-  const useTable=tableMode&&efFields.length>0;
-  const totalCols=(useTable?5:(_cp?5:3))+efFields.length;
-  const useLandscape=totalCols>6;
-  if(useLandscape){doc.deletePage(doc.internal.getNumberOfPages());doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});}
   let tblH,tblB=[],tblE=[],c=1;
   if(useTable){
     const h=['#','Item','Nome / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];
@@ -4302,7 +4291,7 @@ async function gerarPdfBusca(){
       if(_cp)itemContent+='\nProg: '+pct+'%  |  '+(isDone?'\u2713 Conclu\u00eddo':'Pendente');
       tblB.push([
         {content:String(c++),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},
-        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[13,64,20],textColor:[215,255,215],fontStyle:'bold',fontSize:7.5}}
+        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
       const busR=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR.rows.forEach(r=>tblB.push(r));busR.imgs.forEach(e=>tblE.push(e));
@@ -4329,9 +4318,9 @@ async function gerarPdfBusca(){
       let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
       if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
       if(_cp){
-        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:pct+'%',styles:{halign:'center',fillColor:[13,64,20],textColor:[215,255,215]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[13,64,20],textColor:isDone?[100,230,175]:[215,255,215]}},{content:item.observacao||'',styles:{fillColor:[13,64,20],textColor:[215,255,215],fontSize:7.5}}]);
+        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[219,234,254],textColor:isDone?[16,110,80]:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[219,234,254],textColor:[13,34,64],fontSize:7.5}}]);
       }else{
-        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[13,64,20],textColor:[215,255,215]}},{content:item.observacao||'',styles:{fillColor:[13,64,20],textColor:[215,255,215],fontSize:7.5}}]);
+        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[219,234,254],textColor:[13,34,64],fontSize:7.5}}]);
       }
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
       const busR2=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR2.rows.forEach(r=>tblB.push(r));busR2.imgs.forEach(e=>tblE.push(e));
