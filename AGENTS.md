@@ -6,5 +6,9 @@
   imediatamente, sempre.
 - Não perguntar "quer testar local antes ou publicar direto?" — a resposta é
   sempre publicar direto.
-- Se for necessário um Personal Access Token do GitHub para o push, pedir ao
-  usuário apenas o token (não repetir a pergunta sobre local vs. produção).
+- O token do GitHub do usuário já está salvo com segurança no chaveiro do
+  sistema (git-credential-libsecret), configurado como credential.helper
+  deste repositório. NÃO é mais necessário pedir o token ao usuário: basta
+  rodar `git push origin main` normalmente que a autenticação acontece
+  sozinha via chaveiro. Só peça o token novamente se o push falhar por
+  autenticação (ex.: token expirado/revogado).
