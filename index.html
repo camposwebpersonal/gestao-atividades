@@ -1022,27 +1022,45 @@ window.openActivity=function(secId){
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
   const allTpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
   const allEntities=[...items,...S.subitems.filter(s=>items.some(i=>i.id===s.item_id))];
-  const extraKeys=new Set();
+  // Normaliza nomes de campo (trim + acentuação) para evitar colunas "duplicadas"
+  // quando o mesmo campo foi salvo com espaços extras ou variação de acentuação/maiúsculas.
+  const _normFieldKey=k=>String(k||'').trim().normalize('NFC').replace(/\s+/g,' ').toLowerCase();
+  const fieldLabelByNorm=new Map();
   const hasValue=new Map();
   const isInternal=k=>{
     if(String(k).startsWith('item_show_')||String(k).startsWith('show_'))return true;
     return ['id','extra_fields','description','observacao','responsaveis','secretaria_id','item_icon','item_color','concluded','conclusion_date','status','show_conclusion_date','order_num','created_at','updated_at','atividade_id','item_id','parent_id','parent_type','auto_concluded','cover_url','resp_url','deadline_date','start_date'].includes(k);
   };
+  allTpls.forEach(t=>{
+    const nk=_normFieldKey(t.field_name);
+    if(nk&&!fieldLabelByNorm.has(nk))fieldLabelByNorm.set(nk,t.field_name);
+  });
   allEntities.forEach(ent=>{
     const ef=ent.extra_fields||{};
     const merged={...ef};
     Object.keys(ent).forEach(k=>{if(!(k in merged))merged[k]=ent[k];});
     Object.keys(merged).forEach(k=>{
       if(isInternal(k))return;
+      const nk=_normFieldKey(k);
+      if(!nk)return;
+      if(!fieldLabelByNorm.has(nk))fieldLabelByNorm.set(nk,k);
       const raw=merged[k];
       const str=raw==null?'':String(raw).trim();
-      if(str!==''){
-        extraKeys.add(k);
-        hasValue.set(k,true);
-      }
+      if(str!=='')hasValue.set(nk,true);
     });
   });
-  const tableFields=[...new Set([...allTpls.map(t=>t.field_name),...extraKeys])].filter(f=>!isInternal(f)&&hasValue.get(f));
+  // Helper para ler o valor de um campo em qualquer entidade (item/subitem),
+  // tolerando variações de espaço/acentuação/maiúsculas na chave salva.
+  const _tblFieldVal=(ent,fn)=>{
+    const ef=ent.extra_fields||{};
+    if(ef[fn]!=null)return ef[fn];
+    if(ent[fn]!=null)return ent[fn];
+    const nk=_normFieldKey(fn);
+    for(const k of Object.keys(ef)){if(_normFieldKey(k)===nk)return ef[k];}
+    for(const k of Object.keys(ent)){if(_normFieldKey(k)===nk)return ent[k];}
+    return undefined;
+  };
+  const tableFields=[...fieldLabelByNorm.entries()].filter(([nk])=>hasValue.get(nk)).map(([,label])=>label);
   const useTableAtiv=tableModeAtiv&&(tableFields.length>0||items.length>0);
   const hasResumoField=tableFields.includes('Mês')&&tableFields.includes('Remuneração');
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
@@ -1062,7 +1080,7 @@ window.openActivity=function(secId){
       tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${_tblCell(esc(item.description||''),'it-name',item.id,false,null)}${childBadge(item.id,false)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(item.responsaveis||''),null,item.id,false,null)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(item.observacao||''),'it-obs',item.id,false,null)}</td>`;
-      tableFields.forEach(fn=>{const raw=(item.extra_fields||{})[fn]!=null?(item.extra_fields||{})[fn]:item[fn]; tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
+      tableFields.forEach(fn=>{const raw=_tblFieldVal(item,fn); tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td><td style="padding:8px 10px;border-bottom:1px solid #1e293b">${statusBadge(item.status||'pendente',item.id,'item')}</td>`;}
       if(_can) tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(item.id,false,null,item.concluded==1)}</td>`;
       tbl+='</tr>';
@@ -1078,7 +1096,7 @@ window.openActivity=function(secId){
           tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.description||''),'it-name',c.id,true,parentId)}${childBadge(c.id,true)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.responsaveis||''),null,c.id,true,parentId)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.observacao||''),'it-obs',c.id,true,parentId)}</td>`;
-          tableFields.forEach(fn=>{const raw=(c.extra_fields||{})[fn]!=null?(c.extra_fields||{})[fn]:c[fn]; tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
+          tableFields.forEach(fn=>{const raw=_tblFieldVal(c,fn); tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
           if(_cp){tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td><td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px">${statusBadge(c.status||'pendente',c.id,'subitem')}</td>`;}
           if(_can) tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px;text-align:right">${_tblAct(c.id,true,parentId,c.concluded==1)}</td>`;
           tbl+='</tr>';
@@ -1093,7 +1111,7 @@ window.openActivity=function(secId){
         tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(s.description||''),'it-name',s.id,true,item.id)}${childBadge(s.id,true)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(s.responsaveis||''),null,s.id,true,item.id)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(s.observacao||''),'it-obs',s.id,true,item.id)}</td>`;
-        tableFields.forEach(fn=>{const raw=(s.extra_fields||{})[fn]!=null?(s.extra_fields||{})[fn]:s[fn]; tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
+        tableFields.forEach(fn=>{const raw=_tblFieldVal(s,fn); tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
         if(_cp){tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;border-bottom:1px solid #1e293b">${statusBadge(s.status||'pendente',s.id,'subitem')}</td>`;}
         if(_can) tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(s.id,true,item.id,s.concluded==1)}</td>`;
         tbl+='</tr>';
@@ -2219,7 +2237,6 @@ window.executarImportacaoJSON=async function(){
 function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
   const tree=getSubTree(item.id);
   const flat=flattenSubTree(tree,String(rowNum));
-  const lvlColors=[[230,240,250],[240,250,240],[250,250,230],[250,240,250],[250,230,240]];
   const lvlTextColors=[[80,100,140],[60,120,60],[120,100,40],[100,60,140],[140,60,100]];
   const rows=[];
   const imgs=[];
@@ -2232,7 +2249,7 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     let sc=indent+branch+s._hierNum+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
     if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
-    const fill=lvlColors[Math.min(lvl,4)];
+    const fill=[255,255,255];
     const txt=lvlTextColors[Math.min(lvl,4)];
     const txtStyles={fillColor:fill,textColor:txt,fontSize:7.5,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
     if(_cp){
@@ -2582,7 +2599,7 @@ window.gerarPdf=async function(secId,opts){
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);itemContent+='\nProg: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
       tblB.push([
         {content:String(rowNum),styles:{fontSize:7.5,textColor:[13,34,64],halign:'center'}},
-        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
+        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[255,255,255],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
       if(pr.hasSubs){const subR=_pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal);subR.rows.forEach(r=>tblB.push(r));subR.imgs.forEach(e=>tblE.push(e));
@@ -2606,14 +2623,14 @@ window.gerarPdf=async function(secId,opts){
       if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
       const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
       const itemRow=_cp?[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-        {content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},
-        {content:st,styles:{fillColor:[219,234,254],textColor:[13,34,64]}},
-        {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[219,234,254],textColor:[13,34,64]}}
+        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+        {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+        {content:pct+'%',styles:{halign:'center',fillColor:[255,255,255],textColor:[13,34,64]}},
+        {content:st,styles:{fillColor:[255,255,255],textColor:[13,34,64]}},
+        {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[255,255,255],textColor:[13,34,64]}}
       ]:[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}}
+        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+        {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}}
       ];
       tblB.push(itemRow);
       tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
@@ -2702,7 +2719,7 @@ window.gerarPdf=async function(secId,opts){
           let itemContent=item.description||'';if(item.responsaveis)itemContent+='\nResp: '+item.responsaveis;if(item.observacao)itemContent+='\nObs: '+item.observacao;
           if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+ef[fn];});}
           if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);itemContent+='\nProg: '+pct+'%  |  '+st+'  |  Prazo: '+(item.deadline_date?fmtD(item.deadline_date):'\u2014');}
-          sTblB.push([{content:String(sii+1),styles:{fontSize:7.5,textColor:[13,34,64],halign:'center'}},{content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}]);sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
+          sTblB.push([{content:String(sii+1),styles:{fontSize:7.5,textColor:[13,34,64],halign:'center'}},{content:itemContent,colSpan:totalCols-1,styles:{fillColor:[255,255,255],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}]);sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
           sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;const sr=['',String(si+1)+'.',s.description||'',s.responsaveis||'',s.observacao||''];(opts.efFields||[]).forEach(fn=>{const v=(s.extra_fields||{})[fn];sr.push(v||'');});if(_cp){sr.push(sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014');}sTblB.push(sr.map(v=>({content:v,styles:{fontSize:7.5,textColor:[26,32,44]}})));sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
           const sepSubRow=new Array(totalCols).fill(null).map(()=>({content:'',styles:{fillColor:[230,245,230],textColor:[20,82,20]}}));sepSubRow[0]={content:'\u2211',styles:{fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'center'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)',styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=5+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fontSize:7.5,fillColor:[230,245,230],textColor:[20,82,20],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
           if(sii<sepItems.length-1){sTblB.push([{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}},colSpan:totalCols}]);sTblE.push({cu:null,ru:null});}
@@ -2717,14 +2734,14 @@ window.gerarPdf=async function(secId,opts){
           if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
           const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
           const sepItemRow=_cp?[
-            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-            {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-            {content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},
-            {content:st,styles:{fillColor:[219,234,254],textColor:[13,34,64]}},
-            {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[219,234,254],textColor:[13,34,64]}}
+            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+            {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+            {content:pct+'%',styles:{halign:'center',fillColor:[255,255,255],textColor:[13,34,64]}},
+            {content:st,styles:{fillColor:[255,255,255],textColor:[13,34,64]}},
+            {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[255,255,255],textColor:[13,34,64]}}
           ]:[
-            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},
-            {content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}}
+            {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
+            {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}}
           ];
           sTblB.push(sepItemRow);
           sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
@@ -4183,7 +4200,6 @@ function executarBusca(){
 function _pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,rowPrefix){
   const idToSub={};subsToRender.forEach(s=>idToSub[s.id]=s);
   const getLevel=s=>{if(s.parent_type!=='subitem')return 0;const p=idToSub[s.parent_id];return p?getLevel(p)+1:1;};
-  const lvlColors=[[230,240,250],[240,250,240],[250,250,230],[250,240,250],[250,230,240]];
   const lvlTextColors=[[80,100,140],[60,120,60],[120,100,40],[100,60,140],[140,60,100]];
   const rows=[],imgs=[];
   subsToRender.forEach((s,si)=>{
@@ -4194,7 +4210,7 @@ function _pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,rowPrefix){
     let sc=indent+branch+(rowPrefix?rowPrefix+'.':'')+(si+1)+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
     if(efFields&&efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
-    const fill=lvlColors[Math.min(lvl,4)];
+    const fill=[255,255,255];
     const txt=lvlTextColors[Math.min(lvl,4)];
     const txtStyles={fontSize:7.5,textColor:txt,fillColor:fill,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
     if(_cp){
@@ -4291,7 +4307,7 @@ async function gerarPdfBusca(){
       if(_cp)itemContent+='\nProg: '+pct+'%  |  '+(isDone?'\u2713 Conclu\u00eddo':'Pendente');
       tblB.push([
         {content:String(c++),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},
-        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[219,234,254],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
+        {content:itemContent,colSpan:totalCols-1,styles:{fillColor:[255,255,255],textColor:[13,34,64],fontStyle:'bold',fontSize:7.5}}
       ]);
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
       const busR=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR.rows.forEach(r=>tblB.push(r));busR.imgs.forEach(e=>tblE.push(e));
@@ -4318,9 +4334,9 @@ async function gerarPdfBusca(){
       let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
       if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
       if(_cp){
-        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:pct+'%',styles:{halign:'center',fillColor:[219,234,254],textColor:[13,34,64]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[219,234,254],textColor:isDone?[16,110,80]:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[219,234,254],textColor:[13,34,64],fontSize:7.5}}]);
+        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:pct+'%',styles:{halign:'center',fillColor:[255,255,255],textColor:[13,34,64]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[255,255,255],textColor:isDone?[16,110,80]:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[255,255,255],textColor:[13,34,64],fontSize:7.5}}]);
       }else{
-        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[219,234,254],textColor:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[219,234,254],textColor:[13,34,64],fontSize:7.5}}]);
+        tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[255,255,255],textColor:[13,34,64],fontSize:7.5}}]);
       }
       tblE.push({cu:chkImgItemCov?item.cover_url:null,ru:chkImgItemResp?item.resp_url:null});
       const busR2=_pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,String(c-1));busR2.rows.forEach(r=>tblB.push(r));busR2.imgs.forEach(e=>tblE.push(e));
