@@ -11,6 +11,8 @@ const MODULOS = [
   {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', modulo:'distribuicao', flag:'controle_distribuicao'},
   {id:'estoque', label:'Controle de Estoque', desc:'Entradas, saídas e estoque crítico de produtos.', icon:'📦', color:'#0ea5e9', modulo:'estoque', flag:'controle_estoque'},
   {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#f97316', modulo:'alugueis'},
+  {id:'mulher', label:'Rede de Assistência e Proteção da Mulher', desc:'Ações, atendimentos e programas de proteção à mulher.', icon:'🙋‍♀️', color:'#d946ef', modulo:'mulher'},
+  {id:'agenda_prefeita', label:'Agenda da Prefeita', desc:'Compromissos, agendas e atividades da Prefeita.', icon:'📅', color:'#0d9488', modulo:'agenda_prefeita'},
   {id:'atividades', label:'Outros / Geral', desc:'Demandas e itens não classificados em outro módulo.', icon:'⚙️', color:'#3b82f6', isAtividades:true}
 ];
 window.MODULOS = MODULOS;
@@ -26,7 +28,9 @@ const NOME_MODULO = {
   contas:['controle de contas','contas','seguro','seguros'],
   distribuicao:['distribuição','distribuicao','distribuicao de leite','leite'],
   estoque:['estoque','controle de estoque','secretaria de saude','secretaria de saúde','farmacia','farmácia','insumos'],
-  alugueis:['aluguel','alugueis','aluguéis']
+  alugueis:['aluguel','alugueis','aluguéis'],
+  mulher:['rede de assistencia','rede de assistência','protecao da mulher','proteção da mulher','mulher','atendimento mulher'],
+  agenda_prefeita:['agenda da prefeita','prefeita','compromisso da prefeita','agenda prefeitura']
 };
 function _modFromName(name){
   const n=String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
