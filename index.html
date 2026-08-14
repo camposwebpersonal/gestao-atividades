@@ -2717,7 +2717,7 @@ window.gerarPdf=async function(secId,opts){
     tblB.push(spTot);tblE.push({cu:null,ru:null});
     tblB.push(totRow);tblE.push({cu:null,ru:null});
   }
-  const iDims=await Promise.all(tblE.map(async e=({
+  const iDims=await Promise.all(tblE.map(async e=>({
     cd:e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null,
     rd:e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null
   })));
