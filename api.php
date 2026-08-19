@@ -70,12 +70,12 @@ try { $pdo->exec("CREATE TABLE IF NOT EXISTS ci_audit_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )"); } catch(Throwable $_) {}
 
-// Cria usuário admin padrão se tabela vazia
 try {
     $cnt = $pdo->query("SELECT COUNT(*) FROM ci_users")->fetchColumn();
-    if ((int)$cnt === 0) {
+    $bootstrapPassword = getenv('CI_BOOTSTRAP_ADMIN_PASSWORD');
+    if ((int)$cnt === 0 && $bootstrapPassword !== false && $bootstrapPassword !== '') {
         $pdo->prepare("INSERT INTO ci_users (name,email,username,password,role,active) VALUES (?,?,?,?,?,?)")
-            ->execute(['Administrador','admin@workpms.free.nf','admin',password_hash('admin123',PASSWORD_DEFAULT),'admin',1]);
+            ->execute(['Administrador','admin@workpms.free.nf','admin',password_hash($bootstrapPassword,PASSWORD_DEFAULT),'admin',1]);
     }
 } catch(Throwable $_) {}
 // ─────────────────────────────────────────────────────────────────────────────
