@@ -75,3 +75,16 @@ URL: `https://camposwebpersonal.github.io/gestao-atividades/`
 | `chamados` | Chamados entre setores |
 | `galeria` | Fotos com metadados |
 | `contatos` | Cartilha de contatos |
+
+## Testes unitários
+
+Os scripts de `js/` são carregados no navegador como scripts globais (sem
+módulos ES). Nos testes eles são avaliados em um sandbox `vm` com `window`,
+`document` e o estado global `S` simulados — veja `tests/helpers/loadScript.js`.
+
+```bash
+npm install
+npm test              # roda todos os testes (vitest)
+npm run test:watch    # modo interativo
+npm run test:coverage # relatório de cobertura (texto + coverage/index.html)
+```

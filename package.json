@@ -1,0 +1,16 @@
+{
+  "name": "gestao-atividades",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de gestão de atividades da Prefeitura Municipal de Sertânia",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9",
+    "vitest": "^2.1.9"
+  }
+}
