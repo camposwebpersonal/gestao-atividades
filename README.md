@@ -61,6 +61,15 @@ Settings → Pages → Source: `main` branch → `/` (root)
 
 URL: `https://camposwebpersonal.github.io/gestao-atividades/`
 
+### 5. Deploy, recuperação e bootstrap legado
+Os scripts `deploy.py` e `setup_recuperacao.py` usam estas variáveis de ambiente para as conexões FTP:
+
+- `FTP_PBATRANSPORTES_USER` e `FTP_PBATRANSPORTES_PASS`
+- `FTP_CINTERNO_USER` e `FTP_CINTERNO_PASS`
+- `FTP_PRACIMASERTANIA_USER` e `FTP_PRACIMASERTANIA_PASS`
+
+O bootstrap do app PHP legado só cria o primeiro administrador quando `CI_BOOTSTRAP_ADMIN_PASSWORD` estiver definida.
+
 ## Coleções Firestore
 
 | Coleção | Descrição |

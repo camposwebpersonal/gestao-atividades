@@ -87,8 +87,8 @@ SITES = {
         "pasta": "pbatransportes",
         "tipo": "ftp",
         "host": "ftp.pbatransportes.com.br",
-        "user": "web@pbatransportes.com.br",
-        "pass": "WEBTRUCK74z#",
+        "user_env": "FTP_PBATRANSPORTES_USER",
+        "pass_env": "FTP_PBATRANSPORTES_PASS",
         "port": 21,
         "dir": "/",
         "desc": "Vanilla JS ES6 + PHP + MySQL — HostGator",
@@ -99,8 +99,8 @@ SITES = {
         "pasta": "cinterno",
         "tipo": "ftp",
         "host": "ftpupload.net",
-        "user": "if0_41513870",
-        "pass": "qc8jgrw2",
+        "user_env": "FTP_CINTERNO_USER",
+        "pass_env": "FTP_CINTERNO_PASS",
         "port": 21,
         "dir": "/htdocs",
         "mysql_host": "sql100.infinityfree.com",
@@ -113,8 +113,8 @@ SITES = {
         "pasta": "pracimasertania",
         "tipo": "ftp",
         "host": "ftpupload.net",
-        "user": "if0_41596792",
-        "pass": "qc8jgrw4",
+        "user_env": "FTP_PRACIMASERTANIA_USER",
+        "pass_env": "FTP_PRACIMASERTANIA_PASS",
         "port": 21,
         "dir": "/htdocs",
         "mysql_host": "sql111.infinityfree.com",
@@ -139,15 +139,27 @@ def _banner(title):
     print(f"  {title}")
     print("=" * 62)
 
+def _ftp_credentials(site_key):
+    s = SITES[site_key]
+    user = os.getenv(s["user_env"])
+    password = os.getenv(s["pass_env"])
+    missing = [name for name, value in ((s["user_env"], user), (s["pass_env"], password)) if not value]
+    if missing:
+        return None, f"❌ Variáveis de ambiente ausentes: {', '.join(missing)}"
+    return (user, password), None
+
 # ── FTP — CHECK / DEPLOY ─────────────────────────────────────────────────────
 
 def check_ftp(site_key):
     """Testa conexao FTP de um site"""
     s = SITES[site_key]
+    credentials, error = _ftp_credentials(site_key)
+    if error:
+        return False, error
     try:
         ftp = ftplib.FTP()
         ftp.connect(s["host"], s["port"], timeout=15)
-        ftp.login(s["user"], s["pass"])
+        ftp.login(*credentials)
         pwd = ftp.pwd()
         ftp.quit()
         return True, f"OK  (dir: {pwd})"
@@ -178,6 +190,10 @@ def _upload_file(ftp, local_path, remote_path):
 def deploy_ftp_site(site_key, file_list=None):
     """Deploy FTP completo ou seletivo"""
     s = SITES[site_key]
+    credentials, error = _ftp_credentials(site_key)
+    if error:
+        _log(error)
+        return False
     local_dir = _site_dir(s["pasta"])
     if not os.path.isdir(local_dir):
         _log(f"❌ Pasta nao encontrada: {local_dir}")
@@ -214,7 +230,7 @@ def deploy_ftp_site(site_key, file_list=None):
     try:
         ftp = ftplib.FTP()
         ftp.connect(s["host"], s["port"], timeout=30)
-        ftp.login(s["user"], s["pass"])
+        ftp.login(*credentials)
         ftp.cwd(s["dir"])
         _log("🔌 Conectado!")
 
