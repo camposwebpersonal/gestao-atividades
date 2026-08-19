@@ -2,18 +2,13 @@
 
 const CC_TIPOS = ['Luz','Água','Aluguel','Apólice','Seguro','Telefone','Internet','Outros'];
 
-const ccEsc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-if (typeof window.esc !== 'function') window.esc = ccEsc;
-if (typeof window.fmtD !== 'function') window.fmtD = d => { if(!d) return '—'; try { return new Date(d+'T00:00').toLocaleDateString('pt-BR'); } catch { return d; } };
-if (typeof window.setC !== 'function') window.setC = h => document.getElementById('content').innerHTML = h;
+const ccEsc = PMS.esc;
 
-const _ccNorm = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
-function _ccFindKey(ef, frag){
-  return Object.keys(ef).find(k => _ccNorm(k).includes(_ccNorm(frag))) || null;
-}
+const _ccNorm = s => PMS.normUpper(s).trim();
+const _ccFindKey = PMS.efFindKey;
 function _ccLocalExtraFields(local){
   const ef = (local && local.extra_fields) || {};
-  const get = frag => { const k = _ccFindKey(ef, frag); return k ? ef[k] : ''; };
+  const get = frag => PMS.efGet(ef, frag);
   return {
     numero_relogio: get('RELOGIO'),
     conta_contrato: get('CONTA CONTRATO') || get('CONTRATO'),
@@ -41,7 +36,7 @@ function _ccHighlight(text, tokens){
   // mapeia cada caractere original para sua versao normalizada (sem acento, maiuscula)
   let norm = '', idxMap = [];
   for(let i=0;i<raw.length;i++){
-    const ch = raw[i].normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+    const ch = PMS.normUpper(raw[i]);
     for(let k=0;k<ch.length;k++){ norm += ch[k]; idxMap.push(i); }
   }
   const ranges = [];
@@ -208,9 +203,9 @@ window.renderControleContas = function(secId){
           ${mobileRows}
           <div class="cc-total-bar">
             <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <span class="cc-badge">Total: R$ ${locTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${locPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${locPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+              <span class="cc-badge">Total: R$ ${PMS.fmtMoney(locTotal)}</span>
+              <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${PMS.fmtMoney(locPago)}</span>
+              <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${PMS.fmtMoney(locPendente)}</span>
             </div>
             <div style="font-size:11px;color:var(--muted)">${locRows.length} lançamento(s)</div>
           </div>
@@ -227,9 +222,9 @@ window.renderControleContas = function(secId){
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
-          <span class="cc-badge" style="font-weight:700">Total: R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${catPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${catPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span class="cc-badge" style="font-weight:700">Total: R$ ${PMS.fmtMoney(catTotal)}</span>
+          <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${PMS.fmtMoney(catPago)}</span>
+          <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${PMS.fmtMoney(catPend)}</span>
           <span class="cc-badge" style="color:var(--muted)">${catQtd} lanç.</span>
         </div>
       </div>
@@ -251,15 +246,15 @@ window.renderControleContas = function(secId){
       return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
         <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px'>
           <span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(t)}</span>
-          <span style='font-size:12px;color:#94a3b8'>${v.qtd} lanc. · R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span style='font-size:12px;color:#94a3b8'>${v.qtd} lanc. · R$ ${PMS.fmtMoney(v.total)}</span>
         </div>
         <div style='display:flex;align-items:center;gap:10px'>
           <div style='flex:1;background:#1e293b;border-radius:999px;height:12px;overflow:hidden'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:999px'></div></div>
           <span style='font-size:12px;font-weight:700;color:#60a5fa;min-width:60px;text-align:right'>${Math.round(pct)}% do total</span>
         </div>
         <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:6px'>
-          <span>${v.qPago} pagos · R$ ${v.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span style='color:#f87171'>${v.qtd-v.qPago} pendentes · R$ ${(v.total-v.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span>${v.qPago} pagos · R$ ${PMS.fmtMoney(v.pago)}</span>
+          <span style='color:#f87171'>${v.qtd-v.qPago} pendentes · R$ ${PMS.fmtMoney(v.total-v.pago)}</span>
         </div>
       </div>`;
     }).join('')}
@@ -280,18 +275,18 @@ window.renderControleContas = function(secId){
         <td style='text-align:center'>${l.qtd}</td>
         <td style='text-align:center;color:#10b981'>${l.qPago}</td>
         <td style='text-align:center;color:#f87171'>${l.qtd-l.qPago}</td>
-        <td style='text-align:right;font-weight:700'>R$ ${l.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#10b981'>R$ ${l.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#f87171'>R$ ${l.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right;font-weight:700'>R$ ${PMS.fmtMoney(l.total)}</td>
+        <td style='text-align:right;color:#10b981'>R$ ${PMS.fmtMoney(l.pago)}</td>
+        <td style='text-align:right;color:#f87171'>R$ ${PMS.fmtMoney(l.pendente)}</td>
       </tr>`).join('')}</tbody>
       <tfoot><tr style='background:rgba(13,34,64,.35);font-weight:700'>
         <td colspan='2'>TOTAL GERAL</td>
         <td style='text-align:center'>${qtdTotal}</td>
         <td style='text-align:center;color:#10b981'>${qtdPago}</td>
         <td style='text-align:center;color:#f87171'>${qtdPendente}</td>
-        <td style='text-align:right'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style='text-align:right'>R$ ${PMS.fmtMoney(totalGeral)}</td>
+        <td style='text-align:right;color:#10b981'>R$ ${PMS.fmtMoney(totalPago)}</td>
+        <td style='text-align:right;color:#f87171'>R$ ${PMS.fmtMoney(totalPendente)}</td>
       </tr></tfoot>
     </table>
   </div>`;
@@ -330,7 +325,7 @@ window.renderControleContas = function(secId){
     porCat[k].qtd++; porCat[k].valor += (parseFloat(x.c.valor)||0);
   });
   const resumoCatHtml = Object.entries(porCat).sort((a,b)=>b[1].valor-a[1].valor).map(([k,v])=>
-    `<span class="cc-badge" style="font-size:11px"><b>${esc(k)}</b>: ${v.qtd} lanç. — R$ ${v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
+    `<span class="cc-badge" style="font-size:11px"><b>${esc(k)}</b>: ${v.qtd} lanç. — R$ ${PMS.fmtMoney(v.valor)}</span>`
   ).join(' ');
   const linhasHtml = linhas.map(x=>{
     const venc = x.dias<0;
@@ -341,16 +336,11 @@ window.renderControleContas = function(secId){
       <span style="font-size:11px;font-weight:700;color:${cor};min-width:130px">${venc?'🔴':(x.dias<=7?'🟠':'🟡')} ${status}</span>
       <span style="flex:1;min-width:160px;font-size:12px">${esc(x.localNome)}${x.catNome?` <span style="color:var(--muted);font-size:11px">(${esc(x.catNome)})</span>`:''}</span>
       <span style="font-size:12px;color:var(--muted)">${esc(x.c.tipo||'')}</span>
-      <span style="font-weight:800;min-width:100px;text-align:right">R$ ${(parseFloat(x.c.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+      <span style="font-weight:800;min-width:100px;text-align:right">R$ ${PMS.fmtMoney(x.c.valor)}</span>
     </div>`;
   }).join('');
   // ── PAINEL DE VIGÊNCIA DAS APÓLICES (por local/veículo) ──
-  const _efGet = (ef, frag) => {
-    for(const [k,v] of Object.entries(ef||{})){
-      if(_ccNorm(k).includes(_ccNorm(frag))) return String(v||'').trim();
-    }
-    return '';
-  };
+  const _efGet = (ef, frag) => String(PMS.efGet(ef, frag)||'').trim();
   const vigItens = [];
   S.subitems.filter(s=>s.parent_type!=='subitem' && (s.atividade_id===secId || items.some(i=>i.id===s.item_id))).forEach(loc=>{
     const vig = _efGet(loc.extra_fields, 'VIGENCIA');
@@ -400,8 +390,8 @@ window.renderControleContas = function(secId){
   const alertPanel = linhas.length ? `<div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
       <div style="font-size:14px;font-weight:800">⏰ Vencimentos</div>
-      ${vencidas.length?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${vencidas.length} vencida(s): R$ ${totVencido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
-      ${proximas.length?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${proximas.length} nos próximos 30 dias: R$ ${totProximo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
+      ${vencidas.length?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${vencidas.length} vencida(s): R$ ${PMS.fmtMoney(totVencido)}</span>`:''}
+      ${proximas.length?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${proximas.length} nos próximos 30 dias: R$ ${PMS.fmtMoney(totProximo)}</span>`:''}
       <div style="flex:1"></div>
       <select id="cc-venc-ordem" onchange="renderControleContas('${secId}')" style="font-size:12px;padding:4px 8px;border-radius:8px;background:var(--card,#1e293b);color:inherit;border:1px solid rgba(255,255,255,.15)">
         <option value="asc" ${vencOrdem==='asc'?'selected':''}>Mais antiga → mais recente</option>
@@ -415,9 +405,9 @@ window.renderControleContas = function(secId){
   const pctPago = totalGeral ? (totalPago / totalGeral * 100) : 0;
   const pctPend = totalGeral ? (totalPendente / totalGeral * 100) : 0;
   const dashHtml = `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px'>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>💰</div><div><div class='stat-val' style='color:#60a5fa'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Total em Contas</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>✅</div><div><div class='stat-val' style='color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pago</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>⏳</div><div><div class='stat-val' style='color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pendente</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>💰</div><div><div class='stat-val' style='color:#60a5fa'>R$ ${PMS.fmtMoney(totalGeral)}</div><div class='stat-lbl'>Total em Contas</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>✅</div><div><div class='stat-val' style='color:#10b981'>R$ ${PMS.fmtMoney(totalPago)}</div><div class='stat-lbl'>Pago</div></div></div>
+  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>⏳</div><div><div class='stat-val' style='color:#f87171'>R$ ${PMS.fmtMoney(totalPendente)}</div><div class='stat-lbl'>Pendente</div></div></div>
   <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>📊</div><div><div class='stat-val' style='color:#f59e0b'>${qtdPago} / ${qtdTotal}</div><div class='stat-lbl'>Contas Pagas</div></div></div>
   <div class='stat-card' style='display:flex;align-items:center;gap:12px;position:relative;overflow:hidden'>
     <div style='position:relative;width:64px;height:64px'>
@@ -442,7 +432,7 @@ window.renderControleContas = function(secId){
       return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
         <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'><span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(c.nome)}</span><span style='font-size:12px;color:#10b981;font-weight:700'>${Math.round(pct)}% pago</span></div>
         <div style='background:#1e293b;border-radius:999px;height:10px;overflow:hidden;margin-bottom:6px'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:999px;transition:width .5s ease'></div></div>
-        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8'><span>${c.qPago} de ${c.qtd} pagos</span><span>R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8'><span>${c.qPago} de ${c.qtd} pagos</span><span>R$ ${PMS.fmtMoney(c.pago)} / R$ ${PMS.fmtMoney(c.total)}</span></div>
       </div>`;
     }).join('')}
   </div>
@@ -491,18 +481,18 @@ window.renderControleContas = function(secId){
         <td style="text-align:center">${c.qtd}</td>
         <td style="text-align:center;color:#10b981">${c.qPago}</td>
         <td style="text-align:center;color:#f87171">${c.qPendente}</td>
-        <td style="text-align:right;font-weight:700">R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#10b981">R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#f87171">R$ ${c.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right;font-weight:700">R$ ${PMS.fmtMoney(c.total)}</td>
+        <td style="text-align:right;color:#10b981">R$ ${PMS.fmtMoney(c.pago)}</td>
+        <td style="text-align:right;color:#f87171">R$ ${PMS.fmtMoney(c.pendente)}</td>
       </tr>`).join('')}</tbody>
       <tfoot><tr style="background:rgba(13,34,64,.35);font-weight:700">
         <td>TOTAL GERAL</td>
         <td style="text-align:center">${qtdTotal}</td>
         <td style="text-align:center;color:#10b981">${qtdPago}</td>
         <td style="text-align:center;color:#f87171">${qtdPendente}</td>
-        <td style="text-align:right">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#10b981">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="text-align:right">R$ ${PMS.fmtMoney(totalGeral)}</td>
+        <td style="text-align:right;color:#10b981">R$ ${PMS.fmtMoney(totalPago)}</td>
+        <td style="text-align:right;color:#f87171">R$ ${PMS.fmtMoney(totalPendente)}</td>
       </tr></tfoot>
     </table>
   </div>`:''}
@@ -630,7 +620,7 @@ window.ccOpenLancamentoModal = function(id, subitemId){
   const c = id ? S.contas.find(x=>x.id===id) : null;
   const local = S.subitems.find(s=>s.id===subitemId);
   const tipoOpts = CC_TIPOS.map(t=>`<option value="${esc(t)}" ${c?.tipo===t?'selected':''}>${esc(t)}</option>`).join('');
-  const today = new Date().toISOString().split('T')[0];
+  const today = PMS.hojeISO();
   openModal(id ? '✏️ Editar Lançamento' : '➕ Novo Lançamento', 'Local: '+(local?.description||''),
     `<div class="form-grid">
       <div class="form-group"><label>Mês/Ano *</label><input id="cc-lanc-mes" value="${esc(c?.mes_ano||'')}" placeholder="MM/AAAA"></div>
@@ -810,15 +800,14 @@ window.ccConfirmarPdf = function(){
 
 window.ccGerarPdf = async function(secId, opts){
   const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF = PMS.getJsPDF(); if(!jsPDF) return;
   toast('Gerando PDF...','info',8000);
-  const {jsPDF} = window.jspdf;
   const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const W=297, mx=12, cw=W-mx*2;
-  const fmtMoney=v=>parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+  const fmtMoney=PMS.fmtMoney;
   const fmtPdfD=d=>d?fmtD(d):'-';
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const now = new Date().toLocaleDateString('pt-BR');
+  const sf=PMS.pdfStyler(doc);
+  const now = PMS.hojeBR();
   let y = 18;
   doc.setFillColor(13,34,64); doc.rect(mx,12,cw,0.7,'F');
   sf(18,true,[13,34,64]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
@@ -990,6 +979,6 @@ window.ccGerarPdf = async function(secId, opts){
   doc.setFillColor(13,34,64); doc.roundedRect(mx, finalY, cw, fh, 2, 2, 'F');
   sf(9,true,[255,255,255]); doc.text(ftLines, mx+6, finalY+6);
 
-  doc.save((sec.name||'controle-contas').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_relatorio_'+now.replace(/\//g,'-')+'.pdf');
+  doc.save(PMS.slugArquivo(sec.name,'controle-contas')+'_relatorio_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!','success');
 };

@@ -15,23 +15,9 @@ const DIST_CAMPOS = [
   { key: 'Data de Nascimento do Paciente', label: 'Data de Nascimento do Paciente', required: true, type: 'date' }
 ];
 
-const _distEsc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-function _distFmtCPF(v){
-  const d = String(v || '').replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return `${d.slice(0, 3)}.${d.slice(3)}`;
-  if (d.length <= 9) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6)}`;
-  return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
-}
-
-function _distFmtTel(v){
-  const d = String(v || '').replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 7) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-}
+const _distEsc = PMS.esc;
+const _distFmtCPF = PMS.fmtCPF;
+const _distFmtTel = PMS.fmtTel;
 
 function _distCalcIdade(nascimento){
   if (!nascimento) return '';
@@ -55,7 +41,7 @@ function _distGetExtra(it, chave){
   return (it && it.extra_fields && it.extra_fields[chave]) || '';
 }
 
-function _distNorm(s){ return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+const _distNorm = PMS.normUpper;
 function _distMatchesBusca(it, buscaNorm){
   if(!buscaNorm) return true;
   const ef = it.extra_fields || {};
@@ -104,7 +90,7 @@ window.renderControleDistribuicao = function(secId){
   const rows = filtrados.map((it, idx) => {
     const ef = it.extra_fields || {};
     const idade = _distCalcIdade(ef['Data de Nascimento do Paciente'] || '');
-    const nasc = ef['Data de Nascimento do Paciente'] ? new Date(ef['Data de Nascimento do Paciente'] + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
+    const nasc = PMS.fmtD(ef['Data de Nascimento do Paciente']);
     return `<tr style="background:${idx % 2 === 0 ? '#0a1222' : '#060c18'}">
       <td style="padding:8px 10px;font-size:12px;font-weight:600;color:#e2e8f0">${_distEsc(it.description)}</td>
       <td style="padding:8px 10px;font-size:12px;color:#94a3b8;white-space:nowrap">${_distEsc(ef['CPF do Paciente'] || '—')}</td>
@@ -127,7 +113,7 @@ window.renderControleDistribuicao = function(secId){
   const mobileCards = filtrados.map(it => {
     const ef = it.extra_fields || {};
     const idade = _distCalcIdade(ef['Data de Nascimento do Paciente'] || '');
-    const nasc = ef['Data de Nascimento do Paciente'] ? new Date(ef['Data de Nascimento do Paciente'] + 'T00:00:00').toLocaleDateString('pt-BR') : '—';
+    const nasc = PMS.fmtD(ef['Data de Nascimento do Paciente']);
     return `<div class="cc-mobile-card" style="margin-bottom:8px">
       <div class="cc-mobile-title">${_distEsc(it.description)} ${idade ? `<span style="color:#38bdf8;font-size:11px">(${idade})</span>` : ''}</div>
       <div class="cc-mobile-row"><span>CPF</span><span>${_distEsc(ef['CPF do Paciente'] || '—')}</span></div>
@@ -363,12 +349,11 @@ window.distAtualizaIdade = function(){
 
 window.distExportarPDF = function(secId){
   const sec = S.secs.find(s => s.id === secId); if (!sec) return;
-  if (!window.jspdf?.jsPDF) { toast('jsPDF não carregado', 'error'); return; }
-  const { jsPDF } = window.jspdf;
+  const jsPDF = PMS.getJsPDF(); if (!jsPDF) return;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const buscaAtiva = _distNorm(document.getElementById('dist-busca')?.value || '');
   const itens = [...S.items.filter(i => i.atividade_id === secId)].filter(it => _distMatchesBusca(it, buscaAtiva)).sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
-  const agora = new Date().toLocaleDateString('pt-BR');
+  const agora = PMS.hojeBR();
 
   doc.setFillColor(13, 34, 64);
   doc.rect(0, 0, 297, 22, 'F');
@@ -411,6 +396,6 @@ window.distExportarPDF = function(secId){
   doc.setTextColor(13, 34, 64);
   doc.text(`Total de beneficiários: ${itens.length}    |    Quantidade mensal total: ${totalQty}`, 14, finalY);
 
-  doc.save((sec.name || 'distribuicao').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g, '_').trim() + '_' + agora.replace(/\//g, '-') + '.pdf');
+  doc.save(PMS.slugArquivo(sec.name, 'distribuicao') + '_' + agora.replace(/\//g, '-') + '.pdf');
   toast('PDF gerado!');
 };
