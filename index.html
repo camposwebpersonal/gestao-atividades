@@ -3203,10 +3203,10 @@ window.renderCadastros=function(secId){
   function _sitBadge(done,late){
     return done?'<span style="color:#10b981">✅ Concluído</span>':late?'<span style="color:#f87171">⚠ Atrasado</span>':'<span style="color:#64748b">⏳ Pendente</span>';
   }
-  function _respInlineHtml(containerId,currentStr,saveArgs){
+  function _respInlineHtml(containerId,currentStr,id,isSub,secId,wrapId){
     const names=(currentStr||'').split(/\s*[/,;]\s*/).map(s=>s.trim()).filter(Boolean);
     const list=names.length?names:[''];
-    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0" onclick="event.stopPropagation()" data-save-args="${esc(saveArgs)}">`;
+    let h=`<div id="${containerId}" class="resp-combo-list" style="gap:4px;margin:0" onclick="event.stopPropagation()" data-save-id="${esc(id)}" data-save-issub="${esc(isSub?'true':'false')}" data-save-secid="${esc(secId)}" data-save-wrapid="${esc(wrapId)}">`;
     list.forEach(n=>{h+=`<div class="resp-combo-row"><select class="resp-combo" style="padding:4px 6px;font-size:11px" onchange="listaRespChanged(this)">${_respOptions(n)}</select><button type="button" class="resp-combo-del" style="padding:2px 6px;font-size:12px" onclick="listaRemoveRespInline(this)" title="Remover">×</button></div>`;});
     h+=`</div><button type="button" class="resp-combo-add" style="padding:3px 8px;font-size:11px;margin-top:4px" onclick="event.stopPropagation();listaAddRespInline('${containerId}',this)">+ Resp</button>`;
     return h;
@@ -3245,7 +3245,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none" data-save-args="${esc(`'${it.id}',false,'${secId}','${respId}-wrap'`)}" data-prefix="${respId}">${_respInlineHtml(respId+'-wrap',it.responsaveis,`'${it.id}',false,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none" data-prefix="${respId}">${_respInlineHtml(respId+'-wrap',it.responsaveis,it.id,false,secId,respId+'-wrap')}</span>
       </td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</span>
@@ -3273,7 +3273,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;font-size:11px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</span>
-        <span id="${respId}-edit" style="display:none" data-save-args="${esc(`'${sb.id}',true,'${secId}','${respId}-wrap'`)}">${_respInlineHtml(respId+'-wrap',sb.responsaveis,`'${sb.id}',true,'${secId}','${respId}-wrap'`)}</span>
+        <span id="${respId}-edit" style="display:none">${_respInlineHtml(respId+'-wrap',sb.responsaveis,sb.id,true,secId,respId+'-wrap')}</span>
       </td>
       <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</span>
@@ -3330,10 +3330,11 @@ window.listaToggleEdit=function(prefix){
         if(!editWrap||editWrap.style.display==='none'){document.removeEventListener('keydown',window._listaKeyHandler);window._listaKeyHandler=null;return;}
         const listWrap=editWrap.querySelector('.resp-combo-list');
         if(!listWrap)return;
-        const args=listWrap.dataset.saveArgs;if(!args)return;
+        const id=listWrap.dataset.saveId,isSub=listWrap.dataset.saveIssub==='true',secId=listWrap.dataset.saveSecid,wrapId=listWrap.dataset.saveWrapid;
+        if(!id||!secId||!wrapId)return;
         ev.preventDefault();
         if(listWrap._autoSaveTimer){clearTimeout(listWrap._autoSaveTimer);listWrap._autoSaveTimer=null;}
-        if(ev.key==='Enter'){eval('listaSaveResp('+args+')');}
+        if(ev.key==='Enter'){listaSaveResp(id,isSub,secId,wrapId);}
         else{listaToggleEdit(prefix);}
         document.removeEventListener('keydown',window._listaKeyHandler);window._listaKeyHandler=null;
       };
@@ -3376,17 +3377,19 @@ window.listaRespKey=async function(e,id,isSub,secId,wrapId){
 };
 window.listaRespChanged=function(select){
   const wrap=select.closest('.resp-combo-list');if(!wrap)return;
-  const args=wrap.dataset.saveArgs;if(!args)return;
+  const id=wrap.dataset.saveId,isSub=wrap.dataset.saveIssub==='true',secId=wrap.dataset.saveSecid,wrapId=wrap.dataset.saveWrapid;
+  if(!id||!secId||!wrapId)return;
   // auto-save after a brief delay so rapid changes don't spam
   if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
-  wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},400);
+  wrap._autoSaveTimer=setTimeout(()=>{listaSaveResp(id,isSub,secId,wrapId);},400);
 };
 window.listaRemoveRespInline=function(btn){
   const row=btn.closest('.resp-combo-row');if(row)row.remove();
   const wrap=btn.closest('.resp-combo-list');if(!wrap)return;
-  const args=wrap.dataset.saveArgs;if(!args)return;
+  const id=wrap.dataset.saveId,isSub=wrap.dataset.saveIssub==='true',secId=wrap.dataset.saveSecid,wrapId=wrap.dataset.saveWrapid;
+  if(!id||!secId||!wrapId)return;
   if(wrap._autoSaveTimer)clearTimeout(wrap._autoSaveTimer);
-  wrap._autoSaveTimer=setTimeout(()=>{eval('listaSaveResp('+args+')');},200);
+  wrap._autoSaveTimer=setTimeout(()=>{listaSaveResp(id,isSub,secId,wrapId);},200);
   const span=wrap.closest('[tabindex]');if(span){setTimeout(()=>span.focus(),0);}
 };
 window.listaAddRespInline=function(containerId,btn){
@@ -4557,5 +4560,4 @@ window.importarContatosExpocose52=async function(){
 </script>
 </body>
 </html>
-
 

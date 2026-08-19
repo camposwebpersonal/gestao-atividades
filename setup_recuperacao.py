@@ -44,8 +44,8 @@ SITES_FTP = {
     "pbatransportes": {
         "nome": "PBA Transportes",
         "host": "ftp.pbatransportes.com.br",
-        "user": "web@pbatransportes.com.br",
-        "pass": "WEBTRUCK74z#",
+        "user_env": "FTP_PBATRANSPORTES_USER",
+        "pass_env": "FTP_PBATRANSPORTES_PASS",
         "port": 21,
         "dir": "/",
         "url": "https://pbatransportes.com.br/proj",
@@ -53,8 +53,8 @@ SITES_FTP = {
     "cinterno": {
         "nome": "Controle Interno",
         "host": "ftpupload.net",
-        "user": "if0_41513870",
-        "pass": "qc8jgrw2",
+        "user_env": "FTP_CINTERNO_USER",
+        "pass_env": "FTP_CINTERNO_PASS",
         "port": 21,
         "dir": "/htdocs",
         "url": "https://controleinterno.free.nf",
@@ -62,8 +62,8 @@ SITES_FTP = {
     "pracimasertania": {
         "nome": "Pra Cima Sertania",
         "host": "ftpupload.net",
-        "user": "if0_41596792",
-        "pass": "qc8jgrw4",
+        "user_env": "FTP_PRACIMASERTANIA_USER",
+        "pass_env": "FTP_PRACIMASERTANIA_PASS",
         "port": 21,
         "dir": "/htdocs",
         "url": "https://pracimasertania.free.nf",
@@ -92,9 +92,21 @@ def _banner(title):
     print(f"  {title}")
     print("=" * 66)
 
+def _ftp_credentials(cfg):
+    user = os.getenv(cfg["user_env"])
+    password = os.getenv(cfg["pass_env"])
+    missing = [name for name, value in ((cfg["user_env"], user), (cfg["pass_env"], password)) if not value]
+    if missing:
+        return None, f"❌ Variáveis de ambiente ausentes: {', '.join(missing)}"
+    return (user, password), None
+
 
 def download_all_from_ftp(site_key, cfg):
     """Baixa TODOS os arquivos do FTP para a pasta local"""
+    credentials, error = _ftp_credentials(cfg)
+    if error:
+        _log(error)
+        return False
     local_dir = os.path.join(ROOT, site_key)
     os.makedirs(local_dir, exist_ok=True)
 
@@ -107,7 +119,7 @@ def download_all_from_ftp(site_key, cfg):
     try:
         ftp = ftplib.FTP()
         ftp.connect(cfg["host"], cfg["port"], timeout=30)
-        ftp.login(cfg["user"], cfg["pass"])
+        ftp.login(*credentials)
         _log("Conectado!")
 
         downloaded = 0
