@@ -113,7 +113,15 @@ try {
         "ALTER TABLE ci_subitems ADD COLUMN licitacao TINYINT(1) DEFAULT NULL",
         "ALTER TABLE ci_subitems ADD COLUMN licitacao_obs TEXT DEFAULT NULL",
     ];
-    foreach ($ms as $sql) { try { $pdo->exec($sql); } catch (Exception $e) {} }
+    // Migrações idempotentes: coluna existente é esperado, mas registra o motivo real
+    foreach ($ms as $sql) {
+        try { $pdo->exec($sql); }
+        catch (Throwable $e) {
+            if (stripos($e->getMessage(), 'duplicate') === false) {
+                error_log("[CI API] migração falhou: $sql -> " . $e->getMessage());
+            }
+        }
+    }
 })($pdo);
 
 function ciNormalizeCargoNome($value) {
@@ -1127,7 +1135,9 @@ try { $pdo->exec("ALTER TABLE ci_subitems ADD COLUMN verbas_list TEXT NOT NULL D
             ciJson(["ok" => false, "error" => "Ação desconhecida"], 404);
     }
 
-} catch (Exception $e) {
-    error_log("[CI API] " . $e->getMessage());
+} catch (Throwable $e) {
+    // Throwable e não Exception: erros de PHP (TypeError, Error) também devem
+    // virar uma resposta JSON 500 em vez de um corpo vazio para o cliente.
+    error_log("[CI API] " . get_class($e) . ": " . $e->getMessage() . " em " . $e->getFile() . ":" . $e->getLine());
     ciJson(["ok" => false, "error" => "Erro interno do servidor"], 500);
 }

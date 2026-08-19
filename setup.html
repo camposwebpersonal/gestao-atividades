@@ -92,7 +92,7 @@ window.runSetup=async function(){
       log('  ❌ Erro em '+u.username+': '+e.message,'er');
       st.textContent='❌';
     }finally{
-      try{await signOut(auth);}catch(e){}
+      try{await signOut(auth);}catch(e){console.warn('Falha ao encerrar sessão de '+u.username+':',e);}
     }
   }
   if(ok===USERS.length){

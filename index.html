@@ -417,12 +417,23 @@ const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
 console.log('=== VERSAO APP: v2.7-moverSubAntesDe-fix ===');
 
+// ── ERROS GLOBAIS ──
+// Handlers em onclick="..." e callbacks async não têm quem os capture: sem isto
+// qualquer falha de gravacão some no console e o usuário pensa que salvou.
+function reportGlobalError(err,origin){
+  const msg=(err&&(err.message||err.error?.message))||String(err||'Erro desconhecido');
+  console.error('[erro não tratado]',origin,err);
+  if(typeof toast==='function')toast('Erro inesperado: '+msg,'error',7000);
+}
+window.addEventListener('unhandledrejection',e=>reportGlobalError(e.reason,'promise'));
+window.addEventListener('error',e=>{if(e.error||e.message)reportGlobalError(e.error||e.message,'error');});
+
 // ── UNDO / REDO MANAGER ──
 const _undoStack=[];const _redoStack=[];const MAX_UNDO=100;
 function pushUndo(name,undoFn,redoFn){_undoStack.push({name,undo:undoFn,redo:redoFn});if(_undoStack.length>MAX_UNDO)_undoStack.shift();_redoStack.length=0;updateUndoUI();}
 window.pushUndo=pushUndo;
-async function undoLast(){if(!_undoStack.length){toast('Nada para desfazer','error');return;}const c=_undoStack.pop();try{await c.undo();}catch(e){console.error('Undo failed',e);}_redoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
-async function redoLast(){if(!_redoStack.length){toast('Nada para refazer','error');return;}const c=_redoStack.pop();try{await c.redo();}catch(e){console.error('Redo failed',e);}_undoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
+async function undoLast(){if(!_undoStack.length){toast('Nada para desfazer','error');return;}const c=_undoStack.pop();try{await c.undo();}catch(e){console.error('Undo failed',e);_undoStack.push(c);updateUndoUI();toast('Erro ao desfazer "'+c.name+'": '+(e.message||e),'error');return;}_redoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
+async function redoLast(){if(!_redoStack.length){toast('Nada para refazer','error');return;}const c=_redoStack.pop();try{await c.redo();}catch(e){console.error('Redo failed',e);_redoStack.push(c);updateUndoUI();toast('Erro ao refazer "'+c.name+'": '+(e.message||e),'error');return;}_undoStack.push(c);updateUndoUI();await loadData();if(curSecId)openActivity(curSecId);}
 window.undoLast=undoLast;window.redoLast=redoLast;
 // wrappers para operações comuns
 window.wUpdateDoc=async function(ref,newData,oldData,name='Editar'){await updateDoc(ref,newData);pushUndo(name,async()=>await updateDoc(ref,oldData),async()=>await updateDoc(ref,newData));};
@@ -443,8 +454,8 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=43';
-  navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>console.error('SW erro:',e));
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=45';
+  navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
 
@@ -459,7 +470,12 @@ onAuthStateChanged(auth,async u=>{
     const ud=await getDoc(doc(db,'users',u.uid));
     if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
     else{S.isAdmin=true;S.userRole='admin';S.userSetor=null;} // primeiro usuário = admin
-  }catch(e){S.isAdmin=true;S.userRole='admin';S.userSetor=null;}
+  }catch(e){
+    // Falha ao ler o perfil não pode conceder privilégios: assume o menor nível
+    console.error('Erro ao carregar perfil do usuário',e);
+    S.isAdmin=false;S.userRole='usuario';S.userSetor=null;
+    toast('Não foi possível carregar suas permissões ('+(e.message||e)+'). Acesso limitado; recarregue a página.','error',8000);
+  }
   if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-imp').style.display='';}
   await loadData();
   setView('mod');
@@ -531,9 +547,13 @@ onAuthStateChanged(auth,async u=>{
       document.body.appendChild(sc);
     },800);
   }
+},e=>{
+  console.error('Erro de autenticação',e);
+  toast('Erro de autenticação: '+(e.message||e),'error',8000);
 });
 window.doLogout=async function doLogout(){
-  try{ await auth.signOut(); }catch(e){ console.warn('Logout ignorado:', e); }
+  // A sessão local é limpa mesmo se o servidor recusar o signOut, mas o motivo fica registrado
+  try{ await auth.signOut(); }catch(e){ console.error('Falha ao encerrar sessão no servidor:', e); }
   for(let i=localStorage.length-1;i>=0;i--){
     const k=localStorage.key(i);
     if(k && (k.startsWith('sb-') || k.includes('auth-token') || k.includes('supabase.auth'))) localStorage.removeItem(k);
@@ -543,8 +563,9 @@ window.doLogout=async function doLogout(){
 
 // ── DATA ──
 window.loadData=async function loadData(){
+  const failed=[];
   const safeGet=async(label,fn)=>{
-    try{return await fn();}catch(e){console.warn('Erro ao carregar '+label+':',e);return{docs:[]};}
+    try{return await fn();}catch(e){console.error('Erro ao carregar '+label+':',e);failed.push(label+' ('+(e.message||e)+')');return{docs:[]};}
   };
   const[a,b,c,ft,se,resp,usr,ch,gal,cont,contas,estq,req]=await Promise.all([
     safeGet('secretariats',()=>getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
@@ -576,6 +597,7 @@ window.loadData=async function loadData(){
   S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
   S.estoque=estq.docs.map(d=>({id:d.id,...d.data()}));
   S.requisicoes=req.docs.map(d=>({id:d.id,...d.data()}));
+  if(failed.length)toast('Falha ao carregar: '+failed.join('; ')+'. Dados podem estar incompletos.','error',9000);
   if(S.isAdmin && !S.secs.some(s=>s.controle_estoque_modelo || (s.name||'').toUpperCase()==='CONTROLE DE ESTOQUE DE ITENS DA SECRETARIA DE SAÚDE')){
     const novo={name:'Controle de Estoque de Itens da Secretaria de Saúde',observacoes:'',responsaveis:'',start_date:null,end_date:null,order_num:S.secs.length,controle_estoque:1,controle_estoque_modelo:1,controle_pendencias:0,ce_nome_secretaria:'Secretaria de Saúde',ce_titulo_controle:'Controle de Estoque de Itens da Secretaria de Saúde',created_at:serverTimestamp(),updated_at:serverTimestamp()};
     const r=await addDoc(collection(db,'secretariats'),novo);
@@ -867,14 +889,15 @@ window.salvarFoto=async function(){
   const data=document.getElementById('gal-data')?.value||'';
   const local=document.getElementById('gal-local')?.value.trim()||'';
   const notas=document.getElementById('gal-notas')?.value.trim()||'';
-  const reader=new FileReader();
-  reader.onload=async function(e){
-    const url=await uploadImgBB(e.target.result);
-    if(!url){toast('Erro ao fazer upload da imagem','error');return;}
+  try{
+    const dataUrl=await readFileAsDataUrl(file);
+    const url=await imgbbUp(dataUrl);
     await addDoc(collection(db,'galeria'),{url,titulo,atividade_id,data,local,notas,created_at:serverTimestamp()});
     await loadData();closeModal();toast('Foto adicionada!');renderGaleria();
-  };
-  reader.readAsDataURL(file);
+  }catch(e){
+    console.error('Falha ao salvar foto na galeria',e);
+    toast('Erro ao adicionar foto: '+(e.message||e),'error',6000);
+  }
 };
 window.deleteFoto=async function(id){
   if(!confirm('Excluir esta foto?'))return;
@@ -1767,15 +1790,20 @@ function rtHtml(type,id,ex){
     </div>
   </div>`;
 }
-window.prevRT=function(inp,type,id){const f=inp.files[0];if(!f)return;const rd=new FileReader();rd.onload=async e=>{const th=await mkThumb(e.target.result,160,160,.82);const el=document.getElementById('rt-'+type+'-'+id);if(el)el.innerHTML=`<img src="${th}" alt="">`;_pRT[type+'_'+id]=th;};rd.readAsDataURL(f);};
+window.prevRT=async function(inp,type,id){const f=inp.files[0];if(!f)return;try{const dataUrl=await readFileAsDataUrl(f);const th=await mkThumb(dataUrl,160,160,.82);const el=document.getElementById('rt-'+type+'-'+id);if(el)el.innerHTML=`<img src="${th}" alt="">`;_pRT[type+'_'+id]=th;}catch(e){console.error('Falha ao pré-visualizar foto',e);toast('Não foi possível ler a imagem: '+(e.message||e),'error');}};
 window.clearRT=function(type,id){const el=document.getElementById('rt-'+type+'-'+id);if(el)el.innerHTML='👤';_pRT[type+'_'+id]=null;};
 async function saveRT(type,id){
   const k=type+'_'+(id||'n'),k0=type+'_n',ak=(k in _pRT)?k:((k0 in _pRT)?k0:null);
   if(!ak||!id)return;const th=_pRT[ak];delete _pRT[ak];
   const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems';
   if(!th){await updateDoc(doc(db,coll,id),{resp_url:null});return;}
-  const url=await imgbbUp(th);
-  if(url)await updateDoc(doc(db,coll,id),{resp_url:url});
+  try{
+    const url=await imgbbUp(th);
+    await updateDoc(doc(db,coll,id),{resp_url:url});
+  }catch(e){
+    console.error('Falha ao salvar foto do responsável',e);
+    toast('Foto do responsável não foi salva: '+(e.message||e),'error',6000);
+  }
 }
 
 // ── IMAGES ──
@@ -1821,8 +1849,15 @@ window.handleUpload=async function(inp,type,id,isRep){
   const files=Array.from(inp.files);if(!files.length)return;inp.value='';
   toast('Enviando '+files.length+' imagem(ns)…','info');
   for(const f of files){
-    const url=await new Promise(res=>{const rd=new FileReader();rd.onload=async e=>res(await imgbbUp(e.target.result));rd.readAsDataURL(f);});
-    if(!url){toast('Erro ao enviar: '+f.name,'error');continue;}
+    let url;
+    try{
+      const dataUrl=await readFileAsDataUrl(f);
+      url=await imgbbUp(dataUrl);
+    }catch(e){
+      console.error('Falha no upload de '+f.name,e);
+      toast('Erro ao enviar '+f.name+': '+(e.message||e),'error',6000);
+      continue;
+    }
     if(isRep){
       if(_upReplId)await deleteDoc(doc(db,'entity_images',_upReplId));
       const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems';
@@ -1864,12 +1899,29 @@ window.openLb=src=>{document.getElementById('lb-img').src=src;document.getElemen
 
 // ── IMGBB ──
 async function imgbbUp(dataUrl){
-  if(!IMGBB_KEY||IMGBB_KEY.includes('COLOQUE')){toast('Configure a chave ImgBB em js/firebase-init.js','error');return null;}
-  try{const b64=dataUrl.split(',')[1];const fd=new FormData();fd.append('key',IMGBB_KEY);fd.append('image',b64);const r=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});const j=await r.json();return j.success?j.data.url:null;}catch(e){console.error(e);return null;}
+  if(!IMGBB_KEY||IMGBB_KEY.includes('COLOQUE'))throw new Error('Chave ImgBB não configurada');
+  const b64=dataUrl.split(',')[1];
+  if(!b64)throw new Error('Imagem inválida');
+  const fd=new FormData();fd.append('key',IMGBB_KEY);fd.append('image',b64);
+  const r=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});
+  const j=await r.json().catch(()=>null);
+  if(!r.ok)throw new Error(j?.error?.message||('ImgBB HTTP '+r.status));
+  if(!j?.success||!j.data?.url)throw new Error(j?.error?.message||'ImgBB recusou o upload');
+  return j.data.url;
+}
+
+// Lê o arquivo como data URL propagando falhas de leitura (arquivo corrompido, permissão)
+function readFileAsDataUrl(file){
+  return new Promise((res,rej)=>{
+    const rd=new FileReader();
+    rd.onload=e=>res(e.target.result);
+    rd.onerror=()=>rej(rd.error||new Error('Não foi possível ler o arquivo '+file.name));
+    rd.readAsDataURL(file);
+  });
 }
 
 // ── THUMB ──
-async function mkThumb(dataUrl,w,h,q){return new Promise(res=>{const img=new Image();img.onload=()=>{const ar=img.naturalWidth/img.naturalHeight;let cw=w,ch=h;if(ar>1)ch=Math.round(w/ar);else cw=Math.round(h*ar);const c=document.createElement('canvas');c.width=cw;c.height=ch;c.getContext('2d').drawImage(img,0,0,cw,ch);res(c.toDataURL('image/jpeg',q));};img.src=dataUrl;});}
+async function mkThumb(dataUrl,w,h,q){return new Promise((res,rej)=>{const img=new Image();img.onerror=()=>rej(new Error('Imagem inválida ou corrompida'));img.onload=()=>{const ar=img.naturalWidth/img.naturalHeight;let cw=w,ch=h;if(ar>1)ch=Math.round(w/ar);else cw=Math.round(h*ar);const c=document.createElement('canvas');c.width=cw;c.height=ch;c.getContext('2d').drawImage(img,0,0,cw,ch);res(c.toDataURL('image/jpeg',q));};img.src=dataUrl;});}
 
 // ── ADMIN ──
 function renderAdmin(){
@@ -2443,9 +2495,9 @@ window.gerarPdf=async function(secId,opts){
 
   // ── Cover image ──
   let covD=null;
-  if(opts.actCov&&sec.cover_url){try{covD=await loadB64(sec.cover_url,'jpeg',450);}catch(e){}}
+  if(opts.actCov&&sec.cover_url){try{covD=await loadB64(sec.cover_url,'jpeg',450);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
   let actRespD=null;
-  if(opts.actResp&&sec.resp_url){try{actRespD=await loadB64(sec.resp_url,'jpeg',120);}catch(e){}}
+  if(opts.actResp&&sec.resp_url){try{actRespD=await loadB64(sec.resp_url,'jpeg',120);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
 
   // ── Title block ──
   doc.setFillColor(15,23,42);doc.rect(mx,y,cw,1.2,'F');y+=4;
@@ -2454,7 +2506,7 @@ window.gerarPdf=async function(secId,opts){
   if(covD){
     const covW=58,covMaxH=44,ar=covD.w/covD.h;
     let iW=covW,iH=covW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}
-    try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){}
+    try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}
     titleBot=Math.max(titleBot,y-2+iH+2);
   }
   y=titleBot;
@@ -2468,7 +2520,7 @@ window.gerarPdf=async function(secId,opts){
     doc.setFillColor(59,130,246);doc.rect(mx,y,2.5,rH,'F');
     sf(10,true,[15,23,42]);doc.text('Responsáveis:',mx+5,y+6);
     sf(10,false,[30,41,59]);doc.text(rL,mx+38,y+6);
-    if(actRespD){const rs=Math.min(rH-2,11),rw=rs*(actRespD.w/actRespD.h);try{doc.addImage(actRespD.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}catch(e){}}
+    if(actRespD){const rs=Math.min(rH-2,11),rw=rs*(actRespD.w/actRespD.h);try{doc.addImage(actRespD.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
     y+=rH+3;
   }
 
@@ -2742,8 +2794,8 @@ window.gerarPdf=async function(secId,opts){
     didDrawCell:function(dat){
       if(dat.section!=='body'||dat.column.index!==1)return;
       const e=iDims[dat.row.index];if(!e)return;
-      if(e.cd){const ih=Math.min(dat.cell.height-1.5,12),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}
-      if(e.rd){const rs=Math.min(dat.cell.height-1.5,11),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,12)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}
+      if(e.cd){const ih=Math.min(dat.cell.height-1.5,12),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}
+      if(e.rd){const rs=Math.min(dat.cell.height-1.5,11),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,12)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}
     },
     didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}
   });
@@ -2847,7 +2899,7 @@ window.gerarPdf=async function(secId,opts){
         sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
       }
       const sDims=await Promise.all(sTblE.map(async e=>({cd:e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null,rd:e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null})));
-      doc.autoTable({startY:y,head:sTblH,body:sTblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:10.5,cellPadding:2.2,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:0.15},headStyles:{fillColor:[15,23,42],textColor:[255,255,255],fontStyle:'bold',fontSize:11},alternateRowStyles:{fillColor:[248,250,252]},columnStyles:colStyles,didParseCell:function(dat){if(dat.section!=='body')return;if(dat.cell.styles&&dat.cell.styles.fillColor)return;const r0=dat.row.raw[0];const c0=typeof r0==='object'?(r0.content||r0):r0;const isSub=String(c0).startsWith('\u2211');const isTot=String(c0).startsWith('\u03a3');if(isSub){dat.cell.styles.fillColor=[226,232,240];dat.cell.styles.textColor=[71,85,105];dat.cell.styles.fontSize=9.5;dat.cell.styles.fontStyle='italic';}else if(isTot){dat.cell.styles.fillColor=[15,23,42];dat.cell.styles.textColor=[203,213,225];dat.cell.styles.fontStyle='bold';}else{dat.cell.styles.textColor=[30,41,59];}if(dat.column.index===1){const e=sDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:2.2,right:rv,bottom:2.2,left:2.2};}}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=sDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,12),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,11),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,12)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+      doc.autoTable({startY:y,head:sTblH,body:sTblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:10.5,cellPadding:2.2,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:0.15},headStyles:{fillColor:[15,23,42],textColor:[255,255,255],fontStyle:'bold',fontSize:11},alternateRowStyles:{fillColor:[248,250,252]},columnStyles:colStyles,didParseCell:function(dat){if(dat.section!=='body')return;if(dat.cell.styles&&dat.cell.styles.fillColor)return;const r0=dat.row.raw[0];const c0=typeof r0==='object'?(r0.content||r0):r0;const isSub=String(c0).startsWith('\u2211');const isTot=String(c0).startsWith('\u03a3');if(isSub){dat.cell.styles.fillColor=[226,232,240];dat.cell.styles.textColor=[71,85,105];dat.cell.styles.fontSize=9.5;dat.cell.styles.fontStyle='italic';}else if(isTot){dat.cell.styles.fillColor=[15,23,42];dat.cell.styles.textColor=[203,213,225];dat.cell.styles.fontStyle='bold';}else{dat.cell.styles.textColor=[30,41,59];}if(dat.column.index===1){const e=sDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:2.2,right:rv,bottom:2.2,left:2.2};}}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=sDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,12),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,11),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,12)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
     }
   }
 
@@ -3604,7 +3656,7 @@ window.__b64Cache=window.__b64Cache||{};
 window.loadB64=async function loadB64(url,fmt='jpeg',maxPx=600){
   const ck=url+'|'+fmt+'|'+maxPx;
   if(window.__b64Cache[ck])return window.__b64Cache[ck];
-  const p=new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.onerror=()=>res(null);img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});
+  const p=new Promise(res=>{const img=new Image();img.crossOrigin='Anonymous';img.onerror=()=>{console.warn('loadB64: falha ao carregar imagem',url);res(null);};img.onload=()=>{let nw=img.naturalWidth,nh=img.naturalHeight;if(nw>maxPx||nh>maxPx){const r=Math.min(maxPx/nw,maxPx/nh);nw=Math.round(nw*r);nh=Math.round(nh*r);}const c=document.createElement('canvas');c.width=nw;c.height=nh;const ctx=c.getContext('2d');if(fmt!=='png'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,nw,nh);}ctx.drawImage(img,0,0,nw,nh);res({d:c.toDataURL(fmt==='png'?'image/png':'image/jpeg',.65),w:nw,h:nh});};img.src=url+(!url.startsWith('data:')?'?t='+Date.now():'');});
   window.__b64Cache[ck]=p;
   p.then(v=>{if(!v)delete window.__b64Cache[ck];});
   return p;
@@ -4339,7 +4391,7 @@ async function gerarPdfBusca(){
   sf(15,true,[13,34,64]);doc.text(sec.name||'ATIVIDADE',mx,y+8);
   sf(8,false,[80,100,140]);doc.text('Busca: "'+query+'"  |  Campo: '+(campoLabel[campo]||campo),mx,y+15);
   let titleBot=y+19;
-  if(chkImgCov&&sec.cover_url){try{const covD=await window.loadB64(sec.cover_url,'jpeg',450);if(covD){const covW=58,covMaxH=44,ar=covD.w/covD.h;let iW=covW,iH=covW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){}titleBot=Math.max(titleBot,y-2+iH+2);}}catch(e){}}
+  if(chkImgCov&&sec.cover_url){try{const covD=await window.loadB64(sec.cover_url,'jpeg',450);if(covD){const covW=58,covMaxH=44,ar=covD.w/covD.h;let iW=covW,iH=covW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}titleBot=Math.max(titleBot,y-2+iH+2);}}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
   y=titleBot;
   if(sec.responsaveis){chk(10);const rL=doc.splitTextToSize(sec.responsaveis,cw-38);const rH=Math.max(8,rL.length*lhf(8)+4);doc.setFillColor(235,240,255);doc.rect(mx,y,cw,rH,'F');doc.setFillColor(99,102,241);doc.rect(mx,y,2.5,rH,'F');sf(7.5,true,[67,56,202]);doc.text('Responsaveis:',mx+5,y+5);sf(7.5,false,[30,30,80]);doc.text(rL,mx+36,y+5);y+=rH+2;}
   y+=2;
@@ -4425,7 +4477,7 @@ async function gerarPdfBusca(){
   for(const e of tblE){const cd=e.cu?await window.loadB64(e.cu,'jpeg',150).catch(()=>null):null;const rd=e.ru?await window.loadB64(e.ru,'jpeg',120).catch(()=>null):null;iDims.push({cd,rd});}
   const colStyles=useTable?{}:(_cp?{0:{cellWidth:8,halign:'center'},2:{cellWidth:14,halign:'center'},3:{cellWidth:26},4:{cellWidth:34}}:{0:{cellWidth:8,halign:'center'},2:{cellWidth:42}});
   if(useTable){colStyles[0]={cellWidth:8,halign:'center'};colStyles[1]={cellWidth:14,halign:'center'};colStyles[2]={cellWidth:42};colStyles[3]={cellWidth:26};colStyles[4]={cellWidth:30};}
-  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:colStyles,didParseCell:function(dat){if(dat.section!=='body')return;if(dat.cell.styles&&dat.cell.styles.fillColor)return;if(dat.column.index!==1)return;const e=iDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+  doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:colStyles,didParseCell:function(dat){if(dat.section!=='body')return;if(dat.cell.styles&&dat.cell.styles.fillColor)return;if(dat.column.index!==1)return;const e=iDims[dat.row.index];if(e&&(e.cd||e.rd)){const rv=(e.cd?13:0)+(e.rd?11:0)+2;dat.cell.styles.cellPadding={top:1.8,right:rv,bottom:1.8,left:1.8};}},didDrawCell:function(dat){if(dat.section!=='body'||dat.column.index!==1)return;const e=iDims[dat.row.index];if(!e)return;if(e.cd){const ih=Math.min(dat.cell.height-1.5,10),iw=ih*(e.cd.w/e.cd.h);try{doc.addImage(e.cd.d,'JPEG',dat.cell.x+dat.cell.width-iw-2,dat.cell.y+(dat.cell.height-ih)/2,iw,ih);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}if(e.rd){const rs=Math.min(dat.cell.height-1.5,9),rw=rs*(e.rd.w/e.rd.h),off=e.cd?Math.min(dat.cell.height-1.5,10)*(e.cd.w/e.cd.h)+2:0;try{doc.addImage(e.rd.d,'JPEG',dat.cell.x+dat.cell.width-rw-off-2,dat.cell.y+(dat.cell.height-rs)/2,rw,rs);}catch(er){console.warn('PDF: falha ao inserir imagem',er);}}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
   rodape();
   const totalPages=doc.internal.getNumberOfPages();
   for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}

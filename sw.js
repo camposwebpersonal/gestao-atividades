@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v44';
+const CACHE_NAME = 'gestao-pms-v45';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -40,6 +40,23 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Falha de rede sem cópia em cache: responde com erro descritível em vez de
+// deixar o fetch estourar sem diagnóstico.
+function offlineResponse(request, err) {
+  console.warn('[SW] Sem rede e sem cache para:', request.url, err);
+  return new Response('Recurso indisponível offline: ' + request.url, {
+    status: 503,
+    statusText: 'Offline',
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  });
+}
+
+function putInCache(request, response) {
+  return caches.open(CACHE_NAME)
+    .then(cache => cache.put(request, response))
+    .catch(err => console.warn('[SW] Falha ao gravar no cache:', request.url, err));
+}
+
 self.addEventListener('fetch', event => {
   const {request} = event;
   if(request.method !== 'GET') return;
@@ -50,11 +67,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request).then(response => {
         if(response && response.status === 200 && !url.hostname.includes('supabase.co')){
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          putInCache(request, response.clone());
         }
         return response;
-      }).catch(() => caches.match(request))
+      }).catch(err => caches.match(request).then(cached => cached || offlineResponse(request, err)))
     );
     return;
   }
@@ -66,11 +82,10 @@ self.addEventListener('fetch', event => {
         if(cached) return cached;
         return fetch(request).then(response => {
           if(response && response.status === 200){
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+            putInCache(request, response.clone());
           }
           return response;
-        });
+        }).catch(err => offlineResponse(request, err));
       })
     );
     return;
@@ -82,14 +97,14 @@ self.addEventListener('fetch', event => {
       if(response) return response;
       return fetch(request).then(networkResponse => {
         if(networkResponse && networkResponse.status === 200){
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          putInCache(request, networkResponse.clone());
         }
         return networkResponse;
-      }).catch(() => {
+      }).catch(err => {
         if(request.destination === 'document'){
-          return caches.match('index.html');
+          return caches.match('index.html').then(cached => cached || offlineResponse(request, err));
         }
+        return offlineResponse(request, err);
       });
     })
   );
