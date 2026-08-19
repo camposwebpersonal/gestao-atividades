@@ -33,7 +33,7 @@ const NOME_MODULO = {
   agenda_prefeita:['agenda da prefeita','prefeita','compromisso da prefeita','agenda prefeitura']
 };
 function _modFromName(name){
-  const n=String(name||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const n=PMS.normLower(name);
   for(const id of MODULOS){
     const keys=NOME_MODULO[id.id];
     if(keys&&keys.some(k=>n.includes(k))) return id.id;
@@ -53,11 +53,11 @@ window.userCan = function(modId, action='acesso'){
 };
 
 const _md = {
-  esc: s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
-  setC: h => document.getElementById('content').innerHTML = h,
-  fmtD: d => { if(!d) return '—'; try { let s=String(d); if(!s.includes('T') && !s.includes(' ')) s+='T00:00'; return new Date(s).toLocaleDateString('pt-BR'); } catch { return String(d); } },
-  pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
-  extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
+  esc: PMS.esc,
+  setC: PMS.setC,
+  fmtD: PMS.fmtD,
+  pColor: PMS.pColor,
+  extra: PMS.extraFields,
   modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1||s.controle_estoque_modelo==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
   pct: g => { const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
   ativTotal: g => { return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
@@ -197,9 +197,8 @@ window.criarGrupoModulo = async function(modId){
 
 window.gerarRelatorioModulo = async function(modId){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod){ toast('Módulo não encontrado','error'); return; }
-  if(!window.jspdf || !window.jspdf.jsPDF){ toast('jsPDF não carregado','error'); return; }
+  const jsPDF = PMS.getJsPDF(); if(!jsPDF) return;
   toast('Gerando PDF do módulo…','info',8000);
-  const {jsPDF} = window.jspdf;
   const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
   const W = 210, mx = 14;
   const now = new Date().toLocaleString('pt-BR');
@@ -229,7 +228,7 @@ window.gerarRelatorioModulo = async function(modId){
   if(!grupos.length){
     doc.setTextColor(100,116,139); doc.setFontSize(11); doc.text('Nenhum grupo cadastrado neste módulo.', mx, y);
   }
-  doc.save(`relatorio-${mod.id}-${new Date().toISOString().slice(0,10)}.pdf`);
+  doc.save(`relatorio-${mod.id}-${PMS.hojeISO()}.pdf`);
   toast('PDF do módulo gerado!','success');
 };
 

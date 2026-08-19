@@ -2,9 +2,9 @@
 
 const CE_UNIDADES = ['UNIDADE','FRASCO','LITRO','CAIXA'];
 
-function _ceEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function _ceFmtMoney(v){ return parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
-function _ceFmtNum(v){ const n=parseFloat(v||0); return Number.isInteger(n)?n.toString():n.toFixed(2).replace('.',','); }
+const _ceEsc = PMS.esc;
+const _ceFmtMoney = PMS.fmtMoney;
+const _ceFmtNum = PMS.fmtNum;
 function _ceFator(prod, unidade){
   const ef=(prod&&prod.extra_fields)||{};
   const k='ce_fator_'+unidade;
@@ -19,7 +19,7 @@ function _ceCalc(prod,lancs){
   const sai=lancs.filter(e=>e.subitem_id===id&&e.tipo==='SAIDA').reduce((a,e)=>a+(parseFloat(e.qtd_base)||0),0);
   return {ent,sai,saldo:ent-sai,total:lancs.filter(e=>e.subitem_id===id&&e.tipo==='ENTRADA').reduce((a,e)=>a+(parseFloat(e.valor_total)||0),0),critico:_ceCritico(prod)};
 }
-function _ceHoje(){ return new Date().toISOString().split('T')[0]; }
+const _ceHoje = PMS.hojeISO;
 function _ceReqId(){ return 'ri_'+(++_ceReqId._n); }
 _ceReqId._n=0;
 function _ceNovaReqId(){ return 'ri_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7); }
@@ -458,7 +458,7 @@ window.ceDeleteRequisicao=async function(id){
   renderControleEstoque(curSecId);
 };
 
-function _ceNormDesc(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+const _ceNormDesc = PMS.normKey;
 async function _ceFindOrCreateProduto(desc){
   const norm=_ceNormDesc(desc);
   let prod=S.subitems.find(s=>s.atividade_id===curSecId && s.parent_type!=='subitem' && _ceNormDesc(s.description)===norm);
@@ -553,12 +553,11 @@ window.ceSaveCompra=async function(requisicaoId,itemId){
 
 window.ceGerarPdf=async function(secId){
   const sec=S.secs.find(s=>s.id===secId); if(!sec) return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error'); return;}
+  const jsPDF = PMS.getJsPDF(); if(!jsPDF) return;
   toast('Gerando PDF…','info',8000);
-  const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const W=297, mx=12, cw=W-mx*2;
-  const now=new Date().toLocaleDateString('pt-BR');
+  const now=PMS.hojeBR();
 
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const produtos=[...S.subitems.filter(s=>items.some(i=>i.id===s.item_id) && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -636,7 +635,7 @@ window.ceGerarPdf=async function(secId){
     });
   }
 
-  doc.save((_ceEsc((sec.name||'controle-estoque').replace(/[^a-zA-Z0-9À-ú ]/g,'_'))).trim()+'_estoque_'+now.replace(/\//g,'-')+'.pdf');
+  doc.save(PMS.slugArquivo(sec.name,'controle-estoque')+'_estoque_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!','success');
 };
 

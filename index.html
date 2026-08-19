@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="js/utils.js"></script>
 <script src="js/controle-contas.js"></script>
 <script src="js/controle-distribuicao.js"></script>
 <script src="js/controle-estoque.js"></script>
@@ -584,12 +585,12 @@ window.loadData=async function loadData(){
 }
 
 // ── UTILS ──
-const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const esc=PMS.esc;
 const _tplOpts=t=>{let o=t?.options||[];if(typeof o==='string'){try{o=JSON.parse(o)}catch(e){o=o.split(',').map(s=>s.trim())}}return Array.isArray(o)?o:[];};
-const fmtD=d=>{if(!d)return'—';try{let s=String(d);if(!s.includes('T')&&!s.includes(' '))s+='T00:00';return new Date(s).toLocaleDateString('pt-BR');}catch{return String(d);}};
+const fmtD=PMS.fmtD;
 function toast(msg,type='success',dur=3200){const el=document.createElement('div');el.className='toast-item '+type;el.textContent=msg;document.getElementById('toast').appendChild(el);setTimeout(()=>el.remove(),dur);}window.toast=toast;
-const setC=h=>document.getElementById('content').innerHTML=h;
-const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
+const setC=PMS.setC;
+const pColor=PMS.pColor;
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
   return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
 function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:item.concluded==1?100:0,total:0,subs:[]};const done=subs.filter(s=>s.concluded==1).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs:subs};}
@@ -659,13 +660,8 @@ window.deleteSecretaria=async function(id){
 };
 
 // ── RESPONSÁVEIS ──
-function _fmtRespCPF(v){
-  const d=String(v||'').replace(/\D/g,'').slice(0,11);
-  if(d.length<=3)return d;
-  if(d.length<=6)return `${d.slice(0,3)}.${d.slice(3)}`;
-  if(d.length<=9)return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
-  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
-}
+const _fmtRespCPF=PMS.fmtCPF;
+window._fmtRespCPF=_fmtRespCPF;
 window.renderResponsaveis=function(){
   const rows=S.responsaveis.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(_fmtRespCPF(r.cpf)||'')}</td><td>${esc(r.cargo||'')}</td><td>${esc(r.setor||'')}</td><td>${esc(r.contato||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteResponsavel('${r.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum responsável cadastrado.</td></tr>';
   setC(`<div class="page-title">👤 Responsáveis</div><div class="page-sub">Cadastro de Responsáveis / Agentes Municipais</div>
@@ -790,14 +786,13 @@ window.deleteContato=async function(id){
 };
 window.gerarPDFContatos=async function(){
   if(!S.contatos.length){toast('Nenhum contato para gerar PDF.','error');return;}
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   toast('Gerando PDF da cartilha…','info',8000);
-  const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=30,FTR_Y=280,FTR_H=12;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const now=new Date().toLocaleDateString('pt-BR');
+  const sf=PMS.pdfStyler(doc);
+  const now=PMS.hojeBR();
   const lObj=await loadB64('img/logo_sertania.png','png',120);
   const logo=lObj?lObj.d:null;
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
@@ -831,7 +826,7 @@ window.gerarPDFContatos=async function(){
     sf(7,false,[59,130,246]);doc.text(esc(c.email||'—').substring(0,30),mx+3*cw4+2,y+4);
     y+=10;
   });
-  doc.save('cartilha-contatos-'+new Date().toISOString().slice(0,10)+'.pdf');
+  doc.save('cartilha-contatos-'+PMS.hojeISO()+'.pdf');
   toast('PDF gerado!','success');
 };
 
@@ -856,7 +851,7 @@ window.renderGaleria=function(){
 window.openFotoUploadModal=function(){
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   openModal('📷 Nova Foto','',
-    `<div class="form-grid"><div class="form-group full"><label>Imagem *</label><input type="file" id="gal-file" accept="image/*" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;width:100%"></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título da foto"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Imagem *</label><input type="file" id="gal-file" accept="image/*" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;width:100%"></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título da foto"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${PMS.hojeISO()}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="salvarFoto()">💾 Salvar</button></div>`);
 };
 window.salvarFoto=async function(){
@@ -896,14 +891,13 @@ window.openFotoModal=function(id){
 };
 window.gerarPDFGaleria=async function(){
   if(!S.galeria.length){toast('Galeria vazia. Adicione fotos primeiro.','error');return;}
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   toast('Gerando PDF fotográfico…','info',8000);
-  const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=28,FTR_Y=274,FTR_H=14;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const now=new Date().toLocaleDateString('pt-BR');
+  const sf=PMS.pdfStyler(doc);
+  const now=PMS.hojeBR();
   const lObj=await loadB64('img/logo_sertania.png','png',120);
   const logo=lObj?lObj.d:null;
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
@@ -945,18 +939,14 @@ window.gerarPDFGaleria=async function(){
     doc.text(metaLines,mx,y+9);
     y+=9+(metaLines.length*3.5)+6;
   }
-  doc.save('relatorio-fotografico-'+new Date().toISOString().slice(0,10)+'.pdf');
+  doc.save('relatorio-fotografico-'+PMS.hojeISO()+'.pdf');
   toast('PDF gerado!','success');
 };
 
 // ── DASHBOARD ──
 // Tela antiga de Atividades removida; use renderModulos() / Central de Lançamentos.
 
-function _parseValor(v){
-  if(v==null||v==='')return 0;
-  const n=parseFloat(String(v).replace(/[^\d,\-]/g,'').replace(',','.'));
-  return isNaN(n)?0:n;
-}
+const _parseValor=PMS.parseNum;
 function _fmtMoney(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function _renderResumoFinanceiro(secId){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -1361,7 +1351,7 @@ window.toggleDone=async function(col,id,val){
 window.openConclusaoModal=function(col,id){
   const e2=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
   const sbs=col==='item'?S.subitems.filter(s=>s.item_id===id):[];
-  const today=new Date().toISOString().split('T')[0];
+  const today=PMS.hojeISO();
   const subWarn=sbs.length?`<div style="background:#0f2a1a;border:1px solid #065f46;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#6ee7b7">⚠️ Isso também marcará os <strong>${sbs.length} sub-item(ns)</strong> como concluídos.</div>`:'';
   openModal('✅ Confirmar Conclusão','',
     `<div style="padding:4px 0">
@@ -1975,7 +1965,7 @@ window.saveUser=async function(id){
     }
     const userRaw=document.getElementById('usr-user')?.value.trim();
     if(!userRaw){toast('Usuário é obrigatório','error');return;}
-    const user=userRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const user=PMS.normKey(userRaw);
     if(!user||user.length<2){toast('Usuário inválido. Use pelo menos 2 letras/números.','error');return;}
     const password=document.getElementById('usr-password')?.value||'';
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
@@ -2269,7 +2259,7 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     imgs.push({cu:null,ru:opts.subResp?s.resp_url:null});
   }
   const _itemSums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
-  const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
+  const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';
   return{rows,imgs,subSumTxt:_subSumTxt,count:flat.length};
 }
 
@@ -2335,14 +2325,13 @@ function _renderQuantitativo(secId,valField,title){
 }
 window.gerarPdfResumoBCCS=async function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   toast('Gerando PDF resumo financeiro...','info',8000);
-  const {jsPDF}=window.jspdf;
   let doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
   const W=297,H=210,mx=14,cw=W-mx*2;
   const HDR_H=28,FTR_Y=H-12,FTR_H=12,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const now=new Date().toLocaleDateString('pt-BR');
+  const sf=PMS.pdfStyler(doc);
+  const now=PMS.hojeBR();
   const lObj=await loadB64('img/logo_sertania.png','png',120);
   function cab(){doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR_H,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR_H-3,W,3,'F');if(lObj){const ar=lObj.w/lObj.h;let lh=18,lw=18*ar;if(lw>28){lw=28;lh=28/ar;}doc.addImage(lObj.d,'PNG',W-mx-lw,3+(24-lh)/2,lw,lh,'logo_hdr','FAST');}sf(13,true,[20,82,20]);doc.text('RESUMO FINANCEIRO BCC',mx+10,12);sf(7,false,[30,123,30]);doc.text('Prefeitura de Sertania — PE  •  '+sec.name+'  •  '+now,mx+10,21);}
   function rod(){doc.setFillColor(20,82,20);doc.rect(0,FTR_Y,W,FTR_H,'F');doc.setFillColor(110,192,46);doc.rect(0,FTR_Y,W,2,'F');sf(6.5,false,[180,240,180]);doc.text('Sertania — PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+8,{align:'center'});}
@@ -2387,9 +2376,8 @@ window.gerarPdfResumoBCCS=async function(secId){
 window.gerarPdf=async function(secId,opts){
   if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   toast('Gerando PDF\u2026','info',8000);
-  const{jsPDF}=window.jspdf;
   const _cp=sec.controle_pendencias!==0;
   const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:2))+(opts.efFields?opts.efFields.length:0);
@@ -2397,9 +2385,9 @@ window.gerarPdf=async function(secId,opts){
   let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const sf=PMS.pdfStyler(doc);
   const lhf=pt=>(pt||9)*0.3528*1.5;
-  const now=new Date().toLocaleDateString('pt-BR');
+  const now=PMS.hojeBR();
   const today=new Date();today.setHours(0,0,0,0);
 
   const lObj=await loadB64('img/logo_sertania.png','png',120);
@@ -2548,19 +2536,19 @@ window.gerarPdf=async function(secId,opts){
     const calcSum=(fn,filterFn)=>{let t=0,c=0;items.forEach(it=>{S.subitems.filter(s=>s.item_id===it.id).forEach(s=>{if(filterFn&&!filterFn(s))return;const v=parseFloat(String((s.extra_fields||{})[fn]||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});return{total:t,count:c};};
     const allCards=[];
     // Card Geral (todos)
-    opts.efFields.forEach(fn=>{const g=calcSum(fn);if(g.count>0)allCards.push({v:'R$ '+g.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:g.count+' cadastro(s)  •  '+fn,c:[245,158,11],title:'Total Geral'});});
+    opts.efFields.forEach(fn=>{const g=calcSum(fn);if(g.count>0)allCards.push({v:PMS.fmtBRL(g.total),l:g.count+' cadastro(s)  •  '+fn,c:[245,158,11],title:'Total Geral'});});
     if(hasSep){
       // Card Demais (não separados)
-      opts.efFields.forEach(fn=>{const ns=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return!v||String(v).trim()!==opts.sepVal;});if(ns.count>0)allCards.push({v:'R$ '+ns.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:ns.count+' cadastro(s)  •  '+fn,c:[59,130,246],title:'Demais'});});
+      opts.efFields.forEach(fn=>{const ns=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return!v||String(v).trim()!==opts.sepVal;});if(ns.count>0)allCards.push({v:PMS.fmtBRL(ns.total),l:ns.count+' cadastro(s)  •  '+fn,c:[59,130,246],title:'Demais'});});
       // Card Separados
-      opts.efFields.forEach(fn=>{const sp=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return v&&String(v).trim()===opts.sepVal;});if(sp.count>0)allCards.push({v:'R$ '+sp.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:sp.count+' cadastro(s)  •  '+fn,c:[139,92,246],title:opts.sepField.toUpperCase()+': '+opts.sepVal});});
+      opts.efFields.forEach(fn=>{const sp=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return v&&String(v).trim()===opts.sepVal;});if(sp.count>0)allCards.push({v:PMS.fmtBRL(sp.total),l:sp.count+' cadastro(s)  •  '+fn,c:[139,92,246],title:opts.sepField.toUpperCase()+': '+opts.sepVal});});
     }
     if(allCards.length){const cW=allCards.length>0?(cw-(Math.min(allCards.length,2)-1)*3)/Math.min(allCards.length,2):cw;let cardY=y;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=19;const cx=mx+col*(cW+3);chk(19);doc.setFillColor(255,255,255);doc.setDrawColor(203,213,225);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cW,17,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cW,3,1,1,'F');sf(13,true,card.c);doc.text(card.v,cx+cW/2,cardY+9,{align:'center'});if(card.title){sf(8.5,true,card.c);doc.text(card.title,cx+cW/2,cardY+13,{align:'center'});sf(7,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+16,{align:'center'});}else{sf(7.5,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+14,{align:'center'});}});y=cardY+19+2;}
   }
 
   // Identifica campos numéricos selecionados
   const numFields=(opts.efFields||[]).filter(fn=>{const t=S.fieldTemplates.find(x=>x.atividade_id===secId&&x.scope==='subitem'&&x.field_name===fn);return t&&t.field_type==='number';});
-  const sumVal=v=>{const n=parseFloat(String(v||'').replace(/[^\d,\-]/g,'').replace(',','.'));return isNaN(n)?0:n;};
+  const sumVal=PMS.parseNum;
 
   // Larguras das colunas
   const efLen=opts.efFields?opts.efFields.length:0;
@@ -2640,13 +2628,13 @@ window.gerarPdf=async function(secId,opts){
           tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});
         });
         const sums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
-        const subTxt=sums.length?'  |  '+sums.map((v,i)=>'\u03a3 '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
+        const subTxt=sums.length?'  |  '+sums.map((v,i)=>'\u03a3 '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';
         const subRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});
         subRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};
         subRow[1]={content:'Subtotal: '+flat.length+' sub-item(ns)'+subTxt,styles:{fillColor:[226,232,240],fontStyle:'bold'}};
         numFields.forEach(fn=>{
           const v=flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);
-          if(v>0){const colIdx=4+opts.efFields.indexOf(fn);subRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{halign:'right',fontStyle:'bold',fillColor:[226,232,240]}};}
+          if(v>0){const colIdx=4+opts.efFields.indexOf(fn);subRow[colIdx]={content:PMS.fmtBRL(v),styles:{halign:'right',fontStyle:'bold',fillColor:[226,232,240]}};}
         });
         tblB.push(subRow);tblE.push({cu:null,ru:null});
         if(ii<items.length-1){tblB.push(new Array(totalCols).fill({content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}));tblE.push({cu:null,ru:null});}
@@ -2658,7 +2646,7 @@ window.gerarPdf=async function(secId,opts){
     totRow[1]={content:'Total: '+items.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};
     numFields.forEach(fn=>{
       const v=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);
-      if(v>0){const colIdx=4+opts.efFields.indexOf(fn);totRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}
+      if(v>0){const colIdx=4+opts.efFields.indexOf(fn);totRow[colIdx]={content:PMS.fmtBRL(v),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}
     });
     tblB.push(totRow);tblE.push({cu:null,ru:null});
   }else{
@@ -2702,7 +2690,7 @@ window.gerarPdf=async function(secId,opts){
       }else if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
     }
     const allSums=numFields.map(fn=>items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);
-    const totSumTxt=allSums.length?'  |  '+allSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
+    const totSumTxt=allSums.length?'  |  '+allSums.map((v,i)=>'Σ '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';
     const totRow=_cp?[
       {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}},
       {content:'Total: '+items.length+' item(ns)'+totSumTxt,styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}},
@@ -2792,12 +2780,12 @@ window.gerarPdf=async function(secId,opts){
             sTblB.push(srow);sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});
           });
           const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
-          const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
-          const sepSubRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});sepSubRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[226,232,240],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
+          const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';
+          const sepSubRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});sepSubRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:PMS.fmtBRL(v),styles:{fontStyle:'bold',fillColor:[226,232,240],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
           if(sii<sepItems.length-1){sTblB.push(new Array(totalCols).fill({content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}));sTblE.push({cu:null,ru:null});}
         });
         sTblB.push(new Array(totalCols).fill({content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}));sTblE.push({cu:null,ru:null});
-        const sepTotRow=new Array(totalCols).fill({content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}});sepTotRow[0]={content:'\u03a3',styles:{fillColor:[15,23,42],textColor:[255,255,255],halign:'center',fontStyle:'bold'}};sepTotRow[1]={content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};numFields.forEach(fn=>{const v=sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepTotRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}});sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
+        const sepTotRow=new Array(totalCols).fill({content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}});sepTotRow[0]={content:'\u03a3',styles:{fillColor:[15,23,42],textColor:[255,255,255],halign:'center',fontStyle:'bold'}};sepTotRow[1]={content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};numFields.forEach(fn=>{const v=sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepTotRow[colIdx]={content:PMS.fmtBRL(v),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}});sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
       }else{
         sTblH=_cp?[['#','Item / Sub-item / Respons\u00e1veis','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Sub-item / Respons\u00e1veis']];
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
@@ -2818,7 +2806,7 @@ window.gerarPdf=async function(secId,opts){
           sTblB.push(sepItemRow);
           sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
           sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){sTblB.push(['',sc,sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
-          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const sepSubRow=_cp?[
+          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';const sepSubRow=_cp?[
             {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
             {content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
             {content:'',styles:{fillColor:[226,232,240],textColor:[15,23,42]}},
@@ -2841,7 +2829,7 @@ window.gerarPdf=async function(secId,opts){
           {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}}
         ];
-        const _sepTotSums=numFields.map(fn=>sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);const _sepTotSumTxt=_sepTotSums.length?'  |  '+_sepTotSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';if(_cp){sepTotRow[1].content+=_sepTotSumTxt;}else{sepTotRow[1].content+=_sepTotSumTxt;}
+        const _sepTotSums=numFields.map(fn=>sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);const _sepTotSumTxt=_sepTotSums.length?'  |  '+_sepTotSums.map((v,i)=>'Σ '+numFields[i]+': '+PMS.fmtBRL(v)).join('  |  '):'';if(_cp){sepTotRow[1].content+=_sepTotSumTxt;}else{sepTotRow[1].content+=_sepTotSumTxt;}
         const spSepTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
         sTblB.push(spSepTot);sTblE.push({cu:null,ru:null});
         sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
@@ -2978,7 +2966,7 @@ window.setItemStatus=async function(id,col,status){
   const obj=col==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);
   const wasConcluded=obj?.concluded==1;
   if(status!=='pendente'){
-    const today=new Date().toISOString().split('T')[0];
+    const today=PMS.hojeISO();
     const si=_ST.find(x=>x.v===status)||{l:status,bg:'#1e3a5f22',c:'#94a3b8'};
     openModal('📋 Mudar Status',`<span style="padding:2px 10px;border-radius:999px;background:${si.bg};color:${si.c};font-size:13px;font-weight:700">${si.l}</span>`,
       `<div style="padding:4px 0">${wasConcluded?`<div style="background:#1e1a00;border:1px solid #b45309;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24">⚠️ Este item será desmarcado como concluído.</div>`:''}
@@ -3029,7 +3017,7 @@ window.childBadge=function(id,isSub){
   return `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:999px;background:#1e3a5f;color:#60a5fa;font-size:10px;font-weight:700;padding:0 5px;margin-left:4px" title="${n} sub-item(ns)">${n}</span>`;
 };
 window.markActivityConcluded=function(secId){
-  const today=new Date().toISOString().split('T')[0];
+  const today=PMS.hojeISO();
   openModal('✅ Concluir Atividade','Todos os itens e sub-itens serão marcados como concluídos.',
     `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="act-use-date" checked onchange="document.getElementById('act-date-row').style.display=this.checked?'':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data de conclusão</label>
     <div id="act-date-row"><div class="form-group full" style="margin-top:4px"><label>Data de Conclusão</label><input type="date" id="act-conc-date" value="${today}"></div></div>
@@ -3051,7 +3039,7 @@ window._doMarkActivityConcluded=async function(secId){
   await loadData();closeModal();toast('✅ Atividade concluída!');openActivity(secId);
 };
 window.markItemConcluded=function(itemId,secId){
-  const today=new Date().toISOString().split('T')[0];
+  const today=PMS.hojeISO();
   const it=S.items.find(x=>x.id===itemId);
   openModal('✅ Concluir Item',esc(it?.description||''),
     `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px"><input type="checkbox" id="item-use-date" checked onchange="document.getElementById('item-date-row').style.display=this.checked?'':'none'" style="width:14px;height:14px;accent-color:#10b981"> Informar data de conclusão</label>
@@ -3627,14 +3615,13 @@ window._setupBccs=async function(){
 // ── PDF RELATÓRIO POR CAMPO ──
 window.gerarPdfRelatorio=async function(secId,fieldName){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   toast('Gerando relatório…','info',8000);
-  const{jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
-  const now=new Date().toLocaleDateString('pt-BR');
+  const sf=PMS.pdfStyler(doc);
+  const now=PMS.hojeBR();
   const lObj=await loadB64('img/logo_sertania.png','png',120);
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
   function bgTextura(){doc.setFillColor(215,242,215);for(let gx=14;gx<=196;gx+=7)for(let gy=HDR_H+4;gy<=FTR_Y-2;gy+=7)doc.circle(gx,gy,0.22,'F');}
@@ -3665,7 +3652,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
   const totalPages=doc.internal.getNumberOfPages();
   for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}
   const fClean=fieldName.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'_').trim().substring(0,15)||'CAMPO';
-  doc.save((sec.name||'relatorio').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_por_'+fClean+'_'+now.replace(/\//g,'-')+'.pdf');
+  doc.save(PMS.slugArquivo(sec.name,'relatorio')+'_por_'+fClean+'_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!');
 };
 </script>
@@ -4132,7 +4119,7 @@ function aplicarFiltroBusca(){const field=document.getElementById('bchk-filter-f
 function limparFiltroBusca(){document.getElementById('bchk-filter-field').value='';document.getElementById('bchk-filter-value').innerHTML='<option value="">— Qualquer —</option>';if(window._buscaRes)executarBusca();}
 function fecharBusca(){document.getElementById('busca-overlay').style.display='none';}
 function limparBusca(){document.getElementById('busca-input').value='';document.getElementById('busca-resultados').innerHTML='';window._buscaRes=null;}
-function _norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+const _norm=PMS.normLower;
 function executarBusca(){
   const q=_norm(document.getElementById('busca-input').value.trim());
   const campo=document.getElementById('busca-campo').value;
@@ -4196,7 +4183,7 @@ function executarBusca(){
   // Stats cards
   if(sumFields.length||qtFields.length){
     html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
-    Object.entries(sumData).forEach(([k,v])=>{html+=`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;min-width:120px"><div style="font-size:10px;color:#94a3b8">Soma ${k}</div><div style="font-size:14px;font-weight:700;color:#f59e0b">R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div style="font-size:10px;color:#64748b">${v.count} registro(s)</div></div>`;});
+    Object.entries(sumData).forEach(([k,v])=>{html+=`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;min-width:120px"><div style="font-size:10px;color:#94a3b8">Soma ${k}</div><div style="font-size:14px;font-weight:700;color:#f59e0b">${PMS.fmtBRL(v.total)}</div><div style="font-size:10px;color:#64748b">${v.count} registro(s)</div></div>`;});
     qtFields.forEach(qt=>{Object.entries(qt.vals).forEach(([k,v])=>{html+=`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;min-width:120px"><div style="font-size:10px;color:#94a3b8">${qt.field} = ${k}</div><div style="font-size:14px;font-weight:700;color:#38bdf8">${v}</div></div>`;});if(qt.vazio)html+=`<div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:8px;padding:8px 12px;min-width:120px"><div style="font-size:10px;color:#94a3b8">${qt.field} (vazio)</div><div style="font-size:14px;font-weight:700;color:#64748b">${qt.vazio}</div></div>`;});
     html+='</div>';
   }
@@ -4300,9 +4287,9 @@ async function gerarPdfBusca(){
   const {results,query,campo,secId,sumData,qtFields}=window._buscaRes;
   const S=window.S;
   const sec=S.secs.find(s=>s.id===secId);
-  if(!sec||!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
+  if(!sec)return;
+  const jsPDF=PMS.getJsPDF(); if(!jsPDF)return;
   window.toast('Gerando PDF\u2026','info',8000);
-  const {jsPDF}=window.jspdf;
   const chkAllSubsItem=document.getElementById('bchk-allsubs-item')?.checked||false;
   const chkAllSubsSub=document.getElementById('bchk-allsubs-sub')?.checked||false;
   const chkImgCov=document.getElementById('bchk-img-cov')?.checked!==false;
@@ -4322,9 +4309,9 @@ async function gerarPdfBusca(){
   let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
-  const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
+  const sf=PMS.pdfStyler(doc);
   const lhf=pt=>(pt||9)*0.3528*1.5;
-  const now=new Date().toLocaleDateString('pt-BR');
+  const now=PMS.hojeBR();
   const campoLabel={todos:'Todos os campos',nome:'Nome/Descri\u00e7\u00e3o',resp:'Respons\u00e1veis',obs:'Observa\u00e7\u00e3o'};
   const lObj=await window.loadB64('img/logo_sertania.png','png',120);
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
@@ -4349,7 +4336,7 @@ async function gerarPdfBusca(){
   const allStatCards=[];
   if(_cp)allStatCards.push({v:String(totalR),l:'Itens encontrados',c:[59,130,246]},{v:String(totalSR),l:'Sub-itens exibidos',c:[110,192,46]});
   else allStatCards.push({v:String(totalR),l:'Itens encontrados',c:[59,130,246]},{v:String(totalSR),l:'Sub-itens exibidos',c:[110,192,46]});
-  Object.entries(sumData||{}).forEach(([k,v])=>{allStatCards.push({v:'R$ '+v.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:'Soma '+k,c:[245,158,11]});allStatCards.push({v:String(v.count),l:'Total cadastros '+k,c:[56,189,248]});});
+  Object.entries(sumData||{}).forEach(([k,v])=>{allStatCards.push({v:PMS.fmtBRL(v.total),l:'Soma '+k,c:[245,158,11]});allStatCards.push({v:String(v.count),l:'Total cadastros '+k,c:[56,189,248]});});
   (qtFields||[]).forEach(qt=>{const totalCount=Object.values(qt.vals).reduce((a,b)=>a+b,0)+(qt.vazio||0);if(totalCount>0)allStatCards.push({v:String(totalCount),l:'Total cadastros '+qt.field,c:[56,189,248]});});
   const cardW=allStatCards.length>0?(cw-(Math.min(allStatCards.length,2)-1)*3)/Math.min(allStatCards.length,2):cw;
   let cardY=y;
@@ -4430,7 +4417,7 @@ async function gerarPdfBusca(){
   const totalPages=doc.internal.getNumberOfPages();
   for(let p=1;p<=totalPages;p++){doc.setPage(p);sf(8,true,[185,245,185]);doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});}
   const qClean=query.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').trim().replace(/\s+/g,'_').substring(0,20)||'BUSCA';
-  doc.save((sec.name||'atividade').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_'+qClean+'.pdf');
+  doc.save(PMS.slugArquivo(sec.name,'atividade')+'_'+qClean+'.pdf');
   window.toast('PDF gerado!','success');
 }
 
