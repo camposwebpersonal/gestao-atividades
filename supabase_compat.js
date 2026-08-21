@@ -72,7 +72,7 @@ function mergeExtraFields(row) {
       return merged;
     }
   } catch (e) {
-    // ignora JSON inválido
+    console.warn('extra_fields com JSON inválido, ignorado:', row.id, e);
   }
   return { ...row };
 }
@@ -123,24 +123,30 @@ function mapUser(su) {
   };
 }
 
-export function onAuthStateChanged(auth, callback) {
+export function onAuthStateChanged(auth, callback, errorCallback) {
   let initialDone = false;
+  const onError = (err) => {
+    console.error('onAuthStateChanged: falha ao recuperar sessão', err);
+    if (errorCallback) errorCallback(err instanceof Error ? err : new Error(err?.message || String(err)));
+  };
   // Primeiro verifica sessão existente
-  auth.getSession().then(({ data }) => {
+  auth.getSession().then(({ data, error }) => {
+    if (error) { onError(error); return; }
     if (data?.session?.user) {
       initialDone = true;
       callback(mapUser(data.session.user));
     }
-  });
+  }).catch(onError);
   // Também escuta mudanças, mas evita chamar null antes de verificar a sessão
   const { subscription } = auth.onAuthStateChange((event, session) => {
     const user = mapUser(session?.user || null);
     if (!initialDone && !user) {
       // Aguarda um pouco para a sessão ser recuperada do storage
       setTimeout(() => {
-        auth.getSession().then(({ data }) => {
+        auth.getSession().then(({ data, error }) => {
+          if (error) { onError(error); return; }
           if (!data?.session?.user) callback(null);
-        });
+        }).catch(onError);
       }, 800);
       return;
     }
@@ -338,7 +344,9 @@ export async function setDoc(docRef, data, options) {
   cleanPayload(payload);
   if (options?.merge) {
     const { data: existing, error: e1 } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
-    if (!e1 && existing) {
+    // Sem o registro atual o merge apagaria campos existentes: falha em vez de perder dados
+    if (e1) throw e1;
+    if (existing) {
       const mergedExisting = mergeExtraFields(existing);
       for (const [k, v] of Object.entries(mergedExisting)) {
         if (payload[k] === undefined) payload[k] = v;
@@ -361,7 +369,9 @@ export async function updateDoc(docRef, data) {
   let existingExtra = null;
   if (EXTRA_TABLES.has(table)) {
     const { data: existing, error } = await supabase.from(table).select('extra_fields').eq('id', docRef._id).maybeSingle();
-    if (!error && existing?.extra_fields) existingExtra = existing.extra_fields;
+    // extra_fields é reescrito por inteiro: sem o valor atual a atualização perderia campos
+    if (error) throw error;
+    if (existing?.extra_fields) existingExtra = existing.extra_fields;
   }
   moveUnknownToExtra(table, payload, existingExtra);
   const { error } = await supabase.from(table).update(payload).eq('id', docRef._id);
@@ -381,10 +391,19 @@ export function writeBatch(db) {
     update: (docRef, data) => { ops.push({ type: 'update', docRef, data }); return batch; },
     delete: (docRef) => { ops.push({ type: 'delete', docRef }); return batch; },
     commit: async () => {
-      for (const op of ops) {
-        if (op.type === 'set') await setDoc(op.docRef, op.data);
-        else if (op.type === 'update') await updateDoc(op.docRef, op.data);
-        else if (op.type === 'delete') await deleteDoc(op.docRef);
+      // Sem transação real: informa quantas operações já foram aplicadas quando falha
+      for (let i = 0; i < ops.length; i++) {
+        const op = ops[i];
+        try {
+          if (op.type === 'set') await setDoc(op.docRef, op.data);
+          else if (op.type === 'update') await updateDoc(op.docRef, op.data);
+          else if (op.type === 'delete') await deleteDoc(op.docRef);
+        } catch (e) {
+          const err = new Error(`batch falhou em ${op.type} ${op.docRef._path}/${op.docRef._id} (operação ${i + 1} de ${ops.length}; ${i} já aplicadas): ${e.message || e}`);
+          err.cause = e;
+          err.appliedOps = i;
+          throw err;
+        }
       }
     }
   };
@@ -392,7 +411,7 @@ export function writeBatch(db) {
 }
 
 // Real-time: simple polling fallback. Proper Supabase realtime can be added later.
-export function onSnapshot(queryRef, callback) {
+export function onSnapshot(queryRef, callback, errorCallback) {
   let lastData = null;
   const run = async () => {
     try {
@@ -409,7 +428,10 @@ export function onSnapshot(queryRef, callback) {
         lastData = hash;
         callback(snap);
       }
-    } catch (e) { console.error('onSnapshot poll error', e); }
+    } catch (e) {
+      console.error('onSnapshot poll error', e);
+      if (errorCallback) errorCallback(e);
+    }
   };
   run();
   const interval = setInterval(run, 3000);
