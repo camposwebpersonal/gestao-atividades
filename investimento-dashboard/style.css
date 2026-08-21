@@ -217,6 +217,37 @@ body {
     color: #111827;
 }
 
+.avisos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.aviso {
+    padding: 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    border-left: 5px solid;
+}
+
+.aviso strong {
+    font-weight: 700;
+}
+
+.aviso.atencao {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #92400e;
+}
+
+.aviso.bloqueio {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+}
+
 .tabela {
     width: 100%;
     border-collapse: collapse;
