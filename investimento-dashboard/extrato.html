@@ -3,51 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Horizonte Investimentos — Dashboard</title>
+    <title>Horizonte Investimentos — Extrato</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body data-page="dashboard">
+<body data-page="extrato">
     <div id="header"></div>
 
     <main class="container">
         <header class="header">
-            <h1>Dashboard de Investimentos</h1>
-            <p>Resumo da carteira e valores em aberto</p>
+            <h1>Extrato</h1>
+            <p>Histórico completo de movimentações da sua conta</p>
         </header>
-
-        <section class="perfil">
-            <div class="perfil-info">
-                <span class="perfil-label">Cliente</span>
-                <span class="perfil-nome">RICARDO DE CAMPOS TAVARES JUNIOR</span>
-            </div>
-            <div class="perfil-info">
-                <span class="perfil-label">CPF</span>
-                <span class="perfil-dado">XXX.XXX.XXX-XX</span>
-            </div>
-        </section>
-
-        <section class="cards">
-            <div class="card destaque">
-                <span class="card-label">Valor disponível para resgate</span>
-                <span class="card-valor">R$ 38.777,98</span>
-                <span class="card-obs">Saldo líquido estimado</span>
-            </div>
-            <div class="card alerta">
-                <span class="card-label">Taxa de serviço (anuidade)</span>
-                <span class="card-valor">R$ 600,00</span>
-                <span class="card-obs">Vencimento: 21/08/2026</span>
-            </div>
-            <div class="card">
-                <span class="card-label">Rentabilidade acumulada</span>
-                <span class="card-valor">+12,4%</span>
-                <span class="card-obs">Últimos 12 meses</span>
-            </div>
-            <div class="card">
-                <span class="card-label">Total investido</span>
-                <span class="card-valor">R$ 27.798,00</span>
-                <span class="card-obs">Aportes realizados</span>
-            </div>
-        </section>
 
         <section class="detalhes">
             <h2>Movimentações recentes</h2>
@@ -58,6 +24,7 @@
                         <th>Descrição</th>
                         <th>Tipo</th>
                         <th>Valor</th>
+                        <th>Saldo após</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,18 +33,35 @@
                         <td>Taxa de serviço - anuidade</td>
                         <td class="tipo-saida">Saída</td>
                         <td class="valor-saida">- R$ 600,00</td>
+                        <td>R$ 38.777,98</td>
                     </tr>
                     <tr>
                         <td>15/08/2026</td>
                         <td>Resgate parcial CDB</td>
                         <td class="tipo-entrada">Entrada</td>
                         <td class="valor-entrada">+ R$ 10.000,00</td>
+                        <td>R$ 39.377,98</td>
                     </tr>
                     <tr>
                         <td>02/08/2026</td>
                         <td>Rendimento mensal</td>
                         <td class="tipo-entrada">Entrada</td>
                         <td class="valor-entrada">+ R$ 1.245,50</td>
+                        <td>R$ 29.377,98</td>
+                    </tr>
+                    <tr>
+                        <td>25/07/2026</td>
+                        <td>Aporte em CDB</td>
+                        <td class="tipo-saida">Saída</td>
+                        <td class="valor-saida">- R$ 5.000,00</td>
+                        <td>R$ 28.132,48</td>
+                    </tr>
+                    <tr>
+                        <td>10/07/2026</td>
+                        <td>Dividendos HGLG11</td>
+                        <td class="tipo-entrada">Entrada</td>
+                        <td class="valor-entrada">+ R$ 132,48</td>
+                        <td>R$ 33.132,48</td>
                     </tr>
                 </tbody>
             </table>

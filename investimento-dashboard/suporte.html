@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizonte Investimentos — Suporte</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="suporte">
+    <div id="header"></div>
+
+    <main class="container">
+        <header class="header">
+            <h1>Suporte</h1>
+            <p>Entre em contato com nossa equipe de atendimento</p>
+        </header>
+
+        <section class="detalhes">
+            <h2>Abrir um chamado</h2>
+            <form class="form-suporte" action="mailto:suporte@horizonteinvestimentos.com.br" method="POST" enctype="text/plain">
+                <div class="solicitacao-top-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="solicitacao-field">
+                        <label for="nome">Nome</label>
+                        <input type="text" id="nome" name="nome" value="RICARDO DE CAMPOS TAVARES JUNIOR" required>
+                    </div>
+                    <div class="solicitacao-field">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" name="email" value="ricardo.tavares@email.com" required>
+                    </div>
+                </div>
+                <div class="solicitacao-field" style="margin-top:16px;">
+                    <label for="assunto">Assunto</label>
+                    <select id="assunto" name="assunto">
+                        <option>Dúvida sobre investimentos</option>
+                        <option>Problema com resgate</option>
+                        <option>Cobrança / anuidade</option>
+                        <option>Outro assunto</option>
+                    </select>
+                </div>
+                <div class="solicitacao-field" style="margin-top:16px;">
+                    <label for="mensagem">Mensagem</label>
+                    <textarea id="mensagem" name="mensagem" rows="5" placeholder="Descreva sua dúvida..." required></textarea>
+                </div>
+                <div style="margin-top:20px;">
+                    <button type="submit" class="btn btn-primary">Enviar mensagem</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="detalhes">
+            <h2>Canais de atendimento</h2>
+            <div class="solicitacao-top-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="solicitacao-field">
+                    <label>Telefone</label>
+                    <input type="text" value="(11) 4000-1234" readonly>
+                </div>
+                <div class="solicitacao-field">
+                    <label>E-mail</label>
+                    <input type="text" value="suporte@horizonteinvestimentos.com.br" readonly>
+                </div>
+                <div class="solicitacao-field">
+                    <label>Horário de atendimento</label>
+                    <input type="text" value="Seg. a Sex. — 9h às 18h" readonly>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer"></div>
+    <script src="script.js"></script>
+</body>
+</html>

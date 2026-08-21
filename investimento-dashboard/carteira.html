@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizonte Investimentos — Carteira</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="carteira">
+    <div id="header"></div>
+
+    <main class="container">
+        <header class="header">
+            <h1>Minha Carteira</h1>
+            <p>Visão completa dos seus ativos e alocações</p>
+        </header>
+
+        <section class="cards">
+            <div class="card">
+                <span class="card-label">Renda Fixa</span>
+                <span class="card-valor">R$ 22.000,00</span>
+                <span class="card-obs">CDB / Tesouro / LC</span>
+            </div>
+            <div class="card">
+                <span class="card-label">Renda Variável</span>
+                <span class="card-valor">R$ 4.798,00</span>
+                <span class="card-obs">Ações / FIIs</span>
+            </div>
+            <div class="card destaque">
+                <span class="card-label">Valor total</span>
+                <span class="card-valor">R$ 38.777,98</span>
+                <span class="card-obs">Saldo consolidado</span>
+            </div>
+        </section>
+
+        <section class="detalhes">
+            <h2>Posições abertas</h2>
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Ativo</th>
+                        <th>Tipo</th>
+                        <th>Valor aplicado</th>
+                        <th>Rentabilidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CDB Banco XYZ</td>
+                        <td>Renda Fixa</td>
+                        <td>R$ 15.000,00</td>
+                        <td class="valor-entrada">+ 8,4%</td>
+                    </tr>
+                    <tr>
+                        <td>Tesouro IPCA+ 2035</td>
+                        <td>Renda Fixa</td>
+                        <td>R$ 7.000,00</td>
+                        <td class="valor-entrada">+ 5,7%</td>
+                    </tr>
+                    <tr>
+                        <td>FII HGLG11</td>
+                        <td>Renda Variável</td>
+                        <td>R$ 3.000,00</td>
+                        <td class="valor-entrada">+ 12,1%</td>
+                    </tr>
+                    <tr>
+                        <td>Ações Banco ABC</td>
+                        <td>Renda Variável</td>
+                        <td>R$ 1.798,00</td>
+                        <td class="valor-saida">- 1,2%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <div id="footer"></div>
+    <script src="script.js"></script>
+</body>
+</html>
