@@ -564,7 +564,7 @@ window.ccDeleteCategoria = async function(id, secId){
 window.ccOpenLocalModal = function(id, itemId){
   const local = id ? S.subitems.find(s=>s.id===id) : null;
   const ef = local ? (local.extra_fields||{}) : {};
-  const standardKeys = ['Número do Relógio','Conta Contrato','Endereço','Medidor','RESPONSÁVEL','WHATSAPP DO RESPONSÁVEL'];
+  const standardKeys = ['Local','Número do Relógio','Conta Contrato','Endereço','Medidor','RESPONSÁVEL','WHATSAPP DO RESPONSÁVEL'];
   const existingKeysNorm = Object.keys(ef).map(k=>_ccNorm(k));
   const allFields = [];
   Object.entries(ef).forEach(([k,v])=>allFields.push({k,v}));
@@ -629,7 +629,7 @@ window.ccDeleteLocal = async function(id, itemId){
 window.ccOpenLancamentoModal = function(id, subitemId){
   const c = id ? S.contas.find(x=>x.id===id) : null;
   const local = S.subitems.find(s=>s.id===subitemId);
-  const tipoOpts = CC_TIPOS.map(t=>`<option value="${esc(t)}" ${c?.tipo===t?'selected':''}>${esc(t)}</option>`).join('');
+  const tipoOpts = `<option value="">-- Selecionar --</option>`+CC_TIPOS.map(t=>`<option value="${esc(t)}" ${c?.tipo===t?'selected':''}>${esc(t)}</option>`).join('');
   const today = new Date().toISOString().split('T')[0];
   openModal(id ? '✏️ Editar Lançamento' : '➕ Novo Lançamento', 'Local: '+(local?.description||''),
     `<div class="form-grid">
@@ -650,7 +650,7 @@ window.ccSaveLancamento = async function(id, subitemId){
   const mes = document.getElementById('cc-lanc-mes')?.value.trim();
   const tipo = document.getElementById('cc-lanc-tipo')?.value;
   const valor = parseFloat(document.getElementById('cc-lanc-valor')?.value||0);
-  if(!mes || !tipo){toast('Mês/Ano e Tipo são obrigatórios','error');return;}
+  if(!mes){toast('Mês/Ano é obrigatório','error');return;}
   const local = S.subitems.find(s=>s.id===subitemId);
   const ativId = local ? local.atividade_id : curSecId;
   const data = {
