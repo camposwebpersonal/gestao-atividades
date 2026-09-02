@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v45';
+const CACHE_NAME = 'gestao-pms-v46';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -6,6 +6,7 @@ const STATIC_ASSETS = [
   'manifest.json',
   'img/logo_sertania.png',
   'js/modulos.js',
+  'js/perfuracao-pocos.js',
   'js/controle-contas.js',
   'js/controle-distribuicao.js',
   'js/controle-estoque.js',

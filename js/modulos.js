@@ -1,3 +1,5 @@
+import './perfuracao-pocos.js';
+
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
   {id:'eventos', label:'Eventos', desc:'Exposições, seminários, agenda e programações especiais.', icon:'🎪', color:'#ec4899', modulo:'eventos'},
@@ -22,7 +24,7 @@ const NOME_MODULO = {
   projetos:['projetos','projeto'],
   obras:['cisterna','cisternas','barreiro','barreiros','barragem','barragens','infraestrutura','pontos de cisterna','demandas de barreiros','obras'],
   frota:['veiculo','veículos','frota','ipva','seguro dos veiculos','seguro dos veículos'],
-  atendimentos:['urgencia','urgência','atendimento','atendimentos','ouvidoria','serviços de urgencia','servicos de urgencia','retro'],
+  atendimentos:['urgencia','urgência','atendimento','atendimentos','ouvidoria','serviços de urgencia','servicos de urgencia','retro','perfuracao','perfuração','poco','poço','pocos','poços'],
   rh:['rh','empregos','vereadores','bcc s','bcc','comissionados','contratos','igespe','genesis','vigia','vigias'],
   cadastros:['associações','associacoes','lideranças','liderancas','lideres','cadastro'],
   contas:['controle de contas','contas','seguro','seguros'],
@@ -59,8 +61,8 @@ const _md = {
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
   extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
   modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1||s.controle_estoque_modelo==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
-  pct: g => { const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
-  ativTotal: g => { return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
+  pct: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1){const ps=(window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco'));return ps.length?Math.round(ps.filter(s=>(s.status_pagamento||s.extra_fields?.status_pagamento)==='pago').length/ps.length*100):0;} const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
+  ativTotal: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)return (window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco')).length; return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
   grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 
@@ -116,10 +118,10 @@ function renderModuloGrupos(mod){
       <div class="card-title">${_md.esc(g.name||'Sem nome')}</div>
       ${g.observacoes?`<div class="card-obs">${_md.esc(g.observacoes)}</div>`:''}
       <div class="card-foot">
-        <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% concluído</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
+        <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% ${(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)?'pagos':'concluído'}</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
         <div class="card-btns">
           ${(admin||podeEditar)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${_md.esc(g.id)}')">✏️</button>`:''}
-          <button class="card-btn" onclick="event.stopPropagation();window.gerarPdf('${_md.esc(g.id)}')">📄</button>
+          <button class="card-btn" onclick="event.stopPropagation();${(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)?`window.gerarPdfPocos('${_md.esc(g.id)}')`:`window.gerarPdf('${_md.esc(g.id)}')`}">📄</button>
         </div>
       </div>
       </div>
