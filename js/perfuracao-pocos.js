@@ -181,7 +181,7 @@
     sf(9,true,[20,82,20]);doc.text('RESUMO POR EMPRESA / PERFURADOR',mx,y+5);y+=8;
     const groups=new Map();wells.forEach(p=>{const n=drillerName(p.item_id);if(!groups.has(n))groups.set(n,[]);groups.get(n).push(p);});
     const sumBody=[...groups.entries()].map(([n,ws])=>{const p=ws.filter(x=>V(x,'status_pagamento')==='pago'),pn=ws.filter(x=>V(x,'status_pagamento')!=='pago');return[n,String(ws.length),String(p.length),String(pn.length),money(ws.reduce((a,x)=>a+Number(V(x,'valor',0)||0),0)),money(pn.reduce((a,x)=>a+Number(V(x,'valor',0)||0),0))];});
-    doc.autoTable({startY:y,head:[['Empresa / Perfurador','Serviços','Pagos','Pendentes','Valor total','A pagar']],body:sumBody,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:8,cellPadding:2,textColor:[30,41,59]},headStyles:{fillColor:[20,82,20],textColor:[255,255,255]},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
+    doc.autoTable({startY:y,head:[['Empresa / Perfurador','Serviços','Pagos','Pendentes','Valor total','A pagar']],body:sumBody,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:8,cellPadding:2,textColor:[30,41,59]},headStyles:{fillColor:[20,82,20],textColor:[255,255,255]},columnStyles:{0:{cellWidth:110},1:{cellWidth:22,halign:'center'},2:{cellWidth:22,halign:'center'},3:{cellWidth:24,halign:'center'},4:{cellWidth:43,halign:'right'},5:{cellWidth:45,halign:'right'}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
     footer();doc.save(`relatorio-pocos-${isoToday()}.pdf`);window.toast(`PDF gerado: ${wells.length} perfuração(ões) · total ${money(total)}`,'success',5000);
   };
 
