@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horizonte Investimentos — Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20260903-3">
 </head>
 <body data-page="dashboard">
     <div id="header"></div>
@@ -13,7 +13,7 @@
     <main class="container">
         <header class="header">
             <h1>Dashboard de Investimentos</h1>
-            <p>Resumo da carteira e valores em aberto</p>
+            <p>Resumo da carteira e pagamentos realizados</p>
         </header>
 
         <section class="perfil">
@@ -43,10 +43,10 @@
                 <span class="card-valor">R$ 600,00</span>
                 <span class="card-obs">Pago em 21/08/2026</span>
             </div>
-            <div class="card alerta">
+            <div class="card destaque">
                 <span class="card-label">Taxa de serviços + imposto</span>
                 <span class="card-valor">R$ 3.958,78</span>
-                <span class="card-obs">R$ 3.705,88 + R$ 252,90 de juros de atraso</span>
+                <span class="card-obs">Pago em 03/09/2026</span>
             </div>
             <div class="card">
                 <span class="card-label">Rentabilidade acumulada</span>
@@ -58,6 +58,15 @@
                 <span class="card-valor">R$ 37.200,00</span>
                 <span class="card-obs">Aportes realizados</span>
             </div>
+        </section>
+
+        <section class="recibo-chamada">
+            <div>
+                <span class="recibo-status">✓ PAGAMENTO CONFIRMADO</span>
+                <h2>Recibo de R$ 3.958,78 disponível</h2>
+                <p>Taxa de serviços + imposto quitada em 03/09/2026.</p>
+            </div>
+            <a class="btn btn-primary" href="recibo.html">Ver recibo</a>
         </section>
 
         <section class="detalhes">
@@ -74,9 +83,9 @@
                 <tbody>
                     <tr>
                         <td>03/09/2026</td>
-                        <td>Taxa de serviços + imposto — valor base R$ 3.705,88 + juros de atraso R$ 252,90</td>
-                        <td class="tipo-pendente">Pendente</td>
-                        <td class="valor-pendente">R$ 3.958,78 a pagar</td>
+                        <td>Pagamento da taxa de serviços + imposto (quitado)</td>
+                        <td class="tipo-pago">Pago</td>
+                        <td class="valor-saida">- R$ 3.958,78</td>
                     </tr>
                     <tr>
                         <td>21/08/2026</td>
