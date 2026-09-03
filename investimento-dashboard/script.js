@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const [headerHtml, footerHtml] = await Promise.all([
-            fetch('components/header.html').then(r => r.text()),
-            fetch('components/footer.html').then(r => r.text())
+            fetch('components/header.html?v=20260903-3').then(r => r.text()),
+            fetch('components/footer.html?v=20260903-3').then(r => r.text())
         ]);
 
         const headerEl = document.getElementById('header');
