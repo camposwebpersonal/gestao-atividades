@@ -288,6 +288,12 @@ body {
     font-weight: 600;
 }
 
+.tipo-pendente,
+.valor-pendente {
+    color: #d97706;
+    font-weight: 700;
+}
+
 .solicitacao-top-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
