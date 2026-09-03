@@ -454,7 +454,7 @@ let curSecId=null,_pRT={};
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=45';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=49';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1922,6 +1922,9 @@ function readFileAsDataUrl(file){
 
 // ── THUMB ──
 async function mkThumb(dataUrl,w,h,q){return new Promise((res,rej)=>{const img=new Image();img.onerror=()=>rej(new Error('Imagem inválida ou corrompida'));img.onload=()=>{const ar=img.naturalWidth/img.naturalHeight;let cw=w,ch=h;if(ar>1)ch=Math.round(w/ar);else cw=Math.round(h*ar);const c=document.createElement('canvas');c.width=cw;c.height=ch;c.getContext('2d').drawImage(img,0,0,cw,ch);res(c.toDataURL('image/jpeg',q));};img.src=dataUrl;});}
+window.imgbbUp=imgbbUp;
+window.readFileAsDataUrl=readFileAsDataUrl;
+window.mkThumb=mkThumb;
 
 // ── ADMIN ──
 function renderAdmin(){
