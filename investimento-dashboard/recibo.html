@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horizonte Investimentos — Recibo de Pagamento</title>
+    <link rel="stylesheet" href="style.css?v=20260903-3">
+</head>
+<body data-page="recibo">
+    <div id="header"></div>
+    <main class="container">
+        <header class="header">
+            <h1>Recibo de Pagamento</h1>
+            <p>Comprovante de quitação da taxa de serviços + imposto</p>
+        </header>
+        <section class="receipt-shell">
+            <div class="receipt-head">
+                <div>
+                    <span class="receipt-kicker">✓ PAGAMENTO CONFIRMADO</span>
+                    <h2>Recibo de quitação</h2>
+                </div>
+                <div class="receipt-amount">R$ 3.958,78</div>
+            </div>
+            <div class="receipt-grid">
+                <div class="receipt-field"><span>Cliente</span><strong>RICARDO DE CAMPOS TAVARES JUNIOR</strong></div>
+                <div class="receipt-field"><span>Data do pagamento</span><strong>03/09/2026</strong></div>
+                <div class="receipt-field"><span>Descrição</span><strong>Taxa de serviços + imposto</strong></div>
+                <div class="receipt-field"><span>Situação</span><strong class="tipo-pago">PAGO</strong></div>
+                <div class="receipt-field"><span>Referência</span><strong>REC-20260903-395878</strong></div>
+                <div class="receipt-field"><span>Instituição</span><strong>Horizonte Investimentos</strong></div>
+            </div>
+            <div class="receipt-breakdown">
+                <div class="receipt-line"><span>Valor base</span><strong>R$ 3.705,88</strong></div>
+                <div class="receipt-line"><span>Juros de atraso</span><strong>R$ 252,90</strong></div>
+                <div class="receipt-line total"><span>Total pago</span><strong>R$ 3.958,78</strong></div>
+            </div>
+            <p class="receipt-footer">Declaramos, para os devidos fins, que o valor acima foi integralmente pago em 03/09/2026, não restando pendência referente a esta cobrança.</p>
+        </section>
+        <div class="receipt-actions">
+            <button class="btn btn-primary" type="button" onclick="window.print()">Imprimir recibo</button>
+            <a class="btn btn-ghost" href="index.html">Voltar ao dashboard</a>
+        </div>
+    </main>
+    <div id="footer"></div>
+    <script src="script.js?v=20260903-3"></script>
+</body>
+</html>
