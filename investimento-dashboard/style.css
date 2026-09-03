@@ -248,6 +248,12 @@ body {
     color: #991b1b;
 }
 
+.aviso.sucesso {
+    background: #ecfdf5;
+    border-left-color: #10b981;
+    color: #065f46;
+}
+
 .tabela {
     width: 100%;
     border-collapse: collapse;
