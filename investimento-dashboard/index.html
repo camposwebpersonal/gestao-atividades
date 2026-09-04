@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Horizonte Investimentos — Dashboard</title>
-    <link rel="stylesheet" href="style.css?v=20260903-3">
+    <link rel="stylesheet" href="style.css?v=20260904-1">
 </head>
 <body data-page="dashboard">
     <div id="header"></div>
@@ -36,7 +36,7 @@
             <div class="card destaque">
                 <span class="card-label">Valor total do resgate até 30 de novembro</span>
                 <span class="card-valor">R$ 65.558,89</span>
-                <span class="card-obs">Previsão para 30/11/2026</span>
+                <span class="card-obs">Disponível de 11/08/2026 a 11/30/2026 (MM/DD/YYYY)</span>
             </div>
             <div class="card destaque">
                 <span class="card-label">Taxa de serviço (anuidade)</span>
@@ -57,6 +57,77 @@
                 <span class="card-label">Total investido</span>
                 <span class="card-valor">R$ 37.200,00</span>
                 <span class="card-obs">Aportes realizados</span>
+            </div>
+        </section>
+
+        <section class="resgate-prazo">
+            <div class="resgate-prazo-topo">
+                <div>
+                    <span class="resgate-etiqueta">VALOR TOTAL A RECEBER</span>
+                    <h2>R$ 65.558,89</h2>
+                    <p>Previsão de disponibilidade dentro do período informado abaixo.</p>
+                </div>
+                <span class="resgate-situacao">AGENDADO</span>
+            </div>
+
+            <div class="resgate-periodo">
+                <div class="resgate-data">
+                    <span>INÍCIO DA DISPONIBILIDADE</span>
+                    <strong>11/08/2026</strong>
+                    <small>8 de novembro de 2026</small>
+                </div>
+                <div class="resgate-linha" aria-hidden="true"><i></i></div>
+                <div class="resgate-data final">
+                    <span>DATA-LIMITE</span>
+                    <strong>11/30/2026</strong>
+                    <small>30 de novembro de 2026</small>
+                </div>
+            </div>
+
+            <div class="formato-data-aviso">
+                <strong>Formato utilizado: MM/DD/YYYY</strong>
+                <span>O mês aparece primeiro. Portanto, <b>11/08/2026</b> significa <b>8 de novembro de 2026</b>.</span>
+            </div>
+
+            <div class="chat-atendimento">
+                <div class="chat-cabecalho">
+                    <div class="chat-avatar atendente-avatar">HI</div>
+                    <div>
+                        <strong>Atendimento ao cliente</strong>
+                        <span><i></i> Atendimento concluído</span>
+                    </div>
+                </div>
+                <div class="chat-conversa">
+                    <div class="chat-mensagem cliente">
+                        <span class="chat-autor">Você</span>
+                        <p>Olá! Por que eu ainda não recebi? O mês de agosto já passou e eu vi que o prazo começava em 11/08/2026.</p>
+                        <small>10:14</small>
+                    </div>
+                    <div class="chat-mensagem atendente">
+                        <span class="chat-autor">Atendente Horizonte</span>
+                        <p>Olá, Ricardo! O valor ainda está dentro do prazo. As datas dessa previsão estão no formato americano <strong>MM/DD/YYYY</strong>, em que o mês vem primeiro.</p>
+                        <small>10:16</small>
+                    </div>
+                    <div class="chat-mensagem atendente">
+                        <span class="chat-autor">Atendente Horizonte</span>
+                        <p>A data exibida como <strong>11/08/2026</strong> corresponde a <strong>8 de novembro de 2026</strong> — ou <strong>08/11/2026</strong> no formato brasileiro. Por isso, não se refere ao mês de agosto.</p>
+                        <small>10:17</small>
+                    </div>
+                    <div class="chat-mensagem cliente">
+                        <span class="chat-autor">Você</span>
+                        <p>Entendi. Peço desculpas, interpretei a data de maneira errada e pensei que fosse 11 de agosto.</p>
+                        <small>10:18</small>
+                    </div>
+                    <div class="chat-mensagem atendente">
+                        <span class="chat-autor">Atendente Horizonte</span>
+                        <p>Sem problema! Confirmamos que o valor de <strong>R$ 65.558,89</strong> tem previsão de disponibilidade entre <strong>11/08/2026</strong> e <strong>11/30/2026</strong>. A data final do prazo é <strong>30 de novembro de 2026</strong>.</p>
+                        <small>10:19</small>
+                    </div>
+                </div>
+                <div class="chat-rodape">
+                    <span>✓ Dúvida esclarecida</span>
+                    <small>Protocolo: ATD-2026-1108</small>
+                </div>
             </div>
         </section>
 
