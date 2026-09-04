@@ -362,20 +362,21 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=54">
 </head>
 <body>
 <div id="app">
   <nav id="navbar">
-    <div class="brand"><img src="img/logo_sertania.png" alt=""> <span>GESTÃO PMS</span></div>
+    <div class="brand"><img src="img/logo_sertania.png" alt="Brasão da Prefeitura de Sertânia"><span class="brand-copy"><strong>Prefeitura de Sertânia</strong><small>Gestão de Atividades</small></span></div>
     <div id="undo-redo-bar">
       <button id="undo-btn" class="undo-btn" style="opacity:.3" onclick="undoLast()" title="Desfazer (Ctrl+Z)">↩️ Desfazer</button>
       <button id="redo-btn" class="redo-btn" style="opacity:.3" onclick="redoLast()" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
     </div>
     <div class="spacer"></div>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
-    <button class="btn-system" style="font-size:12px;padding:6px 12px" onclick="openInstalarModal()">📱 Instalar</button>
-    <button class="btn-system" onclick="window.location.href='exames.html'">SYSTEM</button>
-    <button class="btn-logout" onclick="doLogout()">Sair</button>
+    <button id="install-btn" class="btn-system" onclick="openInstalarModal()">📱 <span>Instalar</span></button>
+    <button id="system-btn" class="btn-system" onclick="window.location.href='exames.html'">▦ <span>Sistema</span></button>
+    <button id="logout-btn" class="btn-logout" onclick="doLogout()">↪ <span>Sair</span></button>
   </nav>
   <div id="navmenu">
     <button class="nav-btn active" id="nav-mod" onclick="setView('mod')">🏠 Início</button>
@@ -450,11 +451,65 @@ let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
+// ── NAVEGAÇÃO PERSISTENTE ──
+const WORKSPACE_ROUTE_KEY='gestao-pms-workspace-v1';
+let _restoringWorkspace=false;
+function workspaceFromHash(){
+  const p=location.hash.replace(/^#/,'').split('/').map(x=>decodeURIComponent(x));
+  if(['view','module','activity'].includes(p[0])&&p[1])return{kind:p[0],id:p[1]};
+  return null;
+}
+function workspaceHash(r){return r?.kind&&r?.id?'#'+r.kind+'/'+encodeURIComponent(r.id):'';}
+function workspaceVisualKey(r){
+  if(r?.kind!=='activity')return r?.id||'mod';
+  const sec=S.secs.find(x=>x.id===r.id);
+  if(!sec)return'atividades';
+  if(sec.controle_contas||sec.extra_fields?.controle_contas)return'financeiro';
+  if(sec.controle_pocos||sec.extra_fields?.controle_pocos)return'infraestrutura';
+  if(sec.controle_estoque||sec.extra_fields?.controle_estoque)return'estoque';
+  if(sec.controle_distribuicao||sec.extra_fields?.controle_distribuicao)return'distribuicao';
+  return window.modForSec?.(sec)||'atividades';
+}
+function applyWorkspaceIdentity(r){
+  const key=workspaceVisualKey(r);
+  document.body.dataset.workspace=key;
+  document.body.dataset.routeKind=r?.kind||'view';
+  const labels={mod:'Central de Lançamentos',secr:'Secretarias',resp:'Responsáveis',cham:'Chamados',gal:'Galeria',cont:'Contatos',adm:'Administração',imp:'Importação',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Atendimentos',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
+  document.title=(labels[key]||'Gestão Municipal')+' — Prefeitura de Sertânia';
+}
+window.rememberWorkspace=function(r,replace=false){
+  if(!r?.kind||!r?.id)return;
+  try{localStorage.setItem(WORKSPACE_ROUTE_KEY,JSON.stringify(r));}catch(_){}
+  applyWorkspaceIdentity(r);
+  if(_restoringWorkspace)return;
+  const h=workspaceHash(r);
+  if(location.hash!==h)history[replace?'replaceState':'pushState']({workspace:r},'',h);
+};
+window.restoreWorkspace=function(){
+  let r=workspaceFromHash();
+  if(!r){try{r=JSON.parse(localStorage.getItem(WORKSPACE_ROUTE_KEY)||'null');}catch(_){}}
+  if(!r)return false;
+  _restoringWorkspace=true;
+  let ok=true;
+  try{
+    if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
+    else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok)window.renderModulo(r.id);}
+    else if(r.kind==='view'){ok=['mod','adm','secr','imp','resp','cham','gal','cont'].includes(r.id);if(ok)window.setView(r.id);}
+    else ok=false;
+  }finally{_restoringWorkspace=false;}
+  if(ok){window.rememberWorkspace(r,true);return true;}
+  try{localStorage.removeItem(WORKSPACE_ROUTE_KEY);}catch(_){}
+  return false;
+};
+const _renderModuloBase=window.renderModulo;
+window.renderModulo=function(id){window.rememberWorkspace?.({kind:'module',id});return _renderModuloBase(id);};
+window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
+
 
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=53';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=54';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -478,7 +533,7 @@ onAuthStateChanged(auth,async u=>{
   }
   if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-imp').style.display='';}
   await loadData();
-  setView('mod');
+  if(!window.restoreWorkspace())setView('mod');
   const _sp=new URLSearchParams(location.search).get('setup');
   if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
   const _imp=new URLSearchParams(location.search).get('importar');
@@ -639,6 +694,8 @@ function flattenSubTree(tree,levelPrefix,out){
 
 // ── NAV ──
 window.setView=function(v){
+  curSecId=null;
+  window.rememberWorkspace?.({kind:'view',id:v});
   ['mod','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(v==='mod')window.renderModulos();
   else if(v==='adm')renderAdmin();
@@ -1035,6 +1092,7 @@ function _renderResumoFinanceiro(secId){
 window.openActivity=function(secId){
   curSecId=secId;
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  window.rememberWorkspace?.({kind:'activity',id:secId});
   const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
