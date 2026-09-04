@@ -1,0 +1,250 @@
+/* Sistema visual municipal — Prefeitura de Sertânia
+   Mantém os módulos existentes e especializa a apresentação por tipo de trabalho. */
+:root{
+  --municipal-navy:#07162b;
+  --municipal-navy-2:#0b2340;
+  --municipal-green:#16803d;
+  --municipal-green-light:#75c044;
+  --municipal-gold:#f5b82e;
+  --workspace-accent:#2f8cff;
+  --workspace-accent-rgb:47,140,255;
+  --shell-card:#0d1b2f;
+  --shell-card-raised:#10233b;
+  --shell-border:#213d5f;
+}
+html,body{
+  min-height:100%;
+  overscroll-behavior-y:none;
+  background:
+    radial-gradient(circle at 8% -10%,rgba(var(--workspace-accent-rgb),.14),transparent 32rem),
+    linear-gradient(180deg,#07111f 0%,#081322 55%,#060d18 100%);
+}
+body{
+  font-size:16px;
+  background-attachment:fixed;
+}
+#app{min-height:100dvh;height:100dvh}
+#navbar{
+  height:72px;
+  padding:0 clamp(14px,2.4vw,34px);
+  gap:16px;
+  background:linear-gradient(110deg,rgba(5,20,37,.98),rgba(8,36,55,.98) 60%,rgba(13,56,52,.98));
+  border-bottom:1px solid rgba(117,192,68,.35);
+  box-shadow:0 8px 30px rgba(0,0,0,.24);
+}
+#navbar .brand{min-width:max-content;gap:11px}
+#navbar .brand img{
+  width:46px;
+  height:46px;
+  object-fit:contain;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.3));
+}
+.brand-copy{display:flex;flex-direction:column;line-height:1.12}
+.brand-copy strong{font-size:15px;letter-spacing:.15px;color:#f8fafc}
+.brand-copy small{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:#9fd37e;margin-top:3px}
+#undo-redo-bar{margin-left:8px}
+.undo-btn,.redo-btn,.btn-system,.btn-logout{
+  min-height:38px;
+  border-radius:10px;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:700;
+}
+.undo-btn,.redo-btn,.btn-system{
+  background:rgba(15,35,59,.8);
+  border:1px solid #294866;
+  color:#c7d8ea;
+}
+.btn-system{cursor:pointer}
+.btn-system:hover,.undo-btn:hover,.redo-btn:hover{background:#142c48;border-color:var(--workspace-accent);color:#fff}
+#install-btn{border-color:rgba(245,184,46,.55);color:#ffd56d}
+#system-btn{border-color:rgba(117,192,68,.48);color:#b8e497}
+.user-chip{
+  background:rgba(8,25,45,.82);
+  border-color:#2a4967;
+  min-height:42px;
+  padding:5px 13px 5px 6px;
+}
+.user-chip .av{
+  width:31px;height:31px;
+  background:linear-gradient(135deg,var(--workspace-accent),#5bbf78);
+  box-shadow:0 0 0 3px rgba(var(--workspace-accent-rgb),.15);
+}
+.user-chip span{font-size:13px;color:#c6d5e6}
+#navmenu{
+  min-height:52px;
+  align-items:center;
+  gap:6px;
+  padding:6px clamp(10px,2vw,30px);
+  background:rgba(5,15,28,.94);
+  border-bottom:1px solid #173351;
+  box-shadow:0 5px 18px rgba(0,0,0,.16);
+}
+.nav-btn{
+  min-height:38px;
+  padding:8px 13px;
+  border:1px solid transparent;
+  border-radius:10px;
+  font-size:14px;
+  color:#8fa5bc;
+}
+.nav-btn:hover{background:#0d2036;border-color:#234361;color:#e8f1fa}
+.nav-btn.active{
+  color:#fff;
+  border-color:rgba(var(--workspace-accent-rgb),.55);
+  border-bottom-color:rgba(var(--workspace-accent-rgb),.55);
+  background:linear-gradient(135deg,rgba(var(--workspace-accent-rgb),.28),rgba(var(--workspace-accent-rgb),.12));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
+}
+main{
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+}
+#content{
+  width:100%;
+  max-width:1500px;
+  margin:0 auto;
+  padding:clamp(18px,2.6vw,38px);
+}
+.page-title{
+  font-size:clamp(1.45rem,2.8vw,2.1rem);
+  line-height:1.15;
+  letter-spacing:-.025em;
+  color:#f5f9ff;
+}
+.page-sub{font-size:.95rem;line-height:1.55;color:#91a6bb;max-width:850px}
+.cards-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:18px}
+.activity-card,.item-row,.stat-card,.table-wrap,.cc-local-card{
+  background:linear-gradient(150deg,rgba(16,35,59,.98),rgba(10,24,42,.98));
+  border-color:var(--shell-border);
+  box-shadow:0 12px 32px rgba(0,0,0,.16);
+}
+.activity-card{
+  border-radius:16px;
+  padding:18px;
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.activity-card:hover{
+  transform:translateY(-2px);
+  border-color:var(--workspace-accent);
+  box-shadow:0 16px 38px rgba(var(--workspace-accent-rgb),.12);
+}
+.card-title,.item-name{font-size:1rem;line-height:1.4}
+.card-obs,.item-meta,.stat-lbl{font-size:.82rem;color:#8da1b7}
+.btn-action,.btn-save,.btn-cancel,.card-btn{
+  border-radius:10px;
+  min-height:40px;
+  font-size:.88rem;
+}
+.btn-action.primary,.btn-save{
+  background:linear-gradient(135deg,var(--workspace-accent),color-mix(in srgb,var(--workspace-accent) 72%,#0b3761));
+  border-color:transparent;
+  box-shadow:0 7px 18px rgba(var(--workspace-accent-rgb),.2);
+}
+.form-group label{font-size:.82rem;color:#9db0c4}
+.form-group input,.form-group textarea,.form-group select{
+  min-height:44px;
+  border-radius:10px;
+  border-color:#294564;
+  background:#0a1728;
+  font-size:1rem;
+}
+.modal-box{
+  border-radius:18px;
+  border-color:#2a4868;
+  background:#0d1c30;
+}
+.modal-head{background:#0d1c30}
+.table-wrap{border-radius:14px;overflow:auto}
+table{font-size:.9rem}
+th{letter-spacing:.03em}
+#toast{bottom:max(20px,env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));left:auto}
+.toast-item{font-size:.9rem;max-width:min(360px,calc(100vw - 32px))}
+
+/* Identidades próprias por área */
+body[data-workspace="financeiro"],
+body[data-workspace="contas"]{--workspace-accent:#18a567;--workspace-accent-rgb:24,165,103}
+body[data-workspace="infraestrutura"],
+body[data-workspace="obras"],
+body[data-workspace="atendimentos"]{--workspace-accent:#27a9e8;--workspace-accent-rgb:39,169,232}
+body[data-workspace="estoque"],
+body[data-workspace="distribuicao"]{--workspace-accent:#f59e0b;--workspace-accent-rgb:245,158,11}
+body[data-workspace="eventos"]{--workspace-accent:#d946ef;--workspace-accent-rgb:217,70,239}
+body[data-workspace="projetos"]{--workspace-accent:#8b5cf6;--workspace-accent-rgb:139,92,246}
+body[data-workspace="frota"]{--workspace-accent:#6366f1;--workspace-accent-rgb:99,102,241}
+body[data-workspace="rh"],
+body[data-workspace="resp"]{--workspace-accent:#14b8a6;--workspace-accent-rgb:20,184,166}
+body[data-workspace="cadastros"],
+body[data-workspace="secr"],
+body[data-workspace="cont"]{--workspace-accent:#06b6d4;--workspace-accent-rgb:6,182,212}
+body[data-workspace="cham"]{--workspace-accent:#ef4444;--workspace-accent-rgb:239,68,68}
+body[data-workspace="gal"]{--workspace-accent:#a855f7;--workspace-accent-rgb:168,85,247}
+body[data-workspace="adm"],
+body[data-workspace="imp"]{--workspace-accent:#f59e0b;--workspace-accent-rgb:245,158,11}
+
+/* Finanças: leitura tabular e indicadores fortes */
+body[data-workspace="financeiro"] .cc-local-card{border-left:4px solid #18a567;border-radius:12px}
+body[data-workspace="financeiro"] .cc-local-head{background:linear-gradient(90deg,rgba(24,165,103,.16),#0a1728)}
+body[data-workspace="financeiro"] .cc-total-bar{background:#0b2530}
+body[data-workspace="financeiro"] .stat-card{border-top:3px solid #18a567}
+
+/* Infraestrutura: cartões de campo e registros fotográficos */
+body[data-workspace="infraestrutura"] #content{max-width:1320px}
+body[data-workspace="infraestrutura"] .pw-card{box-shadow:0 16px 38px rgba(0,0,0,.2)}
+body[data-workspace="infraestrutura"] .pw-card-head{background:linear-gradient(100deg,rgba(39,169,232,.12),transparent)}
+body[data-workspace="infraestrutura"] .pw-photo{height:96px}
+
+/* Estoque e distribuição: maior densidade operacional */
+body[data-workspace="estoque"] #content,
+body[data-workspace="distribuicao"] #content{max-width:1580px}
+body[data-workspace="estoque"] .table-wrap,
+body[data-workspace="distribuicao"] .table-wrap{border-top:3px solid #f59e0b}
+
+/* Pessoas: fichas mais legíveis */
+body[data-workspace="rh"] .activity-card,
+body[data-workspace="resp"] .activity-card{border-radius:20px}
+body[data-workspace="rh"] .card-thumb,
+body[data-workspace="resp"] .card-thumb{border-radius:50%;width:86px;height:86px}
+
+/* Evita recarga acidental por gesto e melhora toque */
+button,a,input,select,textarea{touch-action:manipulation}
+@media (hover:none){.activity-card:hover{transform:none}}
+@media(max-width:900px){
+  #navbar{height:auto;min-height:68px;flex-wrap:wrap;padding:9px 12px;gap:8px}
+  #navbar .brand{margin-right:auto}
+  #navbar .brand img{width:40px;height:40px}
+  .brand-copy strong{font-size:14px}.brand-copy small{font-size:10px}
+  .user-chip span{display:none}
+  .user-chip{padding:4px;border-radius:50%}
+  #undo-redo-bar{order:10;width:100%;margin:0}
+  .undo-btn,.redo-btn{flex:1;justify-content:center;min-height:40px}
+  #navmenu{min-height:50px;padding:6px 10px;scroll-snap-type:x proximity}
+  .nav-btn{scroll-snap-align:start;min-height:40px;padding:8px 12px}
+}
+@media(max-width:620px){
+  body{font-size:16px}
+  #content{padding:16px 12px 30px}
+  #install-btn span,#system-btn span,#logout-btn span{display:none}
+  #install-btn,#system-btn,#logout-btn{min-width:40px;padding:8px;justify-content:center}
+  .cards-grid{grid-template-columns:1fr;gap:13px}
+  .activity-card{padding:15px;border-radius:14px}
+  .page-title{font-size:1.45rem}
+  .page-sub{font-size:.9rem;margin-bottom:16px}
+  .form-grid{grid-template-columns:1fr}
+  .form-group.full{grid-column:auto}
+  .modal-overlay{padding:0;align-items:flex-end}
+  .modal-box{max-height:94dvh;border-radius:18px 18px 0 0;border-bottom:0}
+  .modal-head{padding:16px;min-height:58px}
+  .modal-body{padding:16px 14px calc(18px + env(safe-area-inset-bottom))}
+  .modal-actions{position:sticky;bottom:0;background:#0d1c30;padding:12px 0 calc(4px + env(safe-area-inset-bottom));z-index:3}
+  .btn-action{min-height:44px}
+  .pw-card-body{font-size:1rem}
+  body[data-workspace="infraestrutura"] .pw-photo{height:88px}
+  #toast{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom))}
+  .toast-item{max-width:none;width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
