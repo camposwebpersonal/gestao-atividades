@@ -11,6 +11,16 @@
   const dateBR=v=>{if(!v)return '—';const s=String(v).slice(0,10).split('-');return s.length===3?`${s[2]}/${s[1]}/${s[0]}`:String(v);};
   const isoToday=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Recife'});
   const state={secId:null,status:'todos',perfurador:'todos',busca:'',tab:'pocos'};
+  try{
+    const saved=JSON.parse(localStorage.getItem('gestao-pocos-ui-v1')||'null');
+    if(saved&&typeof saved==='object'){
+      if(['todos','pendente','pago'].includes(saved.status))state.status=saved.status;
+      if(typeof saved.perfurador==='string')state.perfurador=saved.perfurador;
+      if(typeof saved.busca==='string')state.busca=saved.busca;
+      if(['pocos','perfuradores'].includes(saved.tab))state.tab=saved.tab;
+    }
+  }catch(_){}
+  const saveUiState=()=>{try{localStorage.setItem('gestao-pocos-ui-v1',JSON.stringify({status:state.status,perfurador:state.perfurador,busca:state.busca,tab:state.tab}));}catch(_){}};
   const isWell=x=>V(x,'registro_tipo')==='poco';
   const isDriller=x=>V(x,'registro_tipo')==='perfurador';
   const isPlaceholder=x=>isDriller(x)&&Number(V(x,'is_placeholder',0))===1;
@@ -133,6 +143,8 @@
 
   window.renderPocos=function(secId){
     state.secId=secId;
+    window.rememberWorkspace?.({kind:'activity',id:secId},true);
+    saveUiState();
     const wells=allWells(secId),paid=wells.filter(p=>V(p,'status_pagamento')==='pago'),pending=wells.filter(p=>V(p,'status_pagamento')!=='pago');
     const total=wells.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0),pendingValue=pending.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0);
     const editable=canEdit();
@@ -168,8 +180,8 @@
     return `<div class="pw-company"><div style="display:flex;gap:10px"><div style="font-size:28px">${V(d,'tipo_pessoa')==='empresa'?'🏢':'👷'}</div><div style="flex:1"><h3>${esc(d.description)}</h3><div class="pw-company-meta">${esc(V(d,'documento')||'Documento não informado')}<br>${esc(V(d,'telefone')||'Telefone não informado')}${V(d,'contato')?` · ${esc(V(d,'contato'))}`:''}</div></div></div><div class="pw-company-totals"><div><b>${ws.length}</b>Serviços</div><div><b style="color:#6ee7b7">${pd.length}</b>Pagos</div><div><b style="color:#fcd34d">${pn.length}</b>Pendentes</div></div><div style="font-size:11px;color:#94a3b8">A receber: <b style="color:#fbbf24">${money(pn.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0))}</b></div>${editable?`<div class="pw-card-actions" style="margin:12px -15px -15px"><button class="pw-mini" onclick="openPerfuradorModal('${d.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePerfurador('${d.id}')">🗑️ Excluir</button></div>`:''}</div>`;
   }
 
-  window.pocoSetTab=function(tab){state.tab=tab;window.renderPocos(state.secId);};
-  window.pocoFilter=function(key,value){state[key]=value;const view=document.getElementById('pw-view');if(view)view.innerHTML=renderWellList(canEdit());};
+  window.pocoSetTab=function(tab){state.tab=tab;saveUiState();window.renderPocos(state.secId);};
+  window.pocoFilter=function(key,value){state[key]=value;saveUiState();const view=document.getElementById('pw-view');if(view)view.innerHTML=renderWellList(canEdit());};
 
   window.openPocoModal=function(id){
     const p=id?allWells(state.secId).find(x=>x.id===id):null;
