@@ -27,6 +27,18 @@
     }
     return [];
   };
+  // Entrega miniaturas WebP leves para os cartões; a imagem original só abre ao tocar.
+  const fastThumb=url=>{
+    const src=String(url||'');
+    if(!src||src.startsWith('data:')||src.startsWith('blob:'))return src;
+    try{
+      const u=new URL(src);
+      if(u.hostname==='i.ibb.co'){
+        return 'https://images.weserv.nl/?url='+encodeURIComponent(u.hostname+u.pathname)+'&w=360&h=280&fit=cover&output=webp&q=68';
+      }
+    }catch(_){}
+    return src;
+  };
 
   const style=document.createElement('style');
   style.textContent=`
@@ -43,7 +55,7 @@
     .pw-card-head{display:flex;align-items:flex-start;gap:10px;padding:14px 15px;border-bottom:1px solid #172640}.pw-card-main{flex:1;min-width:0}.pw-num{font-size:11px;font-weight:900;color:#38bdf8;text-transform:uppercase}.pw-local{font-size:17px;font-weight:850;color:#f8fafc;margin-top:2px}.pw-badge{border-radius:999px;padding:5px 10px;font-size:10px;font-weight:900;white-space:nowrap}.pw-badge.pago{background:#064e3b;color:#6ee7b7}.pw-badge.pendente{background:#78350f;color:#fcd34d}
     .pw-card-body{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:12px;padding:13px 15px}.pw-field small{display:block;color:#64748b;font-size:9px;font-weight:800;text-transform:uppercase;margin-bottom:3px}.pw-field div{color:#cbd5e1;font-size:12px;line-height:1.35}
     .pw-card-actions{display:flex;gap:7px;justify-content:flex-end;padding:10px 15px;background:#0a1222;flex-wrap:wrap}.pw-mini{border:1px solid #1e3a5f;background:#111c31;color:#cbd5e1;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}.pw-mini:hover{border-color:#38bdf8;color:#38bdf8}
-    .pw-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:6px}.pw-photo{width:100%;height:78px;object-fit:cover;border-radius:8px;border:1px solid #29415f;background:#071323}.pw-photo-edit{position:relative}.pw-photo-remove{position:absolute;right:4px;top:4px;border:0;border-radius:999px;width:24px;height:24px;background:#991b1b;color:#fff;font-weight:900;cursor:pointer}.pw-photo-name{font-size:9px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
+    .pw-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:6px}.pw-photo{width:100%;height:78px;object-fit:cover;border-radius:8px;border:1px solid #29415f;background:linear-gradient(110deg,#071323 25%,#13243b 45%,#071323 65%);background-size:200% 100%;animation:pwPhotoLoading 1.2s linear infinite;content-visibility:auto}.pw-photo[src]{animation:none}@keyframes pwPhotoLoading{to{background-position-x:-200%}}.pw-photo-edit{position:relative}.pw-photo-remove{position:absolute;right:4px;top:4px;border:0;border-radius:999px;width:24px;height:24px;background:#991b1b;color:#fff;font-weight:900;cursor:pointer}.pw-photo-name{font-size:9px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
     .pw-company-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}.pw-company{background:#0e1729;border:1px solid #1e3a5f;border-radius:14px;padding:15px}.pw-company h3{font-size:15px;color:#f8fafc;margin-bottom:4px}.pw-company-meta{color:#64748b;font-size:11px;line-height:1.55}.pw-company-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.pw-company-totals div{background:#091323;border-radius:8px;padding:8px;text-align:center;font-size:10px;color:#64748b}.pw-company-totals b{display:block;font-size:15px;color:#e2e8f0;margin-bottom:2px}
     @media(max-width:760px){.pw-stats{grid-template-columns:repeat(2,1fr)}.pw-filters{grid-template-columns:1fr}.pw-card-body{grid-template-columns:repeat(2,1fr)}.pw-toolbar>.btn-action{flex:1}.pw-tabs{width:100%}.pw-tab{flex:1}.pw-card-head{align-items:center}.pw-local{font-size:15px}}
     @media(max-width:420px){.pw-card-body{grid-template-columns:1fr}.pw-stats{gap:7px}.pw-stat{padding:11px}.pw-stat b{font-size:20px}}
@@ -143,7 +155,7 @@
 
   function wellCard(p,editable){
     const st=V(p,'status_pagamento','pendente'),val=Number(V(p,'valor',0)||0),imgs=imageList(p);
-    return `<article class="pw-card ${st}"><div class="pw-card-head"><div style="font-size:25px">${st==='pago'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(V(p,'numero','POÇO'))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><span class="pw-badge ${st}">${st==='pago'?'PAGO':'PENDENTE'}</span></div><div class="pw-card-body"><div class="pw-field"><small>Data da execução</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div><div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#fbbf24':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(url)}" alt="Foto ${i+1} de ${esc(V(p,'numero','poço'))}" loading="lazy" onclick="window.openLB&&window.openLB('${esc(url)}')" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Marcar pendente</button>`:`<button class="pw-mini" style="border-color:#047857;color:#6ee7b7" onclick="togglePocoPagamento('${p.id}','pago')">✓ Marcar pago</button>`}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
+    return `<article class="pw-card ${st}"><div class="pw-card-head"><div style="font-size:25px">${st==='pago'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(V(p,'numero','POÇO'))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><span class="pw-badge ${st}">${st==='pago'?'PAGO':'PENDENTE'}</span></div><div class="pw-card-body"><div class="pw-field"><small>Data da execução</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div><div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#fbbf24':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(V(p,'numero','poço'))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" onclick="window.openLB&&window.openLB(this.dataset.full)" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Marcar pendente</button>`:`<button class="pw-mini" style="border-color:#047857;color:#6ee7b7" onclick="togglePocoPagamento('${p.id}','pago')">✓ Marcar pago</button>`}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
   }
 
   function renderDrillerList(editable){
@@ -189,7 +201,7 @@
   window.renderPocoImagePreview=function(){
     const el=document.getElementById('pw-foto-preview');if(!el)return;
     const atuais=window.__pocoFotosAtuais||[],novas=window.__pocoNovasFotos||[];
-    const a=atuais.map((url,i)=>`<div class="pw-photo-edit"><img class="pw-photo" src="${esc(url)}" alt="Imagem já salva"><button type="button" class="pw-photo-remove" onclick="removePocoImage('atual',${i})" title="Remover">×</button><div class="pw-photo-name">Imagem salva</div></div>`).join('');
+    const a=atuais.map((url,i)=>`<div class="pw-photo-edit"><img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Imagem já salva" loading="lazy" decoding="async" onerror="this.onerror=null;this.src=this.dataset.full"><button type="button" class="pw-photo-remove" onclick="removePocoImage('atual',${i})" title="Remover">×</button><div class="pw-photo-name">Imagem salva</div></div>`).join('');
     const n=novas.map((file,i)=>{file.__previewUrl=file.__previewUrl||URL.createObjectURL(file);return `<div class="pw-photo-edit"><img class="pw-photo" src="${esc(file.__previewUrl)}" alt="Nova imagem"><button type="button" class="pw-photo-remove" onclick="removePocoImage('nova',${i})" title="Remover">×</button><div class="pw-photo-name">${esc(file.name)}</div></div>`;}).join('');
     el.innerHTML=a+n||'<div style="grid-column:1/-1;color:#64748b;font-size:11px">Nenhuma imagem adicionada.</div>';
   };
@@ -207,7 +219,7 @@
         window.toast(`Enviando ${novas.length} imagem(ns)…`,'info',10000);
         for(const file of novas){
           const raw=await window.readFileAsDataUrl(file);
-          const compact=window.mkThumb?await window.mkThumb(raw,1600,1600,.78):raw;
+          const compact=window.mkThumb?await window.mkThumb(raw,1280,1280,.70):raw;
           imagens.push(await window.imgbbUp(compact));
         }
       }
