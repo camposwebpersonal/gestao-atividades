@@ -28,6 +28,14 @@
   const allWells=secId=>(window.S?.subitems||[]).filter(x=>x.atividade_id===secId&&isWell(x));
   const allDrillers=secId=>(window.S?.items||[]).filter(x=>x.atividade_id===secId&&isDriller(x));
   const drillerName=id=>{const d=(window.S?.items||[]).find(x=>x.id===id);return d&&!isPlaceholder(d)?d.description:'Não informado';};
+  const drillerById=id=>(window.S?.items||[]).find(x=>x.id===id&&isDriller(x));
+  const valuesEnabledForDriller=id=>{
+    const d=drillerById(id),raw=V(d,'exibir_valores',1);
+    return !(raw===false||raw===0||raw==='0'||String(raw).toLowerCase()==='false');
+  };
+  const valuesEnabledForWell=p=>valuesEnabledForDriller(p?.item_id);
+  let pdfBusy=false;
+  const withTimeout=(promise,ms,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||'Tempo esgotado')),ms))]);
   const imageList=x=>{
     const raw=V(x,'imagens',[]);
     if(Array.isArray(raw))return raw.map(v=>typeof v==='string'?v:v?.url).filter(Boolean);
@@ -67,7 +75,9 @@
     .pw-card-actions{display:flex;gap:7px;justify-content:flex-end;padding:10px 15px;background:#0a1222;flex-wrap:wrap}.pw-mini{border:1px solid #1e3a5f;background:#111c31;color:#cbd5e1;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}.pw-mini:hover{border-color:#38bdf8;color:#38bdf8}
     .pw-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:6px}.pw-photo{width:100%;height:78px;object-fit:cover;border-radius:8px;border:1px solid #29415f;background:linear-gradient(110deg,#071323 25%,#13243b 45%,#071323 65%);background-size:200% 100%;animation:pwPhotoLoading 1.2s linear infinite;content-visibility:auto}.pw-photo[src]{animation:none}@keyframes pwPhotoLoading{to{background-position-x:-200%}}.pw-photo-edit{position:relative}.pw-photo-remove{position:absolute;right:4px;top:4px;border:0;border-radius:999px;width:24px;height:24px;background:#991b1b;color:#fff;font-weight:900;cursor:pointer}.pw-photo-name{font-size:9px;color:#94a3b8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:3px}
     .pw-company-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}.pw-company{background:#0e1729;border:1px solid #1e3a5f;border-radius:14px;padding:15px}.pw-company h3{font-size:15px;color:#f8fafc;margin-bottom:4px}.pw-company-meta{color:#64748b;font-size:11px;line-height:1.55}.pw-company-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.pw-company-totals div{background:#091323;border-radius:8px;padding:8px;text-align:center;font-size:10px;color:#64748b}.pw-company-totals b{display:block;font-size:15px;color:#e2e8f0;margin-bottom:2px}
-    @media(max-width:760px){.pw-stats{grid-template-columns:repeat(2,1fr)}.pw-filters{grid-template-columns:1fr}.pw-card-body{grid-template-columns:repeat(2,1fr)}.pw-toolbar>.btn-action{flex:1}.pw-tabs{width:100%}.pw-tab{flex:1}.pw-card-head{align-items:center}.pw-local{font-size:15px}}
+    .pw-value-config{display:grid;gap:8px;max-height:52vh;overflow:auto;padding-right:4px}.pw-value-row{display:flex;align-items:center;gap:12px;background:#0b1628;border:1px solid #1e3a5f;border-radius:10px;padding:11px 13px}.pw-value-row input{width:18px;height:18px;accent-color:#10b981}.pw-value-row div{flex:1}.pw-value-row b{display:block;color:#e2e8f0;font-size:13px}.pw-value-row small{color:#64748b;font-size:10px}.pw-config-tools{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}.pw-option-card{display:flex;gap:12px;align-items:flex-start;background:#0b1628;border:1px solid #1e3a5f;border-radius:12px;padding:14px}.pw-option-card input{width:19px;height:19px;accent-color:#10b981;margin-top:2px}.pw-option-card b{display:block;color:#e2e8f0;margin-bottom:3px}.pw-option-card small{color:#94a3b8;line-height:1.45}
+    .pw-stats.pw-stats-3{grid-template-columns:repeat(3,minmax(120px,1fr))}
+    @media(max-width:760px){.pw-stats,.pw-stats.pw-stats-3{grid-template-columns:repeat(2,1fr)}.pw-filters{grid-template-columns:1fr}.pw-card-body{grid-template-columns:repeat(2,1fr)}.pw-toolbar>.btn-action{flex:1}.pw-tabs{width:100%}.pw-tab{flex:1}.pw-card-head{align-items:center}.pw-local{font-size:15px}}
     @media(max-width:420px){.pw-card-body{grid-template-columns:1fr}.pw-stats{gap:7px}.pw-stat{padding:11px}.pw-stat b{font-size:20px}}
   `;
   document.head.appendChild(style);
@@ -146,15 +156,16 @@
     window.rememberWorkspace?.({kind:'activity',id:secId},true);
     saveUiState();
     const wells=allWells(secId),paid=wells.filter(p=>V(p,'status_pagamento')==='pago'),pending=wells.filter(p=>V(p,'status_pagamento')!=='pago');
-    const total=wells.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0),pendingValue=pending.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0);
+    const valued=wells.filter(valuesEnabledForWell),hasValues=valued.length>0;
+    const total=valued.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0),pendingValue=pending.filter(valuesEnabledForWell).reduce((a,p)=>a+Number(V(p,'valor',0)||0),0);
     const editable=canEdit();
     const sec=window.S.secs.find(s=>s.id===secId);
     document.getElementById('content').innerHTML=`
       <div class="pw-hero"><div style="font-size:12px;color:#5eead4;font-weight:800;text-transform:uppercase;letter-spacing:.7px">Atendimentos · Infraestrutura Rural</div><div style="font-size:clamp(23px,4vw,34px);font-weight:900;margin:4px 0">💧 Perfuração de Poços</div><div style="max-width:720px;color:#a7c8c0;font-size:13px">Controle completo das perfurações, localidades, representantes, prestadores e pagamentos da Prefeitura Municipal de Sertânia.</div></div>
-      <div class="pw-toolbar"><button class="btn-action" onclick="window.renderModulo('atendimentos')">← Atendimentos</button><div class="pw-tabs"><button class="pw-tab ${state.tab==='pocos'?'active':''}" onclick="pocoSetTab('pocos')">💧 Poços</button><button class="pw-tab ${state.tab==='perfuradores'?'active':''}" onclick="pocoSetTab('perfuradores')">🏢 Perfuradores</button></div><div style="flex:1"></div>${editable?'<button class="btn-action primary" onclick="openPocoModal()">+ Nova Perfuração</button><button class="btn-action" onclick="openPerfuradorModal()">+ Novo Perfurador</button>':''}<button class="btn-action" onclick="gerarPdfPocos()">📄 Gerar PDF</button></div>
-      <div class="pw-stats"><div class="pw-stat"><b style="color:#38bdf8">${wells.length}</b><span>Poços perfurados</span></div><div class="pw-stat"><b style="color:#10b981">${paid.length}</b><span>Serviços pagos</span></div><div class="pw-stat"><b style="color:#f59e0b">${pending.length}</b><span>Aguardando pagamento</span></div><div class="pw-stat"><b style="color:#fbbf24;font-size:18px">${pendingValue?money(pendingValue):'—'}</b><span>Valor pendente</span></div></div>
+      <div class="pw-toolbar"><button class="btn-action" onclick="window.renderModulo('atendimentos')">← Atendimentos</button><div class="pw-tabs"><button class="pw-tab ${state.tab==='pocos'?'active':''}" onclick="pocoSetTab('pocos')">💧 Poços</button><button class="pw-tab ${state.tab==='perfuradores'?'active':''}" onclick="pocoSetTab('perfuradores')">🏢 Perfuradores</button></div><div style="flex:1"></div>${editable?'<button class="btn-action" onclick="openPocoValueConfig()">⚙️ Exibição de valores</button><button class="btn-action primary" onclick="openPocoModal()">+ Nova Perfuração</button><button class="btn-action" onclick="openPerfuradorModal()">+ Novo Perfurador</button>':''}<button id="pw-pdf-btn" class="btn-action" onclick="openPocoPdfOptions()">📄 Gerar PDF</button></div>
+      <div class="pw-stats ${hasValues?'':'pw-stats-3'}"><div class="pw-stat"><b style="color:#38bdf8">${wells.length}</b><span>Poços perfurados</span></div><div class="pw-stat"><b style="color:#10b981">${paid.length}</b><span>Serviços pagos</span></div><div class="pw-stat"><b style="color:#f59e0b">${pending.length}</b><span>Aguardando pagamento</span></div>${hasValues?`<div class="pw-stat"><b style="color:#fbbf24;font-size:18px">${pendingValue?money(pendingValue):'—'}</b><span>Valor pendente</span></div>`:''}</div>
       <div id="pw-view">${state.tab==='pocos'?renderWellList(editable):renderDrillerList(editable)}</div>
-      <div style="margin-top:12px;color:#475569;font-size:10px;text-align:right">Controle: ${esc(sec?.name||'Perfuração de Poços')} · Valor total registrado: ${money(total)}</div>`;
+      <div style="margin-top:12px;color:#475569;font-size:10px;text-align:right">Controle: ${esc(sec?.name||'Perfuração de Poços')}${hasValues?' · Valor total dos grupos com valores: '+money(total):' · Valores desativados para os grupos atuais'}</div>`;
   };
 
   function renderWellList(editable){
@@ -166,8 +177,8 @@
   }
 
   function wellCard(p,editable){
-    const st=V(p,'status_pagamento','pendente'),val=Number(V(p,'valor',0)||0),imgs=imageList(p);
-    return `<article class="pw-card ${st}"><div class="pw-card-head"><div style="font-size:25px">${st==='pago'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(V(p,'numero','POÇO'))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><span class="pw-badge ${st}">${st==='pago'?'PAGO':'PENDENTE'}</span></div><div class="pw-card-body"><div class="pw-field"><small>Data da execução</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div><div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#fbbf24':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(V(p,'numero','poço'))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" onclick="window.openLB&&window.openLB(this.dataset.full)" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Marcar pendente</button>`:`<button class="pw-mini" style="border-color:#047857;color:#6ee7b7" onclick="togglePocoPagamento('${p.id}','pago')">✓ Marcar pago</button>`}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
+    const st=V(p,'status_pagamento','pendente'),val=Number(V(p,'valor',0)||0),imgs=imageList(p),showValue=valuesEnabledForWell(p);
+    return `<article class="pw-card ${st}"><div class="pw-card-head"><div style="font-size:25px">${st==='pago'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(V(p,'numero','POÇO'))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><span class="pw-badge ${st}">${st==='pago'?'PAGO':'PENDENTE'}</span></div><div class="pw-card-body"><div class="pw-field"><small>Data da execução</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div>${showValue?`<div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#fbbf24':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>`:''}${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(V(p,'numero','poço'))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" onclick="window.openLB&&window.openLB(this.dataset.full)" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Marcar pendente</button>`:`<button class="pw-mini" style="border-color:#047857;color:#6ee7b7" onclick="togglePocoPagamento('${p.id}','pago')">✓ Marcar pago</button>`}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
   }
 
   function renderDrillerList(editable){
@@ -177,7 +188,8 @@
 
   function drillerCard(d,editable){
     const ws=allWells(state.secId).filter(p=>p.item_id===d.id),pd=ws.filter(p=>V(p,'status_pagamento')==='pago'),pn=ws.filter(p=>V(p,'status_pagamento')!=='pago');
-    return `<div class="pw-company"><div style="display:flex;gap:10px"><div style="font-size:28px">${V(d,'tipo_pessoa')==='empresa'?'🏢':'👷'}</div><div style="flex:1"><h3>${esc(d.description)}</h3><div class="pw-company-meta">${esc(V(d,'documento')||'Documento não informado')}<br>${esc(V(d,'telefone')||'Telefone não informado')}${V(d,'contato')?` · ${esc(V(d,'contato'))}`:''}</div></div></div><div class="pw-company-totals"><div><b>${ws.length}</b>Serviços</div><div><b style="color:#6ee7b7">${pd.length}</b>Pagos</div><div><b style="color:#fcd34d">${pn.length}</b>Pendentes</div></div><div style="font-size:11px;color:#94a3b8">A receber: <b style="color:#fbbf24">${money(pn.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0))}</b></div>${editable?`<div class="pw-card-actions" style="margin:12px -15px -15px"><button class="pw-mini" onclick="openPerfuradorModal('${d.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePerfurador('${d.id}')">🗑️ Excluir</button></div>`:''}</div>`;
+    const showValue=valuesEnabledForDriller(d.id);
+    return `<div class="pw-company"><div style="display:flex;gap:10px"><div style="font-size:28px">${V(d,'tipo_pessoa')==='empresa'?'🏢':'👷'}</div><div style="flex:1"><h3>${esc(d.description)}</h3><div class="pw-company-meta">${esc(V(d,'documento')||'Documento não informado')}<br>${esc(V(d,'telefone')||'Telefone não informado')}${V(d,'contato')?` · ${esc(V(d,'contato'))}`:''}<br><span style="color:${showValue?'#6ee7b7':'#fbbf24'}">${showValue?'Valores visíveis':'Valores ocultos'}</span></div></div></div><div class="pw-company-totals"><div><b>${ws.length}</b>Serviços</div><div><b style="color:#6ee7b7">${pd.length}</b>Pagos</div><div><b style="color:#fcd34d">${pn.length}</b>Pendentes</div></div>${showValue?`<div style="font-size:11px;color:#94a3b8">A receber: <b style="color:#fbbf24">${money(pn.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0))}</b></div>`:''}${editable?`<div class="pw-card-actions" style="margin:12px -15px -15px"><button class="pw-mini" onclick="openPerfuradorModal('${d.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePerfurador('${d.id}')">🗑️ Excluir</button></div>`:''}</div>`;
   }
 
   window.pocoSetTab=function(tab){state.tab=tab;saveUiState();window.renderPocos(state.secId);};
@@ -189,8 +201,16 @@
     const next=allWells(state.secId).reduce((m,x)=>Math.max(m,parseInt(String(V(x,'numero')).replace(/\D/g,''))||0),0)+1;
     window.__pocoFotosAtuais=imageList(p);
     window.__pocoNovasFotos=[];
-    window.openModal(id?'✏️ Editar perfuração':'💧 Nova perfuração','Informe os dados do poço, pagamento e registro fotográfico.',`<div class="form-grid"><div class="form-group"><label>Identificação do poço *</label><input id="pw-numero" value="${esc(V(p,'numero',`POÇO ${next}`))}" placeholder="Ex.: POÇO 5"></div><div class="form-group"><label>Data da execução *</label><input type="date" id="pw-data" value="${esc(p?.start_date||isoToday())}"></div><div class="form-group full"><label>Localidade *</label><input id="pw-local" value="${esc(p?.description||'')}" placeholder="Ex.: SÍTIO SANTANA"></div><div class="form-group full"><label>Responsável / representante do local</label><input id="pw-representante" value="${esc(p?.responsaveis||'')}"></div><div class="form-group full"><label>Empresa ou pessoa que realizou a perfuração</label><select id="pw-perfurador">${ds.map(d=>`<option value="${esc(d.id)}" ${p?.item_id===d.id?'selected':''}>${isPlaceholder(d)?'— Não informado —':esc(d.description)}</option>`).join('')}</select></div><div class="form-group"><label>Valor do serviço (R$)</label><input type="number" min="0" step="0.01" id="pw-valor" value="${esc(V(p,'valor',''))}" placeholder="0,00"></div><div class="form-group"><label>Status do pagamento</label><select id="pw-status" onchange="document.getElementById('pw-data-pgto-wrap').style.display=this.value==='pago'?'flex':'none'"><option value="pendente" ${V(p,'status_pagamento','pendente')==='pendente'?'selected':''}>Pendente</option><option value="pago" ${V(p,'status_pagamento')==='pago'?'selected':''}>Pago</option></select></div><div class="form-group" id="pw-data-pgto-wrap" style="display:${V(p,'status_pagamento')==='pago'?'flex':'none'}"><label>Data do pagamento</label><input type="date" id="pw-data-pgto" value="${esc(V(p,'data_pagamento',''))}"></div><div class="form-group full"><label>Observações</label><textarea id="pw-obs" placeholder="Detalhes da perfuração, acesso, profundidade ou outras informações...">${esc(p?.observacao||'')}</textarea></div><div class="form-group full"><label>Imagens do lançamento</label><input type="file" id="pw-fotos" accept="image/*" multiple onchange="pocoSelecionarImagens(this)" style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;padding:10px;width:100%"><small style="color:#64748b">Você pode selecionar uma ou várias imagens. Elas também aparecerão no PDF.</small><div id="pw-foto-preview" class="pw-photos"></div></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePoco('${id||''}')">💾 Salvar perfuração</button></div>`);
-    setTimeout(()=>window.renderPocoImagePreview(),0);
+    window.openModal(id?'✏️ Editar perfuração':'💧 Nova perfuração','Informe os dados do poço, pagamento e registro fotográfico.',`<div class="form-grid"><div class="form-group"><label>Identificação do poço *</label><input id="pw-numero" value="${esc(V(p,'numero',`POÇO ${next}`))}" placeholder="Ex.: POÇO 5"></div><div class="form-group"><label>Data da execução *</label><input type="date" id="pw-data" value="${esc(p?.start_date||isoToday())}"></div><div class="form-group full"><label>Localidade *</label><input id="pw-local" value="${esc(p?.description||'')}" placeholder="Ex.: SÍTIO SANTANA"></div><div class="form-group full"><label>Responsável / representante do local</label><input id="pw-representante" value="${esc(p?.responsaveis||'')}"></div><div class="form-group full"><label>Empresa ou pessoa que realizou a perfuração</label><select id="pw-perfurador" onchange="pocoAtualizarValorVisibilidade()">${ds.map(d=>`<option value="${esc(d.id)}" ${p?.item_id===d.id?'selected':''}>${isPlaceholder(d)?'— Não informado —':esc(d.description)}</option>`).join('')}</select><small id="pw-value-hint" style="color:#64748b"></small></div><div class="form-group" id="pw-valor-wrap"><label>Valor do serviço (R$)</label><input type="number" min="0" step="0.01" id="pw-valor" value="${esc(V(p,'valor',''))}" placeholder="0,00"></div><div class="form-group"><label>Status do pagamento</label><select id="pw-status" onchange="document.getElementById('pw-data-pgto-wrap').style.display=this.value==='pago'?'flex':'none'"><option value="pendente" ${V(p,'status_pagamento','pendente')==='pendente'?'selected':''}>Pendente</option><option value="pago" ${V(p,'status_pagamento')==='pago'?'selected':''}>Pago</option></select></div><div class="form-group" id="pw-data-pgto-wrap" style="display:${V(p,'status_pagamento')==='pago'?'flex':'none'}"><label>Data do pagamento</label><input type="date" id="pw-data-pgto" value="${esc(V(p,'data_pagamento',''))}"></div><div class="form-group full"><label>Observações</label><textarea id="pw-obs" placeholder="Detalhes da perfuração, acesso, profundidade ou outras informações...">${esc(p?.observacao||'')}</textarea></div><div class="form-group full"><label>Imagens do lançamento</label><input type="file" id="pw-fotos" accept="image/*" multiple onchange="pocoSelecionarImagens(this)" style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;padding:10px;width:100%"><small style="color:#64748b">Você pode selecionar uma ou várias imagens. Elas também aparecerão no PDF.</small><div id="pw-foto-preview" class="pw-photos"></div></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePoco('${id||''}')">💾 Salvar perfuração</button></div>`);
+    setTimeout(()=>{window.renderPocoImagePreview();window.pocoAtualizarValorVisibilidade();},0);
+  };
+
+  window.pocoAtualizarValorVisibilidade=function(){
+    const select=document.getElementById('pw-perfurador'),wrap=document.getElementById('pw-valor-wrap'),hint=document.getElementById('pw-value-hint');
+    if(!select||!wrap)return;
+    const enabled=valuesEnabledForDriller(select.value);
+    wrap.style.display=enabled?'flex':'none';
+    if(hint)hint.textContent=enabled?'Este grupo utiliza valores financeiros.':'Este grupo está configurado sem valores financeiros.';
   };
 
   window.pocoSelecionarImagens=function(input){
@@ -219,6 +239,7 @@
   };
 
   window.savePoco=async function(id){
+    const existing=id?allWells(state.secId).find(x=>x.id===id):null;
     const numero=document.getElementById('pw-numero').value.trim(),local=document.getElementById('pw-local').value.trim(),data=document.getElementById('pw-data').value;
     if(!numero||!data){window.toast('Identificação e data são obrigatórias','error');return;}
     const status=document.getElementById('pw-status').value;
@@ -235,7 +256,8 @@
           imagens.push(await window.imgbbUp(compact));
         }
       }
-      const payload={atividade_id:state.secId,item_id:perfuradorId,parent_id:perfuradorId,parent_type:'item',description:local,responsaveis:document.getElementById('pw-representante').value.trim(),start_date:data,observacao:document.getElementById('pw-obs').value.trim(),status:status==='pago'?'concluido':'pendente',concluded:status==='pago'?1:0,updated_at:window.serverTimestamp(),registro_tipo:'poco',numero,status_pagamento:status,valor:Number(document.getElementById('pw-valor').value||0),data_pagamento:status==='pago'?(document.getElementById('pw-data-pgto').value||isoToday()):null,imagens};
+      const showValue=valuesEnabledForDriller(perfuradorId);
+      const payload={atividade_id:state.secId,item_id:perfuradorId,parent_id:perfuradorId,parent_type:'item',description:local,responsaveis:document.getElementById('pw-representante').value.trim(),start_date:data,observacao:document.getElementById('pw-obs').value.trim(),status:status==='pago'?'concluido':'pendente',concluded:status==='pago'?1:0,updated_at:window.serverTimestamp(),registro_tipo:'poco',numero,status_pagamento:status,valor:showValue?Number(document.getElementById('pw-valor').value||0):Number(V(existing,'valor',0)||0),data_pagamento:status==='pago'?(document.getElementById('pw-data-pgto').value||isoToday()):null,imagens};
       if(id)await window.updateDoc(window.doc(window.db,'subitems',id),payload);else{payload.order_num=allWells(state.secId).length;payload.created_at=window.serverTimestamp();await window.addDoc(window.collection(window.db,'subitems'),payload);}
       await window.loadData();window.closeModal();window.__pocoFotosAtuais=[];window.__pocoNovasFotos=[];window.toast(id?'Perfuração atualizada!':'Perfuração cadastrada!');window.renderPocos(state.secId);
     }catch(e){console.error(e);window.toast('Erro ao salvar perfuração: '+(e.message||e),'error',8000);}
@@ -249,12 +271,12 @@
 
   window.openPerfuradorModal=function(id){
     const d=id?allDrillers(state.secId).find(x=>x.id===id):null;
-    window.openModal(id?'✏️ Editar perfurador':'🏢 Novo perfurador','Cadastre empresa ou pessoa responsável pela execução.',`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="pd-tipo"><option value="empresa" ${V(d,'tipo_pessoa','empresa')==='empresa'?'selected':''}>Empresa</option><option value="pessoa" ${V(d,'tipo_pessoa')==='pessoa'?'selected':''}>Pessoa física</option></select></div><div class="form-group"><label>Nome / Razão social *</label><input id="pd-nome" value="${esc(d?.description||'')}"></div><div class="form-group"><label>CPF / CNPJ</label><input id="pd-doc" value="${esc(V(d,'documento',''))}"></div><div class="form-group"><label>Telefone</label><input id="pd-tel" value="${esc(V(d,'telefone',''))}"></div><div class="form-group full"><label>Pessoa de contato</label><input id="pd-contato" value="${esc(V(d,'contato',''))}"></div><div class="form-group full"><label>Observações</label><textarea id="pd-obs">${esc(d?.observacao||'')}</textarea></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePerfurador('${id||''}')">💾 Salvar perfurador</button></div>`);
+    window.openModal(id?'✏️ Editar perfurador':'🏢 Novo perfurador','Cadastre empresa ou pessoa responsável pela execução.',`<div class="form-grid"><div class="form-group"><label>Tipo</label><select id="pd-tipo"><option value="empresa" ${V(d,'tipo_pessoa','empresa')==='empresa'?'selected':''}>Empresa</option><option value="pessoa" ${V(d,'tipo_pessoa')==='pessoa'?'selected':''}>Pessoa física</option></select></div><div class="form-group"><label>Nome / Razão social *</label><input id="pd-nome" value="${esc(d?.description||'')}"></div><div class="form-group"><label>CPF / CNPJ</label><input id="pd-doc" value="${esc(V(d,'documento',''))}"></div><div class="form-group"><label>Telefone</label><input id="pd-tel" value="${esc(V(d,'telefone',''))}"></div><div class="form-group full"><label>Pessoa de contato</label><input id="pd-contato" value="${esc(V(d,'contato',''))}"></div><label class="pw-option-card form-group full"><input type="checkbox" id="pd-exibir-valores" ${d?valuesEnabledForDriller(d.id)?'checked':'':'checked'}><span><b>Informar e mostrar valores dos serviços</b><small>Desmarque para retirar o campo de valor dos lançamentos deste grupo e ocultar seus valores nos relatórios.</small></span></label><div class="form-group full"><label>Observações</label><textarea id="pd-obs">${esc(d?.observacao||'')}</textarea></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePerfurador('${id||''}')">💾 Salvar perfurador</button></div>`);
   };
 
   window.savePerfurador=async function(id){
     const name=document.getElementById('pd-nome').value.trim();if(!name){window.toast('Nome é obrigatório','error');return;}
-    const payload={atividade_id:state.secId,description:name,observacao:document.getElementById('pd-obs').value.trim(),concluded:0,updated_at:window.serverTimestamp(),registro_tipo:'perfurador',tipo_pessoa:document.getElementById('pd-tipo').value,documento:document.getElementById('pd-doc').value.trim(),telefone:document.getElementById('pd-tel').value.trim(),contato:document.getElementById('pd-contato').value.trim()};
+    const payload={atividade_id:state.secId,description:name,observacao:document.getElementById('pd-obs').value.trim(),concluded:0,updated_at:window.serverTimestamp(),registro_tipo:'perfurador',tipo_pessoa:document.getElementById('pd-tipo').value,documento:document.getElementById('pd-doc').value.trim(),telefone:document.getElementById('pd-tel').value.trim(),contato:document.getElementById('pd-contato').value.trim(),exibir_valores:document.getElementById('pd-exibir-valores').checked?1:0};
     try{if(id)await window.updateDoc(window.doc(window.db,'items',id),payload);else{payload.order_num=allDrillers(state.secId).length;payload.created_at=window.serverTimestamp();await window.addDoc(window.collection(window.db,'items'),payload);}await window.loadData();window.closeModal();state.tab='perfuradores';window.toast(id?'Perfurador atualizado!':'Perfurador cadastrado!');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao salvar perfurador: '+(e.message||e),'error');}
   };
 
@@ -262,59 +284,94 @@
     const linked=allWells(state.secId).filter(p=>p.item_id===id);if(linked.length){window.toast(`Este perfurador possui ${linked.length} serviço(s). Reatribua os poços antes de excluir.`,'error',6000);return;}if(!confirm('Excluir este cadastro de perfurador?'))return;try{await window.deleteDoc(window.doc(window.db,'items',id));await window.loadData();window.toast('Perfurador excluído!');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao excluir: '+(e.message||e),'error');}
   };
 
-  window.gerarPdfPocos=async function(secId){
+  window.openPocoValueConfig=function(){
+    const ds=allDrillers(state.secId);
+    const rows=ds.map(d=>`<label class="pw-value-row"><input type="checkbox" data-pw-value-id="${esc(d.id)}" ${valuesEnabledForDriller(d.id)?'checked':''}><div><b>${isPlaceholder(d)?'Sem grupo / não informado':esc(d.description)}</b><small>${valuesEnabledForDriller(d.id)?'O valor aparece nos lançamentos e relatórios.':'Lançamentos e relatórios sem valores.'}</small></div></label>`).join('');
+    window.openModal('⚙️ Exibição de valores por grupo','Escolha quais empresas ou perfuradores trabalham com valor do serviço.',`<div class="pw-config-tools"><button class="pw-mini" onclick="document.querySelectorAll('[data-pw-value-id]').forEach(x=>x.checked=true)">✓ Marcar todos</button><button class="pw-mini" onclick="document.querySelectorAll('[data-pw-value-id]').forEach(x=>x.checked=false)">Desmarcar todos</button></div><div class="pw-value-config">${rows||'<div class="empty">Cadastre um perfurador primeiro.</div>'}</div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="savePocoValueConfig()">💾 Salvar configuração</button></div>`);
+  };
+
+  window.savePocoValueConfig=async function(){
+    const boxes=[...document.querySelectorAll('[data-pw-value-id]')];
+    if(!boxes.length){window.closeModal();return;}
+    try{
+      await Promise.all(boxes.map(box=>window.updateDoc(window.doc(window.db,'items',box.dataset.pwValueId),{exibir_valores:box.checked?1:0,updated_at:window.serverTimestamp()})));
+      boxes.forEach(box=>{const d=drillerById(box.dataset.pwValueId);if(d)d.exibir_valores=box.checked?1:0;});
+      window.closeModal();window.toast('Exibição de valores atualizada por grupo!');window.renderPocos(state.secId);
+    }catch(e){console.error(e);window.toast('Erro ao salvar configuração de valores: '+(e.message||e),'error',8000);}
+  };
+
+  window.openPocoPdfOptions=function(){
+    if(pdfBusy){window.toast('O relatório já está sendo gerado. Aguarde a conclusão.','info',5000);return;}
+    window.openModal('📄 Gerar relatório de perfurações','Defina o conteúdo do PDF antes de gerar.',`<label class="pw-option-card"><input type="checkbox" id="pw-pdf-photos" checked><span><b>Incluir relatório fotográfico</b><small>Marcado por padrão. Desmarque para gerar somente o resumo inicial das perfurações.</small></span></label><div style="margin-top:10px;color:#64748b;font-size:11px">Os valores respeitarão automaticamente a configuração de cada empresa / perfurador.</div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="confirmarPdfPocos()">📄 Gerar PDF</button></div>`);
+  };
+
+  window.confirmarPdfPocos=function(){
+    const incluir=document.getElementById('pw-pdf-photos')?.checked!==false;
+    window.closeModal();window.gerarPdfPocos(null,{incluirFotos:incluir});
+  };
+
+  window.gerarPdfPocos=async function(secId,options={}){
     if(secId)state.secId=secId;
     if(!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
     const wells=filteredWells();if(!wells.length){window.toast('Não há perfurações nos filtros atuais','error');return;}
-    window.toast('Gerando relatório institucional…','info',6000);
+    if(pdfBusy){window.toast('O relatório já está sendo gerado. Aguarde a conclusão.','info',5000);return;}
+    pdfBusy=true;
+    const pdfButton=document.getElementById('pw-pdf-btn');if(pdfButton){pdfButton.disabled=true;pdfButton.textContent='⏳ Gerando PDF...';}
+    window.toast('Gerando relatório institucional…','info',12000);
+    try{
     const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,bottom=H-FTR-4;
-    const logo=await window.loadB64('img/logo_sertania.png','png',140).catch(()=>null);
+    const incluirFotos=options.incluirFotos!==false;
+    const logo=await withTimeout(window.loadB64('img/logo_sertania.png','png',140),10000,'Tempo esgotado ao carregar o brasão').catch(()=>null);
     const sf=(n,b,c)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(n);doc.setTextColor(...(c||[30,41,59]));};
     const header=()=>{doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR-3,W,3,'F');if(logo){let h=22,w=h*(logo.w/logo.h);if(w>30){w=30;h=w/(logo.w/logo.h);}doc.addImage(logo.d,'PNG',W-mx-w,3+(23-h)/2,w,h,'pw_logo_h','FAST');}sf(14,true,[20,82,20]);doc.text('RELATÓRIO DE PERFURAÇÃO DE POÇOS',mx+8,13);sf(7.5,false,[30,123,30]);doc.text('Prefeitura Municipal de Sertânia — PE  •  Controle de Atendimentos  •  '+new Date().toLocaleDateString('pt-BR'),mx+8,22);};
     const footer=()=>{doc.setFillColor(20,82,20);doc.rect(0,H-FTR,W,FTR,'F');doc.setFillColor(110,192,46);doc.rect(0,H-FTR,W,2,'F');if(logo){let h=10,w=h*(logo.w/logo.h);doc.addImage(logo.d,'PNG',mx,H-FTR+3,w,h,'pw_logo_f','FAST');}sf(7,true,[210,250,210]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA — PE',mx+17,H-FTR+8);sf(6.5,false,[190,240,190]);doc.text('Sertânia — PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,H-FTR+12,{align:'center'});};
     header();footer();
-    const paid=wells.filter(p=>V(p,'status_pagamento')==='pago'),pending=wells.filter(p=>V(p,'status_pagamento')!=='pago'),total=wells.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0),pendVal=pending.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0);
-    const cards=[['PERFURAÇÕES',String(wells.length),[59,130,246]],['PAGAS',String(paid.length),[16,185,129]],['PENDENTES',String(pending.length),[245,158,11]],['VALOR PENDENTE',money(pendVal),[220,120,20]]];
-    const cw=(W-mx*2-9)/4;cards.forEach((c,i)=>{const x=mx+i*(cw+3);doc.setFillColor(248,250,252);doc.setDrawColor(210,225,215);doc.roundedRect(x,top,cw,17,2,2,'FD');doc.setFillColor(...c[2]);doc.rect(x,top,cw,2,'F');sf(11,true,c[2]);doc.text(c[1],x+cw/2,top+9,{align:'center'});sf(6,false,[100,116,139]);doc.text(c[0],x+cw/2,top+14,{align:'center'});});
-    const body=wells.map(p=>[V(p,'numero','—'),p.description||'—',p.responsaveis||'—',dateBR(p.start_date),drillerName(p.item_id),money(V(p,'valor',0)),V(p,'status_pagamento')==='pago'?'PAGO':'PENDENTE',dateBR(V(p,'data_pagamento')),p.observacao||'']);
-    doc.autoTable({startY:top+22,tableWidth:253,head:[['Poço','Localidade','Representante','Execução','Empresa / Perfurador','Valor','Pagamento','Data pgto.','Observações']],body,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:7,cellPadding:1.8,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:14},1:{cellWidth:32},2:{cellWidth:31},3:{cellWidth:17},4:{cellWidth:35},5:{cellWidth:22,halign:'right'},6:{cellWidth:18,halign:'center'},7:{cellWidth:17},8:{cellWidth:67}},didParseCell:d=>{if(d.section==='body'&&d.column.index===6){const paid=String(d.cell.raw)==='PAGO';d.cell.styles.textColor=paid?[5,150,105]:[217,119,6];d.cell.styles.fontStyle='bold';}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
+    const paid=wells.filter(p=>V(p,'status_pagamento')==='pago'),pending=wells.filter(p=>V(p,'status_pagamento')!=='pago'),valuedWells=wells.filter(valuesEnabledForWell),showValues=valuedWells.length>0,total=valuedWells.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0),pendVal=pending.filter(valuesEnabledForWell).reduce((a,p)=>a+Number(V(p,'valor',0)||0),0);
+    const cards=[['PERFURAÇÕES',String(wells.length),[59,130,246]],['PAGAS',String(paid.length),[16,185,129]],['PENDENTES',String(pending.length),[245,158,11]]];
+    if(showValues)cards.push(['VALOR PENDENTE',money(pendVal),[220,120,20]]);
+    const cw=(W-mx*2-3*(cards.length-1))/cards.length;cards.forEach((c,i)=>{const x=mx+i*(cw+3);doc.setFillColor(248,250,252);doc.setDrawColor(210,225,215);doc.roundedRect(x,top,cw,17,2,2,'FD');doc.setFillColor(...c[2]);doc.rect(x,top,cw,2,'F');sf(11,true,c[2]);doc.text(c[1],x+cw/2,top+9,{align:'center'});sf(6,false,[100,116,139]);doc.text(c[0],x+cw/2,top+14,{align:'center'});});
+    const tableHead=showValues?['Poço','Localidade','Representante','Execução','Empresa / Perfurador','Valor','Pagamento','Data pgto.','Observações']:['Poço','Localidade','Representante','Execução','Empresa / Perfurador','Pagamento','Data pgto.','Observações'];
+    const body=wells.map(p=>{const row=[V(p,'numero','—'),p.description||'—',p.responsaveis||'—',dateBR(p.start_date),drillerName(p.item_id)];if(showValues)row.push(valuesEnabledForWell(p)?money(V(p,'valor',0)):'—');row.push(V(p,'status_pagamento')==='pago'?'PAGO':'PENDENTE',dateBR(V(p,'data_pagamento')),p.observacao||'');return row;});
+    const statusColumn=showValues?6:5;
+    const columnStyles=showValues?{0:{cellWidth:14},1:{cellWidth:32},2:{cellWidth:31},3:{cellWidth:17},4:{cellWidth:35},5:{cellWidth:22,halign:'right'},6:{cellWidth:18,halign:'center'},7:{cellWidth:17},8:{cellWidth:67}}:{0:{cellWidth:16},1:{cellWidth:38},2:{cellWidth:38},3:{cellWidth:20},4:{cellWidth:45},5:{cellWidth:22,halign:'center'},6:{cellWidth:20},7:{cellWidth:67}};
+    doc.autoTable({startY:top+22,tableWidth:253,head:[tableHead],body,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:7,cellPadding:1.8,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[248,252,248]},columnStyles,didParseCell:d=>{if(d.section==='body'&&d.column.index===statusColumn){const paid=String(d.cell.raw)==='PAGO';d.cell.styles.textColor=paid?[5,150,105]:[217,119,6];d.cell.styles.fontStyle='bold';}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
     let y=doc.lastAutoTable.finalY+5;if(y+24>bottom){doc.addPage();header();footer();y=top;}
     sf(9,true,[20,82,20]);doc.text('RESUMO POR EMPRESA / PERFURADOR',mx,y+5);y+=8;
     const groups=new Map();wells.forEach(p=>{const n=drillerName(p.item_id);if(!groups.has(n))groups.set(n,[]);groups.get(n).push(p);});
-    const sumBody=[...groups.entries()].map(([n,ws])=>{const p=ws.filter(x=>V(x,'status_pagamento')==='pago'),pn=ws.filter(x=>V(x,'status_pagamento')!=='pago');return[n,String(ws.length),String(p.length),String(pn.length),money(ws.reduce((a,x)=>a+Number(V(x,'valor',0)||0),0)),money(pn.reduce((a,x)=>a+Number(V(x,'valor',0)||0),0))];});
-    doc.autoTable({startY:y,tableWidth:266,head:[['Empresa / Perfurador','Serviços','Pagos','Pendentes','Valor total','A pagar']],body:sumBody,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:8,cellPadding:2,textColor:[30,41,59]},headStyles:{fillColor:[20,82,20],textColor:[255,255,255]},columnStyles:{0:{cellWidth:110},1:{cellWidth:22,halign:'center'},2:{cellWidth:22,halign:'center'},3:{cellWidth:24,halign:'center'},4:{cellWidth:43,halign:'right'},5:{cellWidth:45,halign:'right'}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
-    const photoWells=wells.filter(p=>imageList(p).length);
+    const sumBody=[...groups.entries()].map(([n,ws])=>{const p=ws.filter(x=>V(x,'status_pagamento')==='pago'),pn=ws.filter(x=>V(x,'status_pagamento')!=='pago'),row=[n,String(ws.length),String(p.length),String(pn.length)];if(showValues){const enabled=ws.some(valuesEnabledForWell);row.push(enabled?money(ws.filter(valuesEnabledForWell).reduce((a,x)=>a+Number(V(x,'valor',0)||0),0)):'—',enabled?money(pn.filter(valuesEnabledForWell).reduce((a,x)=>a+Number(V(x,'valor',0)||0),0)):'—');}return row;});
+    const sumHead=showValues?['Empresa / Perfurador','Serviços','Pagos','Pendentes','Valor total','A pagar']:['Empresa / Perfurador','Serviços','Pagos','Pendentes'];
+    const sumStyles=showValues?{0:{cellWidth:110},1:{cellWidth:22,halign:'center'},2:{cellWidth:22,halign:'center'},3:{cellWidth:24,halign:'center'},4:{cellWidth:43,halign:'right'},5:{cellWidth:45,halign:'right'}}:{0:{cellWidth:170},1:{cellWidth:32,halign:'center'},2:{cellWidth:32,halign:'center'},3:{cellWidth:32,halign:'center'}};
+    doc.autoTable({startY:y,tableWidth:266,head:[sumHead],body:sumBody,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:8,cellPadding:2,textColor:[30,41,59]},headStyles:{fillColor:[20,82,20],textColor:[255,255,255]},columnStyles:sumStyles,didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
+    const photoWells=incluirFotos?wells.filter(p=>imageList(p).length):[];
     if(photoWells.length){
-      for(const p of photoWells){
-        let photos=[];
-        for(const url of imageList(p)){
-          const loaded=await window.loadB64(url,'jpeg',1000).catch(()=>null);
-          if(loaded)photos.push(loaded);
-        }
+      window.toast(`Preparando ${photoWells.length} seção(ões) fotográfica(s)…`,'info',18000);
+      const preparedPhotos=await Promise.all(photoWells.map(async p=>({p,photos:(await Promise.all(imageList(p).map(url=>withTimeout(window.loadB64(url,'jpeg',1400),18000,'Uma imagem demorou demais para carregar').catch(e=>{console.warn('PDF: foto ignorada',url,e);return null;})))).filter(Boolean)})));
+      for(const entry of preparedPhotos){
+        const p=entry.p,photos=entry.photos;
         if(!photos.length)continue;
-        doc.addPage();header();footer();
-        let py=top;
-        sf(12,true,[20,82,20]);doc.text('REGISTRO FOTOGRÁFICO — '+String(V(p,'numero','POÇO')),mx,py+5);
-        sf(8,false,[71,85,105]);doc.text((p.description||'Local não informado')+'  •  Representante: '+(p.responsaveis||'Não informado')+'  •  Perfurador: '+drillerName(p.item_id),mx,py+11);
-        py+=17;
-        const gap=5,cols=3,cellW=(W-mx*2-gap*(cols-1))/cols,maxH=52;
-        for(let i=0;i<photos.length;i++){
-          const col=i%cols;
-          if(col===0&&i>0)py+=maxH+9;
-          if(py+maxH+7>bottom){
-            doc.addPage();header();footer();py=top;
-            sf(10,true,[20,82,20]);doc.text('REGISTRO FOTOGRÁFICO — '+String(V(p,'numero','POÇO'))+' (continuação)',mx,py+5);py+=10;
-          }
-          const ph=photos[i],ratio=ph.w/ph.h;
-          let iw=cellW,ih=iw/ratio;if(ih>maxH){ih=maxH;iw=ih*ratio;}
-          const x=mx+col*(cellW+gap)+(cellW-iw)/2;
-          doc.setDrawColor(203,213,225);doc.rect(mx+col*(cellW+gap),py,cellW,maxH,'S');
-          try{doc.addImage(ph.d,'JPEG',x,py+(maxH-ih)/2,iw,ih,undefined,'FAST');}catch(e){console.warn('PDF: falha ao inserir foto do poço',e);}
-          sf(6.5,false,[100,116,139]);doc.text('Imagem '+(i+1),mx+col*(cellW+gap)+cellW/2,py+maxH+4,{align:'center'});
+        for(let offset=0;offset<photos.length;offset+=6){
+          const pagePhotos=photos.slice(offset,offset+6),count=pagePhotos.length,cols=count===1?1:count===2?2:3,rows=count<=3?1:2,gap=5;
+          doc.addPage();header();footer();
+          let py=top;
+          sf(12.5,true,[20,82,20]);doc.text('REGISTRO FOTOGRÁFICO — '+String(V(p,'numero','POÇO'))+(offset?' (continuação)':''),mx,py+5);
+          const meta=(p.description||'Local não informado')+'  •  Representante: '+(p.responsaveis||'Não informado')+'  •  Perfurador: '+drillerName(p.item_id);
+          sf(10,true,[35,52,75]);const metaLines=doc.splitTextToSize(meta,W-mx*2);doc.text(metaLines,mx,py+12);
+          py+=15+Math.max(0,metaLines.length-1)*4.2;
+          const labelH=6,usableH=bottom-py-gap*(rows-1)-labelH*rows,cellH=usableH/rows,cellW=(W-mx*2-gap*(cols-1))/cols;
+          pagePhotos.forEach((ph,index)=>{
+            const row=Math.floor(index/cols),col=index%cols,x0=mx+col*(cellW+gap),y0=py+row*(cellH+labelH+gap),ratio=ph.w/ph.h;
+            let iw=cellW-2,ih=iw/ratio;if(ih>cellH-2){ih=cellH-2;iw=ih*ratio;}
+            const x=x0+(cellW-iw)/2,yImg=y0+(cellH-ih)/2;
+            doc.setFillColor(249,251,250);doc.setDrawColor(190,210,195);doc.roundedRect(x0,y0,cellW,cellH,1.5,1.5,'FD');
+            try{doc.addImage(ph.d,'JPEG',x,yImg,iw,ih,undefined,'FAST');}catch(e){console.warn('PDF: falha ao inserir foto do poço',e);}
+            sf(7,true,[71,85,105]);doc.text('Imagem '+(offset+index+1),x0+cellW/2,y0+cellH+4,{align:'center'});
+          });
         }
       }
     }
-    footer();doc.save(`relatorio-pocos-${isoToday()}.pdf`);window.toast(`PDF gerado: ${wells.length} perfuração(ões) · total ${money(total)}`,'success',5000);
+    footer();doc.save(`relatorio-pocos-${isoToday()}.pdf`);window.toast(`PDF gerado: ${wells.length} perfuração(ões)${incluirFotos?' · com relatório fotográfico':' · somente resumo'}`,'success',5000);
+    }catch(e){console.error('Erro ao gerar PDF de poços',e);window.toast('Não foi possível gerar o PDF: '+(e.message||e),'error',9000);}
+    finally{pdfBusy=false;if(pdfButton){pdfButton.disabled=false;pdfButton.textContent='📄 Gerar PDF';}}
   };
 
   function installIntegration(){
