@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v55';
+const CACHE_NAME = 'gestao-pms-v56';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -71,6 +71,17 @@ self.addEventListener('fetch', event => {
         if(response && response.status === 200 && !url.hostname.includes('supabase.co')){
           putInCache(request, response.clone());
         }
+        return response;
+      }).catch(err => caches.match(request).then(cached => cached || offlineResponse(request, err)))
+    );
+    return;
+  }
+
+  // Dashboard de investimentos: rede primeiro para exibir alterações imediatamente
+  if(url.pathname.includes('/investimento-dashboard/') && request.destination === 'document'){
+    event.respondWith(
+      fetch(request).then(response => {
+        if(response && response.status === 200) putInCache(request, response.clone());
         return response;
       }).catch(err => caches.match(request).then(cached => cached || offlineResponse(request, err)))
     );
