@@ -369,7 +369,7 @@
         }
       }
     }
-    footer();doc.save(`relatorio-pocos-${isoToday()}.pdf`);window.toast(`PDF gerado: ${wells.length} perfuração(ões)${incluirFotos?' · com relatório fotográfico':' · somente resumo'}`,'success',5000);
+    footer();doc.save(`RELATORIO-POCOS-${isoToday()}.pdf`);window.toast(`PDF gerado: ${wells.length} perfuração(ões)${incluirFotos?' · com relatório fotográfico':' · somente resumo'}`,'success',5000);
     }catch(e){console.error('Erro ao gerar PDF de poços',e);window.toast('Não foi possível gerar o PDF: '+(e.message||e),'error',9000);}
     finally{pdfBusy=false;if(pdfButton){pdfButton.disabled=false;pdfButton.textContent='📄 Gerar PDF';}}
   };
