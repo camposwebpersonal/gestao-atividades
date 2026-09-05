@@ -11,3 +11,7 @@ Thumbs.db
 
 cinterno/
 pbatransportes/
+
+# Node / testes
+node_modules/
+coverage/
