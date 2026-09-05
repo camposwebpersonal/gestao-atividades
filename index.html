@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=54">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=57">
 </head>
 <body>
 <div id="app">
@@ -410,7 +410,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js';
+import './js/modulos.js?v=57';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -509,10 +509,51 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=56';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=57';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
+
+// Atualização por gesto no celular. O navegador usa o pull-to-refresh nativo;
+// no modo PWA instalado, este fallback garante o mesmo comportamento.
+(function installMobilePullRefresh(){
+  if(!matchMedia('(pointer:coarse)').matches)return;
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(!standalone)return;
+  const indicator=document.createElement('div');
+  indicator.className='mobile-pull-indicator';
+  indicator.setAttribute('aria-live','polite');
+  indicator.textContent='↓ Puxe para atualizar';
+  document.body.appendChild(indicator);
+  let startX=0,startY=0,distance=0,tracking=false;
+  const atTop=()=>Math.max(window.scrollY||0,document.scrollingElement?.scrollTop||0)<=1;
+  document.addEventListener('touchstart',event=>{
+    if(event.touches.length!==1||!atTop()||event.target.closest('input,textarea,select,.modal-overlay,.system-overlay'))return;
+    startX=event.touches[0].clientX;startY=event.touches[0].clientY;distance=0;tracking=true;
+  },{passive:true});
+  document.addEventListener('touchmove',event=>{
+    if(!tracking||event.touches.length!==1)return;
+    const dx=Math.abs(event.touches[0].clientX-startX),dy=event.touches[0].clientY-startY;
+    if(dy<=0||dx>dy*.65){tracking=false;indicator.className='mobile-pull-indicator';return;}
+    event.preventDefault();
+    distance=Math.min(dy,130);indicator.classList.add('visible');
+    indicator.style.transform=`translate(-50%,${Math.min(-44+distance*.58,20)}px)`;
+    const ready=distance>=90;indicator.classList.toggle('ready',ready);
+    indicator.textContent=ready?'↻ Solte para atualizar':'↓ Puxe para atualizar';
+  },{passive:false});
+  document.addEventListener('touchend',()=>{
+    if(!tracking)return;tracking=false;
+    if(distance>=90){indicator.textContent='↻ Atualizando…';sessionStorage.setItem('mobile-pull-refreshed','1');location.reload();return;}
+    indicator.className='mobile-pull-indicator';indicator.style.transform='translate(-50%,-55px)';
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{
+    tracking=false;distance=0;indicator.className='mobile-pull-indicator';indicator.style.transform='translate(-50%,-55px)';
+  },{passive:true});
+  if(sessionStorage.getItem('mobile-pull-refreshed')){
+    sessionStorage.removeItem('mobile-pull-refreshed');
+    window.addEventListener('load',()=>setTimeout(()=>window.toast?.('Página atualizada com a versão mais recente!','success',3500),700),{once:true});
+  }
+})();
 
 // ── AUTH ──
 onAuthStateChanged(auth,async u=>{

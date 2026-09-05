@@ -208,10 +208,14 @@ body[data-workspace="resp"] .activity-card{border-radius:20px}
 body[data-workspace="rh"] .card-thumb,
 body[data-workspace="resp"] .card-thumb{border-radius:50%;width:86px;height:86px}
 
-/* Evita recarga acidental por gesto e melhora toque */
+/* Mantém os controles responsivos sem bloquear o gesto de atualização da página. */
 button,a,input,select,textarea{touch-action:manipulation}
 @media (hover:none){.activity-card:hover{transform:none}}
 @media(max-width:900px){
+  html,body{height:auto;min-height:100%;overscroll-behavior-y:auto}
+  body{overflow-y:auto}
+  #app{height:auto;min-height:100dvh}
+  main{flex:0 0 auto;overflow-y:visible;overscroll-behavior-y:auto}
   #navbar{height:auto;min-height:68px;flex-wrap:wrap;padding:9px 12px;gap:8px}
   #navbar .brand{margin-right:auto}
   #navbar .brand img{width:40px;height:40px}
@@ -223,6 +227,16 @@ button,a,input,select,textarea{touch-action:manipulation}
   #navmenu{min-height:50px;padding:6px 10px;scroll-snap-type:x proximity}
   .nav-btn{scroll-snap-align:start;min-height:40px;padding:8px 12px}
 }
+.mobile-pull-indicator{
+  position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top));z-index:5000;
+  display:flex;align-items:center;gap:7px;min-height:34px;padding:7px 12px;
+  color:#dff6eb;background:rgba(8,35,52,.96);border:1px solid rgba(117,192,68,.55);
+  border-radius:999px;box-shadow:0 8px 25px rgba(0,0,0,.32);
+  font-size:12px;font-weight:800;pointer-events:none;opacity:0;
+  transform:translate(-50%,-55px);transition:transform .15s ease,opacity .15s ease;
+}
+.mobile-pull-indicator.visible{opacity:1}
+.mobile-pull-indicator.ready{color:#fff4c7;border-color:#f5b82e}
 @media(max-width:620px){
   body{font-size:16px}
   #content{padding:16px 12px 30px}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v56';
+const CACHE_NAME = 'gestao-pms-v57';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -104,7 +104,25 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Páginas e assets estáticos: cache-first
+  // Páginas, scripts e estilos: rede primeiro. Assim, puxar para atualizar
+  // sempre procura a versão recém-publicada e o cache continua como fallback offline.
+  if(request.mode === 'navigate' || ['document','script','style','worker','manifest'].includes(request.destination)){
+    event.respondWith(
+      fetch(request).then(networkResponse => {
+        if(networkResponse && networkResponse.status === 200){
+          putInCache(request, networkResponse.clone());
+        }
+        return networkResponse;
+      }).catch(err => caches.match(request).then(cached => {
+        if(cached)return cached;
+        if(request.destination === 'document')return caches.match('index.html').then(index => index || offlineResponse(request, err));
+        return offlineResponse(request, err);
+      }))
+    );
+    return;
+  }
+
+  // Demais recursos estáticos: cache-first
   event.respondWith(
     caches.match(request).then(response => {
       if(response) return response;
