@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=57">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=58">
 </head>
 <body>
 <div id="app">
@@ -410,7 +410,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=57';
+import './js/modulos.js?v=58';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -451,6 +451,117 @@ let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
+const EMPREGOS_DATA_VERSION='2026-06-v1';
+let _empregosSyncPromise=null;
+
+function _normEmpregos(v){
+  return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+}
+function _isControleEmpregos(sec){
+  const n=_normEmpregos(sec?.name);
+  return n.includes('CONTROLE DE EMPREGOS')||n.includes('EMPREGOS / VEREADORES')||n.includes('EMPREGOS/VEREADORES');
+}
+function _valorEmpregos(v){
+  const n=Number(v||0);
+  return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+}
+async function _mapLimitEmpregos(list,limit,fn){
+  let cursor=0;
+  const workers=Array.from({length:Math.min(limit,list.length)},async()=>{
+    while(cursor<list.length){const i=cursor++;await fn(list[i],i);}
+  });
+  await Promise.all(workers);
+}
+
+// Restaura, uma única vez, a base salarial que veio do Controle Interno.
+// A operação é idempotente: reaproveita grupos/colaboradores existentes e só
+// completa campos ausentes, preservando informações acrescentadas manualmente.
+window.restaurarEmpregosSalarios=async function(secId,{automatico=false}={}){
+  if(_empregosSyncPromise)return _empregosSyncPromise;
+  const sec=S.secs.find(s=>s.id===secId);
+  if(!sec||!_isControleEmpregos(sec)||!S.isAdmin)return;
+  _empregosSyncPromise=(async()=>{
+    if(!automatico)toast('Restaurando colaboradores e salários…','info',5000);
+    const resp=await fetch('./bcc_data_junho_2026.json?v='+encodeURIComponent(EMPREGOS_DATA_VERSION),{cache:'no-store'});
+    if(!resp.ok)throw new Error('Não foi possível carregar a base salarial (HTTP '+resp.status+').');
+    const grupos=await resp.json();
+    if(!Array.isArray(grupos)||!grupos.length)throw new Error('A base salarial está vazia ou inválida.');
+
+    const campos=['Localidade','Telefone','Função','Remuneração','Data Início','Mês'];
+    const existentesTpl=S.fieldTemplates.filter(t=>t.atividade_id===secId&&t.scope==='subitem');
+    for(let i=0;i<campos.length;i++){
+      const campo=campos[i];
+      if(!existentesTpl.some(t=>_normEmpregos(t.field_name)===_normEmpregos(campo))){
+        await addDoc(collection(db,'fieldTemplates'),{atividade_id:secId,scope:'subitem',field_name:campo,field_type:'text',order_num:i,created_at:serverTimestamp()});
+      }
+    }
+
+    const itemMap=new Map();
+    S.items.filter(i=>i.atividade_id===secId).forEach(i=>itemMap.set(_normEmpregos(i.description),i));
+    for(let i=0;i<grupos.length;i++){
+      const nome=String(grupos[i].name||grupos[i].nome||'').trim();
+      if(!nome)continue;
+      const chave=_normEmpregos(nome);
+      if(!itemMap.has(chave)){
+        const ref=await addDoc(collection(db,'items'),{atividade_id:secId,description:nome,item_icon:'👥',item_color:'#8B5CF6',order_num:i,concluded:0,created_at:serverTimestamp()});
+        itemMap.set(chave,{id:ref.id,description:nome});
+      }
+    }
+
+    const existentes=new Map();
+    S.subitems.filter(s=>s.atividade_id===secId).forEach(s=>{
+      existentes.set((s.item_id||'')+'::'+_normEmpregos(s.description),s);
+    });
+    const tarefas=[];
+    grupos.forEach((grupo,gi)=>{
+      const item=itemMap.get(_normEmpregos(grupo.name||grupo.nome));
+      if(!item)return;
+      (grupo.people||grupo.pessoas||[]).forEach((p,pi)=>tarefas.push({grupo,item,p,ord:gi*1000+pi}));
+    });
+    let criados=0,atualizados=0,preservados=0;
+    await _mapLimitEmpregos(tarefas,6,async({item,p,ord})=>{
+      const nome=String(p.nome||p.name||'').trim();
+      if(!nome)return;
+      const importados={
+        'Localidade':p.localidade??p.Localidade??'',
+        'Telefone':p.telefone??p.Telefone??'',
+        'Função':p.funcao??p['Função']??'',
+        'Remuneração':_valorEmpregos(p.remuneracao??p['Remuneração']),
+        'Data Início':p.data_inicio??p['Data Início']??'',
+        'Mês':p.mes??p['Mês']??'06/2026'
+      };
+      const key=item.id+'::'+_normEmpregos(nome);
+      const atual=existentes.get(key);
+      if(!atual){
+        await addDoc(collection(db,'subitems'),{atividade_id:secId,item_id:item.id,description:nome,extra_fields:importados,order_num:ord,concluded:0,created_at:serverTimestamp()});
+        criados++;return;
+      }
+      const merged={...(atual.extra_fields||{})};
+      let mudou=false;
+      for(const [campo,valor] of Object.entries(importados)){
+        const chaveAtual=Object.keys(merged).find(k=>_normEmpregos(k)===_normEmpregos(campo))||campo;
+        if((merged[chaveAtual]==null||String(merged[chaveAtual]).trim()==='')&&String(valor).trim()!==''){
+          merged[chaveAtual]=valor;mudou=true;
+        }
+      }
+      if(mudou){await updateDoc(doc(db,'subitems',atual.id),{extra_fields:merged,updated_at:serverTimestamp()});atualizados++;}
+      else preservados++;
+    });
+    await updateDoc(doc(db,'secretariats',secId),{
+      show_table:1,show_stats:0,controle_pendencias:0,show_quantitativo:1,
+      quantitativo_campo:'Remuneração',empregos_data_version:EMPREGOS_DATA_VERSION,updated_at:serverTimestamp()
+    });
+    await loadData();
+    toast(`Base salarial restaurada: ${criados} incluídos, ${atualizados} completados e ${preservados} já corretos.`,'success',8000);
+    if(curSecId===secId)openActivity(secId);
+    return{criados,atualizados,preservados,total:tarefas.length};
+  })().catch(err=>{
+    console.error('Falha ao restaurar base salarial',err);
+    toast('Não foi possível restaurar os salários: '+(err.message||err),'error',9000);
+    throw err;
+  }).finally(()=>{_empregosSyncPromise=null;});
+  return _empregosSyncPromise;
+};
 // ── NAVEGAÇÃO PERSISTENTE ──
 const WORKSPACE_ROUTE_KEY='gestao-pms-workspace-v1';
 let _restoringWorkspace=false;
@@ -509,7 +620,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=57';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=58';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1184,7 +1295,7 @@ window.openActivity=function(secId){
   };
   const tableFields=[...fieldLabelByNorm.entries()].filter(([nk])=>hasValue.get(nk)).map(([,label])=>label);
   const useTableAtiv=tableModeAtiv&&(tableFields.length>0||items.length>0);
-  const hasResumoField=tableFields.includes('Mês')&&tableFields.includes('Remuneração');
+  const hasResumoField=tableFields.some(f=>_normFieldKey(f)==='mês')&&tableFields.some(f=>_normFieldKey(f)==='remuneração');
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
@@ -1269,14 +1380,17 @@ window.openActivity=function(secId){
     </div>`;
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
-  const qField=(sec.quantitativo_campo||'').trim()||(isBccs&&tableFields.includes('Remuneração')?'Remuneração':'');
-  const showQuant=isBccs?sec.show_quantitativo!==0:sec.show_quantitativo==1;
-  const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,isBccs?'Colaboradores Ativos por Secretaria':'Resumo Quantitativo'):'';
+  const isEmpregos=_isControleEmpregos(sec);
+  const needsEmpregosRestore=isEmpregos&&sec.empregos_data_version!==EMPREGOS_DATA_VERSION;
+  const qField=(sec.quantitativo_campo||'').trim()||((isBccs||isEmpregos)&&tableFields.some(f=>_normFieldKey(f)==='remuneração')?'Remuneração':'');
+  const showQuant=(isBccs||isEmpregos)?sec.show_quantitativo!==0:sec.show_quantitativo==1;
+  const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Restaurar colaboradores e salários</button>`:''}
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
@@ -1294,6 +1408,7 @@ window.openActivity=function(secId){
       ${sec.resp_url?`<img src="${esc(sec.resp_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #818cf8">`:''}
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
+  ${needsEmpregosRestore&&S.isAdmin?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);color:#ddd6fe;font-size:13px"><strong>Restaurando a base salarial importada…</strong><br><span style="color:#a78bfa">Os 444 colaboradores e suas remunerações serão associados a esta atividade sem criar duplicidades.</span></div>`:''}
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
     ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
@@ -1304,6 +1419,7 @@ window.openActivity=function(secId){
   ${bccsHtml}
   <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
   window._refreshAtivTable=()=>openActivity(secId);
+  if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
 };
 
 function _renderSubSubs(parentSubId,item,today,prefix,level){
@@ -2308,13 +2424,14 @@ window.executarImportacaoJSON=async function(){
 
     // 5. Criar Sub-items (com proteção contra duplicação)
     logImp('Criando sub-itens...');
-    let subCount=0,skipCount=0,updStatus=0;
+    let subCount=0,skipCount=0,updCount=0;
     const baseSubCount=S.subitems.length;
     const existingSubKeys=new Set();
     const existingSubs={};
     S.subitems.filter(s=>s.atividade_id===act.id).forEach(s=>{
-      existingSubKeys.add((s.item_id||'')+'::'+(s.description||''));
-      existingSubs[s.description]=s;
+      const key=(s.item_id||'')+'::'+_normEmpregos(s.description||'');
+      existingSubKeys.add(key);
+      existingSubs[key]=s;
     });
     for(const item of itensArr){
       const itemName=item.nome||item.name||item.secao||'Item';
@@ -2323,20 +2440,28 @@ window.executarImportacaoJSON=async function(){
       for(const p of (item.pessoas||[])){
         const nome=p.nome||p.name||'';
         if(!nome){continue;}
-        const key=(itemId||'')+'::'+nome;
+        const key=(itemId||'')+'::'+_normEmpregos(nome);
         const ef={};
         Object.keys(p).forEach(k=>{if(k!=='nome'&&p[k])ef[k]=p[k];});
 
-        // Se já existe, só atualiza Status se houver
+        // Se já existe, mescla todos os campos importados. A versão anterior
+        // atualizava apenas Status e por isso descartava remuneração, função etc.
         if(existingSubKeys.has(key)){
           pulados++;
           skipCount++;
-          const sub=existingSubs[nome];
-          if(sub&&ef['Status']&&(sub.extra_fields||{})['Status']!==ef['Status']){
+          const sub=existingSubs[key];
+          if(sub){
             const oldEF={...(sub.extra_fields||{})};
-            oldEF['Status']=ef['Status'];
-            await updateDoc(doc(db,'subitems',sub.id),{extra_fields:oldEF,updated_at:serverTimestamp()});
-            updStatus++;
+            let mudou=false;
+            for(const [campo,valor] of Object.entries(ef)){
+              if(valor==null||String(valor).trim()==='')continue;
+              const chaveAtual=Object.keys(oldEF).find(k=>_normEmpregos(k)===_normEmpregos(campo))||campo;
+              if(String(oldEF[chaveAtual]??'')!==String(valor)){oldEF[chaveAtual]=valor;mudou=true;}
+            }
+            if(mudou){
+              await updateDoc(doc(db,'subitems',sub.id),{extra_fields:oldEF,updated_at:serverTimestamp()});
+              updCount++;
+            }
           }
           continue;
         }
@@ -2348,7 +2473,7 @@ window.executarImportacaoJSON=async function(){
       else logImp('✚ '+(item.pessoas||[]).length+' sub-itens criados para '+itemName);
     }
     if(skipCount>0)logImp('⚠️ Total pulados (já existiam): '+skipCount);
-    if(updStatus>0)logImp('✚ '+updStatus+' status atualizados');
+    if(updCount>0)logImp('✚ '+updCount+' registros existentes atualizados');
 
     // 6. Recarregar
     logImp('Recarregando dados...');
@@ -2363,7 +2488,7 @@ window.executarImportacaoJSON=async function(){
           <strong>Itens:</strong> ${Object.keys(itemMap).length}<br>
           <strong>Sub-itens novos:</strong> ${subCount}<br>
           ${skipCount>0?`<strong>Pulados (já existiam):</strong> ${skipCount}<br>`:''}
-          ${updStatus>0?`<strong>Status atualizados:</strong> ${updStatus}<br>`:''}
+          ${updCount>0?`<strong>Registros atualizados:</strong> ${updCount}<br>`:''}
         </div>
         <div style="margin-top:12px"><button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${act.id}')))">🏠 Voltar ao início</button></div>
       </div>`;
