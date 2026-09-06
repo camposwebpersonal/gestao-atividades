@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=58">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=59">
 </head>
 <body>
 <div id="app">
@@ -410,7 +410,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=58';
+import './js/modulos.js?v=59';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -452,6 +452,7 @@ let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],sub
 let _importando=false;
 let curSecId=null,_pRT={};
 const EMPREGOS_DATA_VERSION='2026-06-v1';
+const EMPREGOS_FULL_DATA_VERSION='2026-09-folhas-v2';
 let _empregosSyncPromise=null;
 
 function _normEmpregos(v){
@@ -549,7 +550,9 @@ window.restaurarEmpregosSalarios=async function(secId,{automatico=false}={}){
     });
     await updateDoc(doc(db,'secretariats',secId),{
       show_table:1,show_stats:0,controle_pendencias:0,show_quantitativo:1,
-      quantitativo_campo:'Remuneração',empregos_data_version:EMPREGOS_DATA_VERSION,updated_at:serverTimestamp()
+      quantitativo_campo:'Remuneração',
+      empregos_data_version:sec.empregos_data_version===EMPREGOS_FULL_DATA_VERSION?EMPREGOS_FULL_DATA_VERSION:EMPREGOS_DATA_VERSION,
+      updated_at:serverTimestamp()
     });
     await loadData();
     toast(`Base salarial restaurada: ${criados} incluídos, ${atualizados} completados e ${preservados} já corretos.`,'success',8000);
@@ -620,7 +623,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=58';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=59';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1381,7 +1384,7 @@ window.openActivity=function(secId){
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
   const isEmpregos=_isControleEmpregos(sec);
-  const needsEmpregosRestore=isEmpregos&&sec.empregos_data_version!==EMPREGOS_DATA_VERSION;
+  const needsEmpregosRestore=isEmpregos&&![EMPREGOS_DATA_VERSION,EMPREGOS_FULL_DATA_VERSION].includes(sec.empregos_data_version);
   const qField=(sec.quantitativo_campo||'').trim()||((isBccs||isEmpregos)&&tableFields.some(f=>_normFieldKey(f)==='remuneração')?'Remuneração':'');
   const showQuant=(isBccs||isEmpregos)?sec.show_quantitativo!==0:sec.show_quantitativo==1;
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
@@ -1390,7 +1393,7 @@ window.openActivity=function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Restaurar colaboradores e salários</button>`:''}
+    ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
