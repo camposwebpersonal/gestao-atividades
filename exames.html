@@ -75,6 +75,25 @@ td input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(59,130,246,.
 .hl input{background:#fff3e0!important;color:#333!important}
 @media print{body{background:#fff;padding:0;color:#333}.container{box-shadow:none;padding:10px;border:none;background:#fff}.toolbar,.actions,.warning,.tabs,.relatorio-toolbar{display:none!important}td input{border:none;background:transparent;color:#333}th{background:#1e3a5f!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}tr:nth-child(even) td{background:#f8fafc!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.tab-panel{display:block!important}}
 </style>
+<style>
+/* Tema institucional claro compartilhado com a Central de Gestão */
+:root{--bg:#f3f6fa;--card:#fff;--border:#dbe4ed;--text:#172033;--muted:#64748b;--accent:#16803d;--h:68px;color-scheme:light}
+html,body{background:linear-gradient(180deg,#f8fafc,#eef3f7);color:var(--text);font-size:16px}
+#loginScreen{background:linear-gradient(105deg,#071827 0,#0a3b38 42%,#eef3f7 42%)}
+.login-box{background:#fff;border-color:#dbe4ed;border-radius:22px;box-shadow:0 28px 70px rgba(6,28,43,.2)}
+.login-box h1{color:#172033}.login-box input{background:#f8fafc;color:#172033;border-color:#cbd7e2}.login-box input:focus{border-color:#16803d;box-shadow:0 0 0 4px rgba(22,128,61,.1)}
+.btn-primary{background:linear-gradient(135deg,#16803d,#0c6741);box-shadow:0 8px 20px rgba(22,128,61,.2)}.btn-primary:hover{background:#0f7137}
+.btn-secondary,.toolbar button,.relatorio-toolbar button{background:#fff;color:#334155;border-color:#cbd7e2}.btn-secondary:hover,.toolbar button:hover,.relatorio-toolbar button:hover{border-color:#16803d;color:#16803d}
+.head{background:linear-gradient(105deg,#071827,#0a3b38);border-color:#31505f;box-shadow:0 8px 26px rgba(6,28,43,.15)}
+.head h1{color:#f8fafc}
+.main{background:linear-gradient(180deg,#f8fafc,#eef3f7)}
+.container{background:#fff;border-color:#dbe4ed;border-radius:16px;box-shadow:0 13px 35px rgba(23,45,68,.07)}
+.tabs{border-color:#dbe4ed}.tab-btn{background:#edf2f6;color:#526174}.tab-btn:hover{color:#172033}.tab-btn.active{background:#fff;color:#16803d;border-bottom-color:#16803d}
+.search-box,.relatorio-toolbar select,td input{background:#fff;color:#172033;border-color:#cbd7e2}.search-box:focus,td input:focus{border-color:#16803d;box-shadow:0 0 0 3px rgba(22,128,61,.1)}
+.table-wrap{border-color:#dbe4ed}th{background:#eaf0f5;color:#425166}td{color:#273548;border-bottom-color:#e4ebf1}tr:hover td{background:#f7fafc}
+.relatorio-total{background:#eaf8ef;color:#08783c}.subtotal-row{background:#eef4f7}.subtotal-row td{border-color:#d6e1e9}.total-geral-row{background:#e4f6ea}.total-geral-row td{border-color:#a6d9b7}.ano-header{background:#edf3f8;color:#17638d}.ano-header td{border-color:#d2e0e9}
+@media(max-width:700px){#loginScreen{background:linear-gradient(180deg,#071827 0,#0a3b38 25%,#eef3f7 25%)}.head{height:auto;min-height:68px;padding:10px 12px;flex-wrap:wrap}.main{padding:12px}.container{border-radius:13px}}
+</style>
 </head>
 <body>
 <div id="loginScreen">

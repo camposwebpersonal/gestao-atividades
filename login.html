@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#3b82f6">
+<meta name="theme-color" content="#071b2d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,26 +13,28 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{min-height:100vh;background:linear-gradient(135deg,#06101f 0%,#0a1830 50%,#06101f 100%);display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;padding:20px}
-.card{background:linear-gradient(160deg,#1a2540,#111827);border:1px solid rgba(59,130,246,.2);border-radius:20px;padding:40px 36px;width:100%;max-width:400px;box-shadow:0 24px 80px rgba(0,0,0,.6)}
-.logo-row{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:30px}
-.logo-row img{height:54px;object-fit:contain;filter:drop-shadow(0 0 12px rgba(59,130,246,.4))}
-.logo-txt{font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;line-height:1.3}
-.logo-txt strong{display:block;font-size:17px;color:#e2e8f0;letter-spacing:.2px}
-h2{text-align:center;font-size:21px;font-weight:800;color:#f1f5f9;margin-bottom:4px}
-.sub{text-align:center;font-size:13px;color:#475569;margin-bottom:28px}
-.field{margin-bottom:16px;position:relative}
-.field label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:7px;letter-spacing:.3px;text-transform:uppercase}
-.field input{width:100%;background:#0f172a;border:1px solid rgba(59,130,246,.2);border-radius:10px;color:#f1f5f9;padding:12px 16px;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:.3px}
-.field input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-.field input::placeholder{color:#374151;letter-spacing:0}
-.btn{width:100%;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s,transform .1s;letter-spacing:.3px}
-.btn:hover{opacity:.9}
-.btn:active{transform:scale(.98)}
+:root{color-scheme:light}
+body{min-height:100vh;background:linear-gradient(105deg,#071827 0%,#0a3b38 42%,#eef3f7 42%,#f7f9fb 100%);display:flex;align-items:center;justify-content:center;font-family:'Segoe UI',system-ui,sans-serif;padding:24px;color:#172033}
+.card{position:relative;overflow:hidden;background:#fff;border:1px solid #dbe4ec;border-radius:24px;padding:42px 40px;width:100%;max-width:430px;box-shadow:0 30px 80px rgba(6,28,43,.2)}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;background:linear-gradient(90deg,#75c044,#16803d,#f5b82e)}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:13px;margin-bottom:31px}
+.logo-row img{height:58px;object-fit:contain;filter:drop-shadow(0 5px 10px rgba(10,53,52,.16))}
+.logo-txt{font-size:12px;font-weight:750;color:#617184;letter-spacing:.8px;text-transform:uppercase;line-height:1.35}
+.logo-txt strong{display:block;font-size:18px;color:#18324a;letter-spacing:.1px}
+h2{text-align:center;font-size:25px;font-weight:850;color:#142337;margin-bottom:7px;letter-spacing:-.035em}
+.sub{text-align:center;font-size:14px;color:#718096;margin-bottom:29px}
+.field{margin-bottom:17px;position:relative}
+.field label{display:block;font-size:12px;font-weight:750;color:#526174;margin-bottom:7px;letter-spacing:.3px;text-transform:uppercase}
+.field input{width:100%;min-height:48px;background:#f8fafc;border:1px solid #cbd7e2;border-radius:11px;color:#172033;padding:12px 15px;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;letter-spacing:.2px}
+.field input:focus{background:#fff;border-color:#16803d;box-shadow:0 0 0 4px rgba(22,128,61,.11)}
+.field input::placeholder{color:#9aa8b7;letter-spacing:0}
+.btn{width:100%;background:linear-gradient(135deg,#16803d,#0c6741);color:#fff;border:none;border-radius:11px;padding:14px;font-size:15px;font-weight:800;cursor:pointer;margin-top:9px;transition:filter .2s,transform .1s,box-shadow .2s;letter-spacing:.2px;box-shadow:0 10px 23px rgba(22,128,61,.22)}
+.btn:hover{filter:brightness(1.06);box-shadow:0 13px 28px rgba(22,128,61,.28)}
+.btn:active{transform:scale(.985)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
-.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#f87171;border-radius:8px;padding:10px 14px;font-size:13px;text-align:center;margin-top:14px;display:none}
-.footer{text-align:center;font-size:11px;color:#1e293b;margin-top:28px}
-@media(max-width:480px){.card{padding:28px 20px}}
+.err{background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:9px;padding:11px 14px;font-size:13px;text-align:center;margin-top:14px;display:none}
+.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:29px}
+@media(max-width:700px){body{background:linear-gradient(180deg,#071827 0,#0a3b38 25%,#eef3f7 25%);padding:18px}.card{padding:34px 25px;border-radius:20px}}
 </style>
 </head>
 <body>
@@ -53,7 +55,7 @@ h2{text-align:center;font-size:21px;font-weight:800;color:#f1f5f9;margin-bottom:
     <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
   </div>
   <button class="btn" id="btn" onclick="doLogin()">Entrar</button>
-  <div style="text-align:center;margin-top:12px"><a href="#" onclick="recuperarSenha();return false;" style="color:#3b82f6;font-size:13px;text-decoration:none">🔑 Esqueci minha senha</a></div>
+  <div style="text-align:center;margin-top:12px"><a href="#" onclick="recuperarSenha();return false;" style="color:#16803d;font-size:13px;font-weight:650;text-decoration:none">🔑 Esqueci minha senha</a></div>
   <div class="err" id="err"></div>
   <div class="footer">Gestão de Atividades PMS &copy; 2026</div>
 </div>

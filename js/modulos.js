@@ -236,3 +236,71 @@ window.gerarRelatorioModulo = async function(modId){
 };
 
 window.modForSec = s => _md.modFor(s);
+
+/* ── PAINEL INSTITUCIONAL 2026 ────────────────────────────────────────────
+   A navegação foi reorganizada sem alterar as rotinas ou os dados dos módulos. */
+function _visibleModules(){
+  return MODULOS.filter(m=>window.userCan(m.id,'acesso'));
+}
+
+function _moduleNumbers(mod){
+  const grupos=_md.grupos(mod);
+  return{
+    grupos,
+    total:grupos.reduce((sum,g)=>sum+_md.ativTotal(g),0)
+  };
+}
+
+function _renderSidebarModules(activeId=''){
+  const host=document.getElementById('sidebar-modules');
+  if(!host)return;
+  host.innerHTML=_visibleModules().map(mod=>{
+    const numbers=_moduleNumbers(mod);
+    return `<button type="button" class="sidebar-module-btn ${activeId===mod.id?'active':''}" onclick="window.renderModulo('${mod.id}')" title="${_md.esc(mod.label)}" style="--module-soft:${mod.color}28;--module-color:${mod.color}">
+      <span class="sidebar-module-icon">${mod.icon}</span>
+      <span class="sidebar-module-label">${_md.esc(mod.label)}</span>
+      <span class="sidebar-module-count">${numbers.grupos.length}</span>
+    </button>`;
+  }).join('');
+}
+window.refreshSidebarModules=_renderSidebarModules;
+
+window.renderModulos=function(){
+  const mods=_visibleModules();
+  const numbers=mods.map(mod=>({mod,..._moduleNumbers(mod)}));
+  const totalGroups=numbers.reduce((sum,item)=>sum+item.grupos.length,0);
+  const totalEntries=numbers.reduce((sum,item)=>sum+item.total,0);
+  _renderSidebarModules('');
+  const directory=numbers.map(({mod,grupos,total})=>`<button type="button" class="module-row" onclick="window.renderModulo('${mod.id}')" style="--module-soft:${mod.color}18;--module-color:${mod.color}">
+    <span class="module-row-icon">${mod.icon}</span>
+    <span class="module-row-copy">
+      <span class="module-row-title">${_md.esc(mod.label)}</span>
+      <span class="module-row-meta">${grupos.length} grupo(s) · ${total} lançamento(s)</span>
+    </span>
+    <span class="module-row-action" aria-hidden="true">›</span>
+  </button>`).join('');
+  _md.setC(`<section class="home-shell" aria-labelledby="home-title">
+    <div class="home-hero">
+      <div>
+        <div class="workspace-kicker">Central integrada</div>
+        <h1 class="home-title" id="home-title">Gestão municipal em um só lugar</h1>
+        <p class="home-copy">Acesse as áreas operacionais, acompanhe os registros e mantenha as informações da Prefeitura organizadas com rapidez.</p>
+      </div>
+      <div class="home-totals" aria-label="Resumo geral">
+        <div class="home-total"><strong>${totalGroups}</strong><span>Grupos ativos</span></div>
+        <div class="home-total"><strong>${totalEntries}</strong><span>Lançamentos</span></div>
+      </div>
+    </div>
+    <div class="home-directory">
+      <div class="home-directory-head"><h2>Áreas de trabalho</h2><span>${mods.length} áreas disponíveis para o seu perfil</span></div>
+      <div class="module-directory">${directory||'<div class="empty">Nenhuma área liberada para o seu usuário.</div>'}</div>
+    </div>
+  </section>`);
+};
+
+const _renderModuloBeforeRedesign=window.renderModulo;
+window.renderModulo=function(id){
+  _renderSidebarModules(id);
+  document.querySelectorAll('#navmenu > .nav-btn').forEach(btn=>btn.classList.remove('active'));
+  return _renderModuloBeforeRedesign(id);
+};

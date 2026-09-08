@@ -362,11 +362,12 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=59">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=60">
 </head>
 <body>
 <div id="app">
   <nav id="navbar">
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Abrir menu" aria-controls="navmenu" aria-expanded="false" onclick="toggleSidebar()">☰</button>
     <div class="brand"><img src="img/logo_sertania.png" alt="Brasão da Prefeitura de Sertânia"><span class="brand-copy"><strong>Prefeitura de Sertânia</strong><small>Gestão de Atividades</small></span></div>
     <div id="undo-redo-bar">
       <button id="undo-btn" class="undo-btn" style="opacity:.3" onclick="undoLast()" title="Desfazer (Ctrl+Z)">↩️ Desfazer</button>
@@ -379,6 +380,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
     <button id="logout-btn" class="btn-logout" onclick="doLogout()">↪ <span>Sair</span></button>
   </nav>
   <div id="navmenu">
+    <div class="sidebar-heading"><span>Navegação</span><button id="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeSidebar()">×</button></div>
     <button class="nav-btn active" id="nav-mod" onclick="setView('mod')">🏠 Início</button>
     <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
     <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
@@ -387,9 +389,14 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
     <button class="nav-btn" id="nav-cont" onclick="setView('cont')">📇 Contatos</button>
     <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
     <button class="nav-btn" id="nav-imp" style="display:none" onclick="setView('imp')">📥 Importar</button>
+    <div class="sidebar-divider"><span>Áreas operacionais</span></div>
+    <div id="sidebar-modules" aria-label="Áreas operacionais"></div>
+    <div class="sidebar-footnote"><span class="system-live-dot"></span><span>Sistema conectado</span></div>
   </div>
   <main><div id="content"><div class="loading"><div class="spinner"></div> Carregando…</div></div></main>
+  <footer id="app-footer"><span>Prefeitura de Sertânia</span><span>Central Integrada de Gestão</span><span class="footer-year">2026</span></footer>
 </div>
+<button id="sidebar-backdrop" type="button" aria-label="Fechar menu" onclick="closeSidebar()"></button>
 <div class="modal-overlay" id="modal-ov" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
     <div class="modal-head">
@@ -410,12 +417,22 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=59';
+import './js/modulos.js?v=60';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
+window.toggleSidebar=function(force){
+  const open=typeof force==='boolean'?force:!document.body.classList.contains('sidebar-open');
+  document.body.classList.toggle('sidebar-open',open);
+  document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded',String(open));
+};
+window.closeSidebar=function(){window.toggleSidebar(false);};
+document.getElementById('navmenu')?.addEventListener('click',event=>{
+  if(event.target.closest('button')&&window.matchMedia('(max-width: 960px)').matches)window.closeSidebar();
+});
+window.addEventListener('resize',()=>{if(window.innerWidth>960)window.closeSidebar();});
 console.log('=== VERSAO APP: v2.7-moverSubAntesDe-fix ===');
 
 // ── ERROS GLOBAIS ──
@@ -588,6 +605,8 @@ function applyWorkspaceIdentity(r){
   const key=workspaceVisualKey(r);
   document.body.dataset.workspace=key;
   document.body.dataset.routeKind=r?.kind||'view';
+  const activeModule=r?.kind==='module'?r.id:(r?.kind==='activity'?window.modForSec?.(S.secs.find(sec=>sec.id===r.id)):null);
+  window.refreshSidebarModules?.(activeModule||'');
   const labels={mod:'Central de Lançamentos',secr:'Secretarias',resp:'Responsáveis',cham:'Chamados',gal:'Galeria',cont:'Contatos',adm:'Administração',imp:'Importação',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Atendimentos',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
   document.title=(labels[key]||'Gestão Municipal')+' — Prefeitura de Sertânia';
 }
@@ -623,7 +642,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=59';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=60';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
