@@ -266,6 +266,51 @@ table tr:hover td,.cc-table tr:hover td{background:#f7fafc}
 .system-ano-header{background:#edf3f8;color:#17638d}.system-ano-header td{border-color:#d2e0e9}
 .resp-combo-add{background:#eff6ff;color:#2563eb;border-color:#bfdbfe}
 
+/* Contraste de componentes legados: neutraliza fundos escuros embutidos no HTML antigo */
+#content :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea)[style*="background:#0"],
+.modal-box :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea)[style*="background:#0"]{
+  background:#fff!important;color:#172033!important;border-color:#bdcbd8!important
+}
+#content :is(div,label,tr)[style*="background:#0a1222"],
+#content :is(div,label,tr)[style*="background:#0e1729"],
+#content :is(div,label,tr)[style*="background:#0e1a2e"],
+.modal-box :is(div,label)[style*="background:#0a1222"],
+.modal-box :is(div,label)[style*="background:#0e1729"]{
+  background:#fff!important;color:#172033!important;border-color:#d3dee8!important
+}
+#content :is(div,span,label,tr)[style*="background:#060c18"],
+#content :is(div,span,label,tr)[style*="background:#0a0f1a"],
+#content :is(div,span,label,tr)[style*="background:#0f172a"],
+#content :is(div,span,label,tr)[style*="background:#0f2a1a"]{
+  background:#f7fafc!important;color:#273548!important;border-color:#d3dee8!important
+}
+#content :is(div,label,tr)[style*="background:#0a1222"] [style*="color:#e2e8f0"],
+#content :is(div,label,tr)[style*="background:#0e1729"] [style*="color:#e2e8f0"],
+.modal-box :is(div,label)[style*="background:#0a1222"] [style*="color:#e2e8f0"]{color:#172033!important}
+#content :is(div,label,tr)[style*="background:#0a1222"] [style*="color:#94a3b8"],
+#content :is(div,label,tr)[style*="background:#0e1729"] [style*="color:#94a3b8"]{color:#5c6b7c!important}
+#content input::placeholder,.modal-box input::placeholder,#content textarea::placeholder{color:#758397;opacity:1}
+#content [style*="color:#60a5fa"]{color:#17649a!important}
+#content [style*="color:#10b981"]{color:#087a50!important}
+#content [style*="color:#f87171"]{color:#c73545!important}
+#content [style*="color:#f59e0b"],#content [style*="color:#fbbf24"]{color:#925d00!important}
+
+/* Administração */
+.admin-permissions-cell{max-width:250px;white-space:normal;line-height:1.6}
+.admin-permission-chip{display:inline-block;margin:2px;padding:3px 7px;border:1px solid #b8cbe0;border-radius:999px;background:#eaf2fb;color:#164f7a;font-size:10px;font-weight:750}
+.admin-password-cell{white-space:nowrap}.admin-password-input{width:132px!important;padding:7px 9px!important;border:1px solid #bdcbd8!important;border-radius:7px!important;background:#fff!important;color:#172033!important;font-size:12px!important}
+.admin-key-button{margin-left:6px;background:#2563eb!important;color:#fff!important}
+.admin-security-box{margin-bottom:18px;padding:15px;border:1px solid #d4e0e9;border-radius:12px;background:#f7fafc;color:#172033}
+.admin-rules-box{margin-top:20px;padding:16px;border:1px solid #bad7ee;border-radius:12px;background:#edf7ff;color:#24445e;font-size:13px;line-height:1.6}
+.admin-permission-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:6px;padding:9px 12px;border:1px solid #d4e0e9;border-radius:8px;background:#f8fafc;color:#172033}
+
+/* Controle de contas: paginação e isolamento de pintura reduzem muito o custo do DOM */
+.cc-paginacao{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0;padding:11px 13px;border:1px solid #d4e0e9;border-radius:12px;background:#fff;color:#425166;font-size:12px;box-shadow:0 4px 14px rgba(16,42,67,.05)}
+.cc-paginacao-acoes{display:flex;align-items:center;gap:10px}.cc-paginacao .btn-action{min-height:36px;padding:7px 11px}.cc-paginacao .btn-action:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.cc-paginacao-local{margin:0 0 10px;background:#f7fafc;box-shadow:none}.cc-paginacao-local .btn-action{min-width:36px;padding:6px}
+.cc-local-card{content-visibility:auto;contain:layout paint style;contain-intrinsic-size:520px}
+.cc-table tfoot tr{background:#edf3f7!important;color:#172033!important}
+
 /* Identidade por área, mantida com fundos claros */
 body[data-workspace="financeiro"],body[data-workspace="contas"]{--workspace-accent:#168f5b;--workspace-accent-rgb:22,143,91}
 body[data-workspace="infraestrutura"],body[data-workspace="obras"],body[data-workspace="atendimentos"]{--workspace-accent:#1687c2;--workspace-accent-rgb:22,135,194}
@@ -339,6 +384,8 @@ button,a,input,select,textarea{touch-action:manipulation}
   .modal-actions{position:sticky;bottom:0;background:#fff;padding:12px 0 calc(4px + env(safe-area-inset-bottom));z-index:3}
   .btn-action{min-height:44px}
   #app-footer{padding:0 12px}#app-footer span:nth-child(2){display:none}
+  .cc-paginacao{align-items:stretch;flex-direction:column}.cc-paginacao-acoes{justify-content:space-between}.cc-paginacao-acoes span{text-align:center}
+  .admin-permission-row{align-items:flex-start;flex-direction:column}
   #toast{left:12px;right:12px;bottom:calc(50px + env(safe-area-inset-bottom))}.toast-item{max-width:none;width:100%}
 }
 @media(hover:none){.activity-card:hover{transform:none}.nav-btn:hover{transform:none}}

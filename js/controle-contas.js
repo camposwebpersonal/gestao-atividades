@@ -22,10 +22,10 @@ function _ccLocalExtraFields(local){
   };
 }
 
-function _ccLocalMatchesBusca(item, local, buscaTokens){
+function _ccLocalMatchesBusca(item, local, buscaTokens, localContas){
   if(!buscaTokens || !buscaTokens.length) return true;
   const efLocal = (local && local.extra_fields) || {};
-  const obsTodas = S.contas.filter(c=>c.subitem_id===local.id).map(c=>c.observacao||'');
+  const obsTodas = (localContas || []).map(c=>c.observacao||'');
   const partesBusca = [item?.description, local?.description, ...Object.values(efLocal), ...obsTodas];
   const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
   return buscaTokens.every(tok => searchable.includes(tok));
@@ -68,16 +68,35 @@ function _ccHighlight(text, tokens){
   return esc(out).replace(/\u0001/g,'<mark class="cc-hl">').replace(/\u0002/g,'</mark>');
 }
 
+const CC_LOCAIS_POR_PAGINA = 12;
+const CC_LANCAMENTOS_POR_LOCAL = 40;
+const _ccPaginaPorSecao = new Map();
+const _ccPaginasPorLocal = new Map();
 let _ccBuscaTimer = null;
+window.ccSetPagina = function(secId, pagina){
+  _ccPaginaPorSecao.set(secId, Math.max(1, Number(pagina)||1));
+  renderControleContas(secId);
+  requestAnimationFrame(()=>document.querySelector('.cc-paginacao')?.scrollIntoView({behavior:'smooth',block:'center'}));
+};
+window.ccResetPaginaERender = function(secId){
+  _ccPaginaPorSecao.set(secId, 1);
+  renderControleContas(secId);
+};
+window.ccSetPaginaLocal = function(secId, localId, pagina){
+  _ccPaginasPorLocal.set(secId+':'+localId, Math.max(1,Number(pagina)||1));
+  renderControleContas(secId);
+  requestAnimationFrame(()=>document.getElementById('cc-local-'+localId)?.scrollIntoView({behavior:'smooth',block:'start'}));
+};
 window.ccBuscaInput = function(secId){
   clearTimeout(_ccBuscaTimer);
+  _ccPaginaPorSecao.set(secId, 1);
   const inp = document.getElementById('cc-busca');
   const pos = inp ? inp.selectionStart : null;
   _ccBuscaTimer = setTimeout(()=>{
     renderControleContas(secId);
     const novo = document.getElementById('cc-busca');
     if(novo){ novo.focus(); if(pos!=null){ try{ novo.setSelectionRange(pos,pos); }catch(e){} } }
-  }, 220);
+  }, 320);
 };
 
 window.renderControleContas = function(secId){
@@ -90,16 +109,34 @@ window.renderControleContas = function(secId){
   const buscaFiltro = document.getElementById('cc-busca')?.value || '';
   const buscaTokens = _ccNorm(buscaFiltro).split(/\s+/).filter(Boolean);
 
+  // Um unico indice substitui milhares de varreduras completas em S.contas/S.subitems.
+  const contasSecao = S.contas.filter(c=>c.atividade_id===secId);
+  const contasPorLocal = new Map();
+  S.contas.forEach(c=>{
+    if(!contasPorLocal.has(c.subitem_id)) contasPorLocal.set(c.subitem_id, []);
+    contasPorLocal.get(c.subitem_id).push(c);
+  });
+  const locaisPorCategoria = new Map();
+  S.subitems.forEach(local=>{
+    if(local.parent_type==='subitem') return;
+    if(!locaisPorCategoria.has(local.item_id)) locaisPorCategoria.set(local.item_id, []);
+    locaisPorCategoria.get(local.item_id).push(local);
+  });
+  const paginaSolicitada = Math.max(1, _ccPaginaPorSecao.get(secId)||1);
+  const inicioPagina = (paginaSolicitada-1)*CC_LOCAIS_POR_PAGINA;
+  const fimPagina = inicioPagina+CC_LOCAIS_POR_PAGINA;
+  let quantidadeLocaisEncontrados = 0;
+
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
-  const globalMax = Math.max(...S.contas.filter(c=>c.atividade_id===secId && c.valor).map(c=>parseFloat(c.valor)||0), 1);
+  const globalMax = contasSecao.reduce((maior,c)=>Math.max(maior,parseFloat(c.valor)||0),1);
   const colsOff = new Set(sec.cc_cols_ocultas || []);
   const resumoCats = [];
   const tipoMap = {};
   const locaisResumo = [];
 
   const categoriasHtml = items.map((item, idx)=>{
-    const locais = [...S.subitems.filter(s=>s.item_id===item.id && s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const locais = [...(locaisPorCategoria.get(item.id)||[])].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     let locaisHtml = '';
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
@@ -107,12 +144,12 @@ window.renderControleContas = function(secId){
       // (ex: Distrito/Povoado/Sitio/Vila, Conta Contrato, Endereço, etc.)
       // e a observação de cada lançamento. Se bater em qualquer lugar,
       // o local inteiro aparece com todos os seus lançamentos.
-      if(!_ccLocalMatchesBusca(item, local, buscaTokens)) return;
-      const lancamentos = S.contas.filter(c=>c.subitem_id===local.id).sort((a,b)=>{
+      const lancamentos = [...(contasPorLocal.get(local.id)||[])].sort((a,b)=>{
         const da = (a.mes_ano||'').split('/').reverse().join('-');
         const db = (b.mes_ano||'').split('/').reverse().join('-');
         return da.localeCompare(db);
       });
+      if(!_ccLocalMatchesBusca(item, local, buscaTokens, lancamentos)) return;
       let locRows = lancamentos.filter(c=>{
         if(tipoFiltro && c.tipo !== tipoFiltro) return false;
         if(anoFiltro && !String(c.mes_ano||'').includes('/'+anoFiltro)) return false;
@@ -121,6 +158,14 @@ window.renderControleContas = function(secId){
         return true;
       });
       if(!locRows.length && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
+      const ordemLocal = quantidadeLocaisEncontrados++;
+      const renderizarDetalhes = ordemLocal>=inicioPagina && ordemLocal<fimPagina;
+      const chavePaginaLocal = secId+':'+local.id;
+      const totalPaginasLocal = Math.max(1,Math.ceil(locRows.length/CC_LANCAMENTOS_POR_LOCAL));
+      const paginaLocal = Math.min(totalPaginasLocal,Math.max(1,_ccPaginasPorLocal.get(chavePaginaLocal)||1));
+      _ccPaginasPorLocal.set(chavePaginaLocal,paginaLocal);
+      const inicioLocal = (paginaLocal-1)*CC_LANCAMENTOS_POR_LOCAL;
+      const linhasVisiveis = locRows.slice(inicioLocal,inicioLocal+CC_LANCAMENTOS_POR_LOCAL);
       const locTotal = locRows.reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPago = locRows.filter(c=>c.pago).reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPendente = locTotal - locPago;
@@ -140,7 +185,7 @@ window.renderControleContas = function(secId){
       const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
       const contaContrato = _ccLocalExtraFields(local).conta_contrato;
-      const tableRows = locRows.map((c,ri)=>{
+      const tableRows = renderizarDetalhes ? linhasVisiveis.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
         const vLanc = parseFloat(c.valor)||0;
         const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
@@ -160,9 +205,9 @@ window.renderControleContas = function(secId){
           <td style="text-align:center">${situacaoSvg}</td>
           <td style="white-space:nowrap"><button class="card-btn" onclick="ccOpenLancamentoModal('${c.id}','${local.id}')" title="Editar lançamento completo">✏️</button>${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
         </tr>`;
-      }).join('');
+      }).join('') : '';
 
-      const mobileRows = locRows.map(c=>{
+      const mobileRows = renderizarDetalhes ? linhasVisiveis.map(c=>{
         const vLanc = parseFloat(c.valor)||0;
         const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
         const corLanc = c.pago ? '#10b981' : '#f87171';
@@ -183,9 +228,13 @@ window.renderControleContas = function(secId){
             ${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}
           </div>
         </div>`;
-      }).join('');
+      }).join('') : '';
 
-      locaisHtml += `<div class="cc-local-card">
+      const paginacaoLocalHtml = locRows.length>CC_LANCAMENTOS_POR_LOCAL ? `<div class="cc-paginacao cc-paginacao-local">
+        <div><strong>${inicioLocal+1}–${Math.min(inicioLocal+CC_LANCAMENTOS_POR_LOCAL,locRows.length)}</strong> de <strong>${locRows.length}</strong> lançamentos</div>
+        <div class="cc-paginacao-acoes"><button class="btn-action" ${paginaLocal<=1?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal-1})">←</button><span>Página <strong>${paginaLocal}</strong> de ${totalPaginasLocal}</span><button class="btn-action" ${paginaLocal>=totalPaginasLocal?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal+1})">→</button></div>
+      </div>` : '';
+      if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
             <div class="cc-local-name">${_ccHighlight(local.description||'Local', buscaTokens)}</div>
@@ -197,6 +246,7 @@ window.renderControleContas = function(secId){
           </div>
         </div>
         <div class="cc-lancamentos">
+          ${paginacaoLocalHtml}
           <div class="cc-table-wrap">
             <table class="cc-table">
               <thead><tr>
@@ -217,11 +267,12 @@ window.renderControleContas = function(secId){
         </div>
       </div>`;
     });
-    if(!locaisHtml && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
     const catEf = (item.extra_fields)||{};
     const catMeta = Object.entries(catEf).filter(([k,v])=>String(v==null?'':v).trim()).map(([k,v])=>`<span class="cc-badge" style="font-size:11px">${esc(k)}: ${esc(v)}</span>`).join(' ');
     const catPend = catTotal - catPago;
     if(catQtd > 0) resumoCats.push({ nome: item.description || 'Categoria', qtd: catQtd, qPago: catQPago, qPendente: catQPendente, total: catTotal, pago: catPago, pendente: catPend });
+    const mostrarCategoriaVazia = !locais.length && paginaSolicitada===1 && !buscaTokens.length && !tipoFiltro && !anoFiltro && !pagoFiltro;
+    if(!locaisHtml && !mostrarCategoriaVazia) return '';
     return `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
@@ -238,6 +289,22 @@ window.renderControleContas = function(secId){
       ${S.isAdmin?`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="ccOpenLocalModal(null,'${item.id}')">+ Local</button>`:''}
     </div>`;
   }).join('');
+
+  const totalPaginas = Math.max(1, Math.ceil(quantidadeLocaisEncontrados/CC_LOCAIS_POR_PAGINA));
+  if(paginaSolicitada>totalPaginas){
+    _ccPaginaPorSecao.set(secId,totalPaginas);
+    return renderControleContas(secId);
+  }
+  const primeiroLocal = quantidadeLocaisEncontrados ? inicioPagina+1 : 0;
+  const ultimoLocal = Math.min(fimPagina, quantidadeLocaisEncontrados);
+  const paginacaoHtml = `<div class="cc-paginacao" aria-label="Paginação dos locais">
+    <div><strong>${primeiroLocal}–${ultimoLocal}</strong> de <strong>${quantidadeLocaisEncontrados}</strong> locais</div>
+    <div class="cc-paginacao-acoes">
+      <button class="btn-action" ${paginaSolicitada<=1?'disabled':''} onclick="ccSetPagina('${secId}',${paginaSolicitada-1})">← Anterior</button>
+      <span>Página <strong>${paginaSolicitada}</strong> de ${totalPaginas}</span>
+      <button class="btn-action" ${paginaSolicitada>=totalPaginas?'disabled':''} onclick="ccSetPagina('${secId}',${paginaSolicitada+1})">Próxima →</button>
+    </div>
+  </div>`;
 
   const tipoResumoHtml = (()=>{
     const tipos = Object.entries(tipoMap).sort((a,b)=>b[1].total-a[1].total);
@@ -297,7 +364,7 @@ window.renderControleContas = function(secId){
   </div>`;
   })();
 
-  const anos = [...new Set(S.contas.filter(c=>c.atividade_id===secId && c.mes_ano).map(c=>String(c.mes_ano).split('/')[1]).filter(Boolean))].sort();
+  const anos = [...new Set(contasSecao.filter(c=>c.mes_ano).map(c=>String(c.mes_ano).split('/')[1]).filter(Boolean))].sort();
   const anoOptions = anos.map(a=>`<option value="${esc(a)}" ${a===anoFiltro?'selected':''}>${esc(a)}</option>`).join('');
   const tipoOptions = CC_TIPOS.map(t=>`<option value="${esc(t)}" ${t===tipoFiltro?'selected':''}>${esc(t)}</option>`).join('');
   const currentYear = String(new Date().getFullYear());
@@ -305,8 +372,8 @@ window.renderControleContas = function(secId){
   // ── PAINEL DE VENCIMENTOS (vencidas + próximas a vencer) ──
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const fmtBR = d => { const [y,m,dd] = d.split('-'); return `${dd}/${m}/${y}`; };
-  const pendComData = S.contas
-    .filter(c => c.atividade_id===secId && !c.pago && c.data_vencimento)
+  const pendComData = contasSecao
+    .filter(c => !c.pago && c.data_vencimento)
     .map(c => {
       const dt = new Date(c.data_vencimento+'T00:00:00');
       const dias = Math.round((dt-hoje)/86400000);
@@ -352,7 +419,8 @@ window.renderControleContas = function(secId){
     return '';
   };
   const vigItens = [];
-  S.subitems.filter(s=>s.parent_type!=='subitem' && (s.atividade_id===secId || items.some(i=>i.id===s.item_id))).forEach(loc=>{
+  const idsCategorias = new Set(items.map(i=>i.id));
+  S.subitems.filter(s=>s.parent_type!=='subitem' && (s.atividade_id===secId || idsCategorias.has(s.item_id))).forEach(loc=>{
     const vig = _efGet(loc.extra_fields, 'VIGENCIA');
     const m = vig.match(/(\d{2}\/\d{2}\/\d{4})\s*(?:a|até|-)\s*(\d{2}\/\d{2}\/\d{4})/i);
     if(!m) return;
@@ -463,10 +531,10 @@ window.renderControleContas = function(secId){
     </div>
     <input id="cc-busca" type="text" value="${esc(buscaFiltro)}" placeholder="🔍 Buscar por local, endereço, conta contrato, categoria... (combine vários termos)" oninput="ccBuscaInput('${secId}')" class="cc-busca-input">
     <div class="cc-filtros">
-      <select id="cc-filtro-tipo" onchange="renderControleContas('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
-      <select id="cc-filtro-ano" onchange="renderControleContas('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
-      <select id="cc-filtro-pago" onchange="renderControleContas('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
-      <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';renderControleContas('${secId}')">Limpar</button>
+      <select id="cc-filtro-tipo" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
+      <select id="cc-filtro-ano" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
+      <select id="cc-filtro-pago" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
+      <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';ccResetPaginaERender('${secId}')">Limpar</button>
       <div style="flex:1;min-width:8px"></div>
       <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF${(tipoFiltro||anoFiltro||pagoFiltro||buscaFiltro.trim())?' (filtrado)':''}</button>
     </div>
@@ -508,7 +576,9 @@ window.renderControleContas = function(secId){
   </div>`:''}
   ${vigPanel}
   ${alertPanel}
-  ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}`);
+  ${paginacaoHtml}
+  ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}
+  ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}`);
 };
 
 window.ccOpenCategoriaModal = function(id, secId){
