@@ -890,8 +890,8 @@ window.ccGerarPdf = async function(secId, opts){
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const now = new Date().toLocaleDateString('pt-BR');
   let y = 18;
-  doc.setFillColor(13,34,64); doc.rect(mx,12,cw,0.7,'F');
-  sf(18,true,[13,34,64]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
+  doc.setFillColor(33,135,82); doc.rect(mx,12,cw,0.9,'F');
+  sf(18,true,[15,53,43]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
   sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertania - PE - Controle PMS - '+now, mx, y);
   y+=6;
   const filtros=[];
@@ -962,7 +962,7 @@ window.ccGerarPdf = async function(secId, opts){
     head:[['Categoria','Lanc.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
     body:summaryRows,
     theme:'grid',
-    headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+    headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
     bodyStyles:{fontSize:9,textColor:[40,40,40]},
     alternateRowStyles:{fillColor:[245,250,245]},
     styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
@@ -987,7 +987,7 @@ window.ccGerarPdf = async function(secId, opts){
     head:[['Tipo de Conta','Quant.','Pagas','Pendentes','Valor Total','Valor Pago','Valor Pendente']],
     body:tipoRows,
     theme:'grid',
-    headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+    headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
     bodyStyles:{fontSize:9,textColor:[40,40,40]},
     alternateRowStyles:{fillColor:[245,250,245]},
     styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
@@ -1008,7 +1008,7 @@ window.ccGerarPdf = async function(secId, opts){
       head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.','Situacao']],
       body:rows,
       theme:'grid',
-      headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:8},
+      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:8},
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       alternateRowStyles:{fillColor:[245,250,245]},
       styles:{cellPadding:1.5,overflow:'linebreak',font:'helvetica'},
@@ -1057,7 +1057,7 @@ window.ccGerarPdf = async function(secId, opts){
   const footerText=`TOTAL GERAL: R$ ${fmtMoney(totalGeral)}   |   PAGO: R$ ${fmtMoney(totalPago)}   |   PENDENTE: R$ ${fmtMoney(totalPendente)}   |   ${qtdPago}/${qtdTotal} CONTAS PAGAS (${pctPago.toFixed(1)}%)`;
   const ftLines=doc.splitTextToSize(footerText, cw-12);
   const fh=10+ftLines.length*4.5;
-  doc.setFillColor(13,34,64); doc.roundedRect(mx, finalY, cw, fh, 2, 2, 'F');
+  doc.setFillColor(12,61,49); doc.roundedRect(mx, finalY, cw, fh, 2, 2, 'F');
   sf(9,true,[255,255,255]); doc.text(ftLines, mx+6, finalY+6);
 
   doc.save((sec.name||'controle-contas').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_relatorio_'+now.replace(/\//g,'-')+'.pdf');

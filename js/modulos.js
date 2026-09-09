@@ -174,7 +174,7 @@ window.criarGrupoModulo = async function(modId){
     start_date: null,
     end_date: null,
     order_num: (window.S && S.secs && S.secs.length) || 0,
-    controle_pendencias: 1,
+    controle_pendencias: 0,
     controle_contas: 0,
     controle_distribuicao: 0,
     show_stats:0, show_verba:0, verba_on_subitems:0, verba_sum_subitems:0, verba_has_obs:0,
@@ -232,6 +232,68 @@ window.gerarRelatorioModulo = async function(modId){
     doc.setTextColor(100,116,139); doc.setFontSize(11); doc.text('Nenhum grupo cadastrado neste módulo.', mx, y);
   }
   doc.save(`relatorio-${mod.id}-${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('PDF do módulo gerado!','success');
+};
+
+/* Relatório institucional padronizado pelo modelo de Perfuração de Poços. */
+window.gerarRelatorioModulo = async function(modId){
+  const mod=MODULOS.find(x=>x.id===modId);
+  if(!mod){toast('Módulo não encontrado','error');return;}
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Gerando relatório institucional…','info',8000);
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=14;
+  let logo=null;
+  try{logo=await window.loadB64?.('img/logo_sertania.png','png',120);}catch(e){}
+  const header=()=>{
+    doc.setFillColor(247,250,248);doc.rect(0,0,W,31,'F');
+    doc.setFillColor(33,135,82);doc.rect(0,0,4,31,'F');
+    doc.setDrawColor(121,184,65);doc.setLineWidth(.7);doc.line(0,31,W,31);
+    if(logo?.d)doc.addImage(logo.d,'PNG',W-30,5,16,20,undefined,'FAST');
+    doc.setTextColor(15,53,43);doc.setFont('helvetica','bold');doc.setFontSize(16);
+    doc.text(`RELATÓRIO - ${String(mod.label).toUpperCase()}`,mx,14);
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(78,105,96);
+    doc.text(`Prefeitura Municipal de Sertânia - Emitido em ${new Date().toLocaleString('pt-BR')}`,mx,21);
+  };
+  const footer=()=>{
+    const pg=doc.internal.getCurrentPageInfo().pageNumber;
+    doc.setFillColor(12,61,49);doc.rect(0,H-13,W,13,'F');
+    doc.setTextColor(225,242,234);doc.setFontSize(7);doc.setFont('helvetica','bold');
+    doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES',mx,H-5);
+    doc.text(`Página ${pg}`,W-mx,H-5,{align:'right'});
+  };
+  header();
+  let y=40;
+  const grupos=_md.grupos(mod);
+  for(const g of grupos){
+    if(y>253){footer();doc.addPage();header();y=40;}
+    doc.setFillColor(231,244,235);doc.roundedRect(mx,y-5,W-mx*2,9,1.5,1.5,'F');
+    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(10);
+    doc.text(String(g.name||'Sem nome'),mx+3,y+1);y+=8;
+    const items=((window.S&&S.items)||[]).filter(i=>i.atividade_id===g.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    if(items.length){
+      const rows=items.map((it,idx)=>{
+        const subs=((window.S&&S.subitems)||[]).filter(s=>s.item_id===it.id&&s.parent_type!=='subitem');
+        const done=subs.length?subs.every(s=>s.concluded==1):it.concluded==1;
+        return[String(idx+1),String(it.description||''),done?'Concluído':'Em andamento',_md.fmtD(it.deadline_date)];
+      });
+      doc.autoTable({startY:y,head:[['#','Descrição','Situação','Prazo']],body:rows,
+        margin:{left:mx,right:mx,top:38,bottom:20},theme:'grid',
+        styles:{fontSize:8,textColor:[33,52,63],lineColor:[218,228,224],lineWidth:.2,cellPadding:2.2},
+        headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontStyle:'bold'},
+        alternateRowStyles:{fillColor:[247,250,248]},
+        didDrawPage:()=>{if(doc.internal.getCurrentPageInfo().pageNumber>1)header();}});
+      y=doc.lastAutoTable.finalY+10;
+    }else{
+      doc.setTextColor(104,122,115);doc.setFontSize(8);
+      doc.text('Nenhum lançamento neste grupo.',mx,y);y+=8;
+    }
+  }
+  if(!grupos.length){doc.setTextColor(104,122,115);doc.text('Nenhum grupo cadastrado neste módulo.',mx,y);}
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){doc.setPage(p);footer();}
+  doc.save(`RELATORIO-${String(mod.id).toUpperCase()}-${new Date().toISOString().slice(0,10)}.pdf`);
   toast('PDF do módulo gerado!','success');
 };
 
@@ -295,6 +357,56 @@ window.renderModulos=function(){
       <div class="home-directory-head"><h2>Áreas de trabalho</h2><span>${mods.length} áreas disponíveis para o seu perfil</span></div>
       <div class="module-directory">${directory||'<div class="empty">Nenhuma área liberada para o seu usuário.</div>'}</div>
     </div>
+  </section>`);
+};
+
+/* Painel executivo V62: usa somente os dados já carregados. */
+window.renderModulos=function(){
+  const mods=_visibleModules();
+  const numbers=mods.map(mod=>({mod,..._moduleNumbers(mod)}));
+  const totalGroups=numbers.reduce((sum,item)=>sum+item.grupos.length,0);
+  const totalEntries=numbers.reduce((sum,item)=>sum+item.total,0);
+  const allowedGroups=new Set(numbers.flatMap(n=>n.grupos.map(g=>g.id)));
+  const allItems=((window.S&&S.items)||[]).filter(item=>allowedGroups.has(item.atividade_id));
+  const completed=allItems.filter(item=>item.concluded==1).length;
+  const pending=Math.max(0,allItems.length-completed);
+  const progress=allItems.length?Math.round(completed*100/allItems.length):0;
+  const maxTotal=Math.max(1,...numbers.map(n=>n.total));
+  const ranked=[...numbers].sort((a,b)=>b.total-a.total);
+  _renderSidebarModules('');
+  const bars=ranked.slice(0,7).map(({mod,total})=>`
+    <button class="dashboard-bar-row" onclick="window.renderModulo('${mod.id}')">
+      <span class="dashboard-bar-label">${mod.icon} ${_md.esc(mod.label)}</span>
+      <span class="dashboard-bar-track"><i style="width:${Math.max(total?8:0,Math.round(total*100/maxTotal))}%;--bar:${mod.color}"></i></span>
+      <strong>${total}</strong>
+    </button>`).join('');
+  const quick=ranked.slice(0,4).map(({mod,grupos,total})=>`
+    <button class="dashboard-quick-card" onclick="window.renderModulo('${mod.id}')" style="--quick:${mod.color}">
+      <span>${mod.icon}</span><div><strong>${_md.esc(mod.label)}</strong><small>${grupos.length} grupos · ${total} lançamentos</small></div><b>›</b>
+    </button>`).join('');
+  const directory=numbers.map(({mod,grupos,total})=>`
+    <button type="button" class="dashboard-area-card" onclick="window.renderModulo('${mod.id}')" style="--area:${mod.color}">
+      <span class="dashboard-area-icon">${mod.icon}</span><span><strong>${_md.esc(mod.label)}</strong><small>${grupos.length} grupos cadastrados</small></span><b>${total}</b>
+    </button>`).join('');
+  const stamp=x=>{const v=x.g.updated_at||x.g.created_at;return Number(v?.seconds||v?._seconds||Date.parse(v||0)||0);};
+  const recent=numbers.flatMap(({mod,grupos})=>grupos.map(g=>({mod,g}))).sort((a,b)=>stamp(b)-stamp(a)).slice(0,5).map(({mod,g})=>`
+    <button class="dashboard-recent-row" onclick="openActivity('${g.id}')"><span style="--recent:${mod.color}">${mod.icon}</span><div><strong>${_md.esc(g.name||'Grupo sem nome')}</strong><small>${_md.esc(mod.label)} · ${_md.ativTotal(g)} lançamentos</small></div><b>›</b></button>`).join('');
+  _md.setC(`<section class="dashboard-shell" aria-labelledby="dashboard-title">
+    <header class="dashboard-heading"><div><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">Painel de Gestão</h1><p>Acompanhamento integrado das atividades municipais.</p></div><div class="dashboard-date">Atualizado em <strong>${new Date().toLocaleDateString('pt-BR')}</strong></div></header>
+    <section class="dashboard-banner"><div><span class="dashboard-banner-mark">PMS</span><div><strong>Bem-vindo à Central de Gestão</strong><p>Indicadores reais e acesso rápido a todas as áreas operacionais.</p></div></div><button onclick="document.querySelector('.dashboard-areas')?.scrollIntoView({behavior:'smooth'})">Explorar áreas ↓</button></section>
+    <div class="dashboard-kpis">
+      <article><span class="kpi-icon blue">▦</span><div><small>Áreas operacionais</small><strong>${mods.length}</strong><em>disponíveis</em></div></article>
+      <article><span class="kpi-icon green">✓</span><div><small>Concluídos</small><strong>${completed}</strong><em>${progress}% dos lançamentos</em></div></article>
+      <article><span class="kpi-icon amber">◷</span><div><small>Em andamento</small><strong>${pending}</strong><em>requerem acompanhamento</em></div></article>
+      <article><span class="kpi-icon violet">◎</span><div><small>Total registrado</small><strong>${totalEntries}</strong><em>em ${totalGroups} grupos</em></div></article>
+    </div>
+    <div class="dashboard-main-grid">
+      <article class="dashboard-panel dashboard-chart"><header><div><h2>Atividades por área</h2><p>Volume de lançamentos cadastrados</p></div></header><div>${bars||'<p class="empty">Nenhum lançamento disponível.</p>'}</div></article>
+      <article class="dashboard-panel dashboard-progress"><header><div><h2>Progresso geral</h2><p>Conclusão dos registros</p></div></header><div class="dashboard-donut" style="--progress:${progress*3.6}deg"><div><strong>${progress}%</strong><span>concluído</span></div></div><div class="dashboard-legend"><span><i class="done"></i> ${completed} concluídos</span><span><i></i> ${pending} em andamento</span></div></article>
+      <article class="dashboard-panel dashboard-shortcuts"><header><div><h2>Acessos rápidos</h2><p>Rotinas administrativas</p></div></header><button onclick="setView('secr')">▦ <span><strong>Secretarias</strong><small>Estrutura municipal</small></span>›</button><button onclick="setView('resp')">♟ <span><strong>Responsáveis</strong><small>Agentes cadastrados</small></span>›</button><button onclick="setView('cont')">☏ <span><strong>Contatos</strong><small>Agenda institucional</small></span>›</button></article>
+    </div>
+    <div class="dashboard-lower-grid"><article class="dashboard-panel"><header><div><h2>Áreas mais movimentadas</h2><p>Acesso direto às maiores bases</p></div></header><div class="dashboard-quick-grid">${quick||'<p class="empty">Nenhuma área disponível.</p>'}</div></article><article class="dashboard-panel"><header><div><h2>Grupos recentes</h2><p>Continue de onde parou</p></div></header><div>${recent||'<p class="empty">Nenhum grupo cadastrado.</p>'}</div></article></div>
+    <article class="dashboard-panel dashboard-areas"><header><div><h2>Todas as áreas operacionais</h2><p>${mods.length} áreas disponíveis para o seu perfil</p></div></header><div class="dashboard-area-grid">${directory||'<p class="empty">Nenhuma área liberada.</p>'}</div></article>
   </section>`);
 };
 

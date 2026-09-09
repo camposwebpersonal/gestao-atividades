@@ -370,15 +370,15 @@ window.distExportarPDF = function(secId){
   const itens = [...S.items.filter(i => i.atividade_id === secId)].filter(it => _distMatchesBusca(it, buscaAtiva)).sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
   const agora = new Date().toLocaleDateString('pt-BR');
 
-  doc.setFillColor(13, 34, 64);
+  doc.setFillColor(247, 250, 248);
   doc.rect(0, 0, 297, 22, 'F');
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(15, 53, 43);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(14);
   doc.text(_distEsc(sec.name || 'Controle de Distribuição'), 14, 13);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(180, 210, 255);
+  doc.setTextColor(78, 105, 96);
   doc.text('Relatório de distribuição  •  ' + agora + (buscaAtiva ? '  •  Busca ativa (resultado filtrado)' : ''), 14, 19);
 
   const header = ['#', 'Paciente', ...DIST_CAMPOS.map(c => c.label), 'Idade'];
@@ -394,7 +394,7 @@ window.distExportarPDF = function(secId){
     body: body,
     margin: { left: 10, right: 10, top: 28, bottom: 16 },
     styles: { fontSize: 7, cellPadding: 1.8, overflow: 'linebreak', textColor: [26, 32, 44], lineColor: [200, 210, 220], lineWidth: 0.15 },
-    headStyles: { fillColor: [13, 34, 64], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
+    headStyles: { fillColor: [22, 104, 70], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
     alternateRowStyles: { fillColor: [248, 250, 252] },
     rowPageBreak: 'avoid',
     didDrawPage: (data) => {

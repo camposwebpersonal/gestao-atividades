@@ -566,8 +566,8 @@ window.ceGerarPdf=async function(secId){
   const requisicoes=[...S.requisicoes.filter(r=>r.atividade_id===secId)].sort((a,b)=>(parseInt(b.numero)||0)-(parseInt(a.numero)||0));
 
   let y=16;
-  doc.setFillColor(13,34,64); doc.rect(mx,10,cw,0.7,'F');
-  doc.setTextColor(226,232,240); doc.setFontSize(18); doc.setFont('helvetica','bold');
+  doc.setFillColor(33,135,82); doc.rect(mx,10,cw,0.9,'F');
+  doc.setTextColor(15,53,43); doc.setFontSize(18); doc.setFont('helvetica','bold');
   const tit=_ceEsc(sec.ce_titulo_controle || sec.name || 'CONTROLE DE ESTOQUE');
   doc.text(tit,mx,y); y+=10;
   doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(148,163,184);
@@ -579,11 +579,11 @@ window.ceGerarPdf=async function(secId){
     return [_ceEsc(String(r.numero)), _ceEsc(r.data?fmtD(r.data):'—'), _ceEsc(st), _ceEsc(r.origem||'—'), _ceEsc(r.destino||'—'), String(itens.length)];
   });
   if(reqRows.length){
-    doc.setTextColor(226,232,240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('REQUISIÇÕES DE COMPRA',mx,y); y+=8;
+    doc.setTextColor(15,53,43); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('REQUISIÇÕES DE COMPRA',mx,y); y+=8;
     doc.autoTable({startY:y,margin:{left:mx,right:mx},theme:'grid',
       head:[['Nº','Data','Status','Origem','Destino','Itens']],
       body:reqRows,
-      headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
       bodyStyles:{fontSize:9,textColor:[40,40,40]},
       styles:{cellPadding:2,font:'helvetica'},
       columnStyles:{0:{cellWidth:22,halign:'center'},1:{cellWidth:25},2:{cellWidth:30},3:{cellWidth:55},4:{cellWidth:55},5:{cellWidth:25,halign:'right'}}
@@ -596,11 +596,11 @@ window.ceGerarPdf=async function(secId){
     return [_ceEsc(p.description||''), _ceEsc(_ceUnidadeBase(p)), _ceFmtNum(c.ent), _ceFmtNum(c.sai), _ceFmtNum(c.saldo), 'R$ '+_ceFmtMoney(c.total)];
   });
   if(prodRows.length){
-    doc.setTextColor(226,232,240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('SALDO POR PRODUTO',mx,y); y+=8;
+    doc.setTextColor(15,53,43); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('SALDO POR PRODUTO',mx,y); y+=8;
     doc.autoTable({startY:y,margin:{left:mx,right:mx},theme:'grid',
       head:[['Produto','Unid.','Entradas','Saídas','Saldo','Investimento']],
       body:prodRows,
-      headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:9},
+      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
       bodyStyles:{fontSize:9,textColor:[40,40,40]},
       styles:{cellPadding:2,font:'helvetica'},
       columnStyles:{0:{cellWidth:80},1:{cellWidth:30},2:{cellWidth:30,halign:'right'},3:{cellWidth:30,halign:'right'},4:{cellWidth:30,halign:'right'},5:{cellWidth:35,halign:'right'}}
@@ -625,11 +625,11 @@ window.ceGerarPdf=async function(secId){
   });
   if(movRows.length){
     const filtrosAtivosPdf=[]; if(filtTipoPdf) filtrosAtivosPdf.push('Tipo: '+filtTipoPdf); if(filtIniPdf) filtrosAtivosPdf.push('De: '+fmtD(filtIniPdf)); if(filtFimPdf) filtrosAtivosPdf.push('Até: '+fmtD(filtFimPdf));
-    doc.setTextColor(226,232,240); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('MOVIMENTAÇÕES'+(filtrosAtivosPdf.length?' (filtrado: '+filtrosAtivosPdf.join(', ')+')':''),mx,y); y+=8;
+    doc.setTextColor(15,53,43); doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.text('MOVIMENTAÇÕES'+(filtrosAtivosPdf.length?' (filtrado: '+filtrosAtivosPdf.join(', ')+')':''),mx,y); y+=8;
     doc.autoTable({startY:y,margin:{left:mx,right:mx},theme:'grid',
       head:[['Data','Tipo','Produto','Qtd','Base','Total']],
       body:movRows,
-      headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontSize:8},
+      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:8},
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       styles:{cellPadding:1.5,font:'helvetica'},
       columnStyles:{0:{cellWidth:25},1:{cellWidth:25},2:{cellWidth:80},3:{cellWidth:30},4:{cellWidth:25,halign:'right'},5:{cellWidth:30,halign:'right'}}

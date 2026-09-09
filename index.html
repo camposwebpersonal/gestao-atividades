@@ -14,9 +14,9 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="js/controle-contas.js?v=61"></script>
-<script src="js/controle-distribuicao.js"></script>
-<script src="js/controle-estoque.js"></script>
+<script src="js/controle-contas.js?v=62"></script>
+<script src="js/controle-distribuicao.js?v=62"></script>
+<script src="js/controle-estoque.js?v=62"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=61">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=62">
 </head>
 <body>
 <div id="app">
@@ -374,23 +374,28 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
       <button id="redo-btn" class="redo-btn" style="opacity:.3" onclick="redoLast()" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
     </div>
     <div class="spacer"></div>
+    <div class="global-search-wrap">
+      <span aria-hidden="true">⌕</span>
+      <input id="global-search" type="search" placeholder="Buscar no sistema..." aria-label="Buscar no sistema" onkeydown="if(event.key==='Enter')executarBuscaGlobal(this.value)">
+    </div>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
     <button id="install-btn" class="btn-system" onclick="openInstalarModal()">📱 <span>Instalar</span></button>
     <button id="system-btn" class="btn-system" onclick="window.location.href='exames.html'">▦ <span>Sistema</span></button>
     <button id="logout-btn" class="btn-logout" onclick="doLogout()">↪ <span>Sair</span></button>
   </nav>
   <div id="navmenu">
-    <div class="sidebar-heading"><span>Navegação</span><button id="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeSidebar()">×</button></div>
-    <button class="nav-btn active" id="nav-mod" onclick="setView('mod')">🏠 Início</button>
-    <button class="nav-btn" id="nav-secr" onclick="setView('secr')">🏛️ Secretarias</button>
-    <button class="nav-btn" id="nav-resp" onclick="setView('resp')">👤 Responsáveis</button>
-    <button class="nav-btn" id="nav-cham" onclick="setView('cham')">🎫 Chamados</button>
-    <button class="nav-btn" id="nav-gal" onclick="setView('gal')">🖼️ Galeria</button>
-    <button class="nav-btn" id="nav-cont" onclick="setView('cont')">📇 Contatos</button>
-    <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙️ Admin</button>
-    <button class="nav-btn" id="nav-imp" style="display:none" onclick="setView('imp')">📥 Importar</button>
-    <div class="sidebar-divider"><span>Áreas operacionais</span></div>
+    <div class="sidebar-heading"><span>Áreas operacionais</span><button id="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeSidebar()">×</button></div>
     <div id="sidebar-modules" aria-label="Áreas operacionais"></div>
+    <details class="sidebar-secondary" id="sidebar-secondary">
+      <summary><span>Cadastros e sistema</span><span class="sidebar-summary-icon">⌄</span></summary>
+      <div class="sidebar-secondary-content">
+        <button class="nav-btn active" id="nav-mod" onclick="setView('mod')">⌂ Visão geral</button>
+        <button class="nav-btn" id="nav-secr" onclick="setView('secr')">▦ Secretarias</button>
+        <button class="nav-btn" id="nav-resp" onclick="setView('resp')">♙ Responsáveis</button>
+        <button class="nav-btn" id="nav-cont" onclick="setView('cont')">☏ Contatos</button>
+        <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
+      </div>
+    </details>
     <div class="sidebar-footnote"><span class="system-live-dot"></span><span>Sistema conectado</span></div>
   </div>
   <main><div id="content"><div class="loading"><div class="spinner"></div> Carregando…</div></div></main>
@@ -417,7 +422,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=61';
+import './js/modulos.js?v=62';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -429,6 +434,15 @@ window.toggleSidebar=function(force){
   document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded',String(open));
 };
 window.closeSidebar=function(){window.toggleSidebar(false);};
+window.executarBuscaGlobal=function(valor){
+  const q=String(valor||'').trim().toLocaleLowerCase('pt-BR');
+  if(!q)return;
+  const sec=S.secs.find(s=>String(s.name||'').toLocaleLowerCase('pt-BR').includes(q));
+  if(sec){window.openActivity(sec.id);return;}
+  const item=S.items.find(i=>String(i.description||'').toLocaleLowerCase('pt-BR').includes(q));
+  if(item?.atividade_id){window.openActivity(item.atividade_id);return;}
+  toast('Nenhum lançamento encontrado para “'+valor+'”.','info');
+};
 document.getElementById('navmenu')?.addEventListener('click',event=>{
   if(event.target.closest('button')&&window.matchMedia('(max-width: 960px)').matches)window.closeSidebar();
 });
@@ -607,7 +621,7 @@ function applyWorkspaceIdentity(r){
   document.body.dataset.routeKind=r?.kind||'view';
   const activeModule=r?.kind==='module'?r.id:(r?.kind==='activity'?window.modForSec?.(S.secs.find(sec=>sec.id===r.id)):null);
   window.refreshSidebarModules?.(activeModule||'');
-  const labels={mod:'Central de Lançamentos',secr:'Secretarias',resp:'Responsáveis',cham:'Chamados',gal:'Galeria',cont:'Contatos',adm:'Administração',imp:'Importação',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Atendimentos',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
+  const labels={mod:'Painel de Gestão',secr:'Secretarias',resp:'Responsáveis',cont:'Contatos',adm:'Administração',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Atendimentos',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
   document.title=(labels[key]||'Gestão Municipal')+' — Prefeitura de Sertânia';
 }
 window.rememberWorkspace=function(r,replace=false){
@@ -627,7 +641,7 @@ window.restoreWorkspace=function(){
   try{
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
     else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok)window.renderModulo(r.id);}
-    else if(r.kind==='view'){ok=['mod','adm','secr','imp','resp','cham','gal','cont'].includes(r.id);if(ok)window.setView(r.id);}
+    else if(r.kind==='view'){ok=['mod','adm','secr','resp','cont'].includes(r.id);if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}
   if(ok){window.rememberWorkspace(r,true);return true;}
@@ -642,7 +656,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=61';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=62';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -705,7 +719,7 @@ onAuthStateChanged(auth,async u=>{
     S.isAdmin=false;S.userRole='usuario';S.userSetor=null;
     toast('Não foi possível carregar suas permissões ('+(e.message||e)+'). Acesso limitado; recarregue a página.','error',8000);
   }
-  if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-imp').style.display='';}
+  if(S.isAdmin){document.getElementById('nav-adm').style.display='';}
   await loadData();
   if(!window.restoreWorkspace())setView('mod');
   const _sp=new URLSearchParams(location.search).get('setup');
@@ -796,7 +810,7 @@ window.loadData=async function loadData(){
   const safeGet=async(label,fn)=>{
     try{return await fn();}catch(e){console.error('Erro ao carregar '+label+':',e);failed.push(label+' ('+(e.message||e)+')');return{docs:[]};}
   };
-  const[a,b,c,ft,se,resp,usr,ch,gal,cont,contas,estq,req]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,cont,contas,estq,req]=await Promise.all([
     safeGet('secretariats',()=>getDocs(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
     safeGet('items',()=>getDocs(query(collection(db,'items'),orderBy('order_num','asc')))),
     safeGet('subitems',()=>getDocs(query(collection(db,'subitems'),orderBy('order_num','asc')))),
@@ -804,8 +818,6 @@ window.loadData=async function loadData(){
     safeGet('secretarias',()=>getDocs(query(collection(db,'secretarias'),orderBy('name','asc')))),
     safeGet('responsaveis',()=>getDocs(query(collection(db,'responsaveis'),orderBy('name','asc')))),
     safeGet('users',()=>getDocs(query(collection(db,'users'),orderBy('displayName','asc')))),
-    safeGet('chamados',()=>getDocs(query(collection(db,'chamados'),orderBy('created_at','desc')))),
-    safeGet('galeria',()=>getDocs(query(collection(db,'galeria'),orderBy('created_at','desc')))),
     safeGet('contatos',()=>getDocs(query(collection(db,'contatos'),orderBy('nome','asc')))),
     safeGet('contas',()=>getDocs(query(collection(db,'contas'),orderBy('created_at','desc')))),
     safeGet('estoque',()=>getDocs(query(collection(db,'estoque'),orderBy('created_at','desc')))),
@@ -820,8 +832,8 @@ window.loadData=async function loadData(){
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
   S.me=S.users.find(u=>u.id===S.user?.uid)||{};
   S.permissoes=S.me.permissoes||{modulos:{},pode_criar:false,pode_editar:false};
-  S.chamados=ch.docs.map(d=>({id:d.id,...d.data()}));
-  S.galeria=gal.docs.map(d=>({id:d.id,...d.data()}));
+  S.chamados=[];
+  S.galeria=[];
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
   S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
   S.estoque=estq.docs.map(d=>({id:d.id,...d.data()}));
@@ -839,7 +851,23 @@ const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const _tplOpts=t=>{let o=t?.options||[];if(typeof o==='string'){try{o=JSON.parse(o)}catch(e){o=o.split(',').map(s=>s.trim())}}return Array.isArray(o)?o:[];};
 const fmtD=d=>{if(!d)return'—';try{let s=String(d);if(!s.includes('T')&&!s.includes(' '))s+='T00:00';return new Date(s).toLocaleDateString('pt-BR');}catch{return String(d);}};
 function toast(msg,type='success',dur=3200){const el=document.createElement('div');el.className='toast-item '+type;el.textContent=msg;document.getElementById('toast').appendChild(el);setTimeout(()=>el.remove(),dur);}window.toast=toast;
-const setC=h=>document.getElementById('content').innerHTML=h;
+const setC=h=>{document.getElementById('content').innerHTML=h;requestAnimationFrame(()=>window.refreshStickyTableScroll?.());};
+let _stickyScrollSource=null;
+window.refreshStickyTableScroll=function(){
+  let bar=document.getElementById('sticky-hscroll');
+  if(!bar){
+    bar=document.createElement('div');bar.id='sticky-hscroll';bar.innerHTML='<div></div>';document.body.appendChild(bar);
+    bar.addEventListener('scroll',()=>{if(_stickyScrollSource&&Math.abs(_stickyScrollSource.scrollLeft-bar.scrollLeft)>1)_stickyScrollSource.scrollLeft=bar.scrollLeft;},{passive:true});
+  }
+  const candidates=[...document.querySelectorAll('.sticky-scroll-source,.table-wrap')].filter(el=>el.scrollWidth>el.clientWidth+2);
+  _stickyScrollSource=candidates.find(el=>{const r=el.getBoundingClientRect();return r.top<innerHeight-50&&r.bottom>80;})||null;
+  if(!_stickyScrollSource){bar.classList.remove('visible');return;}
+  bar.firstElementChild.style.width=_stickyScrollSource.scrollWidth+'px';bar.scrollLeft=_stickyScrollSource.scrollLeft;bar.classList.add('visible');
+  _stickyScrollSource.onscroll=()=>{if(Math.abs(bar.scrollLeft-_stickyScrollSource.scrollLeft)>1)bar.scrollLeft=_stickyScrollSource.scrollLeft;};
+};
+window.addEventListener('scroll',()=>window.refreshStickyTableScroll?.(),{passive:true});
+window.addEventListener('resize',()=>window.refreshStickyTableScroll?.(),{passive:true});
+document.querySelector('main')?.addEventListener('scroll',()=>window.refreshStickyTableScroll?.(),{passive:true});
 const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
   return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
@@ -870,23 +898,26 @@ function flattenSubTree(tree,levelPrefix,out){
 window.setView=function(v){
   curSecId=null;
   window.rememberWorkspace?.({kind:'view',id:v});
-  ['mod','adm','secr','imp','resp','cham','gal','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['mod','adm','secr','resp','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  if(['adm','secr','resp','cont'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
   if(v==='mod')window.renderModulos();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
-  else if(v==='imp')renderImportar();
   else if(v==='resp')renderResponsaveis();
-  else if(v==='cham')renderChamados();
-  else if(v==='gal')renderGaleria();
   else if(v==='cont')renderContatos();
 };
 
 // ── SECRETARIAS ──
+function _cadastroPage({icon,title,subtitle,count,actions,head,rows,emptyCols}){
+  return `<section class="registry-page">
+    <div class="registry-heading"><div class="registry-heading-icon">${icon}</div><div><div class="workspace-kicker">Cadastros institucionais</div><h1>${title}</h1><p>${subtitle}</p></div><div class="registry-count"><strong>${count}</strong><span>registros</span></div></div>
+    <div class="registry-toolbar">${actions}</div>
+    <div class="table-wrap registry-table sticky-scroll-source"><table><thead><tr>${head}</tr></thead><tbody>${rows||`<tr><td colspan="${emptyCols}" class="registry-empty">Nenhum registro encontrado.</td></tr>`}</tbody></table></div>
+  </section>`;
+}
 window.renderSecretarias=function(){
-  const rows=S.secretarias.map(s=>`<tr><td>${esc(s.name)}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openSecretariaModal('${s.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteSecretaria('${s.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="2" style="text-align:center;color:var(--muted)">Nenhuma secretaria cadastrada.</td></tr>';
-  setC(`<div class="page-title">🏛️ Secretarias</div><div class="page-sub">Cadastro de Secretarias Municipais</div>
-    ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openSecretariaModal()">+ Nova Secretaria</button></div>`:''}
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+  const rows=S.secretarias.map((s,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">▦</span><strong>${esc(s.name)}</strong></div></td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openSecretariaModal('${s.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteSecretaria('${s.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  setC(_cadastroPage({icon:'▦',title:'Secretarias',subtitle:'Estrutura administrativa municipal',count:S.secretarias.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openSecretariaModal()">＋ Nova secretaria</button>`:''}<button class="btn-action" onclick="setView('mod')">← Visão geral</button>`,head:'<th>#</th><th>Secretaria</th><th>Ações</th>',rows,emptyCols:3}));
 };
 window.openSecretariaModal=function(id){
   const s=id?S.secretarias.find(x=>x.id===id):null;
@@ -920,10 +951,8 @@ function _fmtRespCPF(v){
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 window.renderResponsaveis=function(){
-  const rows=S.responsaveis.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(_fmtRespCPF(r.cpf)||'')}</td><td>${esc(r.cargo||'')}</td><td>${esc(r.setor||'')}</td><td>${esc(r.contato||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteResponsavel('${r.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum responsável cadastrado.</td></tr>';
-  setC(`<div class="page-title">👤 Responsáveis</div><div class="page-sub">Cadastro de Responsáveis / Agentes Municipais</div>
-    ${S.isAdmin?`<div style="margin-bottom:18px"><button class="btn-action primary" onclick="openResponsavelModal()">+ Novo Responsável</button></div>`:''}
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>CPF</th><th>Cargo</th><th>Setor</th><th>Contato</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+  const rows=S.responsaveis.map((r,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((r.name||'?').charAt(0))}</span><strong>${esc(r.name)}</strong></div></td><td>${esc(_fmtRespCPF(r.cpf)||'—')}</td><td>${esc(r.cargo||'—')}</td><td>${esc(r.setor||'—')}</td><td>${esc(r.contato||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteResponsavel('${r.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  setC(_cadastroPage({icon:'♙',title:'Responsáveis',subtitle:'Responsáveis e agentes municipais',count:S.responsaveis.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openResponsavelModal()">＋ Novo responsável</button>`:''}<button class="btn-action" onclick="setView('mod')">← Visão geral</button>`,head:'<th>#</th><th>Nome</th><th>CPF</th><th>Cargo</th><th>Setor</th><th>Contato</th><th>Ações</th>',rows,emptyCols:7}));
 };
 window.openResponsavelModal=function(id){
   const r=id?S.responsaveis.find(x=>x.id===id):null;
@@ -1009,14 +1038,8 @@ window.renderContatos=function(){
   const _filtro=document.getElementById('cont-filtro')?.value||'';
   let contatos=S.contatos;
   if(_filtro){contatos=contatos.filter(c=>String(c.nome).toLowerCase().includes(_filtro.toLowerCase())||String(c.cargo).toLowerCase().includes(_filtro.toLowerCase())||String(c.setor).toLowerCase().includes(_filtro.toLowerCase()));}
-  const rows=contatos.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.cargo||'')}</td><td>${esc(c.setor||'')}</td><td>${esc(c.telefone||'')}</td><td>${esc(c.email||'')}</td><td style="text-align:right">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteContato('${c.id}')">🗑️</button>`:''}</td></tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:var(--muted)">Nenhum contato cadastrado.</td></tr>';
-  setC(`<div class="page-title">📇 Cartilha de Contatos</div><div class="page-sub">Agenda de contatos municipais</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
-      ${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">+ Novo Contato</button>`:''}
-      <button class="btn-action" onclick="gerarPDFContatos()">📄 PDF A4</button>
-      <input id="cont-filtro" placeholder="🔍 Buscar contato..." oninput="renderContatos()" value="${_filtro}" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);min-width:200px">
-    </div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>Email</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+  const rows=contatos.map((c,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((c.nome||'?').charAt(0))}</span><strong>${esc(c.nome)}</strong></div></td><td>${esc(c.cargo||'—')}</td><td>${esc(c.setor||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteContato('${c.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  setC(_cadastroPage({icon:'☏',title:'Contatos',subtitle:'Agenda institucional do município',count:contatos.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">＋ Novo contato</button>`:''}<button class="btn-action" onclick="gerarPDFContatos()">▤ Gerar PDF</button><label class="registry-search"><span>⌕</span><input id="cont-filtro" placeholder="Buscar por nome, cargo ou setor" oninput="renderContatos()" value="${esc(_filtro)}"></label>`,head:'<th>#</th><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>E-mail</th><th>Ações</th>',rows,emptyCols:7}));
 };
 window.openContatoModal=function(id){
   const c=id?S.contatos.find(x=>x.id===id):null;
@@ -1055,15 +1078,16 @@ window.gerarPDFContatos=async function(){
   const logo=lObj?lObj.d:null;
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
   function cabecalho(){
-    doc.setFillColor(13,34,64);doc.rect(0,0,W,HDR_H,'F');
-    doc.setFillColor(59,130,246);doc.rect(0,HDR_H-2,W,2,'F');
+    doc.setFillColor(247,250,248);doc.rect(0,0,W,HDR_H,'F');
+    doc.setFillColor(33,135,82);doc.rect(0,0,4,HDR_H,'F');
+    doc.setFillColor(121,184,65);doc.rect(0,HDR_H-1,W,1,'F');
     if(logo&&lObj){const ls=lSize(lObj,20,22);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,4+(22-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}
-    sf(14,true,[255,255,255]);doc.text('CARTILHA DE CONTATOS',mx+8,14);
-    sf(8,false,[180,210,255]);doc.text('Prefeitura de Sertania — PE  •  '+now,mx+8,22);
+    sf(14,true,[15,53,43]);doc.text('CARTILHA DE CONTATOS',mx+8,14);
+    sf(8,false,[78,105,96]);doc.text('Prefeitura Municipal de Sertânia — PE  •  '+now,mx+8,22);
   }
   function rodape(){
-    doc.setFillColor(13,34,64);doc.rect(0,FTR_Y,W,FTR_H,'F');
-    sf(7,true,[180,210,255]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA — PE  |  (87) 3841-1156',W/2,FTR_Y+8,{align:'center'});
+    doc.setFillColor(12,61,49);doc.rect(0,FTR_Y,W,FTR_H,'F');
+    sf(7,true,[225,242,234]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA — PE  |  (87) 3841-1156',W/2,FTR_Y+8,{align:'center'});
   }
   cabecalho();rodape();
   let y=HDR_H+10;
@@ -1084,7 +1108,7 @@ window.gerarPDFContatos=async function(){
     sf(7,false,[59,130,246]);doc.text(esc(c.email||'—').substring(0,30),mx+3*cw4+2,y+4);
     y+=10;
   });
-  doc.save('cartilha-contatos-'+new Date().toISOString().slice(0,10)+'.pdf');
+  doc.save('CARTILHA-CONTATOS-'+new Date().toISOString().slice(0,10)+'.pdf');
   toast('PDF gerado!','success');
 };
 
@@ -1273,7 +1297,7 @@ window.openActivity=function(secId){
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
-  const _cp=sec.controle_pendencias!==0;
+  const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
   const allTpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
   const allEntities=[...items,...S.subitems.filter(s=>items.some(i=>i.id===s.item_id))];
@@ -1322,7 +1346,7 @@ window.openActivity=function(secId){
   let itemsHtml,_totHtml;
   if(useTableAtiv){
     const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
-    let tbl='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;background:#0a1222;border-radius:8px;overflow:hidden">';
+    let tbl='<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
     const _tblAct=(id,isSub,parentEdit,concluded)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px;background:${concluded?'#f59e0b':'#10b981'};color:#fff" onclick="event.stopPropagation();toggleConcluidoPendente('${id}',${isSub})" title="${concluded?'Desmarcar conclusão':'Marcar como concluído'}">${concluded?'↺':'✅'}</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${id}',${isSub},'${secId}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button></div>`:'';
@@ -1412,6 +1436,7 @@ window.openActivity=function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
@@ -1442,6 +1467,15 @@ window.openActivity=function(secId){
   <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
   window._refreshAtivTable=()=>openActivity(secId);
   if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
+};
+
+window.alternarControleConclusao=async function(secId,ativar){
+  try{
+    await updateDoc(doc(db,'secretariats',secId),{controle_pendencias:ativar?1:0,show_stats:ativar?1:0,updated_at:serverTimestamp()});
+    const sec=S.secs.find(s=>s.id===secId);if(sec){sec.controle_pendencias=ativar?1:0;sec.show_stats=ativar?1:0;}
+    toast(ativar?'Acompanhamento de conclusão ativado.':'Acompanhamento de conclusão desativado.','success');
+    openActivity(secId);
+  }catch(e){console.error(e);toast('Não foi possível alterar o acompanhamento: '+(e.message||e),'error');}
 };
 
 function _renderSubSubs(parentSubId,item,today,prefix,level){
@@ -1839,7 +1873,7 @@ window.openSecModal=function(id){
   <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
     <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
     <div style="display:flex;flex-direction:column;gap:6px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_pendencias!==0?'#38bdf8':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📋 Controle de Pendências <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita itens, sub-itens, status e prazos)</span></label>
+      <label class="settings-option"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias===1||s?.controle_pendencias===true?'checked':''}> 📋 Controle de Conclusão <span>(ativa status, prazos, percentuais e acompanhamento)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_estoque?'#0ea5e9':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-est" ${s?.controle_estoque?'checked':''} style="width:14px;height:14px;accent-color:#0ea5e9;cursor:pointer"> 📦 Controle de Estoque <span style="font-size:11px;color:var(--muted);margin-left:4px">(entradas, saídas, estoque crítico)</span></label>
@@ -2691,7 +2725,7 @@ window.gerarPdf=async function(secId,opts){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF\u2026','info',8000);
   const{jsPDF}=window.jspdf;
-  const _cp=sec.controle_pendencias!==0;
+  const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
   const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:2))+(opts.efFields?opts.efFields.length:0);
   const useLandscape=totalCols>6;
@@ -3492,7 +3526,7 @@ window.renderCadastros=function(secId){
   const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
-  const _cp=sec.controle_pendencias!==0;
+  const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
   let rows='';
   function _statusOptions(cur){
     return _ST.map(s=>`<option value="${esc(s.v)}"${cur===s.v?' selected':''}>${esc(s.l)}</option>`).join('');
@@ -4545,7 +4579,7 @@ function executarBusca(){
       html+=`<div style="font-size:14px;font-weight:700;color:${isDone?'#34d399':'#e2e8f0'}">${itemMatch?hl(item.description):item.description||''}</div>`;
       if(item.responsaveis) html+=`<div style="font-size:11px;color:#a78bfa;margin-top:3px">👤 ${itemMatch?hl(item.responsaveis):item.responsaveis}</div>`;
       if(item.observacao) html+=`<div style="font-size:11px;color:#64748b;margin-top:3px;font-style:italic">📝 ${itemMatch?hl(item.observacao):item.observacao}</div>`;
-      const _cp=sec.controle_pendencias!==0;
+      const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
       if(_cp)html+=`<span style="font-size:11px;background:${isDone?'#10b98122':'#33415522'};color:${isDone?'#34d399':'#94a3b8'};border-radius:999px;padding:3px 10px;display:inline-block;margin-top:6px">${isDone?'✅ Concluído':'⏳ Pendente'}</span>`;
       if(displaySubs.length>0){
         const extra=displaySubs.length-matchSubs.length;
@@ -4616,7 +4650,7 @@ async function gerarPdfBusca(){
   document.querySelectorAll('#busca-pdf-custom input[data-ef]').forEach(cb=>{if(cb.checked)efFields.push(cb.getAttribute('data-ef'));});
   const sumFields=[];
   document.querySelectorAll('#busca-pdf-sum input[data-ef]').forEach(cb=>{if(cb.checked)sumFields.push(cb.getAttribute('data-ef'));});
-  const _cp=sec.controle_pendencias!==0;
+  const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
   const useTable=tableMode&&efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:3))+efFields.length;
   const useLandscape=totalCols>6;
