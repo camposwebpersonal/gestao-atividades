@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="js/controle-contas.js?v=62"></script>
+<script src="js/controle-contas.js?v=63"></script>
 <script src="js/controle-distribuicao.js?v=62"></script>
 <script src="js/controle-estoque.js?v=62"></script>
 <style>
@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=62">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=63">
 </head>
 <body>
 <div id="app">
@@ -422,7 +422,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=62';
+import './js/modulos.js?v=63';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1095,18 +1095,20 @@ window.gerarPDFContatos=async function(){
   sf(7,false,[100,116,139]);doc.text('Total de '+S.contatos.length+' contato(s) cadastrado(s)',mx,y);y+=8;
   const cols=['Nome','Cargo / Setor','Telefone','Email'];
   const cw4=cw/4;
-  doc.setFillColor(13,34,64);doc.rect(mx,y-4,cw,7,'F');
+  const rowH=7.2;
+  doc.setFillColor(20,82,20);doc.setDrawColor(159,181,170);doc.setLineWidth(.18);doc.rect(mx,y-4,cw,7,'FD');
   sf(8,true,[255,255,255]);
-  cols.forEach((h,i)=>doc.text(h,mx+i*cw4+2,y));
+  cols.forEach((h,i)=>{if(i)doc.line(mx+i*cw4,y-4,mx+i*cw4,y+3);doc.text(h,mx+i*cw4+2,y);});
   y+=4;
   S.contatos.forEach((c,idx)=>{
-    if(y+12>FTR_Y-6){doc.addPage();cabecalho();rodape();y=HDR_H+10;}
-    if(idx%2===0){doc.setFillColor(248,250,252);doc.rect(mx,y-2,cw,10,'F');}
-    sf(8,false,[26,32,44]);doc.text(esc(c.nome).substring(0,28),mx+2,y+4);
-    sf(7,false,[100,116,139]);doc.text(esc((c.cargo||'')+' / '+(c.setor||'')).substring(0,30),mx+cw4+2,y+4);
-    sf(7,false,[26,32,44]);doc.text(esc(c.telefone||'—').substring(0,20),mx+2*cw4+2,y+4);
-    sf(7,false,[59,130,246]);doc.text(esc(c.email||'—').substring(0,30),mx+3*cw4+2,y+4);
-    y+=10;
+    if(y+rowH>FTR_Y-4){doc.addPage();cabecalho();rodape();y=HDR_H+8;}
+    doc.setFillColor(...(idx%2===0?[248,251,249]:[255,255,255]));doc.setDrawColor(190,207,199);doc.rect(mx,y-2,cw,rowH,'FD');
+    for(let i=1;i<4;i++)doc.line(mx+i*cw4,y-2,mx+i*cw4,y-2+rowH);
+    sf(7.2,true,[26,45,39]);doc.text(esc(c.nome).substring(0,28),mx+2,y+2.7);
+    sf(6.7,false,[75,93,87]);doc.text(esc((c.cargo||'')+' / '+(c.setor||'')).substring(0,31),mx+cw4+2,y+2.7);
+    sf(6.7,false,[26,45,39]);doc.text(esc(c.telefone||'—').substring(0,20),mx+2*cw4+2,y+2.7);
+    sf(6.7,false,[18,108,91]);doc.text(esc(c.email||'—').substring(0,30),mx+3*cw4+2,y+2.7);
+    y+=rowH;
   });
   doc.save('CARTILHA-CONTATOS-'+new Date().toISOString().slice(0,10)+'.pdf');
   toast('PDF gerado!','success');
@@ -1298,6 +1300,7 @@ window.openActivity=function(secId){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
+  const _showPct=sec.show_progress_percentage!==0;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
   const allTpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
   const allEntities=[...items,...S.subitems.filter(s=>items.some(i=>i.id===s.item_id))];
@@ -1345,7 +1348,7 @@ window.openActivity=function(secId){
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
-    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
+    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){if(_showPct)th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
     let tbl='<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
@@ -1360,7 +1363,7 @@ window.openActivity=function(secId){
       tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(item.responsaveis||''),null,item.id,false,null)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(item.observacao||''),'it-obs',item.id,false,null)}</td>`;
       tableFields.forEach(fn=>{const raw=_tblFieldVal(item,fn); tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
-      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td><td style="padding:8px 10px;border-bottom:1px solid #1e293b">${statusBadge(item.status||'pendente',item.id,'item')}</td>`;}
+      if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);if(_showPct)tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td>`;tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b">${statusBadge(item.status||'pendente',item.id,'item')}</td>`;}
       if(_can) tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(item.id,false,null,item.concluded==1)}</td>`;
       tbl+='</tr>';
       const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -1376,7 +1379,7 @@ window.openActivity=function(secId){
           tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.responsaveis||''),null,c.id,true,parentId)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.observacao||''),'it-obs',c.id,true,parentId)}</td>`;
           tableFields.forEach(fn=>{const raw=_tblFieldVal(c,fn); tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
-          if(_cp){tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td><td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px">${statusBadge(c.status||'pendente',c.id,'subitem')}</td>`;}
+          if(_cp){if(_showPct)tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td>`;tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px">${statusBadge(c.status||'pendente',c.id,'subitem')}</td>`;}
           if(_can) tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px;text-align:right">${_tblAct(c.id,true,parentId,c.concluded==1)}</td>`;
           tbl+='</tr>';
           _tblSubSubs(c.id,num,depth+1);
@@ -1391,7 +1394,7 @@ window.openActivity=function(secId){
         tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(s.responsaveis||''),null,s.id,true,item.id)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(s.observacao||''),'it-obs',s.id,true,item.id)}</td>`;
         tableFields.forEach(fn=>{const raw=_tblFieldVal(s,fn); tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
-        if(_cp){tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;border-bottom:1px solid #1e293b">${statusBadge(s.status||'pendente',s.id,'subitem')}</td>`;}
+        if(_cp){if(_showPct)tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td>`;tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b">${statusBadge(s.status||'pendente',s.id,'subitem')}</td>`;}
         if(_can) tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(s.id,true,item.id,s.concluded==1)}</td>`;
         tbl+='</tr>';
         _tblSubSubs(s.id,subNum,1);
@@ -1422,7 +1425,7 @@ window.openActivity=function(secId){
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#3b82f6">${pend}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Pendentes</div></div>
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">${atras}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Atrasados</div></div>
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
-      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#38bdf8">${total?Math.round((conc/total)*100):0}%</div><div style="font-size:10px;color:#64748b;margin-top:2px">Progresso Geral</div></div>
+      ${_showPct?`<div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#38bdf8">${total?Math.round((conc/total)*100):0}%</div><div style="font-size:10px;color:#64748b;margin-top:2px">Progresso Geral</div></div>`:''}
     </div>`;
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
@@ -1437,6 +1440,7 @@ window.openActivity=function(secId){
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
+    ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
     ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
@@ -1476,6 +1480,15 @@ window.alternarControleConclusao=async function(secId,ativar){
     toast(ativar?'Acompanhamento de conclusão ativado.':'Acompanhamento de conclusão desativado.','success');
     openActivity(secId);
   }catch(e){console.error(e);toast('Não foi possível alterar o acompanhamento: '+(e.message||e),'error');}
+};
+
+window.alternarExibicaoPercentual=async function(secId,mostrar){
+  try{
+    await updateDoc(doc(db,'secretariats',secId),{show_progress_percentage:mostrar?1:0,updated_at:serverTimestamp()});
+    const sec=S.secs.find(s=>s.id===secId);if(sec)sec.show_progress_percentage=mostrar?1:0;
+    toast(mostrar?'Percentuais ativados.':'Percentuais ocultados; os status continuam ativos.','success');
+    openActivity(secId);
+  }catch(e){console.error(e);toast('Não foi possível alterar os percentuais: '+(e.message||e),'error');}
 };
 
 function _renderSubSubs(parentSubId,item,today,prefix,level){
@@ -1525,7 +1538,7 @@ function renderItem(item,today,itemNum){
   const _can=S.isAdmin||window.userCan(window.modForSec(_sec),'editar');
   const _nt=_sec?.controle_pendencias===0;
   const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-  const badge=_nt?'':done?'<span class="badge badge-green">✓ Concluído</span>':late?'<span class="badge badge-red">⚠ Atrasado</span>':pr.pct>0?'<span class="badge badge-blue">⏳ Em andamento</span>':'<span class="badge badge-gray">○ Pendente</span>';
+  const badge=''; // O status já aparece no controle à direita; evita informação repetida.
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem');
   const itemPrefix=itemNum!=null?''+itemNum:null;
@@ -1582,7 +1595,7 @@ function renderItem(item,today,itemNum){
       ${item.resp_url?`<img src="${esc(item.resp_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #818cf8;flex-shrink:0" loading="lazy">`:''}
       ${item.cover_url?`<img src="${esc(item.cover_url)}" style="height:32px;max-width:48px;object-fit:contain;border-radius:5px;flex-shrink:0;background:transparent;cursor:pointer" onclick="event.stopPropagation();openGal('item','${item.id}','${esc(item.description)}')" loading="lazy">`:''}
       ${_nt?'':statusBadge(item.status,item.id,'item')}
-      ${_nt?'':pRing(pr.pct)}
+      ${_nt||_sec?.show_progress_percentage===0?'':pRing(pr.pct)}
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
       ${_can?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
       ${_can&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
@@ -1874,6 +1887,7 @@ window.openSecModal=function(id){
     <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
     <div style="display:flex;flex-direction:column;gap:6px">
       <label class="settings-option"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias===1||s?.controle_pendencias===true?'checked':''}> 📋 Controle de Conclusão <span>(ativa status, prazos, percentuais e acompanhamento)</span></label>
+      <label class="settings-option"><input type="checkbox" id="s-show-progress-percentage" ${s?.show_progress_percentage!==0?'checked':''}> % Mostrar percentual de conclusão <span>(pode ficar desligado mantendo os status)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_estoque?'#0ea5e9':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-est" ${s?.controle_estoque?'checked':''} style="width:14px;height:14px;accent-color:#0ea5e9;cursor:pointer"> 📦 Controle de Estoque <span style="font-size:11px;color:var(--muted);margin-left:4px">(entradas, saídas, estoque crítico)</span></label>
@@ -1921,7 +1935,7 @@ window.saveSec=async function(id){
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
   const respStr=_getRespFromCombos('s-resp-wrap');
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
@@ -2731,7 +2745,7 @@ window.gerarPdf=async function(secId,opts){
   const useLandscape=totalCols>6;
   let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
-  const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
+  const HDR_H=27,FTR_Y=H-13,FTR_H=13,BODY_TOP=HDR_H+4,BODY_BOT=FTR_Y-3;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const lhf=pt=>(pt||9)*0.3528*1.5;
   const now=new Date().toLocaleDateString('pt-BR');
@@ -2742,16 +2756,16 @@ window.gerarPdf=async function(secId,opts){
   function lSize(obj,maxW,maxH){if(!obj)return null;const ar=obj.w/obj.h;let w=maxW,h=maxW/ar;if(h>maxH){h=maxH;w=maxH*ar;}return{data:obj.d,w,h};}
 
   function cabecalho(){
-    doc.setFillColor(15,23,42);doc.rect(0,0,W,HDR_H,'F');
-    doc.setFillColor(59,130,246);doc.rect(0,HDR_H-3,W,3,'F');
+    doc.setFillColor(15,61,49);doc.rect(0,0,W,HDR_H,'F');
+    doc.setFillColor(121,184,65);doc.rect(0,HDR_H-2,W,2,'F');
     if(logo&&lObj){const ls=lSize(lObj,22,24);if(ls)doc.addImage(ls.data,'PNG',W-mx-ls.w,3+(24-ls.h)/2,ls.w,ls.h,'logo_hdr','FAST');}
-    sf(15,true,[255,255,255]);doc.text('RELATORIO DE ATIVIDADE',mx+10,14);
-    sf(10,false,[203,213,225]);doc.text('Prefeitura de Sertania \u2014 PE  \u2022  Controle PMS  \u2022  '+now,mx+10,23);
+    sf(13,true,[255,255,255]);doc.text('RELATÓRIO INSTITUCIONAL DE ATIVIDADE',mx+10,12);
+    sf(8,false,[214,240,226]);doc.text('Prefeitura Municipal de Sertânia — PE  •  Gestão de Atividades  •  '+now,mx+10,20);
   }
 
   function rodape(){
-    doc.setFillColor(15,23,42);doc.rect(0,FTR_Y,W,FTR_H,'F');
-    doc.setFillColor(59,130,246);doc.rect(0,FTR_Y,W,2,'F');
+    doc.setFillColor(15,61,49);doc.rect(0,FTR_Y,W,FTR_H,'F');
+    doc.setFillColor(121,184,65);doc.rect(0,FTR_Y,W,1.5,'F');
     if(logo&&lObj){const ls=lSize(lObj,14,11);if(ls)doc.addImage(ls.data,'PNG',mx,FTR_Y+2+(11-ls.h)/2,ls.w,ls.h,'logo_ftr','FAST');}
     sf(10,true,[255,255,255]);doc.text('PREFEITURA MUNICIPAL DE SERTANIA \u2014 PE',mx+16,FTR_Y+7);
     sf(9,false,[203,213,225]);doc.text('Sert\u00e2nia \u2014 PE  |  (87) 3841-1156  |  www.sertania.pe.gov.br',W/2,FTR_Y+13,{align:'center'});
@@ -3059,8 +3073,8 @@ window.gerarPdf=async function(secId,opts){
   doc.autoTable({startY:y,head:tblH,body:tblB,
     margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},
     rowPageBreak:'avoid',
-    styles:{fontSize:10.5,cellPadding:2.2,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:0.15},
-    headStyles:{fillColor:[15,23,42],textColor:[255,255,255],fontStyle:'bold',fontSize:11},
+    styles:{fontSize:7.6,cellPadding:1.35,overflow:'linebreak',textColor:[30,41,59],lineColor:[174,194,184],lineWidth:0.22},
+    headStyles:{fillColor:[15,61,49],textColor:[255,255,255],fontStyle:'bold',fontSize:8},
     alternateRowStyles:{fillColor:[248,250,252]},
     columnStyles:colStyles,
     didParseCell:function(dat){
@@ -3200,8 +3214,8 @@ window.gerarPdf=async function(secId,opts){
     doc.autoTable({startY:y,head:[['Item / Sub-item','Prazo','Conclus\u00e3o','Status']],
       body:dlE.map(e=>[e.label,fmtD(e.deadline),e.conclusion_date?fmtD(e.conclusion_date):'-',{content:e.isDone?'Conclu\u00eddo':(e.isOver?'Atrasado':'Pendente'),styles:{textColor:e.isDone?[34,197,94]:(e.isOver?[200,30,30]:[60,80,100])}}]),
       margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},
-      styles:{fontSize:10.5,cellPadding:2.2,overflow:'linebreak',lineColor:[203,213,225],lineWidth:0.15},
-      headStyles:{fillColor:[15,23,42],textColor:[255,255,255],fontStyle:'bold',fontSize:11},
+      styles:{fontSize:7.6,cellPadding:1.35,overflow:'linebreak',lineColor:[174,194,184],lineWidth:0.22},
+      headStyles:{fillColor:[15,61,49],textColor:[255,255,255],fontStyle:'bold',fontSize:8},
       alternateRowStyles:{fillColor:[248,250,252]},
       didDrawPage:data=>{if(data.pageNumber>pageNum){cabecalho();pageNum=data.pageNumber;}rodape();}
     });
@@ -3225,7 +3239,7 @@ window.gerarPdf=async function(secId,opts){
     doc.text(p+'/'+totalPages,W-mx,FTR_Y+7,{align:'right'});
   }
 
-  doc.save('atividade_'+(sec.name||'relatorio').replace(/\s+/g,'_').toLowerCase()+'_'+now.replace(/\//g,'-')+'.pdf');
+  doc.save(('RELATORIO-'+(sec.name||'ATIVIDADE')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase()+'-'+new Date().toISOString().slice(0,10)+'.pdf');
   toast('PDF gerado!');
 };
 

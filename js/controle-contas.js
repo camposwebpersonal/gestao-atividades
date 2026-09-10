@@ -72,7 +72,12 @@ const CC_LOCAIS_POR_PAGINA = 12;
 const CC_LANCAMENTOS_POR_LOCAL = 40;
 const _ccPaginaPorSecao = new Map();
 const _ccPaginasPorLocal = new Map();
+const _ccModoPorSecao = new Map();
 let _ccBuscaTimer = null;
+window.ccSetModo = function(secId, modo){
+  _ccModoPorSecao.set(secId,modo);
+  renderControleContas(secId);
+};
 window.ccSetPagina = function(secId, pagina){
   _ccPaginaPorSecao.set(secId, Math.max(1, Number(pagina)||1));
   renderControleContas(secId);
@@ -102,6 +107,7 @@ window.ccBuscaInput = function(secId){
 window.renderControleContas = function(secId){
   const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
   curSecId = secId;
+  const modo=_ccModoPorSecao.get(secId)||'resumo';
   const items = [...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const tipoFiltro = document.getElementById('cc-filtro-tipo')?.value || '';
   const anoFiltro = document.getElementById('cc-filtro-ano')?.value || '';
@@ -539,6 +545,12 @@ window.renderControleContas = function(secId){
       <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF${(tipoFiltro||anoFiltro||pagoFiltro||buscaFiltro.trim())?' (filtrado)':''}</button>
     </div>
   </div>
+  <nav class="cc-workspace-tabs" aria-label="Áreas do controle de contas">
+    <button class="cc-workspace-tab ${modo==='resumo'?'active':''}" onclick="ccSetModo('${secId}','resumo')">📊 Visão geral</button>
+    <button class="cc-workspace-tab ${modo==='lancamentos'?'active':''}" onclick="ccSetModo('${secId}','lancamentos')">🧾 Lançamentos <span>${qtdTotal}</span></button>
+    <button class="cc-workspace-tab ${modo==='vencimentos'?'active':''}" onclick="ccSetModo('${secId}','vencimentos')">⏰ Vencimentos <span>${linhas.length+vigItens.length}</span></button>
+  </nav>
+  <section class="cc-workspace-panel" ${modo==='resumo'?'':'hidden'}>
   ${dashHtml}
   ${catsProgressHtml}
   ${tipoResumoHtml}
@@ -574,11 +586,13 @@ window.renderControleContas = function(secId){
       </tr></tfoot>
     </table>
   </div>`:''}
-  ${vigPanel}
-  ${alertPanel}
+  </section>
+  <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
+  <section class="cc-workspace-panel" ${modo==='lancamentos'?'':'hidden'}>
   ${paginacaoHtml}
   ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}
-  ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}`);
+  ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
+  </section>`);
 };
 
 window.ccOpenCategoriaModal = function(id, secId){

@@ -1,4 +1,4 @@
-import './perfuracao-pocos.js?v=5';
+import './perfuracao-pocos.js?v=6';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
