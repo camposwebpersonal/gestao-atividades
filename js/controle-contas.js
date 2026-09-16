@@ -293,7 +293,6 @@ window.renderControleContas = function(secId,opcoes={}){
       const totalLocalGeral=lancamentosAno.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       const totalLocalPago=lancamentosAno.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       if(renderizarDetalhes) resumoLocalHtml = `<div class="cc-local-summary" style="margin-left:auto">
-          <div style="font-size:12px;font-weight:800;margin-bottom:8px">Total do item/local em ${esc(nav.ano||'—')} <span style="font-weight:400;color:var(--muted)">· todos os meses${nav.tipo?' · '+esc(nav.tipo):''}</span></div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <span class="cc-badge" style="font-size:14px;font-weight:800">Total do ano: R$ ${totalLocalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
             <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${totalLocalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
