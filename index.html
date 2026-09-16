@@ -362,7 +362,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=63">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=64">
 </head>
 <body>
 <div id="app">
@@ -826,7 +826,7 @@ window.loadData=async function loadData(){
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
   S.subitems=c.docs.map(d=>({id:d.id,...d.data()}));
-  S.fieldTemplates=ft.docs.map(d=>({id:d.id,...d.data()}));
+  S.fieldTemplates=ft.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
@@ -1912,12 +1912,12 @@ window.openSecModal=function(id){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:8px">📋 Campos dos Itens</div>
-        <div id="ftpl-item-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='item');return ts.length?ts.map(t=>`<div id="ftpl-row-${t.id}" style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span id="ftpl-type-${t.id}" style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type==='combobox'?'lista: '+_tplOpts(t).join(' / '):t.field_type}</span><button onclick="editFieldTplInline('${t.id}','${id}')" style="background:none;border:none;color:#fbbf24;cursor:pointer;font-size:13px;padding:0 4px" title="Editar tipo">✏️</button><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
+        <div id="ftpl-item-list-${id}">${renderFieldTplList(id,'item')}</div>
         <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-item').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px">📌 Campos dos Subitens</div>
-        <div id="ftpl-sub-list-${id}">${(()=>{const ts=S.fieldTemplates.filter(t=>t.atividade_id===id&&t.scope==='subitem');return ts.length?ts.map(t=>`<div id="ftpl-row-${t.id}" style="display:flex;align-items:center;gap:6px;padding:5px 8px;background:#0e1729;border-radius:6px;margin-bottom:4px"><span style="flex:1;font-size:12px">${esc(t.field_name)}</span><span id="ftpl-type-${t.id}" style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${t.field_type==='combobox'?'lista: '+_tplOpts(t).join(' / '):t.field_type}</span><button onclick="editFieldTplInline('${t.id}','${id}')" style="background:none;border:none;color:#fbbf24;cursor:pointer;font-size:13px;padding:0 4px" title="Editar tipo">✏️</button><button onclick="delFieldTpl('${t.id}','${id}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button></div>`).join(''):'<div style="font-size:11px;color:var(--muted);font-style:italic">Nenhum campo.</div>';})()}</div>
+        <div id="ftpl-sub-list-${id}">${renderFieldTplList(id,'subitem')}</div>
         <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-subitem').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
     </div>
@@ -2008,7 +2008,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     return`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">🗂️ Campos Personalizados</div><div style="display:flex;flex-direction:column;gap:8px">${tpls.map(t=>{
       let raw=ef[t.field_name]; if(raw===null||raw===undefined) raw=it?.[t.field_name];
       const val=raw===null||raw===undefined?'':String(raw);
-      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
+      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
       return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
@@ -3247,10 +3247,11 @@ window.gerarPdf=async function(secId,opts){
 window.saveFieldTpl=async function(actId,scope,nameEl,typeEl){
   const name=document.getElementById(nameEl)?.value.trim();
   if(!name){toast('Nome obrigatório','error');return;}
+  if(getFieldTpls(actId,scope).some(t=>t.field_name===name)){toast('Já existe um campo com esse nome','error');return;}
   const ftype=document.getElementById(typeEl)?.value||'text';
   let opts=[];
   if(ftype==='combobox'){const oel=document.getElementById('ftpl-opts-'+actId+'-'+scope);opts=(oel?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(!opts.length){toast('Adicione ao menos uma opção para o combobox','error');return;}}
-  const ord=S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope).length;
+  const ord=Math.max(-1,...getFieldTpls(actId,scope).map(t=>Number(t.order_num)||0))+1;
   await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope,field_name:name,field_type:ftype,options:opts,order_num:ord,created_at:serverTimestamp()});
   await loadData();openSecModal(actId);
 };
@@ -3259,26 +3260,61 @@ window.delFieldTpl=async function(id,actId){
   await deleteDoc(doc(db,'fieldTemplates',id));
   await loadData();openSecModal(actId);
 };
+const fieldTypeLabels={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (combobox)'};
+window.getFieldTpls=function(actId,scope){return S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope).sort((a,b)=>(a.order_num||0)-(b.order_num||0));};
+window.renderFieldTplList=function(actId,scope){
+  const ts=getFieldTpls(actId,scope);
+  return ts.length?ts.map(t=>`<div id="ftpl-row-${t.id}" class="ftpl-row" data-tpl-id="${t.id}" ondragover="event.preventDefault()" ondrop="dropFieldTpl(event,'${t.id}')">
+    <span class="ftpl-grip" draggable="true" ondragstart="startFieldTplDrag(event,'${t.id}')" title="Arraste para mudar a ordem">⠿</span>
+    <span class="ftpl-name">${esc(t.field_name)}</span><span class="ftpl-type" title="${esc(_tplOpts(t).join(' / '))}">${fieldTypeLabels[t.field_type]||esc(t.field_type)}</span>
+    <button class="card-btn" onclick="editFieldTplInline('${t.id}','${actId}')" title="Editar nome, tipo e opções">✏️</button><button class="card-btn" onclick="delFieldTpl('${t.id}','${actId}')" title="Remover campo">✕</button></div>`).join(''):'<div class="ftpl-help">Nenhum campo.</div>';
+};
+window.startFieldTplDrag=function(ev,id){ev.dataTransfer.setData('application/x-field-template',id);ev.dataTransfer.effectAllowed='move';};
+window.dropFieldTpl=async function(ev,targetId){
+  ev.preventDefault();const sourceId=ev.dataTransfer.getData('application/x-field-template');
+  const source=S.fieldTemplates.find(t=>t.id===sourceId),target=S.fieldTemplates.find(t=>t.id===targetId);
+  if(!source||!target||sourceId===targetId||source.atividade_id!==target.atividade_id||source.scope!==target.scope)return;
+  if(document.querySelector('.ftpl-editor')){toast('Salve ou cancele a edição antes de ordenar','error');return;}
+  const ts=getFieldTpls(source.atividade_id,source.scope),from=ts.indexOf(source),to=ts.indexOf(target);
+  ts.splice(from,1);ts.splice(to,0,source);
+  try{for(let i=0;i<ts.length;i++)await updateDoc(doc(db,'fieldTemplates',ts[i].id),{order_num:i});await loadData();
+    document.getElementById('ftpl-'+(source.scope==='item'?'item':'sub')+'-list-'+source.atividade_id).innerHTML=renderFieldTplList(source.atividade_id,source.scope);toast('Ordem dos campos salva!');
+  }catch(e){console.error(e);toast('Não foi possível salvar toda a ordem. Tente novamente.','error');await loadData();}
+};
+window.addFieldOption=function(tplId,value=''){
+ const list=document.getElementById('ftpl-edit-opts-'+tplId),row=document.createElement('div');row.className='ftpl-option';
+ row.innerHTML=`<span class="ftpl-grip" draggable="true" title="Arraste para ordenar">⠿</span><input aria-label="Opção da lista" value="${esc(value)}"><button type="button" class="card-btn" title="Remover opção">✕</button>`;
+ row.querySelector('button').onclick=()=>row.remove();
+ row.querySelector('.ftpl-grip').ondragstart=ev=>{list._dragRow=row;ev.dataTransfer.setData('application/x-field-option',tplId);ev.dataTransfer.effectAllowed='move';};
+ row.ondragover=ev=>ev.preventDefault();row.ondrop=ev=>{ev.preventDefault();ev.stopPropagation();if(ev.dataTransfer.getData('application/x-field-option')!==tplId||!list._dragRow)return;const source=list._dragRow;if(source===row)return;const rows=[...list.children];list.insertBefore(source,rows.indexOf(source)<rows.indexOf(row)?row.nextSibling:row);list._dragRow=null;};list.appendChild(row);
+};
 window.editFieldTplInline=function(tplId,actId){
-  const tpl=S.fieldTemplates.find(t=>t.id===tplId);if(!tpl)return;
-  const row=document.getElementById('ftpl-row-'+tplId);if(!row)return;
-  const types=[{v:'text',l:'Texto'},{v:'number',l:'Número'},{v:'date',l:'Data'},{v:'textarea',l:'Texto longo'},{v:'combobox',l:'Combobox (lista)'}];
-  let opts=types.map(o=>`<option value="${o.v}"${o.v===tpl.field_type?' selected':''}>${o.l}</option>`).join('');
-  row.innerHTML=`<span style="flex:1;font-size:12px">${esc(tpl.field_name)}</span><select id="ftpl-edit-type-${tplId}" style="padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0e1729;color:var(--text);font-size:11px">${opts}</select><button onclick="saveEditFieldTpl('${tplId}','${actId}')" style="background:none;border:none;color:#34d399;cursor:pointer;font-size:14px;padding:0 4px" title="Salvar">💾</button><button onclick="cancelEditFieldTpl('${tplId}','${actId}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px" title="Cancelar">✕</button>`;
+ const tpl=S.fieldTemplates.find(t=>t.id===tplId),row=document.getElementById('ftpl-row-'+tplId);if(!tpl||!row)return;
+ if(document.querySelector('.ftpl-editor')){toast('Salve ou cancele o campo que está em edição','error');return;}
+ row.innerHTML=`<div class="ftpl-editor"><label>Nome do campo<input id="ftpl-edit-name-${tplId}" value="${esc(tpl.field_name)}"></label><label>Tipo<select id="ftpl-edit-type-${tplId}" onchange="document.getElementById('ftpl-options-${tplId}').hidden=this.value!=='combobox'">${Object.entries(fieldTypeLabels).map(([v,l])=>`<option value="${v}" ${v===tpl.field_type?'selected':''}>${l}</option>`).join('')}</select></label>
+ <div id="ftpl-options-${tplId}" ${tpl.field_type==='combobox'?'':'hidden'}><div class="ftpl-help">Opções da lista · arraste pelo ⠿ para ordenar</div><div id="ftpl-edit-opts-${tplId}"></div><button class="btn-action" onclick="addFieldOption('${tplId}')">+ Opção</button></div>
+ <div class="ftpl-editor-actions"><button class="btn-action primary" onclick="saveEditFieldTpl('${tplId}','${actId}')">Salvar campo</button><button class="btn-action" onclick="cancelEditFieldTpl('${tplId}','${actId}')">Cancelar</button></div></div>`;
+ _tplOpts(tpl).forEach(o=>addFieldOption(tplId,o));
 };
 window.saveEditFieldTpl=async function(tplId,actId){
-  const newType=document.getElementById('ftpl-edit-type-'+tplId)?.value;
-  if(!newType)return;
-  await updateDoc(doc(db,'fieldTemplates',tplId),{field_type:newType,updated_at:serverTimestamp()});
-  await loadData();openSecModal(actId);
-  toast('Tipo atualizado!','success');
+ const tpl=S.fieldTemplates.find(t=>t.id===tplId),name=document.getElementById('ftpl-edit-name-'+tplId)?.value.trim(),type=document.getElementById('ftpl-edit-type-'+tplId)?.value;
+ if(!tpl||!type)return;if(!name){toast('Nome obrigatório','error');return;}
+ if(getFieldTpls(actId,tpl.scope).some(t=>t.id!==tplId&&t.field_name===name)){toast('Já existe um campo com esse nome','error');return;}
+ const options=[...document.querySelectorAll('#ftpl-edit-opts-'+tplId+' input')].map(e=>e.value.trim()).filter(Boolean);
+ if(type==='combobox'&&!options.length){toast('Adicione ao menos uma opção','error');return;}
+ if(type==='combobox'&&new Set(options).size!==options.length){toast('Há opções repetidas na lista','error');return;}
+ const btn=document.querySelector('#ftpl-row-'+tplId+' .primary');btn.disabled=true;
+ try{
+   // Copia os valores para o novo nome antes de mudar o template; mantém a chave antiga como segurança.
+   if(name!==tpl.field_name){const col=tpl.scope==='item'?'items':'subitems',entities=S[col].filter(e=>e.atividade_id===actId&&Object.prototype.hasOwnProperty.call(e.extra_fields||{},tpl.field_name));
+     if(entities.some(e=>Object.prototype.hasOwnProperty.call(e.extra_fields,name)&&e.extra_fields[name]!==e.extra_fields[tpl.field_name]))throw new Error('Nome já utilizado nos dados cadastrados. Escolha outro nome.');
+     for(const entity of entities)await updateDoc(doc(db,col,entity.id),{extra_fields:{...entity.extra_fields,[name]:entity.extra_fields[tpl.field_name]}});
+   }
+   await updateDoc(doc(db,'fieldTemplates',tplId),{field_name:name,field_type:type,options:type==='combobox'?options:[]});
+   await loadData();cancelEditFieldTpl(tplId,actId);toast('Campo atualizado!');
+ }catch(e){console.error(e);toast(e.message||'Não foi possível salvar o campo','error');btn.disabled=false;}
 };
-window.cancelEditFieldTpl=function(tplId,actId){
-  const tpl=S.fieldTemplates.find(t=>t.id===tplId);if(!tpl)return;
-  const row=document.getElementById('ftpl-row-'+tplId);if(!row)return;
-  row.innerHTML=`<span style="flex:1;font-size:12px">${esc(tpl.field_name)}</span><span id="ftpl-type-${tplId}" style="font-size:10px;color:var(--muted);background:#1e3a5f;padding:1px 6px;border-radius:4px">${tpl.field_type==='combobox'?'lista: '+_tplOpts(tpl).join(' / '):tpl.field_type}</span><button onclick="editFieldTplInline('${tplId}','${actId}')" style="background:none;border:none;color:#fbbf24;cursor:pointer;font-size:13px;padding:0 4px" title="Editar tipo">✏️</button><button onclick="delFieldTpl('${tplId}','${actId}')" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:14px;padding:0 2px">✕</button>`;
-};
-window.getFieldTpls=function(actId,scope){return S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope);};
+window.cancelEditFieldTpl=function(tplId,actId){const tpl=S.fieldTemplates.find(t=>t.id===tplId);if(!tpl)return;const list=document.getElementById('ftpl-'+(tpl.scope==='item'?'item':'sub')+'-list-'+actId);if(list)list.innerHTML=renderFieldTplList(actId,tpl.scope);};
 // ── VERBAS LIST ──
 window.vbAdd=function(){
   const list=document.getElementById('vb-list');if(!list)return;

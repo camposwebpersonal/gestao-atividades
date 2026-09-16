@@ -73,6 +73,15 @@ const CC_LANCAMENTOS_POR_LOCAL = 40;
 const _ccPaginaPorSecao = new Map();
 const _ccPaginasPorLocal = new Map();
 const _ccModoPorSecao = new Map();
+const _ccNavegacaoPorSecao = new Map();
+const CC_MESES = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const ccAno = c => String(c.mes_ano||'').split('/')[1]||'Sem ano';
+const ccMes = c => CC_MESES[Number(String(c.mes_ano||'').split('/')[0])-1]||'Sem mês';
+window.ccNavegar = function(secId,nivel,valor){
+ const nav={...(_ccNavegacaoPorSecao.get(secId)||{})};nav[nivel]=valor;
+ if(nivel==='setor'){delete nav.tipo;delete nav.ano;}if(nivel==='tipo')delete nav.ano;
+ _ccNavegacaoPorSecao.set(secId,nav);_ccPaginaPorSecao.set(secId,1);_ccPaginasPorLocal.clear();renderControleContas(secId);
+};
 let _ccBuscaTimer = null;
 window.ccSetModo = function(secId, modo){
   _ccModoPorSecao.set(secId,modo);
@@ -128,6 +137,27 @@ window.renderControleContas = function(secId){
     if(!locaisPorCategoria.has(local.item_id)) locaisPorCategoria.set(local.item_id, []);
     locaisPorCategoria.get(local.item_id).push(local);
   });
+  // A navegação afeta apenas os detalhes; o resumo geral mantém seus totais.
+  const nav={...(_ccNavegacaoPorSecao.get(secId)||{})};
+  const matchesFiltros=c=>(!tipoFiltro||c.tipo===tipoFiltro)&&(!anoFiltro||ccAno(c)===anoFiltro)&&(!pagoFiltro||(pagoFiltro==='pago'?c.pago:!c.pago));
+  const locaisElegiveis=item=>(locaisPorCategoria.get(item.id)||[]).filter(local=>_ccLocalMatchesBusca(item,local,buscaTokens,contasPorLocal.get(local.id)||[]));
+  const contasPorSetor=new Map(items.map(item=>[item.id,locaisElegiveis(item).flatMap(local=>contasPorLocal.get(local.id)||[]).filter(matchesFiltros)]));
+  const contasSetor=item=>contasPorSetor.get(item.id)||[];
+  const setoresNavegaveis=items.filter(item=>contasSetor(item).length||(!tipoFiltro&&!anoFiltro&&!pagoFiltro&&(!buscaTokens.length||locaisElegiveis(item).length)));
+  if(!setoresNavegaveis.some(i=>i.id===nav.setor))nav.setor=setoresNavegaveis[0]?.id||'';
+  const setorAtivo=items.find(i=>i.id===nav.setor);
+  const contasAtivas=setorAtivo?contasSetor(setorAtivo):[];
+  const tiposNavegaveis=[...new Set(contasAtivas.map(c=>c.tipo||'Outros'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  if(!tiposNavegaveis.includes(nav.tipo))nav.tipo=tiposNavegaveis[0]||'';
+  const contasTipo=contasAtivas.filter(c=>(c.tipo||'Outros')===nav.tipo);
+  const anosNavegaveis=[...new Set(contasTipo.map(ccAno))].sort((a,b)=>b.localeCompare(a));
+  if(!anosNavegaveis.includes(nav.ano))nav.ano=anosNavegaveis.includes(String(new Date().getFullYear()))?String(new Date().getFullYear()):anosNavegaveis[0]||'';
+  _ccNavegacaoPorSecao.set(secId,nav);
+  const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
+  const contasAno=contasTipo.filter(c=>ccAno(c)===nav.ano);
+  const navegacaoHtml=`<div class="cc-drilldown"><div class="cc-drill-label">1 · Setor</div>${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
+  ${tiposNavegaveis.length?`<div class="cc-drill-label">2 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">3 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}
+  <div class="cc-path">${esc(setorAtivo?.description||'')} › ${esc(nav.tipo)} › ${esc(nav.ano)}</div><div class="cc-months">${CC_MESES.map((mes,i)=>{const rows=contasAno.filter(c=>Number(String(c.mes_ano||'').split('/')[0])===i+1),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);return `<div class="cc-month ${rows.length?'has-data':''}"><strong>${mes}</strong><small>${rows.length?'R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2}):'Sem lançamento'}</small><small>${rows.length?rows.length+' lançamento(s)':''}</small></div>`;}).join('')}</div>`:'<div class="empty">Nenhum lançamento neste setor para os filtros selecionados.</div>'}</div>`;
   const paginaSolicitada = Math.max(1, _ccPaginaPorSecao.get(secId)||1);
   const inicioPagina = (paginaSolicitada-1)*CC_LOCAIS_POR_PAGINA;
   const fimPagina = inicioPagina+CC_LOCAIS_POR_PAGINA;
@@ -164,14 +194,16 @@ window.renderControleContas = function(secId){
         return true;
       });
       if(!locRows.length && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
-      const ordemLocal = quantidadeLocaisEncontrados++;
-      const renderizarDetalhes = ordemLocal>=inicioPagina && ordemLocal<fimPagina;
+      const detailRows=locRows.filter(c=>item.id===nav.setor&&(c.tipo||'Outros')===nav.tipo&&ccAno(c)===nav.ano);
+      const localSelecionado=item.id===nav.setor&&(detailRows.length||(!locRows.length&&!nav.tipo));
+      const ordemLocal = localSelecionado?quantidadeLocaisEncontrados++:-1;
+      const renderizarDetalhes = localSelecionado&&ordemLocal>=inicioPagina && ordemLocal<fimPagina;
       const chavePaginaLocal = secId+':'+local.id;
-      const totalPaginasLocal = Math.max(1,Math.ceil(locRows.length/CC_LANCAMENTOS_POR_LOCAL));
+      const totalPaginasLocal = Math.max(1,Math.ceil(detailRows.length/CC_LANCAMENTOS_POR_LOCAL));
       const paginaLocal = Math.min(totalPaginasLocal,Math.max(1,_ccPaginasPorLocal.get(chavePaginaLocal)||1));
       _ccPaginasPorLocal.set(chavePaginaLocal,paginaLocal);
       const inicioLocal = (paginaLocal-1)*CC_LANCAMENTOS_POR_LOCAL;
-      const linhasVisiveis = locRows.slice(inicioLocal,inicioLocal+CC_LANCAMENTOS_POR_LOCAL);
+      const linhasVisiveis = detailRows.slice(inicioLocal,inicioLocal+CC_LANCAMENTOS_POR_LOCAL);
       const locTotal = locRows.reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPago = locRows.filter(c=>c.pago).reduce((a,c)=>a+(parseFloat(c.valor)||0),0);
       const locPendente = locTotal - locPago;
@@ -198,7 +230,7 @@ window.renderControleContas = function(secId){
         const corLanc = c.pago ? '#10b981' : '#f87171';
         const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<tr class="${pagoCls}">
-          ${colsOff.has('mes')?'':`<td>${esc(c.mes_ano||'—')}</td>`}
+          ${colsOff.has('mes')?'':`<td>${ccMes(c)} · ${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
           ${colsOff.has('contrato')?'':`<td><input type="text" class="${_ccTokenHit(contaContrato,buscaTokens)?'cc-obs-match':''}" value="${esc(contaContrato||'')}" onchange="ccSalvarContaContratoLocal('${local.id}',this.value)" placeholder="Conta Contrato"></td>`}
           ${colsOff.has('leitura')?'':`<td><input type="text" value="${esc(c.leitura_relogio||'')}" onchange="ccSalvarCampo('${c.id}','leitura_relogio',this.value)" placeholder="Leitura"></td>`}
@@ -219,7 +251,7 @@ window.renderControleContas = function(secId){
         const corLanc = c.pago ? '#10b981' : '#f87171';
         const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<div class="cc-mobile-card">
-          <div class="cc-mobile-title">${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
+          <div class="cc-mobile-title">${ccMes(c)} · ${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
           ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${_ccHighlight(contaContrato||'—', buscaTokens)}</span></div>`}
           ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
           ${colsOff.has('consumo')?'':`<div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>`}
@@ -236,10 +268,11 @@ window.renderControleContas = function(secId){
         </div>`;
       }).join('') : '';
 
-      const paginacaoLocalHtml = locRows.length>CC_LANCAMENTOS_POR_LOCAL ? `<div class="cc-paginacao cc-paginacao-local">
-        <div><strong>${inicioLocal+1}–${Math.min(inicioLocal+CC_LANCAMENTOS_POR_LOCAL,locRows.length)}</strong> de <strong>${locRows.length}</strong> lançamentos</div>
+      const paginacaoLocalHtml = detailRows.length>CC_LANCAMENTOS_POR_LOCAL ? `<div class="cc-paginacao cc-paginacao-local">
+        <div><strong>${inicioLocal+1}–${Math.min(inicioLocal+CC_LANCAMENTOS_POR_LOCAL,detailRows.length)}</strong> de <strong>${detailRows.length}</strong> lançamentos</div>
         <div class="cc-paginacao-acoes"><button class="btn-action" ${paginaLocal<=1?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal-1})">←</button><span>Página <strong>${paginaLocal}</strong> de ${totalPaginasLocal}</span><button class="btn-action" ${paginaLocal>=totalPaginasLocal?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal+1})">→</button></div>
       </div>` : '';
+      const detailTotal=detailRows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0),detailPago=detailRows.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
@@ -264,11 +297,11 @@ window.renderControleContas = function(secId){
           ${mobileRows}
           <div class="cc-total-bar">
             <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <span class="cc-badge">Total: R$ ${locTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${locPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${locPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+              <span class="cc-badge">Total: R$ ${detailTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+              <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${detailPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+              <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(detailTotal-detailPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
             </div>
-            <div style="font-size:11px;color:var(--muted)">${locRows.length} lançamento(s)</div>
+            <div style="font-size:11px;color:var(--muted)">${detailRows.length} lançamento(s)</div>
           </div>
         </div>
       </div>`;
@@ -277,14 +310,14 @@ window.renderControleContas = function(secId){
     const catMeta = Object.entries(catEf).filter(([k,v])=>String(v==null?'':v).trim()).map(([k,v])=>`<span class="cc-badge" style="font-size:11px">${esc(k)}: ${esc(v)}</span>`).join(' ');
     const catPend = catTotal - catPago;
     if(catQtd > 0) resumoCats.push({ nome: item.description || 'Categoria', qtd: catQtd, qPago: catQPago, qPendente: catQPendente, total: catTotal, pago: catPago, pendente: catPend });
-    const mostrarCategoriaVazia = !locais.length && paginaSolicitada===1 && !buscaTokens.length && !tipoFiltro && !anoFiltro && !pagoFiltro;
+    const mostrarCategoriaVazia = item.id===nav.setor && !locais.length && paginaSolicitada===1 && !buscaTokens.length && !tipoFiltro && !anoFiltro && !pagoFiltro;
     if(!locaisHtml && !mostrarCategoriaVazia) return '';
     return `<div style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
-          <span class="cc-badge" style="font-weight:700">Total: R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+          <span class="cc-badge" style="font-weight:700">Total do setor (filtros gerais): R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
           <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${catPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
           <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${catPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
           <span class="cc-badge" style="color:var(--muted)">${catQtd} lanç.</span>
@@ -589,10 +622,13 @@ window.renderControleContas = function(secId){
   </section>
   <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
   <section class="cc-workspace-panel" ${modo==='lancamentos'?'':'hidden'}>
+  ${navegacaoHtml}
   ${paginacaoHtml}
   ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}
   ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
   </section>`);
+  document.querySelectorAll('[data-cc-level]').forEach(button=>button.onclick=()=>ccNavegar(secId,button.dataset.ccLevel,button.dataset.ccValue));
+
 };
 
 window.ccOpenCategoriaModal = function(id, secId){
