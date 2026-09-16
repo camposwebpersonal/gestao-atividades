@@ -74,12 +74,15 @@ test('trocar mês atualiza somente a lista e conserva os cards existentes',()=>{
  assert.match(results.innerHTML,/FEV · 02\/2026/);assert.doesNotMatch(results.innerHTML,/JAN · 01\/2026/);
  assert.equal(cards[0]['aria-pressed'],'false');assert.equal(cards[1]['aria-pressed'],'true');
 });
-test('total geral do local soma todos os meses e anos sem incluir outros locais',()=>{
- const a=app();a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');
+test('total anual soma todos os meses do ano e tipo selecionados, isolando o local',()=>{
+ const a=app();a.S.contas.push({id:'fev',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Luz',mes_ano:'02/2026',valor:60,pago:false});
+ a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');
  const summary=()=>a.panel().split('<div class="cc-local-summary"')[1].split('<div class="cc-lancamentos">')[0];
- assert.match(summary(),/Total geral: R\$ 600,00/);assert.match(summary(),/Pago: R\$ 100,00/);assert.match(summary(),/Pendente: R\$ 500,00/);
+ assert.match(summary(),/Total do ano: R\$ 160,00/);assert.match(summary(),/Pago: R\$ 100,00/);assert.match(summary(),/Pendente: R\$ 60,00/);
  assert.match(a.panel(),/Total do mês: R\$ 100,00/);
- a.ctx.ccNavegar('s','mes','12');assert.match(summary(),/Total geral: R\$ 600,00/);assert.match(a.panel(),/Total do mês: R\$ 0,00/);
- a.filters['cc-filtro-pago']={value:'pago'};a.ctx.renderControleContas('s');assert.match(summary(),/Total geral: R\$ 600,00/);
- a.filters['cc-filtro-pago'].value='';a.ctx.ccNavegar('s','setor','b');assert.match(summary(),/Total geral: R\$ 400,00/);assert.doesNotMatch(summary(),/600,00/);
+ a.ctx.ccNavegar('s','mes','12');assert.match(summary(),/Total do ano: R\$ 160,00/);assert.match(a.panel(),/Total do mês: R\$ 0,00/);
+ a.ctx.ccNavegar('s','ano','2025');assert.match(summary(),/Total do ano: R\$ 200,00/);assert.doesNotMatch(summary(),/160,00/);
+ a.ctx.ccNavegar('s','tipo','Internet');assert.match(summary(),/Total do ano: R\$ 300,00/);
+ a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');a.filters['cc-filtro-pago']={value:'pago'};a.ctx.renderControleContas('s');assert.match(summary(),/Total do ano: R\$ 160,00/);
+ a.filters['cc-filtro-pago'].value='';a.ctx.ccNavegar('s','setor','b');assert.match(summary(),/Total do ano: R\$ 400,00/);assert.doesNotMatch(summary(),/160,00/);
 });
