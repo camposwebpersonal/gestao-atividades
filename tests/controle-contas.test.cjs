@@ -11,7 +11,7 @@ function app(){
  {id:'c3',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Internet',mes_ano:'03/2026',valor:300,pago:false},
  {id:'c4',atividade_id:'s',item_id:'b',subitem_id:'l2',tipo:'Água',mes_ano:'04/2024',valor:400,pago:true}]};
  const ctx={console,S,scrollTo:()=>{},curSecId:null,setTimeout,clearTimeout,requestAnimationFrame:f=>f(),document:{getElementById:id=>filters[id]||null,querySelectorAll:()=>[],querySelector:()=>null},setC:h=>html=h};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/controle-contas.js'),'utf8'),ctx);
- return {ctx,S,filters,panel:()=>html.split('<section class="cc-workspace-panel"').at(-1),html:()=>html};
+ return {ctx,S,filters,panel:()=>html.split('<section class="cc-workspace-panel cc-month-workspace"').at(-1),html:()=>html};
 }
 test('setor → tipo → ano seleciona os registros e mantém resumo geral',()=>{
  const a=app();a.ctx.ccSetModo('s','lancamentos');
@@ -62,4 +62,15 @@ test('trocar mês restaura rolagem interna, móvel e horizontal sem animação',
 test('lançamentos não exibem a coluna Situação nem barras e mantêm avisos dos meses',()=>{
  const a=app();a.ctx.ccSetModo('s','lancamentos');assert.doesNotMatch(a.panel(),/Situação|<svg|\d+%/);assert.match(a.panel(),/Sem lançamento/);
  a.ctx.ccNavegar('s','mes','12');assert.match(a.panel(),/colspan="11"/);
+});
+test('trocar mês atualiza somente a lista e conserva os cards existentes',()=>{
+ const a=app();a.S.contas.push({id:'fev',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Luz',mes_ano:'02/2026',valor:70,pago:true});
+ a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');
+ const results={innerHTML:''},cards=['1','2'].map(value=>({dataset:{ccValue:value},classList:{toggle(name,active){this.active=active;}},setAttribute(name,value){this[name]=value;}}));
+ const get=a.ctx.document.getElementById;a.ctx.document.getElementById=id=>id==='cc-month-results'?results:get(id);
+ a.ctx.document.querySelectorAll=selector=>selector==='[data-cc-level="mes"]'?cards:[];
+ a.ctx.setC=()=>assert.fail('Trocar mês não deve substituir o conteúdo da página');
+ a.ctx.ccNavegar('s','mes','2');
+ assert.match(results.innerHTML,/FEV · 02\/2026/);assert.doesNotMatch(results.innerHTML,/JAN · 01\/2026/);
+ assert.equal(cards[0]['aria-pressed'],'false');assert.equal(cards[1]['aria-pressed'],'true');
 });

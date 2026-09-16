@@ -90,7 +90,7 @@ window.ccNavegar = function(secId,nivel,valor){
  // Mantém a altura durante a troca para o navegador não limitar a rolagem ao esvaziar o conteúdo.
  if(content)content.style.minHeight=content.offsetHeight+'px';
  _ccNavegacaoPorSecao.set(secId,nav);_ccPaginaPorSecao.set(secId,1);_ccPaginasPorLocal.clear();
- try{renderControleContas(secId);}finally{
+ try{renderControleContas(secId,{somenteMes:nivel==='mes'});}finally{
    requestAnimationFrame(()=>{
      if(content)content.style.minHeight=minHeight;
      main?.scrollTo({top,left,behavior:'instant'});
@@ -131,7 +131,7 @@ window.ccBuscaInput = function(secId){
   }, 320);
 };
 
-window.renderControleContas = function(secId){
+window.renderControleContas = function(secId,opcoes={}){
   const sec = S.secs.find(s=>s.id===secId); if(!sec) return;
   curSecId = secId;
   const modo=_ccModoPorSecao.get(secId)||'resumo';
@@ -571,6 +571,19 @@ window.renderControleContas = function(secId){
   </div>
 </div>`:'';
 
+  // Ao trocar o mês, conserva os cards, o foco e todos os elementos acima da lista.
+  const resultados=opcoes.somenteMes?document.getElementById('cc-month-results'):null;
+  if(resultados){
+    resultados.innerHTML=categoriasHtml||'<div class="empty">Nenhum item/local disponível para os filtros selecionados.</div>';
+    document.querySelectorAll('[data-cc-level="mes"]').forEach(button=>{
+      const active=button.dataset.ccValue===nav.mes;
+      button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+    });
+    const path=document.querySelector('.cc-path');
+    if(path)path.textContent=[setorAtivo?.description,localAtivo?.description,nav.tipo,nav.ano,mesesNavegaveis.find(m=>m.id===nav.mes)?.label].filter(Boolean).join(' › ');
+    requestAnimationFrame(()=>window.refreshStickyTableScroll?.());
+    return;
+  }
   setC(`<div style="margin-bottom:14px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;display:block;background:transparent">`:''}
     <div class="page-title">${esc(sec.name)}</div>
@@ -637,9 +650,9 @@ window.renderControleContas = function(secId){
   </div>`:''}
   </section>
   <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
-  <section class="cc-workspace-panel" ${modo==='lancamentos'?'':'hidden'}>
+  <section class="cc-workspace-panel cc-month-workspace" ${modo==='lancamentos'?'':'hidden'}>
   ${navegacaoHtml}
-  ${categoriasHtml || '<div class="empty">Nenhum item/local disponível para os filtros selecionados.</div>'}
+  <div id="cc-month-results">${categoriasHtml || '<div class="empty">Nenhum item/local disponível para os filtros selecionados.</div>'}</div>
   ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
   </section>`);
   document.querySelectorAll('[data-cc-level]').forEach(button=>button.onclick=()=>ccNavegar(secId,button.dataset.ccLevel,button.dataset.ccValue));

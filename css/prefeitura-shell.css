@@ -443,3 +443,6 @@ button,a,input,select,textarea{touch-action:manipulation}
 
 /* Abas mensais de cada item/local */
 button.cc-month{border:1px solid #d5e1e8;text-align:left;cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s}button.cc-month:hover{border-color:#087f72}button.cc-month.active{background:#087f72;color:#fff;border-color:#087f72;box-shadow:0 3px 9px #087f7230}button.cc-month:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}.cc-drill-tabs{flex-wrap:wrap;max-height:220px;overflow-y:auto}.cc-months{grid-template-columns:repeat(12,minmax(100px,1fr))}
+
+/* Mantém a geometria dos cards mensais durante a atualização da lista. */
+.cc-month-workspace,.cc-month-workspace .cc-local-card{content-visibility:visible;contain-intrinsic-size:none}
