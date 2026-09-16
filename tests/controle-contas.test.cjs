@@ -79,6 +79,9 @@ test('total anual soma todos os meses do ano e tipo selecionados, isolando o loc
  a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');
  const summary=()=>a.panel().split('<div class="cc-local-summary"')[1].split('<div class="cc-lancamentos">')[0];
  assert.match(summary(),/Total do ano: R\$ 160,00/);assert.match(summary(),/Pago: R\$ 100,00/);assert.match(summary(),/Pendente: R\$ 60,00/);
+ assert.doesNotMatch(a.panel(),/Total do setor \(filtros gerais\)/);
+ assert.equal((a.panel().match(/class="cc-local-summary"/g)||[]).length,1);
+ assert.ok(a.panel().indexOf('class="cc-local-summary"')<a.panel().indexOf('id="cc-local-l1"'));
  assert.match(a.panel(),/Total do mês: R\$ 100,00/);
  a.ctx.ccNavegar('s','mes','12');assert.match(summary(),/Total do ano: R\$ 160,00/);assert.match(a.panel(),/Total do mês: R\$ 0,00/);
  a.ctx.ccNavegar('s','ano','2025');assert.match(summary(),/Total do ano: R\$ 200,00/);assert.doesNotMatch(summary(),/160,00/);

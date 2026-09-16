@@ -199,7 +199,7 @@ window.renderControleContas = function(secId,opcoes={}){
 
   const categoriasHtml = items.map((item, idx)=>{
     const locais = [...(locaisPorCategoria.get(item.id)||[])].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-    let locaisHtml = '';
+    let locaisHtml = '',resumoLocalHtml = '';
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
       // Busca em TUDO: categoria, local, todos os campos extras do local
@@ -292,6 +292,15 @@ window.renderControleContas = function(secId,opcoes={}){
       const lancamentosAno=lancamentos.filter(c=>ccAno(c)===nav.ano&&(c.tipo||'Outros')===nav.tipo);
       const totalLocalGeral=lancamentosAno.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       const totalLocalPago=lancamentosAno.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
+      if(renderizarDetalhes) resumoLocalHtml = `<div class="cc-local-summary" style="margin-left:auto">
+          <div style="font-size:12px;font-weight:800;margin-bottom:8px">Total do item/local em ${esc(nav.ano||'—')} <span style="font-weight:400;color:var(--muted)">· todos os meses${nav.tipo?' · '+esc(nav.tipo):''}</span></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="cc-badge" style="font-size:14px;font-weight:800">Total do ano: R$ ${totalLocalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${totalLocalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(totalLocalGeral-totalLocalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span style="font-size:11px;color:var(--muted)">${lancamentosAno.length} lançamento(s) no ano</span>
+          </div>
+        </div>`;
       if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
@@ -301,15 +310,6 @@ window.renderControleContas = function(secId,opcoes={}){
           <div class="cc-local-actions">
             ${S.isAdmin?`<button class="card-btn" onclick="ccOpenLocalModal('${local.id}','${item.id}')">✏️</button>`:''}
             <button class="btn-action primary" style="font-size:12px;padding:5px 12px" onclick="ccOpenLancamentoModal(null,'${local.id}')">+ Lançamento</button>
-          </div>
-        </div>
-        <div class="cc-local-summary" style="padding:12px 18px;border-bottom:1px solid var(--border);background:var(--card)">
-          <div style="font-size:12px;font-weight:800;margin-bottom:8px">Total do item/local em ${esc(nav.ano||'—')} <span style="font-weight:400;color:var(--muted)">· todos os meses${nav.tipo?' · '+esc(nav.tipo):''}</span></div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span class="cc-badge" style="font-size:14px;font-weight:800">Total do ano: R$ ${totalLocalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${totalLocalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(totalLocalGeral-totalLocalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span style="font-size:11px;color:var(--muted)">${lancamentosAno.length} lançamento(s) no ano</span>
           </div>
         </div>
         <div class="cc-lancamentos">
@@ -344,12 +344,7 @@ window.renderControleContas = function(secId,opcoes={}){
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
         ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto">
-          <span class="cc-badge" style="font-weight:700">Total do setor (filtros gerais): R$ ${catTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${catPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${catPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span class="cc-badge" style="color:var(--muted)">${catQtd} lanç.</span>
-        </div>
+        ${resumoLocalHtml}
       </div>
       ${catMeta?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${catMeta}</div>`:''}
       ${locaisHtml}
