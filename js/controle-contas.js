@@ -289,6 +289,8 @@ window.renderControleContas = function(secId,opcoes={}){
         <div class="cc-paginacao-acoes"><button class="btn-action" ${paginaLocal<=1?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal-1})">←</button><span>Página <strong>${paginaLocal}</strong> de ${totalPaginasLocal}</span><button class="btn-action" ${paginaLocal>=totalPaginasLocal?'disabled':''} onclick="ccSetPaginaLocal('${secId}','${local.id}',${paginaLocal+1})">→</button></div>
       </div>` : '';
       const detailTotal=detailRows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0),detailPago=detailRows.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
+      const totalLocalGeral=lancamentos.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
+      const totalLocalPago=lancamentos.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
@@ -298,6 +300,15 @@ window.renderControleContas = function(secId,opcoes={}){
           <div class="cc-local-actions">
             ${S.isAdmin?`<button class="card-btn" onclick="ccOpenLocalModal('${local.id}','${item.id}')">✏️</button>`:''}
             <button class="btn-action primary" style="font-size:12px;padding:5px 12px" onclick="ccOpenLancamentoModal(null,'${local.id}')">+ Lançamento</button>
+          </div>
+        </div>
+        <div class="cc-local-summary" style="padding:12px 18px;border-bottom:1px solid var(--border);background:var(--card)">
+          <div style="font-size:12px;font-weight:800;margin-bottom:8px">Total geral do item/local <span style="font-weight:400;color:var(--muted)">· todos os meses, anos e tipos de conta</span></div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="cc-badge" style="font-size:14px;font-weight:800">Total geral: R$ ${totalLocalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${totalLocalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(totalLocalGeral-totalLocalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            <span style="font-size:11px;color:var(--muted)">${lancamentos.length} lançamento(s) no total</span>
           </div>
         </div>
         <div class="cc-lancamentos">
@@ -313,7 +324,7 @@ window.renderControleContas = function(secId,opcoes={}){
           ${mobileRows}
           <div class="cc-total-bar">
             <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <span class="cc-badge">Total: R$ ${detailTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+              <span class="cc-badge">Total do mês: R$ ${detailTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
               <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${detailPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
               <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(detailTotal-detailPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
             </div>
