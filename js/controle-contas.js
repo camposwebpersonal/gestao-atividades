@@ -79,7 +79,9 @@ const ccAno = c => String(c.mes_ano||'').split('/')[1]||'Sem ano';
 const ccMes = c => CC_MESES[Number(String(c.mes_ano||'').split('/')[0])-1]||'Sem mês';
 window.ccNavegar = function(secId,nivel,valor){
  const nav={...(_ccNavegacaoPorSecao.get(secId)||{})};nav[nivel]=valor;
- if(nivel==='setor'){delete nav.tipo;delete nav.ano;}if(nivel==='tipo')delete nav.ano;
+ const niveis=['setor','local','tipo','ano','mes'];
+ const indice=niveis.indexOf(nivel);if(indice<0)return;
+ niveis.slice(indice+1).forEach(chave=>delete nav[chave]);
  _ccNavegacaoPorSecao.set(secId,nav);_ccPaginaPorSecao.set(secId,1);_ccPaginasPorLocal.clear();renderControleContas(secId);
 };
 let _ccBuscaTimer = null;
@@ -146,18 +148,27 @@ window.renderControleContas = function(secId){
   const setoresNavegaveis=items.filter(item=>contasSetor(item).length||(!tipoFiltro&&!anoFiltro&&!pagoFiltro&&(!buscaTokens.length||locaisElegiveis(item).length)));
   if(!setoresNavegaveis.some(i=>i.id===nav.setor))nav.setor=setoresNavegaveis[0]?.id||'';
   const setorAtivo=items.find(i=>i.id===nav.setor);
-  const contasAtivas=setorAtivo?contasSetor(setorAtivo):[];
+  const locaisNavegaveis=(setorAtivo?locaisElegiveis(setorAtivo):[]).filter(local=>!(tipoFiltro||anoFiltro||pagoFiltro)||(contasPorLocal.get(local.id)||[]).some(matchesFiltros)).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  if(!locaisNavegaveis.some(local=>local.id===nav.local))nav.local=locaisNavegaveis[0]?.id||'';
+  const localAtivo=locaisNavegaveis.find(local=>local.id===nav.local);
+  const contasAtivas=(contasPorLocal.get(nav.local)||[]).filter(matchesFiltros);
   const tiposNavegaveis=[...new Set(contasAtivas.map(c=>c.tipo||'Outros'))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
   if(!tiposNavegaveis.includes(nav.tipo))nav.tipo=tiposNavegaveis[0]||'';
   const contasTipo=contasAtivas.filter(c=>(c.tipo||'Outros')===nav.tipo);
   const anosNavegaveis=[...new Set(contasTipo.map(ccAno))].sort((a,b)=>b.localeCompare(a));
   if(!anosNavegaveis.includes(nav.ano))nav.ano=anosNavegaveis.includes(String(new Date().getFullYear()))?String(new Date().getFullYear()):anosNavegaveis[0]||'';
+  const contasAno=contasTipo.filter(c=>ccAno(c)===nav.ano);
+  const mesesNavegaveis=CC_MESES.map((mes,i)=>({id:String(i+1),label:mes}));
+  if(contasAno.some(c=>ccMes(c)==='Sem mês'))mesesNavegaveis.push({id:'0',label:'Sem mês'});
+  const numeroMes=c=>{const n=Number(String(c.mes_ano||'').split('/')[0]);return n>=1&&n<=12?String(n):'0';};
+  if(!mesesNavegaveis.some(m=>m.id===nav.mes))nav.mes=mesesNavegaveis.find(m=>contasAno.some(c=>numeroMes(c)===m.id))?.id||'1';
   _ccNavegacaoPorSecao.set(secId,nav);
   const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
-  const contasAno=contasTipo.filter(c=>ccAno(c)===nav.ano);
   const navegacaoHtml=`<div class="cc-drilldown"><div class="cc-drill-label">1 · Setor</div>${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
-  ${tiposNavegaveis.length?`<div class="cc-drill-label">2 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">3 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}
-  <div class="cc-path">${esc(setorAtivo?.description||'')} › ${esc(nav.tipo)} › ${esc(nav.ano)}</div><div class="cc-months">${CC_MESES.map((mes,i)=>{const rows=contasAno.filter(c=>Number(String(c.mes_ano||'').split('/')[0])===i+1),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);return `<div class="cc-month ${rows.length?'has-data':''}"><strong>${mes}</strong><small>${rows.length?'R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2}):'Sem lançamento'}</small><small>${rows.length?rows.length+' lançamento(s)':''}</small></div>`;}).join('')}</div>`:'<div class="empty">Nenhum lançamento neste setor para os filtros selecionados.</div>'}</div>`;
+  ${locaisNavegaveis.length?`<div class="cc-drill-label">2 · Item / local</div>${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:local.description||'Local'})),nav.local)}`:''}
+  ${tiposNavegaveis.length?`<div class="cc-drill-label">3 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">4 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}
+  <div class="cc-drill-label">5 · Mês</div><div class="cc-months" role="group" aria-label="Mês do lançamento">${mesesNavegaveis.map(mes=>{const rows=contasAno.filter(c=>numeroMes(c)===mes.id),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);return `<button type="button" data-cc-level="mes" data-cc-value="${mes.id}" aria-pressed="${mes.id===nav.mes}" class="cc-month ${rows.length?'has-data':''} ${mes.id===nav.mes?'active':''}"><strong>${mes.label}</strong><small>${rows.length?'R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2}):'Sem lançamento'}</small><small>${rows.length?rows.length+' lançamento(s)':''}</small></button>`;}).join('')}</div>
+  <div class="cc-path">${esc(setorAtivo?.description||'')} › ${esc(localAtivo?.description||'')} › ${esc(nav.tipo)} › ${esc(nav.ano)} › ${mesesNavegaveis.find(m=>m.id===nav.mes)?.label||''}</div>`:'<div class="empty">Nenhum lançamento neste item/local para os filtros selecionados.</div>'}</div>`;
   const paginaSolicitada = Math.max(1, _ccPaginaPorSecao.get(secId)||1);
   const inicioPagina = (paginaSolicitada-1)*CC_LOCAIS_POR_PAGINA;
   const fimPagina = inicioPagina+CC_LOCAIS_POR_PAGINA;
@@ -194,8 +205,8 @@ window.renderControleContas = function(secId){
         return true;
       });
       if(!locRows.length && (tipoFiltro || anoFiltro || pagoFiltro)) return '';
-      const detailRows=locRows.filter(c=>item.id===nav.setor&&(c.tipo||'Outros')===nav.tipo&&ccAno(c)===nav.ano);
-      const localSelecionado=item.id===nav.setor&&(detailRows.length||(!locRows.length&&!nav.tipo));
+      const detailRows=locRows.filter(c=>item.id===nav.setor&&local.id===nav.local&&(c.tipo||'Outros')===nav.tipo&&ccAno(c)===nav.ano&&numeroMes(c)===nav.mes);
+      const localSelecionado=item.id===nav.setor&&local.id===nav.local;
       const ordemLocal = localSelecionado?quantidadeLocaisEncontrados++:-1;
       const renderizarDetalhes = localSelecionado&&ordemLocal>=inicioPagina && ordemLocal<fimPagina;
       const chavePaginaLocal = secId+':'+local.id;
@@ -291,7 +302,7 @@ window.renderControleContas = function(secId){
               <thead><tr>
                 ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('contrato')?'':'<th>Conta Contrato</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th>Situação</th><th></th>
               </tr></thead>
-              <tbody>${tableRows || `<tr><td colspan="${12-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento</td></tr>`}</tbody>
+              <tbody>${tableRows || `<tr><td colspan="${12-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento${nav.ano?' em '+esc(mesesNavegaveis.find(m=>m.id===nav.mes)?.label||'')+' / '+esc(nav.ano):''}</td></tr>`}</tbody>
             </table>
           </div>
           ${mobileRows}
@@ -623,8 +634,7 @@ window.renderControleContas = function(secId){
   <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
   <section class="cc-workspace-panel" ${modo==='lancamentos'?'':'hidden'}>
   ${navegacaoHtml}
-  ${paginacaoHtml}
-  ${categoriasHtml || '<div class="empty">Nenhuma categoria/local cadastrado.</div>'}
+  ${categoriasHtml || '<div class="empty">Nenhum item/local disponível para os filtros selecionados.</div>'}
   ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
   </section>`);
   document.querySelectorAll('[data-cc-level]').forEach(button=>button.onclick=()=>ccNavegar(secId,button.dataset.ccLevel,button.dataset.ccValue));

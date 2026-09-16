@@ -29,3 +29,21 @@ test('sem lançamentos ainda permite gerenciar os locais e setores',()=>{
  const a=app();a.S.contas=[];a.ctx.renderControleContas('s');assert.match(a.panel(),/Hospital/);assert.match(a.panel(),/Nenhum lançamento/);
  a.ctx.ccNavegar('s','setor','b');assert.match(a.panel(),/Escola/);
 });
+test('cada item/local tem sua aba e isola anos, meses e lançamentos',()=>{
+ const a=app();a.S.subitems.push({id:'l3',item_id:'a',atividade_id:'s',description:'Posto de Saúde',extra_fields:{}});
+ a.S.contas.push({id:'c5',atividade_id:'s',item_id:'a',subitem_id:'l3',tipo:'Luz',mes_ano:'05/2024',valor:50,pago:true},{id:'c6',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Luz',mes_ano:'02/2026',valor:60,pago:false});
+ a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');a.ctx.ccNavegar('s','mes','2');
+ assert.match(a.panel(),/data-cc-level="local" data-cc-value="l1"/);assert.match(a.panel(),/data-cc-level="local" data-cc-value="l3"/);
+ assert.match(a.panel(),/FEV · 02\/2026/);assert.doesNotMatch(a.panel(),/JAN · 01\/2026|MAI · 05\/2024|id="cc-local-l3"/);
+ a.ctx.ccNavegar('s','local','l3');assert.match(a.panel(),/MAI · 05\/2024/);assert.doesNotMatch(a.panel(),/id="cc-local-l1"|data-cc-level="ano" data-cc-value="2026"/);
+});
+test('meses vazios ficam selecionáveis e mostram lista vazia sem outros meses',()=>{
+ const a=app();a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','tipo','Luz');a.ctx.ccNavegar('s','ano','2026');a.ctx.ccNavegar('s','mes','12');
+ assert.match(a.panel(),/data-cc-level="mes" data-cc-value="12" aria-pressed="true"/);
+ assert.match(a.panel(),/Nenhum lançamento em DEZ \/ 2026/);assert.doesNotMatch(a.panel(),/JAN · 01\/2026/);
+});
+test('local sem contas continua acessível mesmo com outros locais preenchidos',()=>{
+ const a=app();a.S.subitems.push({id:'vazio',item_id:'a',atividade_id:'s',description:'Novo posto',extra_fields:{}});
+ a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','local','vazio');
+ assert.match(a.panel(),/id="cc-local-vazio"/);assert.doesNotMatch(a.panel(),/id="cc-local-l1"/);assert.match(a.panel(),/\+ Lançamento/);
+});
