@@ -10,7 +10,7 @@ function app(){
  {id:'c2',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Luz',mes_ano:'02/2025',valor:200,pago:false},
  {id:'c3',atividade_id:'s',item_id:'a',subitem_id:'l1',tipo:'Internet',mes_ano:'03/2026',valor:300,pago:false},
  {id:'c4',atividade_id:'s',item_id:'b',subitem_id:'l2',tipo:'Água',mes_ano:'04/2024',valor:400,pago:true}]};
- const ctx={console,S,curSecId:null,setTimeout,clearTimeout,requestAnimationFrame:f=>f(),document:{getElementById:id=>filters[id]||null,querySelectorAll:()=>[],querySelector:()=>null},setC:h=>html=h};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/controle-contas.js'),'utf8'),ctx);
+ const ctx={console,S,scrollTo:()=>{},curSecId:null,setTimeout,clearTimeout,requestAnimationFrame:f=>f(),document:{getElementById:id=>filters[id]||null,querySelectorAll:()=>[],querySelector:()=>null},setC:h=>html=h};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/controle-contas.js'),'utf8'),ctx);
  return {ctx,S,filters,panel:()=>html.split('<section class="cc-workspace-panel"').at(-1),html:()=>html};
 }
 test('setor → tipo → ano seleciona os registros e mantém resumo geral',()=>{
@@ -46,4 +46,20 @@ test('local sem contas continua acessível mesmo com outros locais preenchidos',
  const a=app();a.S.subitems.push({id:'vazio',item_id:'a',atividade_id:'s',description:'Novo posto',extra_fields:{}});
  a.ctx.ccSetModo('s','lancamentos');a.ctx.ccNavegar('s','local','vazio');
  assert.match(a.panel(),/id="cc-local-vazio"/);assert.doesNotMatch(a.panel(),/id="cc-local-l1"/);assert.match(a.panel(),/\+ Lançamento/);
+});
+test('trocar mês restaura rolagem interna, móvel e horizontal sem animação',()=>{
+ const a=app();const content={style:{minHeight:''},offsetHeight:1800};
+ const main={scrollTop:480,scrollLeft:7,scrollTo(args){this.scrollTop=args.top;this.scrollLeft=args.left;assert.equal(args.behavior,'instant');}};
+ let months={scrollLeft:240};const get=a.ctx.document.getElementById;
+ a.ctx.document.getElementById=id=>id==='content'?content:get(id);
+ a.ctx.document.querySelector=q=>q==='main'?main:q==='.cc-months'?months:null;
+ a.ctx.scrollY=330;a.ctx.scrollX=4;a.ctx.scrollTo=args=>{assert.equal(args.behavior,'instant');a.ctx.scrollY=args.top;a.ctx.scrollX=args.left;};
+ const render=a.ctx.setC;a.ctx.setC=html=>{render(html);main.scrollTop=0;main.scrollLeft=0;a.ctx.scrollY=0;a.ctx.scrollX=0;months={scrollLeft:0};};
+ a.ctx.ccNavegar('s','mes','12');
+ assert.equal(main.scrollTop,480);assert.equal(main.scrollLeft,7);assert.equal(a.ctx.scrollY,330);assert.equal(a.ctx.scrollX,4);assert.equal(months.scrollLeft,240);assert.equal(content.style.minHeight,'');
+ assert.match(a.panel(),/data-cc-level="mes" data-cc-value="12" aria-pressed="true"/);
+});
+test('lançamentos não exibem a coluna Situação nem barras e mantêm avisos dos meses',()=>{
+ const a=app();a.ctx.ccSetModo('s','lancamentos');assert.doesNotMatch(a.panel(),/Situação|<svg|\d+%/);assert.match(a.panel(),/Sem lançamento/);
+ a.ctx.ccNavegar('s','mes','12');assert.match(a.panel(),/colspan="11"/);
 });

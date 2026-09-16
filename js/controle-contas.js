@@ -82,7 +82,23 @@ window.ccNavegar = function(secId,nivel,valor){
  const niveis=['setor','local','tipo','ano','mes'];
  const indice=niveis.indexOf(nivel);if(indice<0)return;
  niveis.slice(indice+1).forEach(chave=>delete nav[chave]);
- _ccNavegacaoPorSecao.set(secId,nav);_ccPaginaPorSecao.set(secId,1);_ccPaginasPorLocal.clear();renderControleContas(secId);
+ const main=document.querySelector('main'),content=document.getElementById('content');
+ const top=main?.scrollTop||0,left=main?.scrollLeft||0;
+ const windowTop=window.scrollY||0,windowLeft=window.scrollX||0;
+ const monthsLeft=document.querySelector('.cc-months')?.scrollLeft||0;
+ const minHeight=content?.style.minHeight||'';
+ // Mantém a altura durante a troca para o navegador não limitar a rolagem ao esvaziar o conteúdo.
+ if(content)content.style.minHeight=content.offsetHeight+'px';
+ _ccNavegacaoPorSecao.set(secId,nav);_ccPaginaPorSecao.set(secId,1);_ccPaginasPorLocal.clear();
+ try{renderControleContas(secId);}finally{
+   requestAnimationFrame(()=>{
+     if(content)content.style.minHeight=minHeight;
+     main?.scrollTo({top,left,behavior:'instant'});
+     window.scrollTo({top:windowTop,left:windowLeft,behavior:'instant'});
+     const months=document.querySelector('.cc-months');if(months)months.scrollLeft=monthsLeft;
+   });
+ }
+
 };
 let _ccBuscaTimer = null;
 window.ccSetModo = function(secId, modo){
@@ -176,7 +192,6 @@ window.renderControleContas = function(secId){
 
   let totalGeral = 0, totalPago = 0, totalPendente = 0;
   let qtdPago = 0, qtdPendente = 0, qtdTotal = 0;
-  const globalMax = contasSecao.reduce((maior,c)=>Math.max(maior,parseFloat(c.valor)||0),1);
   const colsOff = new Set(sec.cc_cols_ocultas || []);
   const resumoCats = [];
   const tipoMap = {};
@@ -236,10 +251,6 @@ window.renderControleContas = function(secId){
       const contaContrato = _ccLocalExtraFields(local).conta_contrato;
       const tableRows = renderizarDetalhes ? linhasVisiveis.map((c,ri)=>{
         const pagoCls = c.pago ? 'cc-pago-row' : '';
-        const vLanc = parseFloat(c.valor)||0;
-        const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
-        const corLanc = c.pago ? '#10b981' : '#f87171';
-        const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<tr class="${pagoCls}">
           ${colsOff.has('mes')?'':`<td>${ccMes(c)} · ${esc(c.mes_ano||'—')}</td>`}
           ${colsOff.has('tipo')?'':`<td>${esc(c.tipo||'—')}</td>`}
@@ -251,16 +262,11 @@ window.renderControleContas = function(secId){
           <td><input type="date" value="${esc(c.data_pagamento||'')}" onchange="ccSalvarCampo('${c.id}','data_pagamento',this.value)"></td>
           <td class="cc-col-pago"><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></td>
           <td><input type="text" class="${_ccTokenHit(c.observacao,buscaTokens)?'cc-obs-match':''}" value="${esc(c.observacao||'')}" onchange="ccSalvarCampo('${c.id}','observacao',this.value)" placeholder="Obs."></td>
-          <td style="text-align:center">${situacaoSvg}</td>
           <td style="white-space:nowrap"><button class="card-btn" onclick="ccOpenLancamentoModal('${c.id}','${local.id}')" title="Editar lançamento completo">✏️</button>${S.isAdmin?`<button class="card-btn" onclick="ccDeleteLancamento('${c.id}')">🗑️</button>`:''}</td>
         </tr>`;
       }).join('') : '';
 
       const mobileRows = renderizarDetalhes ? linhasVisiveis.map(c=>{
-        const vLanc = parseFloat(c.valor)||0;
-        const pctLanc = globalMax ? Math.round(vLanc/globalMax*100) : 0;
-        const corLanc = c.pago ? '#10b981' : '#f87171';
-        const situacaoSvg = `<svg width="46" height="12" style="vertical-align:middle"><rect x="0" y="0" width="46" height="12" fill="#1e293b" rx="2"/><rect x="0" y="0" width="${Math.max(0,pctLanc/100*46)}" height="12" fill="${corLanc}" rx="2"/></svg> <span style="font-size:10px;color:${corLanc};font-weight:700">${pctLanc}%</span>`;
         return `<div class="cc-mobile-card">
           <div class="cc-mobile-title">${ccMes(c)} · ${esc(c.mes_ano||'—')} — ${esc(c.tipo||'—')}</div>
           ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${_ccHighlight(contaContrato||'—', buscaTokens)}</span></div>`}
@@ -270,7 +276,6 @@ window.renderControleContas = function(secId){
           <div class="cc-mobile-row"><span>Vencimento</span><span>${fmtD(c.data_vencimento)}</span></div>
           <div class="cc-mobile-row"><span>Pagamento</span><span>${fmtD(c.data_pagamento)}</span></div>
           <div class="cc-mobile-row"><span>Pago</span><span><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></span></div>
-          <div class="cc-mobile-row"><span>Situação</span><span>${situacaoSvg}</span></div>
           <div class="cc-mobile-row"><span>Obs.</span><span>${_ccHighlight(c.observacao||'—', buscaTokens)}</span></div>
           <div class="cc-mobile-row" style="justify-content:flex-end;gap:8px;margin-top:4px">
             <button class="card-btn" onclick="ccOpenLancamentoModal('${c.id}','${local.id}')" title="Editar lançamento completo">✏️ Editar</button>
@@ -300,9 +305,9 @@ window.renderControleContas = function(secId){
           <div class="cc-table-wrap">
             <table class="cc-table">
               <thead><tr>
-                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('contrato')?'':'<th>Conta Contrato</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th>Situação</th><th></th>
+                ${colsOff.has('mes')?'':'<th>Mês/Ano</th>'}${colsOff.has('tipo')?'':'<th>Tipo</th>'}${colsOff.has('contrato')?'':'<th>Conta Contrato</th>'}${colsOff.has('leitura')?'':'<th>Leitura</th>'}${colsOff.has('consumo')?'':'<th>Consumo</th>'}<th>Valor</th><th>Vencimento</th><th>Pagamento</th><th class="cc-col-pago">Pago</th><th>Obs.</th><th></th>
               </tr></thead>
-              <tbody>${tableRows || `<tr><td colspan="${12-colsOff.size}" style="text-align:center;color:var(--muted)">Nenhum lançamento${nav.ano?' em '+esc(mesesNavegaveis.find(m=>m.id===nav.mes)?.label||'')+' / '+esc(nav.ano):''}</td></tr>`}</tbody>
+              <tbody>${tableRows || `<tr><td colspan="${11-['mes','tipo','contrato','leitura','consumo'].filter(col=>colsOff.has(col)).length}" style="text-align:center;color:var(--muted)">Nenhum lançamento${nav.ano?' em '+esc(mesesNavegaveis.find(m=>m.id===nav.mes)?.label||'')+' / '+esc(nav.ano):''}</td></tr>`}</tbody>
             </table>
           </div>
           ${mobileRows}
@@ -964,7 +969,6 @@ window.ccGerarPdf = async function(secId, opts){
   if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*3.5 + 4; }
 
   let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
-  const maxValor = S.contas.filter(c=>c.atividade_id===secId && c.valor).reduce((a,c)=>Math.max(a, parseFloat(c.valor)||0), 1);
   const rows=[];
   const catMap={};
   const tipoMap={};
@@ -983,25 +987,23 @@ window.ccGerarPdf = async function(secId, opts){
       lancs.forEach(c=>{
         const v=parseFloat(c.valor)||0;
         const tipo=c.tipo||'N/A';
-        const pctLanc = maxValor ? Math.round(v/maxValor*100) : 0;
-        const situacao=pctLanc+'%';
         totalGeral+=v; qtdTotal++; catTotal+=v; catQtd++; locTotal+=v; locQtd++;
         if(c.pago){ totalPago+=v; qtdPago++; catPago+=v; locPago++; }
         if(!catMap[item.id]) catMap[item.id]={nome:item.description||'-',qtd:0,qPago:0,total:0,pago:0};
         catMap[item.id].qtd++; catMap[item.id].total+=v; if(c.pago){ catMap[item.id].qPago++; catMap[item.id].pago+=v; }
         if(!tipoMap[tipo]) tipoMap[tipo]={qtd:0,qPago:0,total:0,pago:0};
         tipoMap[tipo].qtd++; tipoMap[tipo].total+=v; if(c.pago){ tipoMap[tipo].qPago++; tipoMap[tipo].pago+=v; }
-        rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-', situacao]);
+        rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-']);
       });
       if(locQtd>0){
-        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '', '']);
-        rows.push(['','','','','','','','','','','','']);
+        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '']);
+        rows.push(['','','','','','','','','','','']);
       }
     });
     if(catQtd>0){
-      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '', '']);
-      rows.push(['','','','','','','','','','','','']);
-      rows.push(['','','','','','','','','','','','']);
+      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '']);
+      rows.push(['','','','','','','','','','','']);
+      rows.push(['','','','','','','','','','','']);
     }
   });
   const totalPendente=totalGeral-totalPago;
@@ -1065,14 +1067,14 @@ window.ccGerarPdf = async function(secId, opts){
     doc.autoTable({
       startY:startDetailY,
       margin:{left:mx,right:mx},
-      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.','Situacao']],
+      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
       body:rows,
       theme:'grid',
       headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:8},
       bodyStyles:{fontSize:8,textColor:[40,40,40]},
       alternateRowStyles:{fillColor:[245,250,245]},
       styles:{cellPadding:1.5,overflow:'linebreak',font:'helvetica'},
-      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:22,halign:'right'},7:{cellWidth:12,halign:'center'},8:{cellWidth:18},9:{cellWidth:18},10:{cellWidth:43},11:{cellWidth:18,halign:'center'}},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:22,halign:'right'},7:{cellWidth:12,halign:'center'},8:{cellWidth:18},9:{cellWidth:18},10:{cellWidth:61}},
       didParseCell:(data)=>{
         if(data.section!=='body') return;
         const isBlank = Array.isArray(data.row.raw) && data.row.raw.every(x=>String(x).trim()==='');
@@ -1095,18 +1097,6 @@ window.ccGerarPdf = async function(secId, opts){
           [2,6,8,9].forEach(idx=>{ if(data.column.index===idx) data.cell.styles.fontStyle='bold'; });
           if(data.column.index===7 && data.row.raw[7]==='SIM') data.cell.styles.textColor=[0,0,0];
         }
-      },
-      didDrawCell:(data)=>{
-        if(data.section!=='body' || data.column.index!==11) return;
-        const txt = data.row.raw[11];
-        if(!txt) return;
-        const pct = parseInt(txt);
-        if(isNaN(pct)) return;
-        const isPaid = data.row.raw[7]==='SIM';
-        const col = isPaid ? [16,185,129] : [248,113,113];
-        doc.setFillColor(col[0],col[1],col[2]);
-        const barW = Math.max(0.5,(data.cell.width-2)*(pct/100));
-        doc.rect(data.cell.x+1, data.cell.y+2, barW, data.cell.height-4, 'F');
       }
     });
   } else {
