@@ -176,7 +176,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 #gallery-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:2000;align-items:center;justify-content:center;padding:16px}
 .gal-modal-box{background:#0e1729;border:1px solid var(--border);border-radius:16px;width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:22px}
 #lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:3000;align-items:center;justify-content:center;cursor:zoom-out}
-#lightbox img{max-width:96vw;max-height:96vh;object-fit:contain;border-radius:6px}
+#lightbox img{max-width:92vw;max-height:88vh;object-fit:contain;border-radius:8px;cursor:default;box-shadow:0 12px 50px #0008}
+#lb-close{position:absolute;top:16px;right:20px;width:44px;height:44px;border:1px solid #ffffff80;border-radius:50%;background:#142132;color:#fff;font-size:30px;cursor:pointer;display:grid;place-items:center}
 #toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
 .toast-item{padding:11px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:tIn .2s ease;max-width:300px}
 .toast-item.success{background:#064e3b;color:#34d399;border:1px solid #065f46}
@@ -414,8 +415,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="gallery-modal" onclick="if(event.target===this)closeGal()">
   <div class="gal-modal-box" id="gal-box"></div>
 </div>
-<div id="lightbox" onclick="document.getElementById('lightbox').style.display='none'">
-  <img id="lb-img" src="" alt="">
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada" onclick="if(event.target===this)closeLb()">
+  <button id="lb-close" type="button" aria-label="Fechar imagem ampliada" onclick="closeLb()">×</button>
+  <img id="lb-img" alt="">
 </div>
 <div id="toast"></div>
 
@@ -2179,7 +2181,25 @@ window.openGal=async function(type,id,name){
   document.getElementById('gallery-modal').style.display='flex';
 };
 window.closeGal=()=>document.getElementById('gallery-modal').style.display='none';
-window.openLb=src=>{document.getElementById('lb-img').src=src;document.getElementById('lightbox').style.display='flex';};
+let _lbPreviousFocus=null;
+window.openLb=(src,alt='Foto ampliada')=>{
+  _lbPreviousFocus=document.activeElement;
+  const image=document.getElementById('lb-img');image.src=src;image.alt=alt;
+  document.getElementById('lightbox').style.display='flex';
+  document.getElementById('lb-close').focus({preventScroll:true});
+};
+window.openLB=window.openLb;
+window.closeLb=()=>{
+  document.getElementById('lightbox').style.display='none';
+  document.getElementById('lb-img').removeAttribute('src');
+  if(_lbPreviousFocus?.isConnected)_lbPreviousFocus.focus({preventScroll:true});
+  _lbPreviousFocus=null;
+};
+document.addEventListener('keydown',event=>{
+  if(document.getElementById('lightbox').style.display!=='flex')return;
+  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeLb();}
+  if(event.key==='Tab'){event.preventDefault();document.getElementById('lb-close').focus({preventScroll:true});}
+});
 
 // ── IMGBB ──
 async function imgbbUp(dataUrl){
