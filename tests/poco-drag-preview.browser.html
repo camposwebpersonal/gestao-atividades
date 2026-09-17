@@ -11,11 +11,14 @@ const fire=(el,type,transfer,y=0)=>el.dispatchEvent(new DragEvent(type,{bubbles:
  let cards=[...document.querySelectorAll('.pw-card')],transfer=new DataTransfer();const originalB=cards[1].offsetTop;
  fire(cards[0].querySelector('.pw-drag-handle'),'dragstart',transfer);await wait();
  check(document.querySelector('.pw-drag-placeholder'),'Espaço inicial ausente');
- fire(cards[2],'dragover',transfer,cards[2].getBoundingClientRect().bottom-5);await wait();
+ fire(cards[2],'dragenter',transfer,cards[2].getBoundingClientRect().top+1);await wait();
  check(cards[1].offsetTop<originalB-20,'Os cartões não se deslocaram para cima');
  check(document.querySelector('.pw-drag-placeholder').previousElementSibling===cards[2],'Espaço não acompanhou o arraste para baixo');
  check((S.subitems[0].poco_order??S.subitems[0].extra_fields.poco_order)===0,'Salvou antes de soltar');
- fire(cards[1],'dragover',transfer,cards[1].getBoundingClientRect().top+5);await wait();
+ fire(cards[2],'dragover',transfer,cards[2].getBoundingClientRect().top+1);await wait();
+ check(document.querySelector('.pw-drag-placeholder').previousElementSibling===cards[2],'Repetir evento fez o espaço oscilar');
+ fire(document.querySelector('.pw-drag-placeholder'),'dragover',transfer);
+ fire(cards[1],'dragenter',transfer,cards[1].getBoundingClientRect().bottom-1);await wait();
  check(document.querySelector('.pw-drag-placeholder').nextElementSibling===cards[1],'Espaço não acompanhou o arraste para cima');
  check(cards[1].offsetTop>originalB-5,'Os cartões não voltaram para baixo');
  fire(cards[2],'dragover',transfer,cards[2].getBoundingClientRect().bottom-5);await wait();
@@ -26,6 +29,6 @@ const fire=(el,type,transfer,y=0)=>el.dispatchEvent(new DragEvent(type,{bubbles:
  transfer=new DataTransfer();fire(cards[2].querySelector('.pw-drag-handle'),'dragstart',transfer);await wait();fire(cards[0],'dragover',transfer,cards[0].getBoundingClientRect().top+5);await wait();pocoDragEnd();
  check(!document.querySelector('.pw-drag-placeholder'),'Cancelar deixou espaço aberto');check(!document.querySelector('.pw-drag-source'),'Cancelar deixou cartão invisível');
  check([...document.querySelectorAll('.pw-card')].map(x=>x.dataset.wellId).join(',')==='B,C,A','Cancelar mudou a ordem');
- document.querySelector('#result').textContent='PASS: deslocamento em ambas as direções, espaço, salvamento ao soltar e cancelamento';
+ document.querySelector('#result').textContent='PASS: espaço imediato na entrada, estabilidade, ambas as direções, salvamento e cancelamento';
 }catch(e){document.querySelector('#result').textContent='FAIL: '+e.stack;}})();
 </script></body></html>

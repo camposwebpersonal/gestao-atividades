@@ -290,10 +290,10 @@
     const placeholder=document.createElement('div');
     placeholder.className='pw-drag-placeholder';placeholder.style.height=source.getBoundingClientRect().height+'px';
     placeholder.textContent='Solte aqui para mover o poço';
-    placeholder.addEventListener('dragover',event=>{event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect='move';});
+    placeholder.addEventListener('dragover',event=>{event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect='move';if(dragPreview)dragPreview.hovered=null;});
     placeholder.addEventListener('drop',event=>window.pocoDrop(event));
     list.insertBefore(placeholder,source);source.classList.add('pw-drag-source');
-    dragPreview={source,list,placeholder,target:null,after:false};
+    dragPreview={source,list,placeholder,target:null,after:false,hovered:null};
   }
   function moveDragPlaceholder(card,after){
     const preview=dragPreview;if(!preview||card===preview.source)return;
@@ -306,6 +306,14 @@
     if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
       cards.forEach(el=>{const delta=positions.get(el)-el.getBoundingClientRect().top;if(delta)el.animate?.([{transform:`translateY(${delta}px)`},{transform:'translateY(0)'}],{duration:160,easing:'ease-out'});});
     }
+  }
+  function dragInsertionAfter(card,event){
+    if(!dragPreview){const rect=card.getBoundingClientRect();return event.clientY>rect.top+rect.height/2;}
+    if(dragPreview.hovered===card)return dragPreview.after;
+    dragPreview.hovered=card;
+    // Abre espaço ao entrar no cartão, conforme a posição atual do espaço.
+    const children=[...dragPreview.list.children];
+    return children.indexOf(card)>children.indexOf(dragPreview.placeholder);
   }
   window.pocoDragStart=function(event,id){
     if(!canEdit()||reordering){event.preventDefault();return;}
@@ -320,7 +328,7 @@
   window.pocoDragOver=function(event){
     if(!draggedWell||reordering)return;event.preventDefault();event.dataTransfer.dropEffect='move';
     beginDragPreview(draggedWell);
-    const card=event.currentTarget,rect=card.getBoundingClientRect(),after=event.clientY>rect.top+rect.height/2;
+    const card=event.currentTarget,after=dragInsertionAfter(card,event);
     moveDragPlaceholder(card,after);
   };
   window.pocoDrop=function(event,target){
@@ -328,7 +336,7 @@
     const id=draggedWell;
     let after;
     if(!target){target=dragPreview?.target;after=dragPreview?.after;}
-    else{const rect=event.currentTarget.getBoundingClientRect();after=event.clientY>rect.top+rect.height/2;moveDragPlaceholder(event.currentTarget,after);}
+    else{after=dragInsertionAfter(event.currentTarget,event);moveDragPlaceholder(event.currentTarget,after);}
     if(target&&dragPreview)dragPreview.list.insertBefore(dragPreview.source,dragPreview.placeholder);
     window.pocoDragEnd();if(target)return window.pocoReorder(id,target,after);
   };
@@ -390,7 +398,7 @@
 
   function wellCard(p,editable){
     const st=V(p,'status_pagamento','pendente'),ds=drillingStatus(p),val=Number(V(p,'valor',0)||0),imgs=imageList(p),showValue=valuesEnabledForWell(p);
-    return `<article class="pw-card ${ds}" data-well-id="${esc(p.id)}" ${editable?`ondragover="pocoDragOver(event)" ondrop="pocoDrop(event,'${p.id}')"`: ''}><div class="pw-card-head">${editable?`<button type="button" class="pw-drag-handle" draggable="true" ondragstart="pocoDragStart(event,'${p.id}')" ondragend="pocoDragEnd()" title="Arraste para mudar a ordem. Use as setas do teclado para mover." aria-label="Mover ${esc(wellNumber(p))}" onkeydown="if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();pocoMove('${p.id}',event.key==='ArrowUp'?-1:1)}">⠿</button>`:''}<div style="font-size:22px">${ds==='executada'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(wellNumber(p))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><div class="pw-badges"><span class="pw-badge ${ds}">${ds==='executada'?'EXECUTADA':'SOLICITADA'}</span>${st==='pago'||paymentPending(p)?`<span class="pw-badge ${st}">${st==='pago'?'PAGAMENTO REALIZADO':'PAGAMENTO PENDENTE'}</span>`:''}</div></div><div class="pw-card-body"><div class="pw-field"><small>${ds==='executada'?'Data da execução':'Data da solicitação'}</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}${responsibleContacts(p).map(c=>`<div style="margin-top:4px;overflow-wrap:anywhere">${c.tipo==='telefone'?'📞':'✉'} ${esc(c.valor)}</div>`).join('')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div>${showValue?`<div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#a15c00':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>`:''}${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(wellNumber(p))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" role="button" tabindex="0" onpointerenter="pocoWarmPhoto(this)" onfocus="pocoWarmPhoto(this)" onpointerdown="pocoWarmPhoto(this)" onclick="pocoOpenPhoto(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pocoOpenPhoto(this)}" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Pagamento pendente</button>`:paymentPending(p)?`<button class="pw-mini" style="border-color:#047857;color:#087344" onclick="togglePocoPagamento('${p.id}','pago')">✓ Confirmar pagamento</button>`:''}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#b91c1c" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
+    return `<article class="pw-card ${ds}" data-well-id="${esc(p.id)}" ${editable?`ondragenter="pocoDragOver(event)" ondragover="pocoDragOver(event)" ondrop="pocoDrop(event,'${p.id}')"`: ''}><div class="pw-card-head">${editable?`<button type="button" class="pw-drag-handle" draggable="true" ondragstart="pocoDragStart(event,'${p.id}')" ondragend="pocoDragEnd()" title="Arraste para mudar a ordem. Use as setas do teclado para mover." aria-label="Mover ${esc(wellNumber(p))}" onkeydown="if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();pocoMove('${p.id}',event.key==='ArrowUp'?-1:1)}">⠿</button>`:''}<div style="font-size:22px">${ds==='executada'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(wellNumber(p))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><div class="pw-badges"><span class="pw-badge ${ds}">${ds==='executada'?'EXECUTADA':'SOLICITADA'}</span>${st==='pago'||paymentPending(p)?`<span class="pw-badge ${st}">${st==='pago'?'PAGAMENTO REALIZADO':'PAGAMENTO PENDENTE'}</span>`:''}</div></div><div class="pw-card-body"><div class="pw-field"><small>${ds==='executada'?'Data da execução':'Data da solicitação'}</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}${responsibleContacts(p).map(c=>`<div style="margin-top:4px;overflow-wrap:anywhere">${c.tipo==='telefone'?'📞':'✉'} ${esc(c.valor)}</div>`).join('')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div>${showValue?`<div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#a15c00':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>`:''}${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(wellNumber(p))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" role="button" tabindex="0" onpointerenter="pocoWarmPhoto(this)" onfocus="pocoWarmPhoto(this)" onpointerdown="pocoWarmPhoto(this)" onclick="pocoOpenPhoto(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pocoOpenPhoto(this)}" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Pagamento pendente</button>`:paymentPending(p)?`<button class="pw-mini" style="border-color:#047857;color:#087344" onclick="togglePocoPagamento('${p.id}','pago')">✓ Confirmar pagamento</button>`:''}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#b91c1c" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
   }
 
   function renderDrillerList(editable){
