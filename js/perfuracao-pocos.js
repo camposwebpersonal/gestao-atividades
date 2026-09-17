@@ -36,10 +36,11 @@
       const digits=value.replace(/\D/g,'');
       if(type==='telefone'&&(digits.length<10||digits.length>15||(!value.startsWith('+')&&digits.length>11)))input.setCustomValidity('Informe um telefone com DDD, ou um número internacional com + e código do país.');
       if(!input.checkValidity()){input.reportValidity();return null;}
-      contacts.push({tipo:type,valor:value});
+      contacts.push({tipo:type,valor:value.toLocaleUpperCase('pt-BR')});
     }
     return contacts;
   };
+  const upperField=id=>document.getElementById(id).value.trim().toLocaleUpperCase('pt-BR');
   const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   const dateBR=v=>{if(!v)return '—';const s=String(v).slice(0,10).split('-');return s.length===3?`${s[2]}/${s[1]}/${s[0]}`:String(v);};
   const isoToday=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Recife'});
@@ -319,7 +320,7 @@
 
   window.savePoco=async function(id){
     const existing=id?allWells(state.secId).find(x=>x.id===id):null;
-    const numero=document.getElementById('pw-numero').value.trim(),local=document.getElementById('pw-local').value.trim(),data=document.getElementById('pw-data').value;
+    const numero=upperField('pw-numero'),local=upperField('pw-local'),data=document.getElementById('pw-data').value;
     if(!numero||!data){window.toast('Identificação e data são obrigatórias','error');return;}
     const status=document.getElementById('pw-status').value;
     const statusPerfuracao=document.getElementById('pw-status-perfuracao')?.value||'executada';
@@ -338,7 +339,7 @@
         }
       }
       const showValue=valuesEnabledForDriller(perfuradorId);
-      const payload={atividade_id:state.secId,item_id:perfuradorId,parent_id:perfuradorId,parent_type:'item',description:local,responsaveis:document.getElementById('pw-representante').value.trim(),contatos_responsavel:contatosResponsavel,start_date:data,observacao:document.getElementById('pw-obs').value.trim(),status:statusPerfuracao==='executada'?'concluido':'pendente',concluded:statusPerfuracao==='executada'?1:0,updated_at:window.serverTimestamp(),registro_tipo:'poco',numero,status_perfuracao:statusPerfuracao,status_pagamento:status,valor:showValue?Number(document.getElementById('pw-valor').value||0):Number(V(existing,'valor',0)||0),data_pagamento:status==='pago'?(document.getElementById('pw-data-pgto').value||isoToday()):null,imagens};
+      const payload={atividade_id:state.secId,item_id:perfuradorId,parent_id:perfuradorId,parent_type:'item',description:local,responsaveis:upperField('pw-representante'),contatos_responsavel:contatosResponsavel,start_date:data,observacao:upperField('pw-obs'),status:statusPerfuracao==='executada'?'concluido':'pendente',concluded:statusPerfuracao==='executada'?1:0,updated_at:window.serverTimestamp(),registro_tipo:'poco',numero,status_perfuracao:statusPerfuracao,status_pagamento:status,valor:showValue?Number(document.getElementById('pw-valor').value||0):Number(V(existing,'valor',0)||0),data_pagamento:status==='pago'?(document.getElementById('pw-data-pgto').value||isoToday()):null,imagens};
       if(id)await window.updateDoc(window.doc(window.db,'subitems',id),payload);else{payload.order_num=allWells(state.secId).length;payload.created_at=window.serverTimestamp();await window.addDoc(window.collection(window.db,'subitems'),payload);}
       await window.loadData();window.closeModal();window.__pocoFotosAtuais=[];window.__pocoNovasFotos=[];window.toast(id?'Perfuração atualizada!':'Perfuração cadastrada!');window.renderPocos(state.secId);
     }catch(e){console.error(e);window.toast('Erro ao salvar perfuração: '+(e.message||e),'error',8000);}
@@ -356,8 +357,8 @@
   };
 
   window.savePerfurador=async function(id){
-    const name=document.getElementById('pd-nome').value.trim();if(!name){window.toast('Nome é obrigatório','error');return;}
-    const payload={atividade_id:state.secId,description:name,observacao:document.getElementById('pd-obs').value.trim(),concluded:0,updated_at:window.serverTimestamp(),registro_tipo:'perfurador',tipo_pessoa:document.getElementById('pd-tipo').value,documento:document.getElementById('pd-doc').value.trim(),telefone:document.getElementById('pd-tel').value.trim(),contato:document.getElementById('pd-contato').value.trim(),exibir_valores:document.getElementById('pd-exibir-valores').checked?1:0};
+    const name=upperField('pd-nome');if(!name){window.toast('Nome é obrigatório','error');return;}
+    const payload={atividade_id:state.secId,description:name,observacao:upperField('pd-obs'),concluded:0,updated_at:window.serverTimestamp(),registro_tipo:'perfurador',tipo_pessoa:document.getElementById('pd-tipo').value,documento:upperField('pd-doc'),telefone:upperField('pd-tel'),contato:upperField('pd-contato'),exibir_valores:document.getElementById('pd-exibir-valores').checked?1:0};
     try{if(id)await window.updateDoc(window.doc(window.db,'items',id),payload);else{payload.order_num=allDrillers(state.secId).length;payload.created_at=window.serverTimestamp();await window.addDoc(window.collection(window.db,'items'),payload);}await window.loadData();window.closeModal();state.tab='perfuradores';window.toast(id?'Perfurador atualizado!':'Perfurador cadastrado!');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao salvar perfurador: '+(e.message||e),'error');}
   };
 
