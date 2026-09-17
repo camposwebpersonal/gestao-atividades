@@ -164,7 +164,7 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    .pw-drag-handle{cursor:grab;border:1px solid #cbdde5;border-radius:8px;background:#fff;color:#087f8c;font-size:24px;padding:3px 9px;flex-shrink:0}.pw-drag-handle:active{cursor:grabbing}.pw-drag-handle:focus-visible{outline:2px solid #087f8c;outline-offset:2px}.pw-order-hint{font-size:11px;color:#64748b;margin-bottom:8px}.pw-card.pw-drop-before{box-shadow:0 -4px 0 #087f8c}.pw-card.pw-drop-after{box-shadow:0 4px 0 #087f8c}
+    .pw-drag-handle{cursor:grab;border:1px solid #cbdde5;border-radius:8px;background:#fff;color:#087f8c;font-size:24px;padding:3px 9px;flex-shrink:0}.pw-drag-handle:active{cursor:grabbing}.pw-drag-handle:focus-visible{outline:2px solid #087f8c;outline-offset:2px}.pw-order-hint{font-size:11px;color:#64748b;margin-bottom:8px}.pw-list{position:relative}.pw-card.pw-drag-source{position:absolute;left:0;top:0;opacity:0;pointer-events:none;width:100%}.pw-drag-placeholder{box-sizing:border-box;border:2px dashed #087f8c;border-radius:11px;background:#e0f4ef;color:#087f8c;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
     .pw-hero{background:linear-gradient(135deg,#063f39,#0d5545 55%,#164e72);border:1px solid #2f806c;border-radius:14px;padding:15px 18px;margin-bottom:12px;position:relative;overflow:hidden;color:#fff}
     .pw-hero-title{font-size:clamp(23px,4vw,34px);font-weight:900;margin:3px 0;color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.22)}
     .pw-hero:after{content:'💧';position:absolute;right:18px;top:-15px;font-size:100px;opacity:.08;transform:rotate(12deg)}
@@ -281,20 +281,56 @@
   function refreshWellList(){
     const view=document.getElementById('pw-view');if(view&&state.tab==='pocos'){view.innerHTML=renderWellList(canEdit());prepareVisiblePhotos();}
   }
+  let dragPreview=null;
+  function beginDragPreview(id){
+    if(draggedWell!==id||dragPreview)return;
+    const list=document.getElementById('pw-view')?.querySelector?.('.pw-list');
+    const source=list&&[...list.querySelectorAll('.pw-card')].find(card=>card.dataset.wellId===id);
+    if(!source)return;
+    const placeholder=document.createElement('div');
+    placeholder.className='pw-drag-placeholder';placeholder.style.height=source.getBoundingClientRect().height+'px';
+    placeholder.textContent='Solte aqui para mover o poço';
+    placeholder.addEventListener('dragover',event=>{event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect='move';});
+    placeholder.addEventListener('drop',event=>window.pocoDrop(event));
+    list.insertBefore(placeholder,source);source.classList.add('pw-drag-source');
+    dragPreview={source,list,placeholder,target:null,after:false};
+  }
+  function moveDragPlaceholder(card,after){
+    const preview=dragPreview;if(!preview||card===preview.source)return;
+    const reference=after?card.nextSibling:card;
+    if(reference===preview.placeholder||preview.placeholder.nextSibling===reference)return;
+    const cards=[...preview.list.querySelectorAll('.pw-card:not(.pw-drag-source)')];
+    const positions=new Map(cards.map(el=>[el,el.getBoundingClientRect().top]));
+    preview.list.insertBefore(preview.placeholder,reference);
+    preview.target=card.dataset.wellId;preview.after=after;
+    if(!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){
+      cards.forEach(el=>{const delta=positions.get(el)-el.getBoundingClientRect().top;if(delta)el.animate?.([{transform:`translateY(${delta}px)`},{transform:'translateY(0)'}],{duration:160,easing:'ease-out'});});
+    }
+  }
   window.pocoDragStart=function(event,id){
     if(!canEdit()||reordering){event.preventDefault();return;}
     draggedWell=id;event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',id);
+    // Aguarda o navegador capturar a imagem do arraste antes de abrir o espaço.
+    setTimeout(()=>beginDragPreview(id),0);
   };
-  window.pocoDragEnd=function(){draggedWell=null;document.querySelectorAll('.pw-drop-before,.pw-drop-after').forEach(el=>el.classList.remove('pw-drop-before','pw-drop-after'));};
+  window.pocoDragEnd=function(){
+    if(dragPreview){dragPreview.source.classList.remove('pw-drag-source');dragPreview.placeholder.remove();dragPreview=null;}
+    draggedWell=null;document.querySelectorAll('.pw-drop-before,.pw-drop-after').forEach(el=>el.classList.remove('pw-drop-before','pw-drop-after'));
+  };
   window.pocoDragOver=function(event){
     if(!draggedWell||reordering)return;event.preventDefault();event.dataTransfer.dropEffect='move';
-    const card=event.currentTarget,after=event.clientY>card.getBoundingClientRect().top+card.getBoundingClientRect().height/2;
-    card.classList.toggle('pw-drop-before',!after);card.classList.toggle('pw-drop-after',after);
+    beginDragPreview(draggedWell);
+    const card=event.currentTarget,rect=card.getBoundingClientRect(),after=event.clientY>rect.top+rect.height/2;
+    moveDragPlaceholder(card,after);
   };
   window.pocoDrop=function(event,target){
-    if(!draggedWell)return;event.preventDefault();
-    const card=event.currentTarget,after=event.clientY>card.getBoundingClientRect().top+card.getBoundingClientRect().height/2,id=draggedWell;
-    window.pocoDragEnd();return window.pocoReorder(id,target,after);
+    if(!draggedWell)return;event.preventDefault();event.stopPropagation?.();
+    const id=draggedWell;
+    let after;
+    if(!target){target=dragPreview?.target;after=dragPreview?.after;}
+    else{const rect=event.currentTarget.getBoundingClientRect();after=event.clientY>rect.top+rect.height/2;moveDragPlaceholder(event.currentTarget,after);}
+    if(target&&dragPreview)dragPreview.list.insertBefore(dragPreview.source,dragPreview.placeholder);
+    window.pocoDragEnd();if(target)return window.pocoReorder(id,target,after);
   };
   window.pocoReorder=async function(id,target,after=false){
     if(!canEdit()||reordering||id===target)return;
@@ -354,7 +390,7 @@
 
   function wellCard(p,editable){
     const st=V(p,'status_pagamento','pendente'),ds=drillingStatus(p),val=Number(V(p,'valor',0)||0),imgs=imageList(p),showValue=valuesEnabledForWell(p);
-    return `<article class="pw-card ${ds}" data-well-id="${esc(p.id)}" ${editable?`ondragover="pocoDragOver(event)" ondragleave="this.classList.remove('pw-drop-before','pw-drop-after')" ondrop="pocoDrop(event,'${p.id}')"`: ''}><div class="pw-card-head">${editable?`<button type="button" class="pw-drag-handle" draggable="true" ondragstart="pocoDragStart(event,'${p.id}')" ondragend="pocoDragEnd()" title="Arraste para mudar a ordem. Use as setas do teclado para mover." aria-label="Mover ${esc(wellNumber(p))}" onkeydown="if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();pocoMove('${p.id}',event.key==='ArrowUp'?-1:1)}">⠿</button>`:''}<div style="font-size:22px">${ds==='executada'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(wellNumber(p))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><div class="pw-badges"><span class="pw-badge ${ds}">${ds==='executada'?'EXECUTADA':'SOLICITADA'}</span>${st==='pago'||paymentPending(p)?`<span class="pw-badge ${st}">${st==='pago'?'PAGAMENTO REALIZADO':'PAGAMENTO PENDENTE'}</span>`:''}</div></div><div class="pw-card-body"><div class="pw-field"><small>${ds==='executada'?'Data da execução':'Data da solicitação'}</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}${responsibleContacts(p).map(c=>`<div style="margin-top:4px;overflow-wrap:anywhere">${c.tipo==='telefone'?'📞':'✉'} ${esc(c.valor)}</div>`).join('')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div>${showValue?`<div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#a15c00':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>`:''}${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(wellNumber(p))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" role="button" tabindex="0" onpointerenter="pocoWarmPhoto(this)" onfocus="pocoWarmPhoto(this)" onpointerdown="pocoWarmPhoto(this)" onclick="pocoOpenPhoto(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pocoOpenPhoto(this)}" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Pagamento pendente</button>`:paymentPending(p)?`<button class="pw-mini" style="border-color:#047857;color:#087344" onclick="togglePocoPagamento('${p.id}','pago')">✓ Confirmar pagamento</button>`:''}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#b91c1c" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
+    return `<article class="pw-card ${ds}" data-well-id="${esc(p.id)}" ${editable?`ondragover="pocoDragOver(event)" ondrop="pocoDrop(event,'${p.id}')"`: ''}><div class="pw-card-head">${editable?`<button type="button" class="pw-drag-handle" draggable="true" ondragstart="pocoDragStart(event,'${p.id}')" ondragend="pocoDragEnd()" title="Arraste para mudar a ordem. Use as setas do teclado para mover." aria-label="Mover ${esc(wellNumber(p))}" onkeydown="if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();pocoMove('${p.id}',event.key==='ArrowUp'?-1:1)}">⠿</button>`:''}<div style="font-size:22px">${ds==='executada'?'✅':'💧'}</div><div class="pw-card-main"><div class="pw-num">${esc(wellNumber(p))}</div><div class="pw-local">${esc(p.description||'Local não informado')}</div></div><div class="pw-badges"><span class="pw-badge ${ds}">${ds==='executada'?'EXECUTADA':'SOLICITADA'}</span>${st==='pago'||paymentPending(p)?`<span class="pw-badge ${st}">${st==='pago'?'PAGAMENTO REALIZADO':'PAGAMENTO PENDENTE'}</span>`:''}</div></div><div class="pw-card-body"><div class="pw-field"><small>${ds==='executada'?'Data da execução':'Data da solicitação'}</small><div>${dateBR(p.start_date)}</div></div><div class="pw-field"><small>Representante local</small><div>${esc(p.responsaveis||'Não informado')}${responsibleContacts(p).map(c=>`<div style="margin-top:4px;overflow-wrap:anywhere">${c.tipo==='telefone'?'📞':'✉'} ${esc(c.valor)}</div>`).join('')}</div></div><div class="pw-field"><small>Empresa / Perfurador</small><div>${esc(drillerName(p.item_id))}</div></div>${showValue?`<div class="pw-field"><small>Valor do serviço</small><div style="color:${val?'#a15c00':'#64748b'};font-weight:800">${val?money(val):'Não informado'}</div></div>`:''}${p.observacao?`<div class="pw-field" style="grid-column:1/-1"><small>Observações</small><div>${esc(p.observacao)}</div></div>`:''}${st==='pago'?`<div class="pw-field"><small>Data do pagamento</small><div>${dateBR(V(p,'data_pagamento'))}</div></div>`:''}${imgs.length?`<div class="pw-field" style="grid-column:1/-1"><small>Registro fotográfico (${imgs.length})</small><div class="pw-photos">${imgs.map((url,i)=>`<img class="pw-photo" src="${esc(fastThumb(url))}" data-full="${esc(url)}" alt="Foto ${i+1} de ${esc(wellNumber(p))}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.onerror=null;this.src=this.dataset.full" role="button" tabindex="0" onpointerenter="pocoWarmPhoto(this)" onfocus="pocoWarmPhoto(this)" onpointerdown="pocoWarmPhoto(this)" onclick="pocoOpenPhoto(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();pocoOpenPhoto(this)}" style="cursor:pointer">`).join('')}</div></div>`:''}</div>${editable?`<div class="pw-card-actions">${st==='pago'?`<button class="pw-mini" onclick="togglePocoPagamento('${p.id}','pendente')">↩ Pagamento pendente</button>`:paymentPending(p)?`<button class="pw-mini" style="border-color:#047857;color:#087344" onclick="togglePocoPagamento('${p.id}','pago')">✓ Confirmar pagamento</button>`:''}<button class="pw-mini" onclick="openPocoModal('${p.id}')">✏️ Editar</button><button class="pw-mini" style="color:#b91c1c" onclick="deletePoco('${p.id}')">🗑️ Excluir</button></div>`:''}</article>`;
   }
 
   function renderDrillerList(editable){
