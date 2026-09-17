@@ -107,7 +107,7 @@
   const drillingStatus=p=>V(p,'status_perfuracao','executada')==='solicitada'?'solicitada':'executada';
   const paymentPending=p=>drillingStatus(p)==='executada'&&V(p,'status_pagamento')!=='pago';
   let pdfBusy=false;
-  const withTimeout=(promise,ms,label)=>Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||'Tempo esgotado')),ms))]);
+  const withTimeout=(promise,ms,label)=>{let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label||'Tempo esgotado')),ms);})]).finally(()=>clearTimeout(timer));};
   const imageList=x=>{
     const raw=V(x,'imagens',[]);
     if(Array.isArray(raw))return raw.map(v=>typeof v==='string'?v:v?.url).filter(Boolean);
@@ -134,6 +134,63 @@
     try{const u=new URL(url);if(u.hostname==='i.ibb.co')return 'https://images.weserv.nl/?url='+encodeURIComponent(u.hostname+u.pathname)+'&w=800&output=webp&q=40';}catch(_){}
     return url;
   };
+  // O PDF usa fotos inteiras pequenas, sem a miniatura recortada nem cache-busting.
+  const pdfPhotoCache=new Map();
+  function pdfPhotoSources(url){
+    const src=String(url||'');
+    if(src.startsWith('data:')||src.startsWith('blob:'))return [src];
+    try{
+      const u=new URL(src);
+      if(u.hostname==='i.ibb.co'||u.hostname==='images.weserv.nl'||u.hostname==='wsrv.nl'){
+        const original=u.hostname==='i.ibb.co'?u.hostname+u.pathname+u.search:u.searchParams.get('url');
+        if(original){const query='?url='+encodeURIComponent(original)+'&w=640&h=640&fit=inside&output=jpg&q=35';return [...new Set(['https://images.weserv.nl/'+query,src,'https://wsrv.nl/'+query])];}
+      }
+    }catch(_){}
+    return [src];
+  }
+  function readPdfPhoto(src){
+    return new Promise((resolve,reject)=>{
+      const image=new Image();let settled=false;
+      const finish=(error,result)=>{if(settled)return;settled=true;clearTimeout(timer);image.onload=image.onerror=null;if(error){image.src='';reject(error);}else resolve(result);};
+      const timer=setTimeout(()=>finish(new Error('Tempo esgotado ao carregar foto')),8000);
+      image.crossOrigin='anonymous';image.decoding='async';
+      image.onerror=()=>finish(new Error('Não foi possível carregar foto'));
+      image.onload=()=>{
+        try{
+          if(!image.naturalWidth||!image.naturalHeight)throw new Error('Foto inválida');
+          const scale=Math.min(1,640/image.naturalWidth,640/image.naturalHeight),canvas=document.createElement('canvas');
+          canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+          const context=canvas.getContext('2d');context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(image,0,0,canvas.width,canvas.height);
+          let data=canvas.toDataURL('image/jpeg',.38);
+          if(data.length>68000)data=canvas.toDataURL('image/jpeg',.25);
+          if(data.length>68000){const small=document.createElement('canvas');small.width=Math.max(1,Math.round(canvas.width*.75));small.height=Math.max(1,Math.round(canvas.height*.75));small.getContext('2d').drawImage(canvas,0,0,small.width,small.height);data=small.toDataURL('image/jpeg',.25);finish(null,{d:data,w:small.width,h:small.height});}
+          else finish(null,{d:data,w:canvas.width,h:canvas.height});
+        }catch(error){finish(error);}
+      };
+      image.src=src;
+    });
+  }
+  async function loadPdfPhoto(url){
+    if(pdfPhotoCache.has(url))return pdfPhotoCache.get(url);
+    const job=(async()=>{let error;for(const source of pdfPhotoSources(url)){try{return await readPdfPhoto(source);}catch(e){error=e;}}throw error||new Error('Foto indisponível');})();
+    pdfPhotoCache.set(url,job);
+    try{const photo=await job;if(pdfPhotoCache.size>96)pdfPhotoCache.delete(pdfPhotoCache.keys().next().value);return photo;}
+    catch(error){if(pdfPhotoCache.get(url)===job)pdfPhotoCache.delete(url);throw error;}
+  }
+  async function preparePdfPhotos(wells,onProgress){
+    const entries=wells.map(p=>({p,photos:new Array(imageList(p).length)})),tasks=[];
+    entries.forEach(entry=>imageList(entry.p).forEach((url,index)=>tasks.push({entry,url,index})));
+    let cursor=0,completed=0;const failed=[];
+    await Promise.all(Array.from({length:Math.min(3,tasks.length)},async()=>{
+      while(cursor<tasks.length){const task=tasks[cursor++];
+        try{task.entry.photos[task.index]=await loadPdfPhoto(task.url);}
+        catch(error){failed.push({p:task.entry.p,index:task.index,error});}
+        completed++;onProgress?.(completed,tasks.length);
+      }
+    }));
+    if(failed.length){const names=[...new Set(failed.map(f=>wellNumber(f.p)))].join(', ');throw new Error(`${failed.length} foto(s) não carregaram (${names}). O relatório não foi baixado incompleto. Tente gerar novamente.`);}
+    return entries;
+  }
   window.pocoWarmPhoto=element=>window.preloadLb?.(fastFullPhoto(element.dataset.full));
   window.pocoOpenPhoto=element=>window.openLb(element.dataset.full,element.alt,'',fastFullPhoto(element.dataset.full));
 
@@ -547,7 +604,7 @@
     const pdfButton=document.getElementById('pw-pdf-btn');if(pdfButton){pdfButton.disabled=true;pdfButton.textContent='⏳ Gerando PDF...';}
     window.toast('Gerando relatório institucional…','info',12000);
     try{
-    const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,bottom=H-FTR-4;
+    const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,bottom=H-FTR-4;
     const incluirFotos=options.incluirFotos!==false;
     const logo=await withTimeout(window.loadB64('img/logo_sertania.png','png',140),10000,'Tempo esgotado ao carregar o brasão').catch(()=>null);
     const sf=(n,b,c)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(n);doc.setTextColor(...(c||[30,41,59]));};
@@ -574,10 +631,10 @@
     const photoWells=incluirFotos?wells.filter(p=>imageList(p).length):[];
     if(photoWells.length){
       window.toast(`Preparando ${photoWells.length} seção(ões) fotográfica(s)…`,'info',18000);
-      const preparedPhotos=await Promise.all(photoWells.map(async p=>({p,photos:(await Promise.all(imageList(p).map(url=>withTimeout(window.loadB64(url,'jpeg',1400),18000,'Uma imagem demorou demais para carregar').catch(e=>{console.warn('PDF: foto ignorada',url,e);return null;})))).filter(Boolean)})));
+      const preparedPhotos=await preparePdfPhotos(photoWells,(done,total)=>{if(pdfButton)pdfButton.textContent=`⏳ Fotos ${done}/${total}`;});
       for(const entry of preparedPhotos){
         const p=entry.p,photos=entry.photos;
-        if(!photos.length)continue;
+
         for(let offset=0;offset<photos.length;offset+=6){
           const pagePhotos=photos.slice(offset,offset+6),count=pagePhotos.length,cols=count===1?1:count===2?2:3,rows=count<=3?1:2,gap=5;
           doc.addPage();header();footer();
@@ -592,7 +649,7 @@
             let iw=cellW-2,ih=iw/ratio;if(ih>cellH-2){ih=cellH-2;iw=ih*ratio;}
             const x=x0+(cellW-iw)/2,yImg=y0+(cellH-ih)/2;
             doc.setFillColor(249,251,250);doc.setDrawColor(190,210,195);doc.roundedRect(x0,y0,cellW,cellH,1.5,1.5,'FD');
-            try{doc.addImage(ph.d,'JPEG',x,yImg,iw,ih,undefined,'FAST');}catch(e){console.warn('PDF: falha ao inserir foto do poço',e);}
+            try{doc.addImage(ph.d,'JPEG',x,yImg,iw,ih,undefined,'FAST');}catch(e){throw new Error('Não foi possível inserir a imagem '+(offset+index+1)+' de '+wellNumber(p)+'. O relatório não foi baixado incompleto.');}
             sf(7,true,[71,85,105]);doc.text('Imagem '+(offset+index+1),x0+cellW/2,y0+cellH+4,{align:'center'});
           });
         }
