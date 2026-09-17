@@ -62,6 +62,40 @@
   const canEdit=()=>window.S?.isAdmin||window.userCan?.('atendimentos','editar');
   const allWells=secId=>(window.S?.subitems||[]).filter(x=>x.atividade_id===secId&&isWell(x));
   const allDrillers=secId=>(window.S?.items||[]).filter(x=>x.atividade_id===secId&&isDriller(x));
+  const uppercaseMigrations=new Map();
+  function existingTextPatch(record,fields){
+    const patch={};
+    fields.forEach(key=>{const value=V(record,key,null);if(typeof value==='string'){const normalized=value.toLocaleUpperCase('pt-BR');if(normalized!==value)patch[key]=normalized;}});
+    let contacts=V(record,'contatos_responsavel',null);
+    if(typeof contacts==='string'){try{contacts=JSON.parse(contacts);}catch(_){contacts=null;}}
+    if(Array.isArray(contacts)){
+      const normalized=contacts.map(c=>c&&typeof c.valor==='string'?{...c,valor:c.tipo==='email'?c.valor.toLowerCase():c.valor.toLocaleUpperCase('pt-BR')}:c);
+      if(JSON.stringify(contacts)!==JSON.stringify(normalized))patch.contatos_responsavel=normalized;
+    }
+    return patch;
+  }
+  window.migratePocoUppercase=function(secId){
+    if(!canEdit())return Promise.resolve();
+    if(uppercaseMigrations.has(secId))return uppercaseMigrations.get(secId);
+    const job=(async()=>{
+      let changed=0,failed=0;
+      const groups=[['subitems',allWells(secId),['numero','description','responsaveis','observacao']],['items',allDrillers(secId),['description','observacao','documento','telefone','contato']]];
+      for(const [collection,records,fields] of groups){for(const record of records){
+        const patch=existingTextPatch(record,fields);if(!Object.keys(patch).length)continue;
+        const extra={...EF(record)};let extraChanged=false;
+        Object.keys(patch).forEach(key=>{if(Object.prototype.hasOwnProperty.call(extra,key)){extra[key]=patch[key];extraChanged=true;}});
+        const payload=extraChanged?{...patch,extra_fields:extra}:patch;
+        try{
+          await window.updateDoc(window.doc(window.db,collection,record.id),payload);
+          Object.assign(record,payload);changed++;
+        }catch(error){failed++;console.error('Falha ao converter cadastro antigo',error);}
+      }}
+      if(changed&&state.secId===secId){const view=document.getElementById('pw-view');if(view){view.innerHTML=state.tab==='pocos'?renderWellList(canEdit()):renderDrillerList(canEdit());prepareVisiblePhotos();}}
+      if(failed)window.toast('Não foi possível converter '+failed+' cadastro(s) antigo(s). Abra o módulo novamente para tentar.','error');
+    })();
+    uppercaseMigrations.set(secId,job);
+    job.finally(()=>uppercaseMigrations.delete(secId));return job;
+  };
   const drillerName=id=>{const d=(window.S?.items||[]).find(x=>x.id===id);return d&&!isPlaceholder(d)?d.description:'Não informado';};
   const drillerById=id=>(window.S?.items||[]).find(x=>x.id===id&&isDriller(x));
   const valuesEnabledForDriller=id=>{
@@ -240,6 +274,7 @@
       <div id="pw-view">${state.tab==='pocos'?renderWellList(editable):renderDrillerList(editable)}</div>
       <div style="margin-top:12px;color:#475569;font-size:10px;text-align:right">Controle: ${esc(sec?.name||'Perfuração de Poços')}${hasValues?' · Valor total dos grupos com valores: '+money(total):' · Valores desativados para os grupos atuais'}</div>`;
     prepareVisiblePhotos();
+    window.migratePocoUppercase(secId);
   };
 
   function renderWellList(editable){
