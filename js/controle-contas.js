@@ -179,7 +179,7 @@ window.renderControleContas = function(secId,opcoes={}){
   const numeroMes=c=>{const n=Number(String(c.mes_ano||'').split('/')[0]);return n>=1&&n<=12?String(n):'0';};
   if(!mesesNavegaveis.some(m=>m.id===nav.mes))nav.mes=mesesNavegaveis.find(m=>contasAno.some(c=>numeroMes(c)===m.id))?.id||'1';
   _ccNavegacaoPorSecao.set(secId,nav);
-  const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
+  const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs ${nivel==='local'?'cc-local-grid':''}" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
   const navegacaoHtml=`<div class="cc-drilldown"><div class="cc-drill-label">1 · Setor</div>${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
   ${locaisNavegaveis.length?`<div class="cc-drill-label">2 · Item / local</div>${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:local.description||'Local'})),nav.local)}`:''}
   ${tiposNavegaveis.length?`<div class="cc-drill-label">3 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">4 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}

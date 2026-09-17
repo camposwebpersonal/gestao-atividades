@@ -446,3 +446,11 @@ button.cc-month{border:1px solid #d5e1e8;text-align:left;cursor:pointer;font-fam
 
 /* Mantém a geometria dos cards mensais durante a atualização da lista. */
 .cc-month-workspace,.cc-month-workspace .cc-local-card{content-visibility:visible;contain-intrinsic-size:none}
+
+/* Todos os itens/locais visíveis em colunas de largura uniforme. */
+.cc-drill-tabs{max-height:none;overflow:visible}
+.cc-drill-tabs.cc-local-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:8px;max-height:none;overflow:visible;padding-bottom:6px}
+.cc-local-grid button{width:100%;min-width:0;min-height:58px;padding:12px;text-align:left;white-space:normal;overflow-wrap:anywhere;line-height:1.4}
+#navmenu>.sidebar-home{flex-shrink:0;margin-bottom:10px}
+@media(max-width:600px){.cc-drill-tabs.cc-local-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-local-grid button{padding:10px;font-size:12px}}
+@media(max-width:360px){.cc-drill-tabs.cc-local-grid{grid-template-columns:1fr}}
