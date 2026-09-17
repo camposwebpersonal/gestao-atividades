@@ -95,11 +95,36 @@
   };
 
   const fastFullPhoto=url=>{
-    try{const u=new URL(url);if(u.hostname==='i.ibb.co')return 'https://images.weserv.nl/?url='+encodeURIComponent(u.hostname+u.pathname)+'&w=1280&output=webp&q=78';}catch(_){}
+    try{const u=new URL(url);if(u.hostname==='i.ibb.co')return 'https://images.weserv.nl/?url='+encodeURIComponent(u.hostname+u.pathname)+'&w=800&output=webp&q=40';}catch(_){}
     return url;
   };
   window.pocoWarmPhoto=element=>window.preloadLb?.(fastFullPhoto(element.dataset.full));
   window.pocoOpenPhoto=element=>window.openLb(element.dataset.full,element.alt,'',fastFullPhoto(element.dataset.full));
+
+  let photoObserver=null,photoLoads=0;
+  const photoQueue=[],photoQueued=new Set();
+  function runPhotoQueue(){
+    while(photoLoads<2&&photoQueue.length){
+      const element=photoQueue.shift(),url=fastFullPhoto(element.dataset.full);
+      if(!element.isConnected){photoQueued.delete(url);continue;}
+      photoLoads++;
+      Promise.resolve(window.preloadLb?.(url)).finally(()=>{photoLoads--;photoQueued.delete(url);runPhotoQueue();});
+    }
+  }
+  function prepareVisiblePhotos(){
+    photoObserver?.disconnect();
+    photoQueue.forEach(element=>photoQueued.delete(fastFullPhoto(element.dataset.full)));photoQueue.length=0;
+    if(!window.IntersectionObserver)return;
+    photoObserver=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(!entry.isIntersecting)return;
+        photoObserver.unobserve(entry.target);
+        const url=fastFullPhoto(entry.target.dataset.full);
+        if(!photoQueued.has(url)){photoQueued.add(url);photoQueue.push(entry.target);}
+      });runPhotoQueue();
+    },{rootMargin:'120px',threshold:.01});
+    document.querySelectorAll('#pw-view .pw-photo').forEach(photo=>photoObserver.observe(photo));
+  }
 
   const style=document.createElement('style');
   style.textContent=`
@@ -213,6 +238,7 @@
       <div class="pw-stats"><div class="pw-stat"><b style="color:#d97706">${requested.length}</b><span>Solicitadas</span></div><div class="pw-stat"><b style="color:#059669">${executed.length}</b><span>Executadas</span></div><div class="pw-stat"><b style="color:#087f8c">${paid.length}</b><span>Pagamentos realizados</span></div><div class="pw-stat"><b style="color:#c2410c">${pending.length}</b><span>Aguardando pagamento${hasValues&&pendingValue?' · '+money(pendingValue):''}</span></div></div>
       <div id="pw-view">${state.tab==='pocos'?renderWellList(editable):renderDrillerList(editable)}</div>
       <div style="margin-top:12px;color:#475569;font-size:10px;text-align:right">Controle: ${esc(sec?.name||'Perfuração de Poços')}${hasValues?' · Valor total dos grupos com valores: '+money(total):' · Valores desativados para os grupos atuais'}</div>`;
+    prepareVisiblePhotos();
   };
 
   function renderWellList(editable){
@@ -240,7 +266,7 @@
   }
 
   window.pocoSetTab=function(tab){state.tab=tab;saveUiState();window.renderPocos(state.secId);};
-  window.pocoFilter=function(key,value){state[key]=value;saveUiState();const view=document.getElementById('pw-view');if(view)view.innerHTML=renderWellList(canEdit());};
+  window.pocoFilter=function(key,value){state[key]=value;saveUiState();const view=document.getElementById('pw-view');if(view){view.innerHTML=renderWellList(canEdit());prepareVisiblePhotos();}};
 
   window.openPocoModal=function(id){
     const p=id?allWells(state.secId).find(x=>x.id===id):null;
