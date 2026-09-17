@@ -10,7 +10,7 @@
   const responsibleContacts=p=>{
     let contacts=V(p,'contatos_responsavel',[]);
     if(typeof contacts==='string'){try{contacts=JSON.parse(contacts);}catch(_){contacts=[];}}
-    return Array.isArray(contacts)?contacts.filter(c=>c&&['telefone','email'].includes(c.tipo)&&typeof c.valor==='string'&&c.valor.trim()):[];
+    return Array.isArray(contacts)?contacts.filter(c=>c&&['telefone','email'].includes(c.tipo)&&typeof c.valor==='string'&&c.valor.trim()).map(c=>({...c,valor:c.tipo==='email'?c.valor.toLowerCase():c.valor})):[];
   };
   const contactRow=(type,value='',primary=false)=>`<div class="pw-contact-row" data-contact-type="${type}"><label>${primary?'Telefone do responsável':type==='email'?'Email do responsável':'Telefone adicional'}<input type="${type==='email'?'email':'tel'}" inputmode="${type==='email'?'email':'tel'}" autocomplete="${type==='email'?'email':'tel'}" placeholder="${type==='email'?'nome@exemplo.com':'(87) 99999-9999'}" value="${esc(value)}" ${type==='telefone'?'oninput="pocoFormatContactPhone(this)"':'oninput="this.setCustomValidity(\'\')"'}></label>${primary?`<button type="button" class="pw-mini" title="Adicionar contato" aria-label="Adicionar telefone ou email" onclick="pocoToggleContactTypes()">+</button>`:`<button type="button" class="pw-mini" title="Remover contato" aria-label="Remover contato" onclick="this.closest('.pw-contact-row').remove()">✕</button>`}</div>`;
   window.pocoToggleContactTypes=function(){const choices=document.getElementById('pw-contact-types');if(choices)choices.hidden=!choices.hidden;};
@@ -36,7 +36,7 @@
       const digits=value.replace(/\D/g,'');
       if(type==='telefone'&&(digits.length<10||digits.length>15||(!value.startsWith('+')&&digits.length>11)))input.setCustomValidity('Informe um telefone com DDD, ou um número internacional com + e código do país.');
       if(!input.checkValidity()){input.reportValidity();return null;}
-      contacts.push({tipo:type,valor:value.toLocaleUpperCase('pt-BR')});
+      contacts.push({tipo:type,valor:type==='email'?value.toLowerCase():value.toLocaleUpperCase('pt-BR')});
     }
     return contacts;
   };
