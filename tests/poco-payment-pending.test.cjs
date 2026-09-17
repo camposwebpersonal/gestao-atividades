@@ -14,7 +14,7 @@ function app(){
 test('somente executados não pagos contam como pendentes, incluindo registros antigos',()=>{
  const a=app();a.ctx.renderPocos('s');
  assert.match(a.nodes.content.innerHTML,/>2<\/b><span>Aguardando pagamento/);
- const requested=a.nodes.content.innerHTML.match(/<article class="pw-card solicitada">[\s\S]*?<\/article>/)[0];assert.doesNotMatch(requested,/PAGAMENTO PENDENTE|Confirmar pagamento/);
+ const requested=a.nodes.content.innerHTML.match(/<article class="pw-card solicitada"[^>]*>[\s\S]*?<\/article>/)[0];assert.doesNotMatch(requested,/PAGAMENTO PENDENTE|Confirmar pagamento/);
  a.ctx.pocoFilter('status','pendente');assert.doesNotMatch(a.nodes['pw-view'].innerHTML,/pw-local">SOLICITADO|pw-local">PAGO/);assert.match(a.nodes['pw-view'].innerHTML,/pw-local">EXECUTADO/);assert.match(a.nodes['pw-view'].innerHTML,/pw-local">ANTIGO/);
  a.ctx.pocoFilter('status','pago');assert.match(a.nodes['pw-view'].innerHTML,/pw-local">PAGO/);assert.doesNotMatch(a.nodes['pw-view'].innerHTML,/pw-local">EXECUTADO/);
  a.ctx.pocoSetTab('perfuradores');assert.match(a.nodes.content.innerHTML,/>2<\/b>Pendentes/);
