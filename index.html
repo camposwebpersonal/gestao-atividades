@@ -2181,15 +2181,36 @@ window.openGal=async function(type,id,name){
   document.getElementById('gallery-modal').style.display='flex';
 };
 window.closeGal=()=>document.getElementById('gallery-modal').style.display='none';
-let _lbPreviousFocus=null;
-window.openLb=(src,alt='Foto ampliada')=>{
-  _lbPreviousFocus=document.activeElement;
-  const image=document.getElementById('lb-img');image.src=src;image.alt=alt;
+let _lbPreviousFocus=null,_lbRequest=0;
+const _lbImageCache=new Map();
+function loadLbImage(src,priority='low'){
+  const cached=_lbImageCache.get(src);
+  if(cached){cached.image.fetchPriority=priority;return cached.promise;}
+  const image=new Image();image.decoding='async';image.fetchPriority=priority;
+  const entry={image,promise:null};
+  entry.promise=new Promise((resolve,reject)=>{
+    image.onload=async()=>{try{await image.decode();}catch(_){}resolve(src);};
+    image.onerror=()=>{if(_lbImageCache.get(src)===entry)_lbImageCache.delete(src);reject(new Error('Imagem indisponível'));};
+  });
+  _lbImageCache.set(src,entry);
+  while(_lbImageCache.size>16)_lbImageCache.delete(_lbImageCache.keys().next().value);
+  image.src=src;return entry.promise;
+}
+window.preloadLb=src=>{if(src)loadLbImage(src).catch(()=>{});};
+window.openLb=(src,alt='Foto ampliada',preview='',displaySrc=src)=>{
+  if(document.getElementById('lightbox').style.display!=='flex')_lbPreviousFocus=document.activeElement;
+  const request=++_lbRequest,image=document.getElementById('lb-img');
+  image.src=preview||displaySrc;image.alt=alt;image.fetchPriority='high';
   document.getElementById('lightbox').style.display='flex';
   document.getElementById('lb-close').focus({preventScroll:true});
+  loadLbImage(displaySrc,'high').catch(error=>{
+    if(request!==_lbRequest||displaySrc===src)throw error;
+    return loadLbImage(src,'high');
+  }).then(loaded=>{if(request===_lbRequest)image.src=loaded;}).catch(()=>{});
 };
 window.openLB=window.openLb;
 window.closeLb=()=>{
+  ++_lbRequest;
   document.getElementById('lightbox').style.display='none';
   document.getElementById('lb-img').removeAttribute('src');
   if(_lbPreviousFocus?.isConnected)_lbPreviousFocus.focus({preventScroll:true});
