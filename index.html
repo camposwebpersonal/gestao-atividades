@@ -14,6 +14,7 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="js/ordenacao-visual.js?v=86"></script>
 <script src="js/controle-contas.js?v=63"></script>
 <script src="js/controle-distribuicao.js?v=62"></script>
 <script src="js/controle-estoque.js?v=62"></script>
@@ -1513,7 +1514,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
-    return`<div class="sub-row ${lvlClass}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+    return`<div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
@@ -1548,7 +1549,7 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="sub-row lvl-1" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+    return`<div class="sub-row lvl-1" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
@@ -1582,7 +1583,7 @@ function renderItem(item,today,itemNum){
     </div>${_renderSubSubs(s.id,item,today,subNum)}`;
   }).join(''):'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
@@ -3318,7 +3319,7 @@ window.dropFieldTpl=async function(ev,targetId){
   if(!source||!target||sourceId===targetId||source.atividade_id!==target.atividade_id||source.scope!==target.scope)return;
   if(document.querySelector('.ftpl-editor')){toast('Salve ou cancele a edição antes de ordenar','error');return;}
   const ts=getFieldTpls(source.atividade_id,source.scope),from=ts.indexOf(source),to=ts.indexOf(target);
-  ts.splice(from,1);ts.splice(to,0,source);
+  ts.splice(from,1);ts.splice(typeof ev.sortAfter==='boolean'?ts.indexOf(target)+(ev.sortAfter?1:0):to,0,source);
   try{for(let i=0;i<ts.length;i++)await updateDoc(doc(db,'fieldTemplates',ts[i].id),{order_num:i});await loadData();
     document.getElementById('ftpl-'+(source.scope==='item'?'item':'sub')+'-list-'+source.atividade_id).innerHTML=renderFieldTplList(source.atividade_id,source.scope);toast('Ordem dos campos salva!');
   }catch(e){console.error(e);toast('Não foi possível salvar toda a ordem. Tente novamente.','error');await loadData();}
@@ -3328,7 +3329,7 @@ window.addFieldOption=function(tplId,value=''){
  row.innerHTML=`<span class="ftpl-grip" draggable="true" title="Arraste para ordenar">⠿</span><input aria-label="Opção da lista" value="${esc(value)}"><button type="button" class="card-btn" title="Remover opção">✕</button>`;
  row.querySelector('button').onclick=()=>row.remove();
  row.querySelector('.ftpl-grip').ondragstart=ev=>{list._dragRow=row;ev.dataTransfer.setData('application/x-field-option',tplId);ev.dataTransfer.effectAllowed='move';};
- row.ondragover=ev=>ev.preventDefault();row.ondrop=ev=>{ev.preventDefault();ev.stopPropagation();if(ev.dataTransfer.getData('application/x-field-option')!==tplId||!list._dragRow)return;const source=list._dragRow;if(source===row)return;const rows=[...list.children];list.insertBefore(source,rows.indexOf(source)<rows.indexOf(row)?row.nextSibling:row);list._dragRow=null;};list.appendChild(row);
+ row.ondragover=ev=>ev.preventDefault();row.ondrop=ev=>{ev.preventDefault();ev.stopPropagation();if(ev.dataTransfer.getData('application/x-field-option')!==tplId||!list._dragRow)return;const source=list._dragRow;if(source===row)return;const rows=[...list.children];list.insertBefore(source,(typeof ev.sortAfter==='boolean'?ev.sortAfter:rows.indexOf(source)<rows.indexOf(row))?row.nextSibling:row);list._dragRow=null;};list.appendChild(row);
 };
 window.editFieldTplInline=function(tplId,actId){
  const tpl=S.fieldTemplates.find(t=>t.id===tplId),row=document.getElementById('ftpl-row-'+tplId);if(!tpl||!row)return;
@@ -3884,14 +3885,14 @@ window.listaDrop=async function(e,type,targetId,secId){
     if(isNest){
       await converterItemEmSubitem(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
     }
-    await reorderItemsLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+    await reorderItemsLista(src.id,targetId,secId,e.sortAfter);clearListaNest();_listaDragSrc=null;return;
   }
   // SUBITEM -> ITEM: segurar 1s = vira filho, soltar rápido = vira irmão antes
   if(src.type==='subitem'&&type==='item'){
     if(isNest){
       await moverSubParaItemLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
     }
-    await converterSubitemEmItemLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
+    await converterSubitemEmItemLista(src.id,targetId,secId,e.sortAfter);clearListaNest();_listaDragSrc=null;return;
   }
   // SUBITEM -> SUBITEM
   if(src.type==='subitem'&&type==='subitem'){
@@ -3902,25 +3903,25 @@ window.listaDrop=async function(e,type,targetId,secId){
       await moverSubParaSubLista(src.id,targetId,secId);clearListaNest();_listaDragSrc=null;return;
     }
     if(isSubAncestor(toSub.id,fromSub.id)){
-      await moverSubAntesDeLista(src.id,toSub.id,secId);clearListaNest();_listaDragSrc=null;return;
+      await moverSubAntesDeLista(src.id,toSub.id,secId,e.sortAfter);clearListaNest();_listaDragSrc=null;return;
     }
     const fromParent=fromSub.parent_type==='subitem'?fromSub.parent_id:fromSub.item_id;
     const toParent=toSub.parent_type==='subitem'?toSub.parent_id:toSub.item_id;
     if(fromParent===toParent){
-      await reorderSubitemsLista(src.id,targetId,secId);
+      await reorderSubitemsLista(src.id,targetId,secId,e.sortAfter);
     }else{
-      await moverSubParaMesmoGrupoLista(src.id,targetId,secId);
+      await moverSubParaMesmoGrupoLista(src.id,targetId,secId,e.sortAfter);
     }
     clearListaNest();_listaDragSrc=null;return;
   }
   clearListaNest();_listaDragSrc=null;
 };
-window.reorderItemsLista=async function(fromId,toId,secId){
+window.reorderItemsLista=async function(fromId,toId,secId,after){
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const fi=its.findIndex(i=>i.id===fromId),ti=its.findIndex(i=>i.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
-  const[m]=its.splice(fi,1);its.splice(ti,0,m);
+  const[m]=its.splice(fi,1);its.splice(typeof after==='boolean'?its.findIndex(x=>x.id===toId)+(after?1:0):ti,0,m);
   its.forEach((item,i)=>{const x=S.items.find(x=>x.id===item.id);if(x)x.order_num=i;});
   renderCadastros(secId);
   for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});
@@ -3929,7 +3930,7 @@ window.reorderItemsLista=async function(fromId,toId,secId){
     async()=>{for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});}
   );
 };
-window.reorderSubitemsLista=async function(fromId,toId,secId){
+window.reorderSubitemsLista=async function(fromId,toId,secId,after){
   const fromSub=S.subitems.find(s=>s.id===fromId);const toSub=S.subitems.find(s=>s.id===toId);
   if(!fromSub||!toSub)return;
   const parentId=fromSub.parent_type==='subitem'?fromSub.parent_id:fromSub.item_id;
@@ -3938,7 +3939,7 @@ window.reorderSubitemsLista=async function(fromId,toId,secId){
   const fi=sbs.findIndex(s=>s.id===fromId),ti=sbs.findIndex(s=>s.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
   const oldOrders=sbs.map(s=>({id:s.id,order_num:s.order_num||0}));
-  const[m]=sbs.splice(fi,1);sbs.splice(ti,0,m);
+  const[m]=sbs.splice(fi,1);sbs.splice(typeof after==='boolean'?sbs.findIndex(x=>x.id===toId)+(after?1:0):ti,0,m);
   sbs.forEach((sb,i)=>{const x=S.subitems.find(x=>x.id===sb.id);if(x)x.order_num=i;});
   renderCadastros(secId);
   for(let i=0;i<sbs.length;i++)await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});
@@ -3966,7 +3967,7 @@ window.moverSubParaSubLista=async function(fromId,toSubId,secId){
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Aninhar sub-item');
   await loadData();renderCadastros(secId);toast('Aninhado!');
 };
-window.moverSubParaMesmoGrupoLista=async function(fromId,toSubId,secId){
+window.moverSubParaMesmoGrupoLista=async function(fromId,toSubId,secId,after){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
   const toSub=S.subitems.find(s=>s.id===toSubId);if(!toSub)return;
   const toParent=toSub.parent_type==='subitem'?toSub.parent_id:toSub.item_id;
@@ -3975,18 +3976,19 @@ window.moverSubParaMesmoGrupoLista=async function(fromId,toSubId,secId){
     if(toParentType==='subitem')return s.parent_id===toParent&&s.parent_type==='subitem';
     return s.item_id===toParent&&s.parent_type!=='subitem';
   })].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
+  const newOrder=typeof after==='boolean'?(toSub.order_num||0)+(after?1:0):(sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0);
+  if(typeof after==='boolean'){for(const sibling of sib){if((sibling.order_num||0)>=newOrder)await updateDoc(doc(db,'subitems',sibling.id),{order_num:(sibling.order_num||0)+1});}}
   const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
   const newData={parent_id:toParent,parent_type:toParentType,item_id:toSub.item_id,order_num:newOrder};
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Mover sub-item de grupo');
   await loadData();renderCadastros(secId);toast('Movido para novo grupo!');
 };
-window.moverSubAntesDeLista=async function(fromId,beforeSubId,secId){
+window.moverSubAntesDeLista=async function(fromId,beforeSubId,secId,after=false){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
   const beforeSub=S.subitems.find(s=>s.id===beforeSubId);if(!beforeSub)return;
   const newParentId=beforeSub.parent_type==='subitem'?beforeSub.parent_id:beforeSub.item_id;
   const newParentType=beforeSub.parent_type==='subitem'?'subitem':'item';
-  const targetOrder=beforeSub.order_num||0;
+  const targetOrder=(beforeSub.order_num||0)+(after?1:0);
   const sib=[...S.subitems.filter(s=>s.item_id===beforeSub.item_id&&s.parent_type===newParentType&&s.parent_id===newParentId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
   for(const s of sib){if((s.order_num||0)>=targetOrder){await updateDoc(doc(db,'subitems',s.id),{order_num:(s.order_num||0)+1});}}
@@ -3994,12 +3996,12 @@ window.moverSubAntesDeLista=async function(fromId,beforeSubId,secId){
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
   await loadData();renderCadastros(secId);toast('Desaninhado antes do alvo!');
 };
-window.reorderItems=async function(fromId,toId,secId){
+window.reorderItems=async function(fromId,toId,secId,after){
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const fi=its.findIndex(i=>i.id===fromId),ti=its.findIndex(i=>i.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
   const oldOrders=its.map(i=>({id:i.id,order_num:i.order_num||0}));
-  const[m]=its.splice(fi,1);its.splice(ti,0,m);
+  const[m]=its.splice(fi,1);its.splice(typeof after==='boolean'?its.findIndex(x=>x.id===toId)+(after?1:0):ti,0,m);
   its.forEach((item,i)=>{const x=S.items.find(x=>x.id===item.id);if(x)x.order_num=i;});
   openActivity(secId);
   for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});
@@ -4008,7 +4010,7 @@ window.reorderItems=async function(fromId,toId,secId){
     async()=>{for(let i=0;i<its.length;i++)await updateDoc(doc(db,'items',its[i].id),{order_num:i});}
   );
 };
-window.reorderSubitems=async function(fromId,toId,parentId,secId){
+window.reorderSubitems=async function(fromId,toId,parentId,secId,after){
   const fromSub=S.subitems.find(s=>s.id===fromId);
   const isNested=fromSub&&fromSub.parent_type==='subitem';
   const sbs=[...S.subitems.filter(s=>{
@@ -4018,7 +4020,7 @@ window.reorderSubitems=async function(fromId,toId,parentId,secId){
   const fi=sbs.findIndex(s=>s.id===fromId),ti=sbs.findIndex(s=>s.id===toId);
   if(fi===-1||ti===-1||fi===ti)return;
   const oldOrders=sbs.map(s=>({id:s.id,order_num:s.order_num||0}));
-  const[m]=sbs.splice(fi,1);sbs.splice(ti,0,m);
+  const[m]=sbs.splice(fi,1);sbs.splice(typeof after==='boolean'?sbs.findIndex(x=>x.id===toId)+(after?1:0):ti,0,m);
   sbs.forEach((sb,i)=>{const x=S.subitems.find(x=>x.id===sb.id);if(x)x.order_num=i;});
   openActivity(secId);
   for(let i=0;i<sbs.length;i++)await updateDoc(doc(db,'subitems',sbs[i].id),{order_num:i});
@@ -4255,13 +4257,13 @@ function onDrItemDrop(ev,targetId,secId){
       window.moverSubParaItem(_dragSubId,targetId,secId);_dragSubId=null;return;
     }
     console.log('Quick drop: converterSubitemEmItem');
-    window.converterSubitemEmItem(_dragSubId,targetId,secId);_dragSubId=null;return;
+    window.converterSubitemEmItem(_dragSubId,targetId,secId,ev.sortAfter);_dragSubId=null;return;
   }
   if(!_dragItemId||_dragItemId===targetId){_dragItemId=null;return;}
   if(isNest){
     window.converterItemEmSubitem(_dragItemId,targetId,secId);_dragItemId=null;return;
   }
-  window.reorderItems(_dragItemId,targetId,secId);_dragItemId=null;
+  window.reorderItems(_dragItemId,targetId,secId,ev.sortAfter);_dragItemId=null;
 }
 function onDrSubDrop(ev,targetId,parentId,secId){
   console.log('>>> onDrSubDrop chamado! targetId=',targetId,'_dragSubId=',_dragSubId);
@@ -4288,10 +4290,10 @@ function onDrSubDrop(ev,targetId,parentId,secId){
     const toSub=S.subitems.find(s=>s.id===toSubId);
     if(fromSub&&toSub){
       if(isSubAncestor(toSub.id,fromSub.id)){
-        window.moverSubAntesDe(_dragSubId,toSub.id,secId);clearDragNest();_dragSubId=null;return;
+        window.moverSubAntesDe(_dragSubId,toSub.id,secId,ev.sortAfter);clearDragNest();_dragSubId=null;return;
       }
       if(fromSub.parent_type===toSub.parent_type&&fromSub.parent_id===toSub.parent_id){
-        window.reorderSubitems(_dragSubId,toSubId,parentId,secId);clearDragNest();_dragSubId=null;return;
+        window.reorderSubitems(_dragSubId,toSubId,parentId,secId,ev.sortAfter);clearDragNest();_dragSubId=null;return;
       }
       // Pais diferentes: quick drop = desaninhar antes do alvo; nest = aninhar como filho
       if(isNest){
@@ -4302,7 +4304,7 @@ function onDrSubDrop(ev,targetId,parentId,secId){
         }
       }else{
         // Quick drop sobre subitem de outro pai -> virar irmão antes do alvo
-        window.moverSubAntesDe(_dragSubId,toSubId,secId);
+        window.moverSubAntesDe(_dragSubId,toSubId,secId,ev.sortAfter);
       }
       clearDragNest();_dragSubId=null;return;
     }
@@ -4316,13 +4318,13 @@ function onDrSubDrop(ev,targetId,parentId,secId){
       if(isNest){
         window.moverSubParaItem(_dragSubId,toItemId,secId);
       }else{
-        window.converterSubitemEmItem(_dragSubId,toItemId,secId);
+        window.converterSubitemEmItem(_dragSubId,toItemId,secId,ev.sortAfter);
       }
       clearDragNest();_dragSubId=null;return;
     }
   }
 
-  if(_dragSubParent===parentId)window.reorderSubitems(_dragSubId,targetId,parentId,secId);
+  if(_dragSubParent===parentId)window.reorderSubitems(_dragSubId,targetId,parentId,secId,ev.sortAfter);
   clearDragNest();_dragSubId=null;
 }
 window.moverSubParaSub=async function(fromId,toSubId,secId){
@@ -4335,12 +4337,12 @@ window.moverSubParaSub=async function(fromId,toSubId,secId){
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Aninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para sub-item!');
 };
-window.moverSubAntesDe=async function(fromId,beforeSubId,secId){
+window.moverSubAntesDe=async function(fromId,beforeSubId,secId,after=false){
   const fromSub=S.subitems.find(s=>s.id===fromId);if(!fromSub)return;
   const beforeSub=S.subitems.find(s=>s.id===beforeSubId);if(!beforeSub)return;
   const newParentId=beforeSub.parent_type==='subitem'?beforeSub.parent_id:beforeSub.item_id;
   const newParentType=beforeSub.parent_type==='subitem'?'subitem':'item';
-  const targetOrder=beforeSub.order_num||0;
+  const targetOrder=(beforeSub.order_num||0)+(after?1:0);
   const sib=[...S.subitems.filter(s=>s.item_id===beforeSub.item_id&&s.parent_type===newParentType&&s.parent_id===newParentId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const oldData={parent_id:fromSub.parent_id,parent_type:fromSub.parent_type,item_id:fromSub.item_id,order_num:fromSub.order_num||0};
   for(const s of sib){if((s.order_num||0)>=targetOrder){await updateDoc(doc(db,'subitems',s.id),{order_num:(s.order_num||0)+1});}}
@@ -4394,10 +4396,10 @@ window.converterItemEmSubitem=async function(itemId,targetItemId,secId){
   );
   await loadData();openActivity(secId);toast('Item aninhado como sub-item!');
 };
-window.converterSubitemEmItem=async function(subId,targetItemId,secId){
+window.converterSubitemEmItem=async function(subId,targetItemId,secId,after=false){
   const sub=S.subitems.find(s=>s.id===subId);if(!sub)return;
   const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
-  const targetOrder=targetItem.order_num||0;
+  const targetOrder=(targetItem.order_num||0)+(after?1:0);
   console.log('=== converterSubitemEmItem DEBUG ===');
   console.log('subId:',subId,'sub:',sub.description);
   console.log('targetItemId:',targetItemId,'target:',targetItem.description);
@@ -4442,10 +4444,10 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId){
   );
   await loadData();openActivity(secId);toast('Sub-item convertido em item!');
 };
-window.converterSubitemEmItemLista=async function(subId,targetItemId,secId){
+window.converterSubitemEmItemLista=async function(subId,targetItemId,secId,after=false){
   const sub=S.subitems.find(s=>s.id===subId);if(!sub)return;
   const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
-  const targetOrder=targetItem.order_num||0;
+  const targetOrder=(targetItem.order_num||0)+(after?1:0);
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(Number(a.order_num)||0)-(Number(b.order_num)||0));
   const oldOrders=its.map(i=>({id:i.id,order_num:Number(i.order_num)||0}));
   for(const i of its){if((Number(i.order_num)||0)>=targetOrder){await updateDoc(doc(db,'items',i.id),{order_num:(Number(i.order_num)||0)+1});}}
