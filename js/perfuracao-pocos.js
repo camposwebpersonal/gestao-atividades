@@ -66,7 +66,8 @@
     .pw-hero{background:linear-gradient(135deg,#063f39,#0d5545 55%,#164e72);border:1px solid #2f806c;border-radius:14px;padding:15px 18px;margin-bottom:12px;position:relative;overflow:hidden;color:#fff}
     .pw-hero-title{font-size:clamp(23px,4vw,34px);font-weight:900;margin:3px 0;color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.22)}
     .pw-hero:after{content:'💧';position:absolute;right:18px;top:-15px;font-size:100px;opacity:.08;transform:rotate(12deg)}
-    .pw-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:11px}
+    .pw-toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:11px;position:sticky;top:0;z-index:60;padding:10px;background:#f7fafb;border:1px solid #d5e1e8;border-radius:10px;box-shadow:0 5px 16px rgba(16,35,61,.12)}
+    @media(max-width:960px){.pw-toolbar{top:var(--header-height,68px)}}
     .pw-tabs{display:flex;gap:5px;background:#071323;border:1px solid #1e3a5f;border-radius:10px;padding:4px}
     .pw-tab{border:0;background:transparent;color:#64748b;padding:7px 12px;border-radius:7px;font-weight:700;cursor:pointer}.pw-tab.active{background:#0f766e;color:#fff}
     .pw-stats{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:11px}
