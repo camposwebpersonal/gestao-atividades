@@ -99,7 +99,7 @@
     return url;
   };
   window.pocoWarmPhoto=element=>window.preloadLb?.(fastFullPhoto(element.dataset.full));
-  window.pocoOpenPhoto=element=>window.openLb(element.dataset.full,element.alt,element.complete&&element.naturalWidth?(element.currentSrc||element.src):'',fastFullPhoto(element.dataset.full));
+  window.pocoOpenPhoto=element=>window.openLb(element.dataset.full,element.alt,'',fastFullPhoto(element.dataset.full));
 
   const style=document.createElement('style');
   style.textContent=`
