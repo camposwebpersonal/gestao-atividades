@@ -11,3 +11,6 @@ Thumbs.db
 
 cinterno/
 pbatransportes/
+
+# Estado local do Supabase CLI
+supabase/.temp/

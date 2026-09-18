@@ -116,7 +116,7 @@ function renderModuloGrupos(mod){
       <div onclick="window.openActivity('${_md.esc(g.id)}')">
       ${g.cover_url?`<img class="card-thumb" src="${_md.esc(g.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph"><img src="img/logo_sertania.png" style="width:64px;height:64px;object-fit:contain;opacity:.7"></div>`}
       <div class="card-title">${_md.esc(g.name||'Sem nome')}</div>
-      ${g.observacoes?`<div class="card-obs">${_md.esc(g.observacoes)}</div>`:''}
+      ${mod.id==='atendimentos'?`<div class="attendance-group-details"><div><strong>Assunto:</strong> <span>${_md.esc(g.assunto??_md.extra(g).assunto??'')||'Não informado'}</span></div><div><strong>Observação:</strong> <span>${_md.esc(g.observacoes||'')||'Não informada'}</span></div></div>`:g.observacoes?`<div class="card-obs">${_md.esc(g.observacoes)}</div>`:''}
       <div class="card-foot">
         <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% ${(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)?'pagos':'concluído'}</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
         <div class="card-btns">

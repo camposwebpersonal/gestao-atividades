@@ -519,3 +519,5 @@ button.cc-month{border:1px solid #d5e1e8;text-align:left;cursor:pointer;font-fam
 .user-card{row-gap:3px}.user-card>.record-audit{padding-left:44px}.user-card-actions{grid-column:4}
 @media(max-width:1100px){.user-card-actions{grid-column:3}}
 @media(max-width:600px){.user-card{row-gap:8px}.user-card-actions{grid-column:2}.user-card>.record-audit{padding-left:0;grid-row:4}}
+
+.attendance-group-details{display:grid;gap:6px;margin:8px 0 12px;font-size:.79rem;line-height:1.45;color:#52677c}.attendance-group-details strong{color:#26465d}.attendance-group-details span{white-space:pre-wrap;overflow-wrap:anywhere}

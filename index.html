@@ -364,7 +364,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=74">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=75">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -428,7 +428,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=64';
+import './js/modulos.js?v=65';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js';
@@ -1886,6 +1886,7 @@ window.openSecModal=function(id){
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveSec('${id||''}')">💾 Salvar</button></div>
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="s-name" value="${esc(s?.name||'')}"></div>
+    ${isAttendanceSection(s)?`<div class="form-group full"><label for="s-assunto">Assunto</label><input id="s-assunto" placeholder="Assunto dos atendimentos deste grupo" value="${esc(s?.assunto??recordExtra(s).assunto??'')}"></div>`:''}
     <div class="form-group full"><label>Observações</label><textarea id="s-obs">${esc(s?.observacoes||'')}</textarea></div>
     <div class="form-group full"><label>Responsáveis</label>${_respComboHtml(s?.responsaveis||'','s-resp-wrap')}<input type="hidden" id="s-resp" value="${esc(s?.responsaveis||'')}"></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="s-start" value="${esc(s?.start_date||'')}"></div>
@@ -1946,6 +1947,7 @@ window.saveSec=async function(id){
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
   const respStr=_getRespFromCombos('s-resp-wrap');
   const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  if(g('s-assunto')) data.assunto=g('s-assunto').value.trim();
   let did=id;
   if(id){await updateDoc(doc(db,'secretariats',id),data);}
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
