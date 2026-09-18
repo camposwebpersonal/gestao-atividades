@@ -174,10 +174,19 @@ export async function createUserAdminSession(username, password, name) {
     body: { username, password, name }
   });
   if (error) {
-    let message = 'Cadastro administrativo indisponível. É necessário ativar o serviço de criação de usuários no Supabase.';
+    let message = 'Não foi possível conectar ao cadastro administrativo. Verifique a conexão e tente novamente.';
     if (error.context && typeof error.context.json === 'function') {
       const body = await error.context.json().catch(() => ({}));
-      message = body.message || message;
+      const status = error.context.status;
+      if (status === 404 || body.code === 'NOT_FOUND') {
+        message = 'A função admin-create-user não foi encontrada no projeto xwlmpxypjheuhbxyfplo. Confira o nome e o projeto no Supabase.';
+      } else if (status === 401) {
+        message = body.message === 'Invalid JWT'
+          ? 'O Supabase recusou a sessão (Invalid JWT). Verifique a configuração JWT da função admin-create-user.'
+          : 'Sua sessão não foi aceita. Saia e entre novamente no sistema.';
+      } else {
+        message = body.message || body.error || message;
+      }
     }
     throw new Error(message);
   }
