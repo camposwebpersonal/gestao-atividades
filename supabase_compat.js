@@ -170,7 +170,7 @@ export async function createUserWithEmailAndPassword(auth, email, password) {
 
 // A sessão do administrador autoriza o cadastro; a chave fica no servidor.
 export async function createUserAdminSession(username, password, name) {
-  const { data, error } = await supabase.functions.invoke('admin-create-user', {
+  const { data, error } = await supabase.functions.invoke('super-worker', {
     body: { username, password, name }
   });
   if (error) {
@@ -179,10 +179,10 @@ export async function createUserAdminSession(username, password, name) {
       const body = await error.context.json().catch(() => ({}));
       const status = error.context.status;
       if (status === 404 || body.code === 'NOT_FOUND') {
-        message = 'A função admin-create-user não foi encontrada no projeto xwlmpxypjheuhbxyfplo. Confira o nome e o projeto no Supabase.';
+        message = 'A função super-worker não foi encontrada no projeto xwlmpxypjheuhbxyfplo. Confira o nome e o projeto no Supabase.';
       } else if (status === 401) {
         message = body.message === 'Invalid JWT'
-          ? 'O Supabase recusou a sessão (Invalid JWT). Verifique a configuração JWT da função admin-create-user.'
+          ? 'O Supabase recusou a sessão (Invalid JWT). Verifique a configuração JWT da função super-worker.'
           : 'Sua sessão não foi aceita. Saia e entre novamente no sistema.';
       } else {
         message = body.message || body.error || message;

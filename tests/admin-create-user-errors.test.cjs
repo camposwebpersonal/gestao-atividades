@@ -5,9 +5,9 @@ const vm=require('node:vm');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../supabase_compat.js'),'utf8');
 const code=source.slice(source.indexOf('export async function createUserAdminSession('),source.indexOf('export async function createUserAdmin(')).replace('export ','');
-async function invoke(result){const ctx={supabase:{functions:{invoke:async()=>result}}};vm.createContext(ctx);vm.runInContext(code,ctx);return ctx.createUserAdminSession('maria','secret','Maria');}
+async function invoke(result){const ctx={assert,supabase:{functions:{invoke:async(name)=>{assert.equal(name,'super-worker');return result;}}}};vm.createContext(ctx);vm.runInContext(code,ctx);return ctx.createUserAdminSession('maria','secret','Maria');}
 test('função não encontrada mostra nome e projeto corretos',async()=>{
- await assert.rejects(invoke({error:{context:{status:404,json:async()=>({code:'NOT_FOUND',message:'Requested function was not found'})}}}),/admin-create-user.*xwlmpxypjheuhbxyfplo/);
+ await assert.rejects(invoke({error:{context:{status:404,json:async()=>({code:'NOT_FOUND',message:'Requested function was not found'})}}}),/super-worker.*xwlmpxypjheuhbxyfplo/);
 });
 test('distingue rejeição JWT de ausência de função',async()=>{
  await assert.rejects(invoke({error:{context:{status:401,json:async()=>({message:'Invalid JWT'})}}}),/Invalid JWT/);
