@@ -364,7 +364,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=72">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=73">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -2258,39 +2258,52 @@ window.mkThumb=mkThumb;
 // ── ADMIN ──
 function renderAdmin(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
-  const permLabels=(p)=>Object.entries(p?.modulos||{}).filter(([_,v])=>v.acesso).map(([k,v])=>{const m=window.MODULOS?.find(x=>x.id===k);const lbl=m?m.icon+' '+m.label:k;return `<span class="admin-permission-chip">${lbl}${v.gerenciar||v.criar||v.editar?' ✎':''}</span>`;}).join('')||'—';
-  const rows=S.users.map(u=>{
-    const roleLbl={admin:'👑 Admin',gestor:'📋 Gestor',usuario:'👤 Usuário'}[u.role]||u.role;
-    const setorName=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'—';
-    const respName=S.responsaveis.find(r=>r.id===u.responsavel_id)?.name||'—';
-    const usuario=_usernameFromEmail(u.email||'');
-    const emailContato=u.email_contato?esc(u.email_contato):'—';
-    const perms=permLabels(u.permissoes);
-    return`<tr><td>${esc(u.displayName||u.name||'')}</td><td>${esc(usuario)}</td><td>${emailContato}</td><td>${roleLbl}</td><td>${esc(setorName)}</td><td>${esc(respName)}</td><td class="admin-permissions-cell">${perms}</td><td class="admin-password-cell"><input class="admin-password-input" type="password" id="usr-nova-senha-${u.id}" placeholder="Nova senha"><button class="card-btn admin-key-button" onclick="changeUserPassword('${u.id}')">🔑</button></td><td style="text-align:right"><button class="card-btn" onclick="openUserModal('${u.id}')">✏️</button><button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="deleteUser('${u.id}')">🗑️</button></td></tr>`;
-  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--muted)">Nenhum usuário cadastrado.</td></tr>';
+  const users=[...S.users].sort((a,b)=>(a.displayName||a.name||a.email||'').localeCompare(b.displayName||b.name||b.email||'','pt-BR'));
+  const roleNames={admin:'Administrador',gestor:'Gestor',usuario:'Usuário',user:'Usuário'};
+  const cards=users.map(u=>{
+    const name=u.displayName||u.name||_usernameFromEmail(u.email)||'Sem nome';
+    const login=_usernameFromEmail(u.email);
+    const initial=name.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+    const modules=Object.entries(u.permissoes?.modulos||{}).filter(([,v])=>v.acesso||v.gerenciar||v.criar||v.editar);
+    const chips=modules.map(([key,value])=>{const m=window.MODULOS?.find(m=>m.id===key);return `<span class="admin-permission-chip">${esc(m?.label||key)}${value.gerenciar||value.criar||value.editar?' · edição':''}</span>`;}).join('');
+    const sector=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'Sem setor';
+    const responsible=S.responsaveis.find(r=>r.id===u.responsavel_id)?.name;
+    const accesses=u.role==='admin'?'<span class="user-full-access">Acesso total</span>':modules.length?`<details class="user-access-details"><summary>${modules.length} ${modules.length===1?'módulo liberado':'módulos liberados'}</summary><div class="user-module-list">${chips}</div></details>`:'<span class="user-muted">Sem módulos liberados</span>';
+    return `<article class="user-card" data-user-search="${esc((name+' '+login+' '+(u.email_contato||'')+' '+sector).toLowerCase())}" data-user-role="${esc(u.role||'usuario')}">
+      <div class="user-identity"><span class="user-avatar" aria-hidden="true">${esc(initial)}</span><div><h3>${esc(name)}</h3><div class="user-login">Login: <strong>${esc(login)}</strong></div>${u.email_contato?`<div class="user-contact">${esc(u.email_contato)}</div>`:''}</div></div>
+      <div class="user-role-cell"><span class="user-role user-role-${['admin','gestor'].includes(u.role)?u.role:'usuario'}">${roleNames[u.role]||'Usuário'}</span><span class="user-sector">${esc(sector)}</span>${responsible?`<span class="user-sector">${esc(responsible)}</span>`:''}</div>
+      <div class="user-access-cell">${accesses}</div>
+      <div class="user-card-actions"><button type="button" class="users-button" onclick="openUserModal('${u.id}')">Editar</button><button type="button" class="users-button users-button-soft" onclick="openUserPasswordModal('${u.id}')">Senha</button></div>
+    </article>`;
+  }).join('');
   const svcKey=localStorage.getItem('sb_service_role_key')||'';
-  const svcBox=`<div class="admin-security-box">
-    <label style="font-weight:600;display:block;margin-bottom:6px">Chave de serviço do Supabase (service_role)</label>
-    <input type="password" id="admin-svc-key" value="${esc(svcKey)}" placeholder="Cole a chave service_role para criar usuários sem rate limit" style="width:100%;margin-bottom:8px">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <button type="button" class="btn-action" onclick="localStorage.setItem('sb_service_role_key',document.getElementById('admin-svc-key').value.trim());toast('Chave salva no navegador','info')">💾 Salvar chave</button>
-      <button type="button" class="btn-cancel" onclick="localStorage.removeItem('sb_service_role_key');document.getElementById('admin-svc-key').value='';toast('Chave removida','info')">🗑️ Remover</button>
-    </div>
-    <div style="font-size:11px;color:var(--muted);margin-top:6px">Fica salva apenas neste navegador. Não é enviada para o GitHub nem para o código.</div>
-  </div>`;
-  setC(`<div class="page-title">⚙️ Administração de Usuários</div>
-    <div class="page-sub">Crie usuários, defina permissões por módulo e redefina senhas</div>
-    ${svcBox}
-    <div style="margin-bottom:18px"><button class="btn-action primary" onclick="openUserModal()">+ Novo Usuário</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Email de contato</th><th>Nível</th><th>Setor</th><th>Responsável</th><th>Módulos</th><th>Nova senha</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="admin-rules-box">
-      <strong>Regras:</strong><br>
-      👑 <strong>Admin</strong> — acesso total e pode gerenciar usuários.<br>
-      📋 <strong>Gestor</strong> — permissões conforme módulos marcados.<br>
-      👤 <strong>Usuário</strong> — apenas consulta nos módulos liberados.<br>
-      O login é feito pelo <strong>nome de usuário</strong>. Vários usuários podem compartilhar o mesmo e-mail de contato.
-    </div>`);
+  setC(`<section class="users-admin">
+    <header class="users-page-header"><div><span class="users-eyebrow">ADMINISTRAÇÃO</span><h1>Usuários e acessos</h1><p>Cadastre sua equipe e organize as permissões em poucos passos.</p></div><button type="button" class="users-button users-button-primary" onclick="openUserModal()">＋ Novo usuário</button></header>
+    <div class="users-overview"><span><strong>${users.length}</strong> usuários cadastrados</span><span><strong>${users.filter(u=>u.role==='admin').length}</strong> administradores</span><span><strong>${users.filter(u=>u.role==='gestor').length}</strong> gestores</span></div>
+    <div class="users-toolbar"><div class="users-search"><label for="users-search">Buscar usuário</label><input id="users-search" type="search" placeholder="Nome, login ou e-mail de contato" oninput="filterAdminUsers()"></div><div class="users-role-filter"><label for="users-role-filter">Nível de acesso</label><select id="users-role-filter" onchange="filterAdminUsers()"><option value="">Todos os níveis</option><option value="admin">Administrador</option><option value="gestor">Gestor</option><option value="usuario">Usuário</option></select></div><span id="users-visible-count" aria-live="polite">${users.length} ${users.length===1?'usuário':'usuários'}</span></div>
+    <div class="users-list">${cards}</div><div id="users-empty" class="users-empty" ${users.length?'hidden':''}>Nenhum usuário encontrado.</div>
+    <p class="users-login-note">O acesso é feito pelo nome de usuário. E-mail de contato é opcional.</p>
+    <details class="users-advanced"><summary>Configurações avançadas</summary><div class="admin-security-box"><label for="admin-svc-key">Chave administrativa</label><input type="password" id="admin-svc-key" value="${esc(svcKey)}" placeholder="Chave de serviço"><div class="user-card-actions"><button type="button" class="users-button" onclick="localStorage.setItem('sb_service_role_key',document.getElementById('admin-svc-key').value.trim());toast('Chave salva no navegador','info')">Salvar chave</button><button type="button" class="users-button users-button-soft" onclick="localStorage.removeItem('sb_service_role_key');document.getElementById('admin-svc-key').value='';toast('Chave removida','info')">Remover chave</button></div></div></details>
+  </section>`);
 }
+window.filterAdminUsers=function(){
+  const query=(document.getElementById('users-search')?.value||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const role=document.getElementById('users-role-filter')?.value||'';
+  let count=0;
+  document.querySelectorAll('.users-admin .user-card').forEach(card=>{
+    const text=card.dataset.userSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const cardRole=card.dataset.userRole==='user'?'usuario':card.dataset.userRole;
+    card.hidden=!(text.includes(query)&&(!role||cardRole===role));
+    if(!card.hidden)count++;
+  });
+  document.getElementById('users-visible-count').textContent=count+' '+(count===1?'usuário':'usuários');
+  document.getElementById('users-empty').hidden=count>0;
+};
+window.openUserPasswordModal=function(id){
+  openUserModal(id);
+  const input=document.getElementById('usr-nova-senha');
+  input?.focus();input?.scrollIntoView({block:'center'});
+};
 function _buildPermMatrix(u){
   const p=u?.permissoes||{modulos:{}};
   const rows=window.MODULOS.map(m=>{
@@ -2314,30 +2327,20 @@ window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
   const secOpts=S.secretarias.map(s=>`<option value="${esc(s.id)}" ${u?.setor_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
   const usedIds=_usedRespIds();
-  const respOpts=S.responsaveis.map(r=>{
-    const isUsed=usedIds.has(r.id);
-    const isCurrent=u?.responsavel_id===r.id;
-    if(isUsed&&!isCurrent)return '';
-    return`<option value="${esc(r.id)}" ${isCurrent?'selected':''}>${esc(r.name)}</option>`;
-  }).join('');
-  const usuario=id?_usernameFromEmail(u?.email||''):'';
-  const emailContato=u?.email_contato||'';
-  const userField=id
-    ?`<div class="form-group full"><label>Usuário</label><input id="usr-user" value="${esc(usuario)}" disabled style="background:#0a1222;color:#64748b"></div>`
-    :`<div class="form-group full"><label>Usuário *</label><input id="usr-user" value="" placeholder="Ex: RCAMPOS" autocapitalize="off" spellcheck="false"><div style="font-size:11px;color:var(--muted);margin-top:4px">Use apenas letras e números. O login será feito com este nome.</div></div>`;
-  const senhaSection=id
-    ?`<div class="form-group full" style="background:#0a1222;border:1px solid var(--border);border-radius:8px;padding:12px">
-      <label style="font-weight:600;display:block;margin-bottom:6px">Nova senha</label>
-      <input type="password" id="usr-nova-senha" placeholder="Mínimo 6 caracteres" style="width:100%;margin-bottom:10px">
-      <button class="btn-action" type="button" onclick="changeUserPassword('${id}')">🔑 Alterar senha agora</button>
-      <div style="font-size:12px;color:var(--muted);margin-top:12px">Ou envie redefinição por e-mail:</div>
-      <button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')" style="margin-top:8px">📧 Enviar redefinição por e-mail</button>
-    </div>`
-    :`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" autocomplete="new-password" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}" placeholder="Mínimo 6 caracteres" style="width:100%"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:400;cursor:pointer"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')" style="width:auto"><span>Mostrar senha</span></label></div>`;
-  const permMatrix=_buildPermMatrix(u);
-  const actions=id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:'';
-  openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
-    `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>E-mail de contato (opcional)</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"><div style="font-size:11px;color:var(--muted);margin-top:4px">Pode ser o mesmo de outro usuário. Não é usado para login.</div></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div>${permMatrix}</div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
+  const respOpts=S.responsaveis.filter(r=>!usedIds.has(r.id)||u?.responsavel_id===r.id).map(r=>`<option value="${esc(r.id)}" ${u?.responsavel_id===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
+  const password=id?`<section class="user-form-section"><h3>Alterar senha</h3><div class="user-password-edit"><input type="password" id="usr-nova-senha" autocomplete="new-password" placeholder="Nova senha · mínimo 6 caracteres" aria-label="Nova senha"><button type="button" class="users-button" onclick="changeUserPassword('${id}')">Alterar senha</button></div><button type="button" class="users-text-button" onclick="sendUserPasswordReset('${id}')">Enviar redefinição por e-mail</button></section>`
+    :`<div class="form-group"><label for="usr-password">Senha *</label><input type="password" id="usr-password" autocomplete="new-password" placeholder="Pelo menos 6 caracteres" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}"><label class="user-show-password"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')"> Mostrar senha</label></div>`;
+  openModal(id?'Editar usuário':'Novo usuário','E-mail de contato é opcional.',
+    `<div class="user-form"><section class="user-form-section"><h3>Dados de acesso</h3><div class="form-grid">
+      <div class="form-group full"><label for="usr-name">Nome completo *</label><input id="usr-name" autocomplete="name" placeholder="Nome da pessoa" value="${esc(u?.displayName||u?.name||'')}"></div>
+      <div class="form-group"><label for="usr-user">Usuário${id?'':' *'}</label><input id="usr-user" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex.: carlos" value="${esc(id?_usernameFromEmail(u?.email):'')}" ${id?'disabled':''}><small>Nome usado para entrar no sistema.</small></div>
+      ${id?'':password}
+      <div class="form-group ${id?'':'full'}"><label for="usr-role">Nível de acesso</label><select id="usr-role"><option value="usuario" ${!u||u.role==='usuario'||u.role==='user'?'selected':''}>Usuário · consulta</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>Gestor · gerencia módulos</option><option value="admin" ${u?.role==='admin'?'selected':''}>Administrador · acesso total</option></select></div>
+    </div></section>
+    <details class="user-form-disclosure" ${id?'open':''}><summary>Informações complementares <span>Opcionais</span></summary><div class="form-grid"><div class="form-group full"><label for="usr-email-contato">E-mail de contato</label><input id="usr-email-contato" type="email" autocomplete="email" value="${esc(u?.email_contato||'')}" placeholder="email@exemplo.com"><small>Pode ser compartilhado por vários usuários.</small></div><div class="form-group"><label for="usr-setor">Setor / Secretaria</label><select id="usr-setor"><option value="">Sem vínculo</option>${secOpts}</select></div><div class="form-group"><label for="usr-resp">Responsável</label><select id="usr-resp"><option value="">Sem vínculo</option>${respOpts}</select></div></div></details>
+    <details class="user-form-disclosure user-form-permissions" ${id?'open':''}><summary>Permissões por módulo <span>Definir acessos</span></summary><div class="user-permissions-body">${_buildPermMatrix(u)}</div></details>${id?password:''}
+    <div class="modal-actions user-form-actions">${id?`<button type="button" class="users-text-button users-danger" onclick="deleteUser('${id}')">Excluir usuário</button>`:''}<button type="button" class="users-button users-button-soft" onclick="closeModal()">Cancelar</button><button type="button" class="users-button users-button-primary" onclick="saveUser('${id||''}')">${id?'Salvar alterações':'Criar usuário'}</button></div></div>`);
+  document.getElementById('usr-name')?.focus();
 };
 window.saveUser=async function(id){
   if(window._savingUser){toast('Aguarde a operação atual','warn');return;}

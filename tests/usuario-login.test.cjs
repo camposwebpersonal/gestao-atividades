@@ -9,6 +9,7 @@ test('identificador válido e nomes de contas novas e antigas',()=>{
  const c=context();assert.equal(c.userEmail(' José '),'jose@pms.sertania.pe.gov.br');
  assert.equal(c.usernameFromEmail('jose@pms.sertania'),'jose');
  assert.equal(c.usernameFromEmail(c.userEmail('José')),'jose');
+ assert.equal(c.usernameFromEmail('camposweb.personal@gmail.com'),'rcampos');
 });
 test('login aceita contas antigas e preserva acesso do administrador',async()=>{
  const c=context();const calls=[];

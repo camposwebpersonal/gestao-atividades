@@ -454,3 +454,61 @@ button.cc-month{border:1px solid #d5e1e8;text-align:left;cursor:pointer;font-fam
 #navmenu>.sidebar-home{flex-shrink:0;margin-bottom:10px}
 @media(max-width:600px){.cc-drill-tabs.cc-local-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-local-grid button{padding:10px;font-size:12px}}
 @media(max-width:360px){.cc-drill-tabs.cc-local-grid{grid-template-columns:1fr}}
+
+/* Usuários: lista compacta e formulário com foco nos dados essenciais. */
+.users-admin{color:#172b40;font-size:14px}
+.users-page-header{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:24px}
+.users-eyebrow{font-size:11px;font-weight:800;letter-spacing:1.5px;color:#16803d}
+.users-page-header h1{font-size:28px;letter-spacing:-.7px;line-height:1.2;margin:7px 0 8px;color:#102b40}
+.users-page-header p{margin:0;color:#64748b;line-height:1.6}
+.users-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 16px;border:1px solid #ccd9e4;border-radius:9px;background:#fff;color:#23435c;font-family:inherit;font-size:13px;font-weight:700;line-height:1.3;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.users-button:hover{background:#edf4fa;border-color:#9ab5ca}
+.users-button-primary{background:#16803d;border-color:#16803d;color:#fff;padding:12px 20px;box-shadow:0 3px 8px #16803d1a}
+.users-button-primary:hover{background:#126b33;border-color:#126b33}
+.users-button-soft{background:#f5f8fb;color:#536a7e}
+.users-button:focus-visible,.users-text-button:focus-visible,.user-access-details summary:focus-visible{outline:3px solid #8db9e9;outline-offset:3px}
+.users-overview{display:flex;flex-wrap:wrap;gap:12px 28px;margin:0 0 24px;padding:16px 20px;background:#e9f1f6;border:1px solid #d9e5ed;border-radius:12px;color:#52697c;font-size:13px}
+.users-overview strong{color:#183d56;font-size:19px;margin-right:5px}
+.users-toolbar{display:flex;align-items:flex-end;gap:16px;margin-bottom:14px}
+.users-search{flex:1}.users-role-filter{width:200px}
+.users-toolbar label,.admin-security-box>label{display:block;margin-bottom:7px;font-size:12px;font-weight:700;color:#3e576d}
+.users-toolbar :is(input,select),.admin-security-box>input{width:100%;min-height:44px;border:1px solid #ccd9e4;border-radius:9px;padding:10px 13px;background:#fff;color:#18354a;font:inherit;box-sizing:border-box}
+.users-toolbar :is(input,select):focus{outline:3px solid #e0effb;border-color:#3b83b4}
+#users-visible-count{font-size:12px;color:#6d8091;padding-bottom:14px;white-space:nowrap}
+.users-list{display:grid;gap:10px}
+.user-card{display:grid;grid-template-columns:minmax(200px,1.5fr) minmax(130px,.85fr) minmax(160px,1fr) auto;align-items:center;gap:18px;padding:18px 20px;background:#fff;border:1px solid #dce5ed;border-radius:12px;box-shadow:0 2px 5px #0b294005}
+.user-card[hidden],.users-empty[hidden]{display:none!important}
+.user-identity{display:flex;gap:12px;align-items:center;min-width:0}
+.user-identity>div{min-width:0}.user-identity h3{margin:0 0 5px;font-size:15px;font-weight:750;line-height:1.35;overflow-wrap:anywhere}
+.user-avatar{display:flex;align-items:center;justify-content:center;flex-shrink:0;width:42px;height:42px;border-radius:12px;background:#e9f2f8;color:#286485;font-size:13px;font-weight:800}
+.user-login,.user-contact{color:#708295;font-size:12px;line-height:1.6;overflow-wrap:anywhere}.user-login strong{color:#416079;font-weight:600}
+.user-role-cell{display:flex;align-items:flex-start;flex-direction:column;gap:6px;min-width:0}
+.user-role{display:inline-block;padding:4px 9px;border-radius:6px;font-size:11px;line-height:1.4;font-weight:750}
+.user-role-admin{background:#eaf1ff;color:#315899}.user-role-gestor{background:#fff5df;color:#896014}.user-role-usuario{background:#edf3f6;color:#547080}
+.user-sector{color:#768899;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.user-access-cell{min-width:0;font-size:12px;color:#526d81}.user-full-access{display:inline-block;color:#16803d;font-weight:700}.user-muted{color:#8697a5}
+.user-access-details summary{cursor:pointer;color:#2c6589;font-weight:650;line-height:1.5}
+.user-module-list{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}.user-module-list .admin-permission-chip{margin:0;border-radius:6px;padding:4px 7px;line-height:1.5;font-size:10px;overflow-wrap:anywhere}
+.user-card-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.users-empty{text-align:center;padding:36px;background:#fff;border:1px dashed #c9d8e3;border-radius:12px;color:#74889a}
+.users-login-note{margin:18px 0;color:#728799;font-size:12px}
+.users-advanced{margin-top:26px;border-top:1px solid #dbe5ed;padding-top:18px;font-size:12px;color:#7890a2}.users-advanced summary{cursor:pointer}.users-advanced .admin-security-box{margin:12px 0 0;max-width:560px}.users-advanced .user-card-actions{margin-top:12px}
+.user-form{color:#20394e;font-size:13px}.user-form-section{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid #e4ebf1}
+.user-form-section h3{margin:0 0 16px;font-size:14px;font-weight:800;color:#254761}.user-form-section h3 span{margin-left:8px;padding:3px 7px;background:#f1f5f8;color:#8193a2;border-radius:5px;font-size:10px;font-weight:600}
+.user-form .form-grid{gap:16px}.user-form .form-group{min-width:0;gap:7px}
+.user-form .form-group label{color:#40586f;font-size:12px}.user-form .form-group :is(input:not([type=checkbox]),select),.user-password-edit input{min-height:44px;width:100%;box-sizing:border-box;border:1px solid #cbd9e5;border-radius:8px;background:#fff;color:#1f3a50;padding:11px 12px;font-family:inherit;font-size:13px}
+.user-form .form-group select option{background:#fff;color:#20394e}.user-form input:disabled{background:#f4f7fa!important;color:#8193a2!important}
+.user-form small{font-size:11px;color:#7b8e9f;line-height:1.5}
+.user-form .user-show-password{display:flex;align-items:center;gap:7px;font-weight:400;font-size:11px}.user-show-password input{width:14px;height:14px;accent-color:#16803d}
+.user-form-permissions .admin-permission-row{padding:10px 12px;margin-bottom:8px}.user-form-permissions .admin-permission-row input{accent-color:#16803d}
+.user-password-edit{display:flex;align-items:center;gap:10px}.user-password-edit input{min-width:0;flex:1}
+.users-text-button{border:0;background:none;color:#2e6b92;font-family:inherit;font-size:12px;cursor:pointer;padding:10px 0;text-align:left}.users-danger{color:#b54145;margin-right:auto}
+.user-form-actions{position:sticky;bottom:-20px;background:#fff;padding:16px 0;margin-top:0;z-index:2;flex-wrap:wrap;align-items:center}
+@media(max-width:1100px){.user-card{grid-template-columns:minmax(180px,1.4fr) minmax(120px,1fr) auto}.user-access-cell{grid-column:1/3;grid-row:2}.user-card-actions{grid-column:3;grid-row:1/3}.users-page-header h1{font-size:25px}}
+@media(max-width:600px){.users-page-header{align-items:stretch;flex-direction:column;gap:16px}.users-page-header .users-button{align-self:flex-start}.users-overview{padding:12px;gap:10px 18px}.users-overview strong{font-size:17px}.users-toolbar{flex-wrap:wrap;gap:12px}.users-search{flex-basis:100%}.users-role-filter{flex:1}#users-visible-count{padding-bottom:14px}.user-card{grid-template-columns:minmax(0,1fr) auto;padding:15px;gap:14px}.user-identity{grid-column:1/-1}.user-role-cell{grid-column:1;grid-row:2}.user-card-actions{grid-column:2;grid-row:2}.user-card-actions .users-button{padding:9px 12px}.user-access-cell{grid-column:1/-1;grid-row:3}.user-form .form-grid{grid-template-columns:1fr}.user-form .form-group{grid-column:1/-1}.user-password-edit{align-items:stretch;flex-direction:column}.user-form-actions{bottom:-16px}.user-form-actions .users-danger{flex-basis:100%}.user-form-permissions .admin-permission-row{gap:10px}}
+.user-form-disclosure{padding:0 0 18px;margin-bottom:18px;border-bottom:1px solid #e4ebf1}
+.user-form-disclosure>summary{cursor:pointer;font-size:13px;font-weight:750;color:#365971;line-height:1.8}
+.user-form-disclosure>summary span{font-weight:400;font-size:11px;color:#8294a4;margin-left:8px}
+.user-form-disclosure[open]>summary{margin-bottom:16px}
+.user-form-disclosure>summary:focus-visible{outline:3px solid #8db9e9;outline-offset:3px;border-radius:4px}
+.user-permissions-body>.form-group>label{display:none}

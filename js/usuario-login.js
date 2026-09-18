@@ -7,6 +7,7 @@ export function normalizeUsername(value) {
     .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
 }
 export function usernameFromEmail(email) {
+  if ((email || '').toLowerCase() === 'camposweb.personal@gmail.com') return 'rcampos';
   return (email || '').replace(/@pms\.sertania(?:\.pe\.gov\.br)?$/i, '');
 }
 export function userEmail(username) {
