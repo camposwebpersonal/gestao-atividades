@@ -364,7 +364,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=73">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=74">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -396,6 +396,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
       <div class="sidebar-secondary-content">
         <button class="nav-btn" id="nav-secr" onclick="setView('secr')">▦ Secretarias</button>
         <button class="nav-btn" id="nav-resp" onclick="setView('resp')">♙ Responsáveis</button>
+        <button class="nav-btn" onclick="openAuthorship()">◎ Autoria dos registros</button>
         <button class="nav-btn" id="nav-cont" onclick="setView('cont')">☏ Contatos</button>
         <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
       </div>
@@ -425,14 +426,18 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=63';
+import './js/modulos.js?v=64';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
+import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
+import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js';
+import {initAuditUI} from './js/autoria.js';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
+initAttendanceUI(moveAttendanceRecord);initAuditUI();
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
 window.toggleSidebar=function(force){
   const open=typeof force==='boolean'?force:!document.body.classList.contains('sidebar-open');
@@ -921,7 +926,7 @@ function _cadastroPage({icon,title,subtitle,count,actions,head,rows,emptyCols}){
   </section>`;
 }
 window.renderSecretarias=function(){
-  const rows=S.secretarias.map((s,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">▦</span><strong>${esc(s.name)}</strong></div></td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openSecretariaModal('${s.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteSecretaria('${s.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  const rows=S.secretarias.map((s,i)=>`<tr data-audit-id="${s.id}"><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">▦</span><strong>${esc(s.name)}</strong></div></td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openSecretariaModal('${s.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteSecretaria('${s.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
   setC(_cadastroPage({icon:'▦',title:'Secretarias',subtitle:'Estrutura administrativa municipal',count:S.secretarias.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openSecretariaModal()">＋ Nova secretaria</button>`:''}<button class="btn-action" onclick="setView('mod')">← Visão geral</button>`,head:'<th>#</th><th>Secretaria</th><th>Ações</th>',rows,emptyCols:3}));
 };
 window.openSecretariaModal=function(id){
@@ -956,7 +961,7 @@ function _fmtRespCPF(v){
   return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9)}`;
 }
 window.renderResponsaveis=function(){
-  const rows=S.responsaveis.map((r,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((r.name||'?').charAt(0))}</span><strong>${esc(r.name)}</strong></div></td><td>${esc(_fmtRespCPF(r.cpf)||'—')}</td><td>${esc(r.cargo||'—')}</td><td>${esc(r.setor||'—')}</td><td>${esc(r.contato||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteResponsavel('${r.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  const rows=S.responsaveis.map((r,i)=>`<tr data-audit-id="${r.id}"><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((r.name||'?').charAt(0))}</span><strong>${esc(r.name)}</strong></div></td><td>${esc(_fmtRespCPF(r.cpf)||'—')}</td><td>${esc(r.cargo||'—')}</td><td>${esc(r.setor||'—')}</td><td>${esc(r.contato||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openResponsavelModal('${r.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteResponsavel('${r.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
   setC(_cadastroPage({icon:'♙',title:'Responsáveis',subtitle:'Responsáveis e agentes municipais',count:S.responsaveis.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openResponsavelModal()">＋ Novo responsável</button>`:''}<button class="btn-action" onclick="setView('mod')">← Visão geral</button>`,head:'<th>#</th><th>Nome</th><th>CPF</th><th>Cargo</th><th>Setor</th><th>Contato</th><th>Ações</th>',rows,emptyCols:7}));
 };
 window.openResponsavelModal=function(id){
@@ -1043,7 +1048,7 @@ window.renderContatos=function(){
   const _filtro=document.getElementById('cont-filtro')?.value||'';
   let contatos=S.contatos;
   if(_filtro){contatos=contatos.filter(c=>String(c.nome).toLowerCase().includes(_filtro.toLowerCase())||String(c.cargo).toLowerCase().includes(_filtro.toLowerCase())||String(c.setor).toLowerCase().includes(_filtro.toLowerCase()));}
-  const rows=contatos.map((c,i)=>`<tr><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((c.nome||'?').charAt(0))}</span><strong>${esc(c.nome)}</strong></div></td><td>${esc(c.cargo||'—')}</td><td>${esc(c.setor||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteContato('${c.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
+  const rows=contatos.map((c,i)=>`<tr data-audit-id="${c.id}"><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((c.nome||'?').charAt(0))}</span><strong>${esc(c.nome)}</strong></div></td><td>${esc(c.cargo||'—')}</td><td>${esc(c.setor||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteContato('${c.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
   setC(_cadastroPage({icon:'☏',title:'Contatos',subtitle:'Agenda institucional do município',count:contatos.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">＋ Novo contato</button>`:''}<button class="btn-action" onclick="gerarPDFContatos()">▤ Gerar PDF</button><label class="registry-search"><span>⌕</span><input id="cont-filtro" placeholder="Buscar por nome, cargo ou setor" oninput="renderContatos()" value="${esc(_filtro)}"></label>`,head:'<th>#</th><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>E-mail</th><th>Ações</th>',rows,emptyCols:7}));
 };
 window.openContatoModal=function(id){
@@ -1959,6 +1964,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="it-name" value="${esc(it?.description||'')}"></div>
     <div class="form-group full"><label>Observação</label><textarea id="it-obs">${esc(it?.observacao||'')}</textarea></div>
+    ${isAttendanceSection(sec)?`<div class="form-group full">${attendanceFields(it)}</div>`:''}
     <div class="form-group full"><label>Responsáveis</label>${_respComboHtml(it?.responsaveis||'','it-resp-wrap')}<input type="hidden" id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
     <div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${it?.secretaria_id===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
@@ -2040,12 +2046,13 @@ window.saveItem=async function(id,secId,isSub,parentId){
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
   const respStr=_getRespFromCombos('it-resp-wrap');
-  const data={description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
+  const data={...readAttendance('at'),description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
-  const ef={};
-  document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();});
+  const existingRecord=id?(isSub?S.subitems:S.items).find(x=>x.id===id):null;
+  const ef={...recordExtra(existingRecord)};
+  document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();else delete ef[el.dataset.efKey];});
   if(Object.keys(ef).length)data.extra_fields=ef;
   else data.extra_fields={};
   const effSec=S.secs.find(s=>s.id===secId);
@@ -2259,9 +2266,10 @@ window.mkThumb=mkThumb;
 function renderAdmin(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
   const users=[...S.users].sort((a,b)=>(a.displayName||a.name||a.email||'').localeCompare(b.displayName||b.name||b.email||'','pt-BR'));
+  const admins=users.filter(u=>u.role==='admin').length;const managers=users.filter(u=>u.role==='gestor').length;
   const roleNames={admin:'Administrador',gestor:'Gestor',usuario:'Usuário',user:'Usuário'};
   const cards=users.map(u=>{
-    const name=u.displayName||u.name||_usernameFromEmail(u.email)||'Sem nome';
+    const name=u.displayName||u.display_name||u.name||_usernameFromEmail(u.email)||'Sem nome';
     const login=_usernameFromEmail(u.email);
     const initial=name.split(/\s+/).map(p=>p[0]).slice(0,2).join('').toUpperCase();
     const modules=Object.entries(u.permissoes?.modulos||{}).filter(([,v])=>v.acesso||v.gerenciar||v.criar||v.editar);
@@ -2279,7 +2287,7 @@ function renderAdmin(){
   const svcKey=localStorage.getItem('sb_service_role_key')||'';
   setC(`<section class="users-admin">
     <header class="users-page-header"><div><span class="users-eyebrow">ADMINISTRAÇÃO</span><h1>Usuários e acessos</h1><p>Cadastre sua equipe e organize as permissões em poucos passos.</p></div><button type="button" class="users-button users-button-primary" onclick="openUserModal()">＋ Novo usuário</button></header>
-    <div class="users-overview"><span><strong>${users.length}</strong> usuários cadastrados</span><span><strong>${users.filter(u=>u.role==='admin').length}</strong> administradores</span><span><strong>${users.filter(u=>u.role==='gestor').length}</strong> gestores</span></div>
+    <div class="users-overview"><span><strong>${users.length}</strong> usuários cadastrados</span><span><strong>${admins}</strong> ${admins===1?'administrador':'administradores'}</span><span><strong>${managers}</strong> ${managers===1?'gestor':'gestores'}</span></div>
     <div class="users-toolbar"><div class="users-search"><label for="users-search">Buscar usuário</label><input id="users-search" type="search" placeholder="Nome, login ou e-mail de contato" oninput="filterAdminUsers()"></div><div class="users-role-filter"><label for="users-role-filter">Nível de acesso</label><select id="users-role-filter" onchange="filterAdminUsers()"><option value="">Todos os níveis</option><option value="admin">Administrador</option><option value="gestor">Gestor</option><option value="usuario">Usuário</option></select></div><span id="users-visible-count" aria-live="polite">${users.length} ${users.length===1?'usuário':'usuários'}</span></div>
     <div class="users-list">${cards}</div><div id="users-empty" class="users-empty" ${users.length?'hidden':''}>Nenhum usuário encontrado.</div>
     <p class="users-login-note">O acesso é feito pelo nome de usuário. E-mail de contato é opcional.</p>
@@ -2332,8 +2340,8 @@ window.openUserModal=function(id){
     :`<div class="form-group"><label for="usr-password">Senha *</label><input type="password" id="usr-password" autocomplete="new-password" placeholder="Pelo menos 6 caracteres" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}"><label class="user-show-password"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')"> Mostrar senha</label></div>`;
   openModal(id?'Editar usuário':'Novo usuário','E-mail de contato é opcional.',
     `<div class="user-form"><section class="user-form-section"><h3>Dados de acesso</h3><div class="form-grid">
-      <div class="form-group full"><label for="usr-name">Nome completo *</label><input id="usr-name" autocomplete="name" placeholder="Nome da pessoa" value="${esc(u?.displayName||u?.name||'')}"></div>
-      <div class="form-group"><label for="usr-user">Usuário${id?'':' *'}</label><input id="usr-user" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex.: carlos" value="${esc(id?_usernameFromEmail(u?.email):'')}" ${id?'disabled':''}><small>Nome usado para entrar no sistema.</small></div>
+      <div class="form-group full"><label for="usr-name">Nome completo *</label><input id="usr-name" autocomplete="name" placeholder="Nome da pessoa" value="${esc(u?.displayName||u?.display_name||u?.name||'')}"></div>
+      <div class="form-group"><label for="usr-user">Usuário${id?'':' *'}</label><input id="usr-user" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex.: carlos" value="${esc(id?_usernameFromEmail(u?.email):'')}"><small>Nome usado para entrar no sistema.</small></div>
       ${id?'':password}
       <div class="form-group ${id?'':'full'}"><label for="usr-role">Nível de acesso</label><select id="usr-role"><option value="usuario" ${!u||u.role==='usuario'||u.role==='user'?'selected':''}>Usuário · consulta</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>Gestor · gerencia módulos</option><option value="admin" ${u?.role==='admin'?'selected':''}>Administrador · acesso total</option></select></div>
     </div></section>
@@ -2354,7 +2362,14 @@ window.saveUser=async function(id){
     const permissoes=_readPermMatrix();
     if(!name){toast('Nome é obrigatório','error');return;}
     if(id){
-      await updateDoc(doc(db,'users',id),{displayName:name,email_contato:emailContato.toLowerCase(),role,setor_id,responsavel_id,permissoes,updated_at:serverTimestamp()});
+      const target=S.users.find(u=>u.id===id);
+      const username=normalizeUsername(document.getElementById('usr-user')?.value||'');
+      if(username.length<2){toast('Use pelo menos 2 letras/números no usuário.','error');return;}
+      if(S.users.some(u=>u.id!==id&&normalizeUsername(_usernameFromEmail(u.email))===username)){toast('Este nome de usuário já existe.','error');return;}
+      const patch={displayName:name,email_contato:emailContato.toLowerCase(),role,isAdmin:role==='admin',setor_id,responsavel_id,permissoes,updated_at:serverTimestamp()};
+      if(username!==normalizeUsername(_usernameFromEmail(target?.email))){
+        await editUserAdminSession({id,username,name,profile:patch});
+      }else{await updateDoc(doc(db,'users',id),patch);}
       await loadData();closeModal();toast('Atualizado!');renderAdmin();return;
     }
     const userRaw=document.getElementById('usr-user')?.value.trim();
@@ -2396,9 +2411,9 @@ window.changeUserPassword=async function(id){
   const pwd=(input?.value||'').trim();
   if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return;}
   const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
-  if(!serviceKey){toast('Salve a chave de serviço no painel admin primeiro','error');return;}
   try{
-    await updateUserPassword(u.id,pwd,serviceKey);
+    if(serviceKey)await updateUserPassword(u.id,pwd,serviceKey);
+    else await editUserAdminSession({action:'password',id:u.id,password:pwd});
     input.value='';
     toast('Senha alterada com sucesso!','info');
   }catch(e){

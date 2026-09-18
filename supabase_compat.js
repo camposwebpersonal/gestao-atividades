@@ -1,6 +1,7 @@
 // Supabase compatibility layer that mimics Firebase API used by the app.
 // This is a pragmatic first pass; not all Firebase features are covered.
 
+import {rememberRecords} from './js/autoria.js';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
@@ -46,6 +47,7 @@ const SCHEMA_FIELDS = {
 };
 
 function cleanPayload(payload) {
+  for (const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at']) delete payload[key];
   for (const k in payload) {
     const v = payload[k];
     if (k.endsWith('_id') && (v === '' || v === undefined)) {
@@ -60,6 +62,7 @@ function cleanPayload(payload) {
 }
 
 function mergeExtraFields(row) {
+  if (row) row = {...row, ...(row.display_name != null ? {displayName:row.display_name} : {}), ...(row.is_admin != null ? {isAdmin:row.is_admin} : {})};
   if (!row || !row.extra_fields) return row;
   try {
     const extra = typeof row.extra_fields === 'string' ? JSON.parse(row.extra_fields) : row.extra_fields;
@@ -342,6 +345,7 @@ export async function getDocs(queryRef) {
       offset += PAGE;
     }
   }
+  rememberRecords(tableName(collectionRef._path),allRows,true);
   const docs = allRows.map(row => ({
     id: row.id,
     exists: () => true,
@@ -355,6 +359,7 @@ export async function getDoc(docRef) {
   const { data, error } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
   if (error) throw error;
   if (!data) return { exists: () => false, data: () => null, id: docRef._id };
+  rememberRecords(table,[data]);
   return { exists: () => true, data: () => mergeExtraFields(data), id: data.id };
 }
 
@@ -369,6 +374,7 @@ export async function addDoc(collectionRef, data) {
   moveUnknownToExtra(table, payload);
   const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
   if (error) throw error;
+  rememberRecords(table,[inserted]);
   return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
 }
 
@@ -390,9 +396,11 @@ export async function setDoc(docRef, data, options) {
   }
   payload.id = docRef._id;
   cleanPayload(payload);
+  for(const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at'])delete payload[key];
   moveUnknownToExtra(table, payload);
-  const { error } = await supabase.from(table).upsert(payload);
-  if (error) throw error;
+  const {data:saved,error}=await supabase.from(table).upsert(payload).select().maybeSingle();
+  if(error)throw error;
+  if(saved)rememberRecords(table,[saved]);
 }
 
 export async function updateDoc(docRef, data) {
@@ -409,14 +417,16 @@ export async function updateDoc(docRef, data) {
     if (existing?.extra_fields) existingExtra = existing.extra_fields;
   }
   moveUnknownToExtra(table, payload, existingExtra);
-  const { error } = await supabase.from(table).update(payload).eq('id', docRef._id);
-  if (error) throw error;
+  const {data:saved,error}=await supabase.from(table).update(payload).eq('id',docRef._id).select().maybeSingle();
+  if(error)throw error;
+  if(saved)rememberRecords(table,[saved]);
 }
 
 export async function deleteDoc(docRef) {
   const table = tableName(docRef._path);
   const { error } = await supabase.from(table).delete().eq('id', docRef._id);
   if (error) throw error;
+  globalThis.__recordIndex?.delete(table+'/'+docRef._id);globalThis.refreshAuditUI?.();
 }
 
 export function writeBatch(db) {
@@ -474,3 +484,19 @@ export function onSnapshot(queryRef, callback, errorCallback) {
 }
 
 export { supabase };
+
+export async function moveAttendanceRecord(args) {
+ const {data,error}=await supabase.rpc('move_attendance_record',args);
+ if(error)throw new Error(error.message||'Não foi possível mover o atendimento.');
+ return data;
+}
+export async function editUserAdminSession(body) {
+ const {data:sessionData}=await supabase.auth.getSession();
+ const token=sessionData?.session?.access_token;
+ if(!token)throw new Error('Entre novamente para editar usuários.');
+ const response=await fetch(`${SUPABASE_URL}/functions/v1/super-worker`,{method:'POST',headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({...body,action:body.action||'update'})});
+ const result=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(result.message||'Não foi possível atualizar o login. Atualize a função super-worker no Supabase.');
+ if(!result.updated)throw new Error('A função de edição ainda não foi atualizada no Supabase.');
+ return result;
+}

@@ -1,8 +1,11 @@
-const CACHE_NAME = 'gestao-pms-v94';
+const CACHE_NAME = 'gestao-pms-v95';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
   'js/usuario-login.js',
+  'js/atendimento-meta.js',
+  'js/atendimento-fluxo.js',
+  'js/autoria.js',
   'exames.html',
   'manifest.json',
   'bcc_data_junho_2026.json',

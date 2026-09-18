@@ -1,0 +1,7 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const source=fs.readFileSync(path.join(__dirname,'../exames.html'),'utf8');const code=source.slice(source.indexOf('function collectExamAudit('),source.indexOf("document.getElementById('tbody').addEventListener",source.indexOf('function collectExamAudit(')));
+function collect(meta,kind,dirty){const node={dataset:{examAudit:JSON.stringify(meta),examKind:kind}};const ctx={currentUser:{uid:'pedro-id',displayName:'Pedro'}};vm.createContext(ctx);vm.runInContext(code,ctx);return ctx.collectExamAudit({querySelector:()=>node,dataset:dirty?{auditDirty:'1'}:{}});}
+test('edição de exame conserva autor original e registra somente último editor',()=>{const data=collect({created_by:'joao-id',created_by_name:'João'},'historical',true);assert.equal(data.created_by_name,'João');assert.equal(data.updated_by_name,'Pedro');});
+test('exame novo recebe autor e editor atuais',()=>{const data=collect({},'new',false);assert.equal(data.created_by_name,'Pedro');assert.equal(data.updated_by_name,'Pedro');});
+test('salvar planilha sem editar a linha conserva autoria',()=>{const data=collect({created_by_name:'João',updated_by_name:'Maria'},'historical',false);assert.equal(data.updated_by_name,'Maria');});
+test('exame histórico editado não recebe um autor inventado',()=>{const data=collect({},'historical',true);assert.equal(data.created_by_name,undefined);assert.equal(data.updated_by_name,'Pedro');});
