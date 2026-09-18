@@ -9,8 +9,16 @@ export function adminCreateUserHandler(client) {
       if (!token) return reply(401, {message:'Entre novamente para cadastrar usuários.'});
       const {data:identity, error:identityError} = await client.auth.getUser(token);
       if (identityError || !identity.user) return reply(401, {message:'Entre novamente para cadastrar usuários.'});
-      const {data:profile, error:profileError} = await client.from('users').select('role,is_admin').eq('id', identity.user.id).maybeSingle();
-      if (profileError || !profile || !(profile.role === 'admin' || profile.is_admin === true)) return reply(403, {message:'Apenas administradores podem cadastrar usuários.'});
+      const {data:profile, error:profileError} = await client.from('users').select('*').eq('id', identity.user.id).maybeSingle();
+      if (profileError) return reply(500, {message:'Não foi possível consultar o perfil administrativo. Verifique os logs da função.'});
+      if (!profile) return reply(403, {message:'Seu login não possui perfil na tabela users. Cadastre o perfil administrativo com o mesmo ID do login.'});
+      let extra = profile.extra_fields || {};
+      if (typeof extra === 'string') {
+        try { extra = JSON.parse(extra); } catch { extra = {}; }
+      }
+      const role = profile.role ?? extra.role;
+      const isAdmin = profile.is_admin ?? extra.is_admin ?? extra.isAdmin;
+      if (!(role === 'admin' || isAdmin === true)) return reply(403, {message:'Seu perfil na tabela users não tem permissão administrativa.'});
       const body = await request.json();
       const username = String(body.username || '').trim().toLowerCase();
       const name = String(body.name || '').trim();

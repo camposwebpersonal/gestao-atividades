@@ -50,3 +50,8 @@ test('servidor rejeita usuários sem sessão, sem perfil ou sem administração'
  for(const profile of [null,{role:'usuario'}]){const s=server(profile);assert.equal((await s.handle(request())).status,403);assert.equal(s.creations(),0);}
  const s=server({role:'admin'});assert.equal((await s.handle(request(''))).status,401);assert.equal(s.creations(),0);
 });
+test('servidor reconhece permissão administrativa migrada em extra_fields',async()=>{
+ for(const extra of [{isAdmin:true},JSON.stringify({is_admin:true})]){
+  const s=server({role:'usuario',extra_fields:extra});assert.equal((await s.handle(request())).status,201);
+ }
+});
