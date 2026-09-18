@@ -428,6 +428,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
 import './js/modulos.js?v=63';
+import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1865,8 +1866,8 @@ window.removeRespCombo=function(btn){
 function _usedRespIds(){
   return new Set(S.users.map(u=>u.responsavel_id).filter(Boolean));
 }
-function _toEmail(user){return user.trim().toLowerCase()+'@pms.sertania';}
-function _usernameFromEmail(email){return (email||'').replace(/@pms\.sertania$/i,'');}
+function _toEmail(user){return userEmail(user);}
+function _usernameFromEmail(email){return usernameFromEmail(email);}
 window._toggleSenha=function(inputId,checkId){
   const input=document.getElementById(inputId);
   const check=document.getElementById(checkId);
@@ -2332,17 +2333,14 @@ window.openUserModal=function(id){
       <div style="font-size:12px;color:var(--muted);margin-top:12px">Ou envie redefinição por e-mail:</div>
       <button class="btn-action" type="button" onclick="sendUserPasswordReset('${id}')" style="margin-top:8px">📧 Enviar redefinição por e-mail</button>
     </div>`
-    :`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" placeholder="Mínimo 6 caracteres" style="width:100%"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:400;cursor:pointer"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')" style="width:auto"><span>Mostrar senha</span></label></div>`;
+    :`<div class="form-group full"><label>Senha *</label><input type="password" id="usr-password" autocomplete="new-password" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}" placeholder="Mínimo 6 caracteres" style="width:100%"><label style="display:flex;align-items:center;gap:6px;margin-top:8px;font-weight:400;cursor:pointer"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')" style="width:auto"><span>Mostrar senha</span></label></div>`;
   const permMatrix=_buildPermMatrix(u);
   const actions=id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteUser('${id}')">🗑️ Excluir</button>`:'';
   openModal(id?'✏️ Editar Usuário':'➕ Novo Usuário','',
-    `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>Email de contato</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"><div style="font-size:11px;color:var(--muted);margin-top:4px">Pode ser o mesmo de outro usuário. Não é usado para login.</div></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div>${permMatrix}</div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
+    `<div class="form-grid">${userField}<div class="form-group full"><label>Nome *</label><input id="usr-name" value="${esc(u?.displayName||u?.name||'')}"></div><div class="form-group full"><label>E-mail de contato (opcional)</label><input id="usr-email-contato" type="email" value="${esc(emailContato)}" placeholder="email@exemplo.com"><div style="font-size:11px;color:var(--muted);margin-top:4px">Pode ser o mesmo de outro usuário. Não é usado para login.</div></div>${senhaSection}<div class="form-group"><label>Nível de Acesso *</label><select id="usr-role"><option value="usuario" ${u?.role==='usuario'?'selected':''}>👤 Usuário</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>📋 Gestor</option><option value="admin" ${u?.role==='admin'?'selected':''}>👑 Admin</option></select></div><div class="form-group"><label>Setor / Secretaria</label><select id="usr-setor"><option value="">— Nenhum —</option>${secOpts}</select></div><div class="form-group full"><label>Associar a Responsável</label><select id="usr-resp"><option value="">— Nenhum —</option>${respOpts}</select><div style="font-size:11px;color:var(--muted);margin-top:4px">Responsáveis já associados a outros usuários não aparecem nesta lista.</div></div>${permMatrix}</div><div class="modal-actions">${actions}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveUser('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveUser=async function(id){
   if(window._savingUser){toast('Aguarde a operação atual','warn');return;}
-  const now=Date.now();
-  if(!id && window._lastUserAttempt && now-window._lastUserAttempt<10000){toast('Aguarde 10 segundos antes de tentar criar outro usuário.','warn');return;}
-  window._lastUserAttempt=now;
   window._savingUser=true;
   try{
     const name=document.getElementById('usr-name')?.value.trim();
@@ -2358,12 +2356,12 @@ window.saveUser=async function(id){
     }
     const userRaw=document.getElementById('usr-user')?.value.trim();
     if(!userRaw){toast('Usuário é obrigatório','error');return;}
-    const user=userRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const user=normalizeUsername(userRaw);
     if(!user||user.length<2){toast('Usuário inválido. Use pelo menos 2 letras/números.','error');return;}
     const password=document.getElementById('usr-password')?.value||'';
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
     const email=_toEmail(user);
-    const existing=(window.S&&S.users||[]).find(u=>(u.email||'').toLowerCase()===email);
+    const existing=(window.S&&S.users||[]).find(u=>normalizeUsername(_usernameFromEmail(u.email))===user);
     if(existing){toast('Este nome de usuário já existe no cadastro. Escolha outro.','error');return;}
     let adminSession=null;
     const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();

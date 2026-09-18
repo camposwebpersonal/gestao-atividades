@@ -61,6 +61,7 @@ h2{text-align:center;font-size:25px;font-weight:850;color:#142337;margin-bottom:
 </div>
 
 <script type="module">
+import {loginEmails,signInUsername} from './js/usuario-login.js';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0';
 
 const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
@@ -72,11 +73,7 @@ supabase.auth.getSession().then(({ data })=>{ if(data.session) location.href='in
 supabase.auth.onAuthStateChange((event, session)=>{ if(session) location.href='index.html'; });
 
 // Converte usuário → email interno
-function toEmail(user){
-  const u=user.trim().toLowerCase();
-  if(u==='rcampos') return 'camposweb.personal@gmail.com';
-  return u+'@pms.sertania';
-}
+function toEmail(user){return loginEmails(user)[0];}
 
 window.doLogin=async function(){
   const user=document.getElementById('usuario').value.trim();
@@ -86,7 +83,7 @@ window.doLogin=async function(){
   if(!user||!pass){showErr('Preencha usuário e senha.');return;}
   btn.disabled=true;btn.textContent='Entrando…';err.style.display='none';
   try{
-    const { data, error } = await supabase.auth.signInWithPassword({ email: toEmail(user), password: pass });
+    const { data, error } = await signInUsername(supabase.auth,user,pass);
     if(error) throw error;
     // Aguarda a sessão ser persistida antes de redirecionar
     if(data.session){
