@@ -15,20 +15,22 @@ CREATE TABLE IF NOT EXISTS pms_maintenance.removed_legacy_users (
   removed_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TEMP TABLE legacy_users_to_remove ON COMMIT DROP AS
-SELECT p.id
-FROM public.users p
-WHERE lower(trim(p.email)) ~ '@pms\.(sertania|sertanis)$'
-  AND NOT EXISTS (SELECT 1 FROM auth.users a WHERE a.id::text = p.id)
-  AND NOT EXISTS (SELECT 1 FROM auth.users a WHERE lower(trim(a.email)) = lower(trim(p.email)));
-
-INSERT INTO pms_maintenance.removed_legacy_users (id,payload)
-SELECT p.id,to_jsonb(p) FROM public.users p
-JOIN legacy_users_to_remove r ON r.id = p.id
-ON CONFLICT (id) DO NOTHING;
-
+-- Backup e exclusão na mesma instrução, sem tabela temporária.
+WITH candidates AS (
+  SELECT p.id, to_jsonb(p) AS payload
+  FROM public.users p
+  WHERE lower(trim(p.email)) ~ '@pms\.(sertania|sertanis)$'
+    AND NOT EXISTS (SELECT 1 FROM auth.users a WHERE a.id::text = p.id)
+    AND NOT EXISTS (SELECT 1 FROM auth.users a WHERE lower(trim(a.email)) = lower(trim(p.email)))
+), saved AS (
+  INSERT INTO pms_maintenance.removed_legacy_users (id, payload)
+  SELECT id, payload FROM candidates
+  ON CONFLICT (id) DO UPDATE
+    SET payload = EXCLUDED.payload, removed_at = now()
+  RETURNING id
+)
 DELETE FROM public.users p
-USING legacy_users_to_remove r
-WHERE p.id = r.id
+USING saved
+WHERE p.id = saved.id
 RETURNING p.email AS registro_removido, p.role;
 COMMIT;
