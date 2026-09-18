@@ -717,7 +717,7 @@ onAuthStateChanged(auth,async u=>{
   try{
     const ud=await getDoc(doc(db,'users',u.uid));
     if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
-    else{S.isAdmin=true;S.userRole='admin';S.userSetor=null;} // primeiro usuário = admin
+    else{S.isAdmin=false;S.userRole='usuario';S.userSetor=null;toast('Seu login não possui perfil cadastrado. Solicite ao administrador a regularização do acesso.','error',8000);}
   }catch(e){
     // Falha ao ler o perfil não pode conceder privilégios: assume o menor nível
     console.error('Erro ao carregar perfil do usuário',e);
