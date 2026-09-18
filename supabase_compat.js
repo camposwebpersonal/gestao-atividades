@@ -168,6 +168,23 @@ export async function createUserWithEmailAndPassword(auth, email, password) {
   return { user: mapUser(data.user) };
 }
 
+// A sessão do administrador autoriza o cadastro; a chave fica no servidor.
+export async function createUserAdminSession(username, password, name) {
+  const { data, error } = await supabase.functions.invoke('admin-create-user', {
+    body: { username, password, name }
+  });
+  if (error) {
+    let message = 'Cadastro administrativo indisponível. É necessário ativar o serviço de criação de usuários no Supabase.';
+    if (error.context && typeof error.context.json === 'function') {
+      const body = await error.context.json().catch(() => ({}));
+      message = body.message || message;
+    }
+    throw new Error(message);
+  }
+  if (!data?.id) throw new Error('O serviço não retornou o cadastro do usuário.');
+  return data.id;
+}
+
 export async function createUserAdmin(email, password, serviceKey, metadata={}) {
   const resp = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
     method: 'POST',

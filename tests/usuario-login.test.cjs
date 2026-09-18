@@ -31,3 +31,22 @@ test('cadastro sem e-mail de contato salva e permite tentativas imediatas',async
 test('cadastro impede duplicar nome de usuário legado',async()=>{
  const {c,created,notices}=admin([{email:'maria@pms.sertania'}]);await c.saveUser('');assert.equal(created.length,0);assert.match(notices[0],/já existe/);
 });
+test('cadastro sem chave usa serviço administrativo sem signup nem troca de sessão',async()=>{
+ const {c,saved}=admin();let calls=0;
+ c.localStorage.getItem=()=>null;
+ c.createUserAdminSession=async(username,password,name)=>{calls++;assert.equal(username,'maria');assert.equal(name,'Maria');return 'new-id';};
+ await c.saveUser('');assert.equal(calls,1);assert.equal(saved.length,1);
+});
+function server(profile){
+ let creations=0;const client={auth:{getUser:async()=>({data:{user:{id:'admin-id'}}}),admin:{createUser:async body=>{creations++;assert.equal(body.email_confirm,true);return {data:{user:{id:'new-id'}}};}}},from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:profile})})})})};
+ const ctx={Response};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../supabase/functions/admin-create-user/handler.js'),'utf8').replace('export ',''),ctx);
+ return {handle:ctx.adminCreateUserHandler(client),creations:()=>creations};
+}
+function request(token='session'){return new Request('http://localhost',{method:'POST',headers:token?{Authorization:'Bearer '+token}:{},body:JSON.stringify({username:'maria',password:'secret',name:'Maria'})});}
+test('servidor cria conta confirmada para administrador',async()=>{
+ const s=server({role:'admin'});const r=await s.handle(request());assert.equal(r.status,201);assert.equal((await r.json()).id,'new-id');assert.equal(s.creations(),1);
+});
+test('servidor rejeita usuários sem sessão, sem perfil ou sem administração',async()=>{
+ for(const profile of [null,{role:'usuario'}]){const s=server(profile);assert.equal((await s.handle(request())).status,403);assert.equal(s.creations(),0);}
+ const s=server({role:'admin'});assert.equal((await s.handle(request(''))).status,401);assert.equal(s.creations(),0);
+});

@@ -425,7 +425,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserWithEmailAndPassword,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
 import './js/modulos.js?v=63';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
@@ -2363,41 +2363,23 @@ window.saveUser=async function(id){
     const email=_toEmail(user);
     const existing=(window.S&&S.users||[]).find(u=>normalizeUsername(_usernameFromEmail(u.email))===user);
     if(existing){toast('Este nome de usuário já existe no cadastro. Escolha outro.','error');return;}
-    let adminSession=null;
     const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
-    let uid=null; let created=false;
-    if(serviceKey){
-      try{
-        uid=await createUserAdmin(email,password,serviceKey,{display_name:name});
-        created=true;
-      }catch(adminErr){
-        console.error(adminErr);
-        const msg=String(adminErr.message||'');
-        if(/rate|limite|too many|too_many_requests/i.test(msg)){toast('Muitas tentativas. Aguarde alguns minutos e tente novamente.','error');}
-        else{toast('Erro ao criar usuário: '+msg,'error');}
-        return;
-      }
-    }else{
-      adminSession=(await auth.getSession()).data.session;
-      try{
-        const cred=await createUserWithEmailAndPassword(auth,email,password);
-        uid=cred.user.uid||cred.user.id; created=true;
-      }catch(createErr){
-        const msg=String(createErr.message||createErr.error||'');
-        console.warn('signup error:',createErr);
-        if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
-        if(/rate|limite|too many|too_many_requests/i.test(msg)){toast('Muitas tentativas para este usuário. Aguarde alguns minutos e tente novamente.','error');return;}
-        toast('Erro ao criar usuário: '+(msg||'verifique o console'),'error');return;
-      }
+    let uid;
+    try{
+      uid=serviceKey
+        ?await createUserAdmin(email,password,serviceKey,{display_name:name})
+        :await createUserAdminSession(user,password,name);
+    }catch(createErr){
+      console.error(createErr);
+      toast('Erro ao criar usuário: '+(createErr.message||'Não foi possível concluir o cadastro.'),'error');
+      return;
     }
     if(!uid){toast('Não foi possível obter o ID do usuário.','error');return;}
     try{
       await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato.toLowerCase(),role,setor_id,responsavel_id,permissoes,created_at:serverTimestamp()});
-      if(adminSession&&adminSession.access_token){await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}
-      await loadData();closeModal();toast(created?'Usuário criado!':'Usuário recuperado e salvo!');renderAdmin();
+      await loadData();closeModal();toast('Usuário criado!');renderAdmin();
     }catch(saveErr){
       console.error(saveErr);
-      if(adminSession&&adminSession.access_token){try{await auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});}catch(err){console.error(err);}}
       toast('Usuário criou login, mas falhou ao salvar dados. Tente editar e salvar novamente.','error');
     }
   }finally{
