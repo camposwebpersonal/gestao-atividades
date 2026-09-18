@@ -170,28 +170,37 @@ export async function createUserWithEmailAndPassword(auth, email, password) {
 
 // A sessão do administrador autoriza o cadastro; a chave fica no servidor.
 export async function createUserAdminSession(username, password, name) {
-  const { data, error } = await supabase.functions.invoke('super-worker', {
-    body: { username, password, name }
-  });
-  if (error) {
-    let message = 'Não foi possível conectar ao cadastro administrativo. Verifique a conexão e tente novamente.';
-    if (error.context && typeof error.context.json === 'function') {
-      const body = await error.context.json().catch(() => ({}));
-      const status = error.context.status;
-      if (status === 404 || body.code === 'NOT_FOUND') {
-        message = 'A função super-worker não foi encontrada no projeto xwlmpxypjheuhbxyfplo. Confira o nome e o projeto no Supabase.';
-      } else if (status === 401) {
-        message = body.message === 'Invalid JWT'
-          ? 'O Supabase recusou a sessão (Invalid JWT). Verifique a configuração JWT da função super-worker.'
-          : 'Sua sessão não foi aceita. Saia e entre novamente no sistema.';
-      } else {
-        message = body.message || body.error || message;
-      }
-    }
-    throw new Error(message);
+  const {data: sessionData, error: sessionError} = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (sessionError || !token) throw new Error('Sua sessão expirou. Saia e entre novamente no sistema para cadastrar usuários.');
+  let response;
+  try {
+    response = await fetch(`${SUPABASE_URL}/functions/v1/super-worker`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({username, password, name})
+    });
+  } catch {
+    throw new Error('O navegador não conseguiu acessar a função super-worker. Confira o erro na aba Console (F12) para identificar bloqueio de rede ou CORS.');
   }
-  if (!data?.id) throw new Error('O serviço não retornou o cadastro do usuário.');
-  return data.id;
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 404 || body.code === 'NOT_FOUND') {
+      throw new Error('A função super-worker não foi encontrada no projeto xwlmpxypjheuhbxyfplo. Confira o nome e o projeto no Supabase.');
+    }
+    if (response.status === 401) {
+      throw new Error(body.message === 'Invalid JWT'
+        ? 'O Supabase recusou a sessão (Invalid JWT). Verifique a configuração JWT da função super-worker.'
+        : 'Sua sessão não foi aceita. Saia e entre novamente no sistema.');
+    }
+    throw new Error(body.message || body.error || `O cadastro administrativo retornou HTTP ${response.status}. Verifique os logs da função super-worker.`);
+  }
+  if (!body.id) throw new Error('O serviço não retornou o cadastro do usuário.');
+  return body.id;
 }
 
 export async function createUserAdmin(email, password, serviceKey, metadata={}) {
