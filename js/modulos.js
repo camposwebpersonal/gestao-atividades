@@ -1,4 +1,5 @@
 import './perfuracao-pocos.js?v=88';
+import './controle-extintores.js?v=1';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
@@ -12,6 +13,7 @@ const MODULOS = [
   {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'💰', color:'#10b981', modulo:'contas', flag:'controle_contas'},
   {id:'distribuicao', label:'Controle de Distribuição', desc:'Distribuição de leite, cestas e benefícios.', icon:'🚚', color:'#14b8a6', modulo:'distribuicao', flag:'controle_distribuicao'},
   {id:'estoque', label:'Controle de Estoque', desc:'Entradas, saídas e estoque crítico de produtos.', icon:'📦', color:'#0ea5e9', modulo:'estoque', flag:'controle_estoque'},
+  {id:'extintores', label:'Controle de Extintores', desc:'Inventário, validade, recarga e localização dos equipamentos.', icon:'🧯', color:'#dc2626', modulo:'extintores', especial:true},
   {id:'alugueis', label:'Controle de Aluguéis', desc:'Imóveis, equipamentos, veículos alugados e contratos.', icon:'🏠', color:'#f97316', modulo:'alugueis'},
   {id:'mulher', label:'Rede de Assistência e Proteção da Mulher', desc:'Ações, atendimentos e programas de proteção à mulher.', icon:'🙋‍♀️', color:'#d946ef', modulo:'mulher'},
   {id:'agenda_prefeita', label:'Agenda da Prefeita', desc:'Compromissos, agendas e atividades da Prefeita.', icon:'📅', color:'#0d9488', modulo:'agenda_prefeita'},
@@ -30,6 +32,7 @@ const NOME_MODULO = {
   contas:['controle de contas','contas','seguro','seguros'],
   distribuicao:['distribuição','distribuicao','distribuicao de leite','leite'],
   estoque:['estoque','controle de estoque','secretaria de saude','secretaria de saúde','farmacia','farmácia','insumos'],
+  extintores:['extintor','extintores','combate a incendio','combate a incêndio'],
   alugueis:['aluguel','alugueis','aluguéis'],
   mulher:['rede de assistencia','rede de assistência','protecao da mulher','proteção da mulher','mulher','atendimento mulher'],
   agenda_prefeita:['agenda da prefeita','prefeita','compromisso da prefeita','agenda prefeitura']
@@ -306,6 +309,7 @@ function _visibleModules(){
 }
 
 function _moduleNumbers(mod){
+  if(mod.especial)return{grupos:[],total:Number(window.extintoresCachedCount||0)};
   const grupos=_md.grupos(mod);
   return{
     grupos,

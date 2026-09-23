@@ -1,0 +1,84 @@
+/* Controle de extintores: inventário independente, com datas e relatório institucional. */
+import { supabase } from '../supabase_compat.js';
+
+(function(){
+  'use strict';
+  const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const dateBR=v=>{if(!v)return 'Não informada';const p=String(v).slice(0,10).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(v);};
+  const today=()=>new Date().toLocaleDateString('sv-SE',{timeZone:'America/Recife'});
+  const statusInfo={ativo:['Ativo','#15803d','#dcfce7'],necessita_recarga:['Recarga necessária','#b45309','#fef3c7'],atencao:['Atenção','#b45309','#fef3c7'],vencido:['Vencido','#b91c1c','#fee2e2']};
+  const state={rows:[],search:'',status:'todos',loading:false};
+  const canEdit=()=>Boolean(window.S?.isAdmin||window.userCan?.('extintores','editar')||window.userCan?.('extintores','criar'));
+  const badge=s=>{const x=statusInfo[s]||['A informar','#475569','#e2e8f0'];return `<span style="display:inline-block;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:800;background:${x[2]};color:${x[1]};white-space:nowrap">${x[0]}</span>`;};
+  const qtyText=r=>r.capacidade==null||r.capacidade===''?'—':`${Number(r.capacidade).toLocaleString('pt-BR',{maximumFractionDigits:2})} ${esc(r.unidade_capacidade||'')}`.trim();
+  const filtered=()=>state.rows.filter(r=>{
+    const q=state.search.trim().toLocaleLowerCase('pt-BR');
+    return (!state.status||state.status==='todos'||r.status===state.status)&&(!q||[r.inventory_code,r.local_nome,r.local_tipo,r.endereco,r.placa,r.tipo_extintor,r.setor_responsavel,r.observacao].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q)));
+  });
+  const render=()=>{
+    const root=document.getElementById('content');if(!root)return;
+    const rows=filtered(), total=state.rows.length, vencidos=state.rows.filter(r=>r.status==='vencido').length, recarga=state.rows.filter(r=>r.status==='necessita_recarga').length, semDatas=state.rows.filter(r=>!r.data_inicial||!r.data_vencimento).length;
+    root.innerHTML=`<section class="registry-page" id="extintores-view">
+      <div class="registry-heading"><div class="registry-heading-icon">🧯</div><div><div class="workspace-kicker">Segurança patrimonial</div><h1>Controle de Extintores</h1><p>Inventário por unidade, prazo de validade, situação e localização responsável.</p></div><div class="registry-count"><strong>${total}</strong><span>extintores</span></div></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin:18px 0"><div class="activity-card" style="padding:13px;border-top:3px solid #16a34a"><b style="font-size:22px;color:#16a34a">${total}</b><div style="font-size:11px;color:var(--muted);font-weight:700">REGISTRADOS</div></div><div class="activity-card" style="padding:13px;border-top:3px solid #dc2626"><b style="font-size:22px;color:#dc2626">${vencidos}</b><div style="font-size:11px;color:var(--muted);font-weight:700">VENCIDOS</div></div><div class="activity-card" style="padding:13px;border-top:3px solid #d97706"><b style="font-size:22px;color:#d97706">${recarga}</b><div style="font-size:11px;color:var(--muted);font-weight:700">RECARGA NECESSÁRIA</div></div><div class="activity-card" style="padding:13px;border-top:3px solid #64748b"><b style="font-size:22px;color:#64748b">${semDatas}</b><div style="font-size:11px;color:var(--muted);font-weight:700">DATAS A CONFERIR</div></div></div>
+      <div class="registry-toolbar" style="gap:8px;align-items:center"><button class="btn-action" onclick="window.setView('mod')">← Visão geral</button>${canEdit()?'<button class="btn-action primary" onclick="openExtintorModal()">＋ Novo extintor</button>':''}<button class="btn-action" onclick="gerarPdfExtintores()">📄 Gerar relatório PDF</button><label class="registry-search" style="margin-left:auto"><span>⌕</span><input id="ext-search" placeholder="Buscar local, placa ou código" value="${esc(state.search)}" oninput="extintoresBuscar(this.value)"></label><select aria-label="Filtrar situação" onchange="extintoresFiltrar(this.value)" style="padding:9px;border-radius:8px;border:1px solid #1e3a5f;background:#0f172a;color:#e2e8f0"><option value="todos" ${state.status==='todos'?'selected':''}>Todas as situações</option><option value="ativo" ${state.status==='ativo'?'selected':''}>Ativos</option><option value="necessita_recarga" ${state.status==='necessita_recarga'?'selected':''}>Recarga necessária</option><option value="atencao" ${state.status==='atencao'?'selected':''}>Atenção</option><option value="vencido" ${state.status==='vencido'?'selected':''}>Vencidos</option></select></div>
+      <div style="font-size:12px;color:#64748b;margin:0 0 10px">${rows.length} registro(s) exibido(s). Datas sem informação no laudo foram preservadas em branco para conferência física.</div>
+      <div class="table-wrap registry-table sticky-scroll-source"><table><thead><tr><th>Código</th><th>Local / responsável</th><th>Extintor</th><th>Instalação</th><th>Vencimento</th><th>Situação</th>${canEdit()?'<th>Ações</th>':''}</tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.inventory_code||'—')}</b>${r.placa?`<br><small style="color:#64748b">Placa: ${esc(r.placa)}</small>`:''}</td><td><b>${esc(r.local_nome)}</b><br><small>${esc(r.local_tipo||'Local não informado')} · ${esc(r.setor_responsavel||'Setor não informado')}</small>${r.endereco?`<br><small>${esc(r.endereco)}</small>`:''}</td><td>${esc(r.tipo_extintor)}<br><small>${esc(r.agente_extintor||'')} · ${qtyText(r)}</small></td><td>${dateBR(r.data_inicial)}</td><td>${dateBR(r.data_vencimento)}</td><td>${badge(r.status)}</td>${canEdit()?`<td style="white-space:nowrap"><button class="card-btn" title="Editar" onclick="openExtintorModal('${esc(r.id)}')">✏️</button><button class="card-btn" title="Excluir" onclick="excluirExtintor('${esc(r.id)}')">🗑️</button></td>`:''}</tr>`).join('')||`<tr><td colspan="${canEdit()?7:6}" class="registry-empty">Nenhum extintor encontrado com esse filtro.</td></tr>`}</tbody></table></div>
+      <div style="margin-top:12px;padding:11px 13px;border-radius:9px;background:#fff7ed;border-left:4px solid #f59e0b;color:#78350f;font-size:12px"><b>Conferência do laudo:</b> os registros importados vieram do arquivo <b>EXTINTORES.pdf</b>. O documento não informa data individual de instalação ou validade; por isso, esses campos devem ser completados apenas após leitura da etiqueta física de cada unidade.</div>
+    </section>`;
+  };
+  async function load(){
+    state.loading=true;
+    try{const {data,error}=await supabase.from('extintores').select('*').order('local_nome').order('inventory_code');if(error)throw error;state.rows=data||[];window.extintoresCachedCount=state.rows.length;render();}
+    catch(e){console.error(e);document.getElementById('content').innerHTML=`<div class="empty">Não foi possível carregar o controle de extintores.<br><small>${esc(e.message||e)}</small></div>`;}
+    finally{state.loading=false;}
+  }
+  window.renderExtintores=load;
+  window.extintoresBuscar=v=>{state.search=v||'';render();};
+  window.extintoresFiltrar=v=>{state.status=v||'todos';render();};
+  window.openExtintorModal=function(id=''){
+    if(!canEdit())return;
+    const r=state.rows.find(x=>x.id===id)||{};
+    const val=k=>esc(r[k]??'');
+    window.openModal(id?'✏️ Editar extintor':'🧯 Novo extintor','Preencha as datas somente com base na etiqueta física do equipamento.',`<div class="form-grid"><div class="form-group"><label>Código patrimonial *</label><input id="ex-codigo" value="${val('inventory_code')}" placeholder="Ex.: EXT-EDU-001"></div><div class="form-group"><label>Situação *</label><select id="ex-status"><option value="ativo" ${r.status==='ativo'?'selected':''}>Ativo</option><option value="necessita_recarga" ${r.status==='necessita_recarga'?'selected':''}>Recarga necessária</option><option value="atencao" ${r.status==='atencao'?'selected':''}>Atenção</option><option value="vencido" ${r.status==='vencido'?'selected':''}>Vencido</option></select></div><div class="form-group full"><label>Local / unidade responsável *</label><input id="ex-local" value="${val('local_nome')}" placeholder="Ex.: Escola Municipal ..."></div><div class="form-group"><label>Tipo do local</label><input id="ex-local-tipo" value="${val('local_tipo')}" placeholder="Escola, Creche, Veículo..."></div><div class="form-group"><label>Secretaria responsável</label><input id="ex-setor" value="${val('setor_responsavel')||'Secretaria Municipal de Educação'}"></div><div class="form-group full"><label>Endereço / referência</label><input id="ex-endereco" value="${val('endereco')}"></div><div class="form-group"><label>Tipo de extintor *</label><input id="ex-tipo" value="${val('tipo_extintor')}" placeholder="PQS-ABC, Água Pressurizada..."></div><div class="form-group"><label>Agente extintor</label><input id="ex-agente" value="${val('agente_extintor')}"></div><div class="form-group"><label>Capacidade</label><input id="ex-capacidade" type="number" min="0" step="0.01" value="${val('capacidade')}"></div><div class="form-group"><label>Unidade</label><select id="ex-unidade"><option value="kg" ${r.unidade_capacidade==='kg'?'selected':''}>kg</option><option value="L" ${r.unidade_capacidade==='L'?'selected':''}>L</option></select></div><div class="form-group"><label>Data inicial / instalação</label><input id="ex-inicial" type="date" value="${val('data_inicial')}"></div><div class="form-group"><label>Data de vencimento</label><input id="ex-vencimento" type="date" value="${val('data_vencimento')}"></div><div class="form-group"><label>Placa (se veículo)</label><input id="ex-placa" value="${val('placa')}"></div><div class="form-group"><label>Ano de referência</label><input id="ex-ano" type="number" min="1900" max="2100" value="${val('ano_referencia')}"></div><div class="form-group full"><label>Observações</label><textarea id="ex-obs" placeholder="Etiqueta, recarga, manutenção ou outra informação">${val('observacao')}</textarea></div></div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="salvarExtintor('${esc(id)}')">💾 Salvar</button></div>`);
+  };
+  const field=id=>document.getElementById(id)?.value.trim()||'';
+  window.salvarExtintor=async function(id=''){
+    const local=field('ex-local'),tipo=field('ex-tipo'),codigo=field('ex-codigo').toLocaleUpperCase('pt-BR');
+    if(!local||!tipo||!codigo){window.toast('Informe código, local e tipo do extintor.','error');return;}
+    const capacity=field('ex-capacidade'),year=field('ex-ano');
+    const existing=state.rows.find(x=>x.id===id);
+    const payload={id:id||crypto.randomUUID(),source_key:existing?.source_key||null,inventory_code:codigo,registro_tipo:'extintor',categoria:existing?.categoria||'manual',setor_responsavel:field('ex-setor'),local_nome:local,local_tipo:field('ex-local-tipo'),endereco:field('ex-endereco'),placa:field('ex-placa').toLocaleUpperCase('pt-BR')||null,veiculo_modelo:existing?.veiculo_modelo||null,capacidade_passageiros:existing?.capacidade_passageiros||null,ano_referencia:year?Number(year):null,tipo_extintor:tipo,agente_extintor:field('ex-agente'),capacidade:capacity?Number(capacity):null,unidade_capacidade:field('ex-unidade'),data_inicial:field('ex-inicial')||null,data_vencimento:field('ex-vencimento')||null,status:field('ex-status'),observacao:field('ex-obs')||null,documento_origem:existing?.documento_origem||'Cadastro manual'};
+    try{const {error}=await supabase.from('extintores').upsert(payload);if(error)throw error;window.closeModal();window.toast('Extintor salvo com sucesso!','success');await load();}catch(e){window.toast('Não foi possível salvar: '+(e.message||e),'error');}
+  };
+  window.excluirExtintor=async function(id){
+    const r=state.rows.find(x=>x.id===id);if(!r||!confirm(`Excluir o extintor ${r.inventory_code||r.local_nome}? Esta ação não pode ser desfeita.`))return;
+    try{const {error}=await supabase.from('extintores').delete().eq('id',id);if(error)throw error;window.toast('Extintor excluído.','success');await load();}catch(e){window.toast('Não foi possível excluir: '+(e.message||e),'error');}
+  };
+  window.gerarPdfExtintores=async function(){
+    if(!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
+    const rows=filtered();if(!rows.length){window.toast('Não há registros para gerar o relatório.','error');return;}
+    window.toast('Gerando relatório institucional de extintores…','info',9000);
+    try{
+      const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=37;
+      const logo=window.loadB64?await window.loadB64('img/logo_sertania.png','png',120).catch(()=>null):null;
+      const font=(s,b,c)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(s);doc.setTextColor(...(c||[30,41,59]));};
+      const header=()=>{doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR-3,W,3,'F');if(logo?.d){let h=22,w=h*(logo.w/logo.h);if(w>30){w=30;h=w/(logo.w/logo.h);}doc.addImage(logo.d,'PNG',W-mx-w,3+(23-h)/2,w,h,undefined,'FAST');}font(14,true,[20,82,20]);doc.text('RELATÓRIO DE CONTROLE DE EXTINTORES',mx+8,13);font(7.5,false,[30,123,30]);doc.text('Prefeitura Municipal de Sertânia — PE  •  Gestão de Atividades  •  '+new Date().toLocaleDateString('pt-BR'),mx+8,22);};
+      const footer=()=>{const p=doc.internal.getCurrentPageInfo().pageNumber;doc.setFillColor(20,82,20);doc.rect(0,H-FTR,W,FTR,'F');doc.setFillColor(110,192,46);doc.rect(0,H-FTR,W,2,'F');font(7,true,[210,250,210]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA — PE',mx,H-FTR+8);font(6.5,false,[190,240,190]);doc.text('Inventário de segurança contra princípio de incêndio',W/2,H-FTR+12,{align:'center'});doc.text(`Página ${p}`,W-mx,H-FTR+8,{align:'right'});};
+      header();footer();
+      const stats=[['REGISTRADOS',rows.length,[22,163,74]],['VENCIDOS',rows.filter(r=>r.status==='vencido').length,[220,38,38]],['RECARGA NECESSÁRIA',rows.filter(r=>r.status==='necessita_recarga').length,[217,119,6]],['DATAS A CONFERIR',rows.filter(r=>!r.data_inicial||!r.data_vencimento).length,[71,85,105]]];
+      const cw=(W-mx*2-9)/4;stats.forEach((s,i)=>{const x=mx+i*(cw+3);doc.setFillColor(248,250,252);doc.setDrawColor(210,225,215);doc.roundedRect(x,top,cw,17,2,2,'FD');doc.setFillColor(...s[2]);doc.rect(x,top,cw,2,'F');font(11,true,s[2]);doc.text(String(s[1]),x+cw/2,top+9,{align:'center'});font(6,false,[100,116,139]);doc.text(s[0],x+cw/2,top+14,{align:'center'});});
+      const body=rows.map((r,i)=>[String(i+1),r.inventory_code||'—',`${r.local_nome||'—'}${r.placa?'\nPlaca: '+r.placa:''}`,`${r.tipo_extintor||'—'}\n${r.agente_extintor||''} · ${qtyText(r)}`,dateBR(r.data_inicial),dateBR(r.data_vencimento),(statusInfo[r.status]||['A informar'])[0],r.observacao||'—']);
+      doc.autoTable({startY:top+22,head:[['#','Código','Local / veículo','Extintor','Instalação','Vencimento','Situação','Observações']],body,margin:{left:mx,right:mx,top:37,bottom:20},styles:{fontSize:6.7,cellPadding:1.7,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:31},2:{cellWidth:49},3:{cellWidth:37},4:{cellWidth:22},5:{cellWidth:22},6:{cellWidth:27},7:{cellWidth:77}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
+      const pages=doc.internal.getNumberOfPages();for(let p=1;p<=pages;p++){doc.setPage(p);footer();}
+      doc.save(`RELATORIO-EXTINTORES-${today()}.pdf`);window.toast(`PDF gerado com ${rows.length} extintor(es).`,'success');
+    }catch(e){console.error(e);window.toast('Não foi possível gerar o PDF: '+(e.message||e),'error');}
+  };
+  function install(){
+    if(!window.renderModulo||!window.MODULOS){setTimeout(install,50);return;}
+    if(window.__extintoresInstalled)return;window.__extintoresInstalled=true;
+    const original=window.renderModulo;
+    window.renderModulo=function(id){if(id==='extintores'){window.rememberWorkspace?.({kind:'module',id});return load();}return original(id);};
+  }
+  setTimeout(install,0);
+})();

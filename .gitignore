@@ -2,6 +2,7 @@
 *.php
 upload_ftp.py
 *.sql
+!supabase/migrations/*.sql
 *.pyc
 __pycache__/
 
