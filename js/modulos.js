@@ -1,5 +1,5 @@
 import './perfuracao-pocos.js?v=88';
-import './controle-extintores.js?v=1';
+import './controle-extintores.js?v=2';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
