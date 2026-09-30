@@ -24,6 +24,10 @@
   consentimento pessoal forem exigidos pelo provedor, iniciar o fluxo e solicitar
   apenas a etapa que depende do usuário. Não afirmar conexão sem verificá-la.
 - Projeto Supabase usado pelo site: `xwlmpxypjheuhbxyfplo`.
+- Supabase CLI instalado em `~/.local/bin/supabase`; login e vínculo deste
+  checkout verificados em 2026-09-30. O vínculo fica em `supabase/.temp/`,
+  ignorado pelo Git. Reutilizar o login salvo; confirmar acesso com
+  `supabase projects list` quando necessário, sem registrar tokens aqui.
 - Esta preferência não autoriza exclusão de dados, gastos ou mudanças sem relação
   com a tarefa solicitada.
 - Este arquivo preserva as preferências para sessões que leiam o repositório;
