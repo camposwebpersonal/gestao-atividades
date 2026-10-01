@@ -365,6 +365,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=75">
+<link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -428,7 +429,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=67';
+import './js/modulos.js?v=68';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js';
@@ -612,10 +613,10 @@ const WORKSPACE_ROUTE_KEY='gestao-pms-workspace-v1';
 let _restoringWorkspace=false;
 function workspaceFromHash(){
   const p=location.hash.replace(/^#/,'').split('/').map(x=>decodeURIComponent(x));
-  if(['view','module','activity'].includes(p[0])&&p[1])return{kind:p[0],id:p[1]};
+  if(['view','module','activity'].includes(p[0])&&p[1])return{kind:p[0],id:p[1],...(p[0]==='module'&&p[1]==='atendimentos'&&p[2]?{secretaria:p[2]}:{})};
   return null;
 }
-function workspaceHash(r){return r?.kind&&r?.id?'#'+r.kind+'/'+encodeURIComponent(r.id):'';}
+function workspaceHash(r){return r?.kind&&r?.id?'#'+r.kind+'/'+encodeURIComponent(r.id)+(r.secretaria?'/'+encodeURIComponent(r.secretaria):''):'';}
 function workspaceVisualKey(r){
   if(r?.kind!=='activity')return r?.id||'mod';
   const sec=S.secs.find(x=>x.id===r.id);
@@ -631,8 +632,9 @@ function applyWorkspaceIdentity(r){
   document.body.dataset.workspace=key;
   document.body.dataset.routeKind=r?.kind||'view';
   const activeModule=r?.kind==='module'?r.id:(r?.kind==='activity'?window.modForSec?.(S.secs.find(sec=>sec.id===r.id)):null);
+  if(r?.kind==='activity'&&activeModule==='atendimentos')window.currentDemandSecretaria=S.secs.find(sec=>sec.id===r.id)?.demanda_secretaria_id||'sem-secretaria';
   window.refreshSidebarModules?.(activeModule||'');
-  const labels={mod:'Painel de Gestão',secr:'Secretarias',resp:'Responsáveis',cont:'Contatos',adm:'Administração',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Atendimentos',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
+  const labels={mod:'Painel de Gestão',secr:'Secretarias',resp:'Responsáveis',cont:'Contatos',adm:'Administração',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Demandas por Secretarias',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
   document.title=(labels[key]||'Gestão Municipal')+' — Prefeitura de Sertânia';
 }
 window.rememberWorkspace=function(r,replace=false){
@@ -650,7 +652,7 @@ window.restoreWorkspace=function(){
   let ok=true;
   try{
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
-    else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok)window.renderModulo(r.id);}
+    else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok){if(r.id==='atendimentos')window.currentDemandSecretaria=r.secretaria||'';window.renderModulo(r.id);}}
     else if(r.kind==='view'){ok=['mod','adm','secr','resp','cont'].includes(r.id);if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}
@@ -659,7 +661,7 @@ window.restoreWorkspace=function(){
   return false;
 };
 const _renderModuloBase=window.renderModulo;
-window.renderModulo=function(id){window.rememberWorkspace?.({kind:'module',id});return _renderModuloBase(id);};
+window.renderModulo=function(id){window.rememberWorkspace?.({kind:'module',id,...(id==='atendimentos'&&window.currentDemandSecretaria?{secretaria:window.currentDemandSecretaria}:{})});return _renderModuloBase(id);};
 window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 
 
@@ -1953,7 +1955,7 @@ window.saveSec=async function(id){
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
   await saveRT('activity',did);
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');
-  if(id&&curSecId===id){openActivity(id);}else{setView('mod');}
+  if(id&&curSecId===id){openActivity(id);}else if(isAttendanceSection(S.secs.find(s=>s.id===did))){window.renderModulo('atendimentos');}else{setView('mod');}
 };
 
 // ── ITEM MODAL ──

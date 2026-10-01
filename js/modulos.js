@@ -1,3 +1,4 @@
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=1';
 import './perfuracao-pocos.js?v=88';
 import './controle-extintores.js?v=2';
 
@@ -7,7 +8,7 @@ const MODULOS = [
   {id:'projetos', label:'Controle de Projetos', desc:'Projetos que a Prefeitura está trabalhando atualmente.', icon:'🚀', color:'#f59e0b', modulo:'projetos'},
   {id:'obras', label:'Obras e Infraestrutura', desc:'Cisternas, barragens, barreiros e demandas de infraestrutura.', icon:'🏗️', color:'#a16207', modulo:'obras'},
   {id:'frota', label:'Frota e Veículos', desc:'IPVA, seguros e aluguéis dos veículos municipais.', icon:'🚗', color:'#6366f1', modulo:'frota'},
-  {id:'atendimentos', label:'Atendimentos', desc:'Serviços de urgência e demandas da população.', icon:'🆘', color:'#ef4444', modulo:'atendimentos'},
+  {id:'atendimentos', label:'Demandas por Secretarias', desc:'Grupos e demandas organizados por secretaria responsável.', icon:'🏛️', color:'#ef4444', modulo:'atendimentos'},
   {id:'rh', label:'RH e Empregos', desc:'BCCS, comissionados, contratos e gestão de pessoas.', icon:'👥', color:'#8b5cf6', modulo:'rh'},
   {id:'cadastros', label:'Cadastros', desc:'Associações, lideranças e listas diversas.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
   {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'💰', color:'#10b981', modulo:'contas', flag:'controle_contas'},
@@ -69,6 +70,8 @@ const _md = {
   grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 
+initDemandas({groups:()=>_md.grupos(MODULOS.find(m=>m.id==='atendimentos')),pct:_md.pct,total:_md.ativTotal});
+
 function _mdCard(mod){
   const grupos = _md.grupos(mod);
   const total = grupos.reduce((a,g)=>a+_md.ativTotal(g),0);
@@ -104,6 +107,7 @@ window.renderModulo = function(id){
 };
 
 function renderModuloGrupos(mod){
+  if(mod.id==='atendimentos')return renderDemandas();
   const grupos = _md.grupos(mod);
   const title = `${mod.icon} ${mod.label}`;
   const podeCriar = window.userCan(mod.id,'criar');
@@ -166,11 +170,11 @@ window._ceExcluirSelecionados=async function(modId){
   window.renderModulo(modId);
 };
 
-window.criarGrupoModulo = async function(modId){
+window.criarGrupoModulo = async function(modId,secretariaId=null){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod) return;
   if(!window.userCan(modId,'criar')){ toast('Sem permissão para criar neste módulo','error'); return; }
   const base = {
-    name: `Novo ${mod.label}`,
+    name: modId==='atendimentos'?'Novo grupo de demandas':`Novo ${mod.label}`,
     description: mod.desc,
     observacoes: '',
     responsaveis: '',
@@ -188,6 +192,10 @@ window.criarGrupoModulo = async function(modId){
     created_at: serverTimestamp(),
     updated_at: serverTimestamp()
   };
+  if(modId==='atendimentos'){
+    if(!S.secretarias.some(s=>s.id===secretariaId&&s.demandas_ativa)){toast('Selecione uma secretaria para o grupo.','error');return;}
+    base.demanda_secretaria_id=secretariaId;
+  }
   if(mod.flag) base[mod.flag] = 1;
   try{
     const ref = await addDoc(collection(db,'secretariats'), base);
@@ -322,11 +330,11 @@ function _renderSidebarModules(activeId=''){
   if(!host)return;
   host.innerHTML=_visibleModules().map(mod=>{
     const numbers=_moduleNumbers(mod);
-    return `<button type="button" class="sidebar-module-btn ${activeId===mod.id?'active':''}" onclick="window.renderModulo('${mod.id}')" title="${_md.esc(mod.label)}" style="--module-soft:${mod.color}28;--module-color:${mod.color}">
+    return `<button type="button" class="sidebar-module-btn ${activeId===mod.id?'active':''}" onclick="${mod.id==='atendimentos'?"window.openDemandSecretaria()":`window.renderModulo('${mod.id}')`}" title="${_md.esc(mod.label)}" style="--module-soft:${mod.color}28;--module-color:${mod.color}">
       <span class="sidebar-module-icon">${mod.icon}</span>
       <span class="sidebar-module-label">${_md.esc(mod.label)}</span>
       <span class="sidebar-module-count">${numbers.grupos.length}</span>
-    </button>`;
+    </button>${mod.id==='atendimentos'?demandSidebar(activeId===mod.id):''}`;
   }).join('');
 }
 window.refreshSidebarModules=_renderSidebarModules;

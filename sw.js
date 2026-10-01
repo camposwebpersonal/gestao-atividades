@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v98';
+const CACHE_NAME = 'gestao-pms-v99';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -11,6 +11,9 @@ const STATIC_ASSETS = [
   'bcc_data_junho_2026.json',
   'img/logo_sertania.png',
   'js/modulos.js',
+  'js/demandas-secretarias.js',
+  'js/demandas-model.js',
+  'css/demandas-secretarias.css',
   'css/prefeitura-shell.css',
   'js/perfuracao-pocos.js',
   'js/ordenacao-visual.js',
