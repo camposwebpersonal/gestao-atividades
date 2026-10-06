@@ -1,0 +1,33 @@
+/* Grupos operacionais em linhas compactas, com o mesmo ritmo visual das demandas. */
+.module-groups-shell{color:#123443}
+.module-groups-toolbar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.module-group-list{display:flex;flex-direction:column;gap:6px}
+.module-group-row{display:flex;align-items:center;gap:11px;position:relative;min-height:64px;padding:8px 12px;background:#fff;border:1px solid #d7e3e9;border-left:4px solid var(--module-accent,#0786a2);border-radius:10px;box-shadow:0 2px 8px #13354608;transition:border-color .15s,box-shadow .15s}
+.module-group-row:hover{border-color:color-mix(in srgb,var(--module-accent,#0786a2) 45%,#d7e3e9);box-shadow:0 4px 14px #1335460d}
+.module-group-checkbox{width:14px;height:14px;accent-color:var(--module-accent,#0786a2);flex:0 0 auto}
+.module-group-open{display:flex;align-items:flex-start;gap:10px;min-width:180px;flex:1;border:0;background:none;text-align:left;color:inherit;padding:0;cursor:pointer}
+.module-group-number{padding-top:2px;color:#88a0ad;font-size:10px;font-weight:800;font-variant-numeric:tabular-nums}
+.module-group-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
+.module-group-copy strong{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
+.module-group-copy small{max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#708695;font-size:10px;line-height:1.35}
+.module-group-total{min-width:86px;color:#718592;font-size:10px;white-space:nowrap}
+.module-group-total b{color:#173e50;font-size:13px;font-variant-numeric:tabular-nums}
+.module-group-progress{width:88px;color:#6d8290;font-size:9px;flex:0 0 auto}
+.module-group-progress span{display:block}.module-group-progress span b{color:var(--progress,#3b82f6);font-size:11px}
+.module-group-progress i{display:block;height:3px;margin-top:5px;background:#e5edf1;border-radius:4px;overflow:hidden}
+.module-group-progress i b{display:block;height:100%;background:var(--progress,#3b82f6)}
+.module-group-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.module-group-actions .card-btn{width:auto;min-width:31px;height:31px;padding:5px 8px;border:1px solid #cedde5;border-radius:8px;background:#fff;color:#234e62;font-size:10px;font-weight:750;box-shadow:none}
+.module-group-actions .card-btn:hover{border-color:var(--module-accent,#0786a2);color:var(--module-accent,#0786a2)}
+.module-group-actions .transfer{color:#087f75;background:#f1faf6;border-color:#bcdcd1}
+.module-group-row>.record-audit{position:absolute;left:42px;bottom:4px;display:flex;gap:10px;margin:0!important;padding:0!important;font-size:8px!important;line-height:1;color:#8195a2;pointer-events:none}
+.module-transfer-intro{margin:0 0 14px;color:#617887;font-size:13px;line-height:1.55}
+.module-transfer-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:17px}
+.module-transfer-choice{display:flex;flex-direction:column;gap:5px;text-align:left;padding:13px;border:1px solid #d3e0e6;border-radius:10px;background:#f8fafb;color:#183b4b;cursor:pointer}
+.module-transfer-choice b{font-size:12px}.module-transfer-choice small{font-size:10px;line-height:1.45;color:#6b818f}
+.module-transfer-choice.selected{border-color:#1b9a84;background:#edf9f5;box-shadow:0 0 0 2px #1b9a8417}
+.module-transfer-summary{margin-top:11px;padding:9px 11px;border-radius:8px;background:#eef5f5;color:#527079;font-size:11px}
+.module-transfer-summary b{color:#087f75;font-size:14px}
+@media(max-width:850px){.module-group-total{min-width:auto}.module-group-actions .transfer span{display:none}.module-group-copy small{max-width:300px}}
+@media(max-width:650px){.module-groups-toolbar{gap:7px}.module-group-row{gap:8px;flex-wrap:wrap;padding:9px}.module-group-open{min-width:0;flex-basis:calc(100% - 30px)}.module-group-total{margin-left:32px}.module-group-progress{margin-right:auto}.module-group-actions{margin-left:auto}.module-group-row>.record-audit{position:static;flex-basis:100%;margin-left:32px!important;flex-wrap:wrap;gap:4px}.module-transfer-choices{grid-template-columns:1fr}.module-group-copy small{max-width:62vw}}
+@media(prefers-reduced-motion:reduce){.module-group-row{transition:none}}

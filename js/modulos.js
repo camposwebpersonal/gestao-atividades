@@ -1,4 +1,5 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=1';
+import {supabase} from '../supabase_compat.js';
 import './perfuracao-pocos.js?v=88';
 import './controle-extintores.js?v=2';
 
@@ -60,6 +61,7 @@ window.userCan = function(modId, action='acesso'){
 
 const _md = {
   esc: s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
+  arg: s => String(JSON.stringify(String(s==null?'':s))).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
   setC: h => document.getElementById('content').innerHTML = h,
   fmtD: d => { if(!d) return '—'; try { let s=String(d); if(!s.includes('T') && !s.includes(' ')) s+='T00:00'; return new Date(s).toLocaleDateString('pt-BR'); } catch { return String(d); } },
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
@@ -116,34 +118,88 @@ function renderModuloGrupos(mod){
   const pode = admin || podeEditar;
   const novo = admin || podeCriar ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
   const mass = pode ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto"><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ce-sel-all" onchange="window._ceToggleAllGrupos(this.checked)"> Selecionar todos</label><button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="window._ceExcluirSelecionados('${mod.id}')">🗑️ Excluir selecionados</button></div>` : '';
-  const cards = grupos.map(g=>{
+  const cards = grupos.map((g,index)=>{
     const p=_md.pct(g), col=_md.pColor(p);
-    return `<div class="activity-card" style="border-top:4px solid ${mod.color};cursor:pointer;position:relative" data-gid="${_md.esc(g.id)}">
-      <input type="checkbox" class="cb-grupo" value="${_md.esc(g.id)}" style="position:absolute;top:10px;right:10px;width:18px;height:18px;cursor:pointer;z-index:2" onchange="event.stopPropagation()" onclick="event.stopPropagation()">
-      <div onclick="window.openActivity('${_md.esc(g.id)}')">
-      ${g.cover_url?`<img class="card-thumb" src="${_md.esc(g.cover_url)}" loading="lazy" alt="">`:`<div class="card-thumb-ph"><img src="img/logo_sertania.png" style="width:64px;height:64px;object-fit:contain;opacity:.7"></div>`}
-      <div class="card-title">${_md.esc(g.name||'Sem nome')}</div>
-      ${mod.id==='atendimentos'?`<div class="attendance-group-details"><div><strong>Assunto:</strong> <span>${_md.esc(g.assunto??_md.extra(g).assunto??'')||'Não informado'}</span></div><div><strong>Observação:</strong> <span>${_md.esc(g.observacoes||'')||'Não informada'}</span></div></div>`:g.observacoes?`<div class="card-obs">${_md.esc(g.observacoes)}</div>`:''}
-      <div class="card-foot">
-        <div style="flex:1"><div style="font-size:11px;color:${col};font-weight:700;margin-bottom:3px">${p}% ${(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)?'pagos':'concluído'}</div><div class="prog-bar"><div class="prog-fill" style="width:${p}%;background:${col}"></div></div></div>
-        <div class="card-btns">
-          ${(admin||podeEditar)?`<button class="card-btn" onclick="event.stopPropagation();window.openSecModal('${_md.esc(g.id)}')">✏️</button>`:''}
-          <button class="card-btn" onclick="event.stopPropagation();${(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)?`window.gerarPdfPocos('${_md.esc(g.id)}')`:`window.gerarPdf('${_md.esc(g.id)}')`}">📄</button>
-        </div>
+    const total=_md.ativTotal(g),well=g.controle_pocos==1||g.extra_fields?.controle_pocos==1;
+    return `<article class="module-group-row" style="--module-accent:${mod.color}" data-gid="${_md.esc(g.id)}" data-audit-id="${_md.esc(g.id)}">
+      ${pode?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
+      <button type="button" class="module-group-open" onclick="window.openActivity(${_md.arg(g.id)})">
+        <span class="module-group-number">${String(index+1).padStart(2,'0')}</span>
+        <span class="module-group-copy"><strong>${_md.esc(g.name||'Sem nome')}</strong>${g.observacoes?`<small>${_md.esc(g.observacoes)}</small>`:''}</span>
+      </button>
+      <span class="module-group-total"><b>${total}</b> lançamento${total===1?'':'s'}</span>
+      <span class="module-group-progress" style="--progress:${col}"><span><b>${p}%</b> ${well?'pagos':'concluído'}</span><i><b style="width:${p}%"></b></i></span>
+      <div class="module-group-actions">
+        ${(admin||podeEditar)?`<button type="button" class="card-btn" onclick="window.openSecModal(${_md.arg(g.id)})" aria-label="Editar ${_md.esc(g.name)}" title="Editar grupo">✎</button>`:''}
+        ${admin?`<button type="button" class="card-btn transfer" onclick="window.openModuleGroupTransfer(${_md.arg(g.id)},${_md.arg(mod.id)})" aria-label="Transferir ${_md.esc(g.name)}" title="Transferir lançamentos ou grupo">⇄ <span>Transferir</span></button>`:''}
+        <button type="button" class="card-btn" onclick="${well?`window.gerarPdfPocos(${_md.arg(g.id)})`:`window.gerarPdf(${_md.arg(g.id)})`}" aria-label="PDF de ${_md.esc(g.name)}" title="Gerar PDF">PDF</button>
       </div>
-      </div>
-    </div>`;
-  }).join('') || `<div class="empty" style="grid-column:1/-1">Nenhum grupo de <strong>${_md.esc(mod.label)}</strong> cadastrado ainda.<br>Clique em <strong>+ Novo Grupo</strong> para começar.</div>`;
-  _md.setC(`<div class="page-title">${title}</div>
+    </article>`;
+  }).join('') || `<div class="empty">Nenhum grupo de <strong>${_md.esc(mod.label)}</strong> cadastrado ainda.<br>Clique em <strong>+ Novo Grupo</strong> para começar.</div>`;
+  _md.setC(`<section class="module-groups-shell" style="--module-accent:${mod.color}"><div class="page-title">${title}</div>
     <div class="page-sub">${_md.esc(mod.desc)}</div>
-    <div style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <div class="module-groups-toolbar">
       ${novo}
       <button class="btn-action" onclick="window.setView('mod')">← Voltar ao início</button>
       <button class="btn-action" onclick="window.gerarRelatorioModulo('${mod.id}')">📄 PDF do módulo</button>
       ${mass}
     </div>
-    <div class="cards-grid">${cards}</div>`);
+    <div class="module-group-list">${cards}</div></section>`);
+  window.refreshAuditUI?.();
 }
+
+function transferGroupOptions(sourceId){
+  return MODULOS.map(mod=>{
+    const options=_md.grupos(mod).filter(g=>g.id!==sourceId).map(g=>`<option value="${_md.esc(g.id)}">${_md.esc(g.name||'Sem nome')}</option>`).join('');
+    return options?`<optgroup label="${_md.esc(mod.label)}">${options}</optgroup>`:'';
+  }).join('');
+}
+
+window.toggleModuleTransferMode=function(mode){
+  document.querySelectorAll('[data-transfer-panel]').forEach(el=>el.hidden=el.dataset.transferPanel!==mode);
+  document.querySelectorAll('.module-transfer-choice').forEach(el=>el.classList.toggle('selected',el.dataset.mode===mode));
+};
+
+window.openModuleGroupTransfer=function(id,modId){
+  if(!window.S?.isAdmin){toast('Somente o administrador pode transferir grupos e lançamentos.','error');return;}
+  const group=S.secs.find(g=>g.id===id);if(!group)return;
+  const secretarias=(S.secretarias||[]).filter(s=>s.demandas_ativa).sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR'));
+  window.__moduleGroupTransfer={id,modId};
+  openModal('Transferir conteúdo',group.name||'Grupo',`<p class="module-transfer-intro">Escolha exatamente o que deseja mover. A transferência conserva responsáveis, autoria, datas, fotos, campos e subitens.</p>
+    <div class="module-transfer-choices">
+      <button type="button" class="module-transfer-choice selected" data-mode="content" onclick="toggleModuleTransferMode('content')"><b>⇄ Apenas os lançamentos</b><small>Move todos os lançamentos para outro grupo. Este grupo permanece vazio no local atual.</small></button>
+      <button type="button" class="module-transfer-choice" data-mode="group" onclick="toggleModuleTransferMode('group')"><b>▤ Grupo completo</b><small>Leva este card, com todo o conteúdo, para uma secretaria em Demandas.</small></button>
+    </div>
+    <form onsubmit="event.preventDefault();confirmModuleGroupTransfer()">
+      <div data-transfer-panel="content" class="form-group"><label for="module-transfer-group">Grupo de destino</label><select id="module-transfer-group"><option value="">Selecione o grupo que receberá os lançamentos…</option>${transferGroupOptions(id)}</select></div>
+      <div data-transfer-panel="group" class="form-group" hidden><label for="module-transfer-secretaria">Secretaria de destino</label><select id="module-transfer-secretaria"><option value="">Selecione a secretaria…</option>${secretarias.map(s=>`<option value="${_md.esc(s.id)}">${_md.esc(s.name)}</option>`).join('')}</select><small>O grupo passará a seguir o layout de Demandas por Secretarias.</small></div>
+      <div class="module-transfer-summary" id="module-transfer-summary"><b>${_md.ativTotal(group)}</b> lançamento(s) neste grupo</div>
+      <div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button type="submit" class="btn-save" id="module-transfer-save">Transferir com segurança</button></div>
+    </form>`);
+};
+
+window.confirmModuleGroupTransfer=async function(){
+  if(window.__moduleTransferBusy||!S.isAdmin)return;
+  const state=window.__moduleGroupTransfer;if(!state)return;
+  const mode=document.querySelector('.module-transfer-choice.selected')?.dataset.mode||'content';
+  const targetGroup=document.getElementById('module-transfer-group')?.value||null;
+  const targetSecretaria=document.getElementById('module-transfer-secretaria')?.value||null;
+  if(mode==='content'&&!targetGroup){toast('Escolha o grupo que receberá os lançamentos.','error');return;}
+  if(mode==='group'&&!targetSecretaria){toast('Escolha a secretaria de destino.','error');return;}
+  const button=document.getElementById('module-transfer-save');window.__moduleTransferBusy=true;button.disabled=true;button.textContent='Transferindo…';
+  try{
+    const {data,error}=await supabase.rpc('transfer_group_content_admin',{operation:mode,source_group:state.id,target_group:targetGroup,target_secretaria:targetSecretaria});
+    if(error)throw error;
+    await window.loadData();closeModal();
+    if(mode==='group'){
+      window.currentDemandSecretaria=targetSecretaria;window.renderModulo('atendimentos');
+      toast(`Grupo transferido com ${data?.items||0} lançamento(s)!`,'success');
+    }else{
+      window.renderModulo(state.modId);toast(`${data?.items||0} lançamento(s) e ${data?.subitems||0} subitem(ns) transferidos!`,'success');
+    }
+  }catch(error){toast('Não foi possível transferir: '+error.message,'error',8000);button.disabled=false;button.textContent='Transferir com segurança';}
+  finally{window.__moduleTransferBusy=false;}
+};
 
 window._ceToggleAllGrupos=function(checked){
   document.querySelectorAll('.cb-grupo').forEach(cb=>cb.checked=checked);
