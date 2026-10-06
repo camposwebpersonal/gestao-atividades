@@ -7,7 +7,37 @@ export function auditDate(value){
 export function auditLabel(record){
  const author=record.created_by_name,editor=record.updated_by_name;
  const created=auditDate(record.created_at),updated=auditDate(record.updated_at);
- return `<span>Lançado por <strong>${esc(author||'não registrado (cadastro anterior)')}</strong>${created?` <time datetime="${esc(String(record.created_at))}">em ${esc(created)}</time>`:''}</span>${editor?`<span>Última edição por <strong>${esc(editor)}</strong>${updated?` <time datetime="${esc(String(record.updated_at))}">em ${esc(updated)}</time>`:''}</span>`:''}`;
+ return `<span>Criado por <strong>${esc(author||'não registrado (cadastro anterior)')}</strong>${created?` <time datetime="${esc(String(record.created_at))}">em ${esc(created)}</time>`:''}</span>${editor?`<span>Última edição por <strong>${esc(editor)}</strong>${updated?` <time datetime="${esc(String(record.updated_at))}">em ${esc(updated)}</time>`:''}</span>`:''}`;
+}
+const auditUserName=user=>String(user?.displayName||user?.display_name||user?.email?.split('@')[0]||'').trim();
+export function auditUserId(record,kind,users=[]){
+ const id=String(record?.[kind+'_by']||'');if(id&&users.some(user=>String(user.id)===id))return id;
+ const name=String(record?.[kind+'_by_name']||'').trim().toLocaleLowerCase('pt-BR');
+ return name?String(users.find(user=>auditUserName(user).toLocaleLowerCase('pt-BR')===name)?.id||''):'';
+}
+export function auditInputValue(value){
+ const date=typeof value?.toDate==='function'?value.toDate():value?.seconds?new Date(value.seconds*1000):value?new Date(value):null;
+ if(!date||Number.isNaN(date.getTime()))return '';
+ const pad=n=>String(n).padStart(2,'0');
+ return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+export function adminAuditFields(record,users=[],prefix='audit'){
+ const options=(kind)=>{
+  const selected=auditUserId(record,kind,users);
+  return `<option value="">Manter o cadastro atual</option>`+users.slice().sort((a,b)=>auditUserName(a).localeCompare(auditUserName(b),'pt-BR')).map(user=>`<option value="${esc(user.id)}"${String(user.id)===selected?' selected':''}>${esc(auditUserName(user))}</option>`).join('');
+ };
+ return `<details class="audit-admin-fields" open><summary>Histórico administrativo <span>Somente administrador</span></summary><p>Corrija quem criou ou editou este registro e as respectivas datas. Os nomes são escolhidos entre os usuários cadastrados.</p><div class="form-grid"><div class="form-group"><label for="${prefix}-created-user">Criado por</label><select id="${prefix}-created-user">${options('created')}</select></div><div class="form-group"><label for="${prefix}-created-at">Data e hora da criação</label><input id="${prefix}-created-at" type="datetime-local" value="${esc(auditInputValue(record?.created_at))}"></div><div class="form-group"><label for="${prefix}-updated-user">Última edição por</label><select id="${prefix}-updated-user">${options('updated')}</select></div><div class="form-group"><label for="${prefix}-updated-at">Data e hora da última edição</label><input id="${prefix}-updated-at" type="datetime-local" value="${esc(auditInputValue(record?.updated_at))}"></div></div></details>`;
+}
+export function readAdminAudit(prefix,record,users=[],root=document){
+ const createdUser=root.getElementById(prefix+'-created-user')?.value||'',updatedUser=root.getElementById(prefix+'-updated-user')?.value||'';
+ const createdAt=root.getElementById(prefix+'-created-at')?.value||'',updatedAt=root.getElementById(prefix+'-updated-at')?.value||'';
+ const result={
+  created_user_id:createdUser&&createdUser!==auditUserId(record,'created',users)?createdUser:null,
+  updated_user_id:updatedUser&&updatedUser!==auditUserId(record,'updated',users)?updatedUser:null,
+  created_at_value:createdAt&&createdAt!==auditInputValue(record?.created_at)?new Date(createdAt).toISOString():null,
+  updated_at_value:updatedAt&&updatedAt!==auditInputValue(record?.updated_at)?new Date(updatedAt).toISOString():null
+ };
+ return Object.values(result).some(Boolean)?result:null;
 }
 export function rememberRecords(table,rows,replace=false){
  const index=globalThis.__recordIndex||(globalThis.__recordIndex=new Map());
@@ -63,7 +93,7 @@ export function initAuditUI(){
  new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
-  window.openModal('Autoria dos registros','Quem cadastrou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
+  window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
  };
  window.filterAuthorship=function(){
   const query=document.getElementById('audit-search').value.toLowerCase();

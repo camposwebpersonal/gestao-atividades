@@ -490,6 +490,11 @@ export async function moveAttendanceRecord(args) {
  if(error)throw new Error(error.message||'Não foi possível mover o atendimento.');
  return data;
 }
+export async function updateRecordAuditAdmin(args) {
+ const {data,error}=await supabase.rpc('admin_update_record_audit',args);
+ if(error)throw new Error(error.message||'Não foi possível corrigir a autoria do registro.');
+ return data;
+}
 export async function editUserAdminSession(body) {
  const {data:sessionData}=await supabase.auth.getSession();
  const token=sessionData?.session?.access_token;
