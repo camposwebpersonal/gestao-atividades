@@ -434,6 +434,7 @@ import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js';
 import {initAuditUI} from './js/autoria.js';
+import {buildDemandReportRows} from './js/demand-report.js';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1461,7 +1462,7 @@ window.openActivity=function(secId){
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
     ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
-    <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
+    <button class="btn-action" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
   </div>
   <div style="margin-bottom:18px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;cursor:pointer;display:block;background:transparent" onclick="openGal('activity','${secId}','${esc(sec.name)}')" loading="lazy">`:''}
@@ -1522,6 +1523,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
+    if(isAttendanceSection(_sec))tags.length=0;
     return`<div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
@@ -1577,6 +1579,7 @@ function renderItem(item,today,itemNum){
         if((_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems||s.item_show_verba)&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
         if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||s.item_show_documentacao)&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
         if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||s.item_show_licitacao)&&s.licitacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${s.licitacao==1?'Concluída':'Pendente'}</span>`);
+        if(isAttendanceSection(_sec))tags.length=0;
         if(!tags.length)return '';
         return`<div style="font-size:10px;color:#94a3b8;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">${tags.join('')}</div>`;
       })()}</div>
@@ -1631,6 +1634,7 @@ function renderItem(item,today,itemNum){
         if((_sec?.show_origem_verba||item.item_show_verba)&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
         if((_sec?.show_documentacao||item.item_show_documentacao)&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
         if((_sec?.show_licitacao||item.item_show_licitacao)&&item.licitacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.licitacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">⚖️ ${item.licitacao==1?'Lic. Concluída':'Lic. Pendente'}</span>`);
+        if(isAttendanceSection(_sec))tags.length=0;
         if(!tags.length)return '';
         return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
       })()}
@@ -2267,6 +2271,7 @@ window.readFileAsDataUrl=readFileAsDataUrl;
 window.mkThumb=mkThumb;
 
 // ── ADMIN ──
+const _recentUserPasswords=new Map();
 function renderAdmin(){
   if(!S.isAdmin){setC('<div class="empty">Sem permissão.</div>');return;}
   const users=[...S.users].sort((a,b)=>(a.displayName||a.name||a.email||'').localeCompare(b.displayName||b.name||b.email||'','pt-BR'));
@@ -2285,7 +2290,13 @@ function renderAdmin(){
       <div class="user-identity"><span class="user-avatar" aria-hidden="true">${esc(initial)}</span><div><h3>${esc(name)}</h3><div class="user-login">Login: <strong>${esc(login)}</strong></div>${u.email_contato?`<div class="user-contact">${esc(u.email_contato)}</div>`:''}</div></div>
       <div class="user-role-cell"><span class="user-role user-role-${['admin','gestor'].includes(u.role)?u.role:'usuario'}">${roleNames[u.role]||'Usuário'}</span><span class="user-sector">${esc(sector)}</span>${responsible?`<span class="user-sector">${esc(responsible)}</span>`:''}</div>
       <div class="user-access-cell">${accesses}</div>
-      <div class="user-card-actions"><button type="button" class="users-button" onclick="openUserModal('${u.id}')">Editar</button><button type="button" class="users-button users-button-soft" onclick="openUserPasswordModal('${u.id}')">Senha</button></div>
+      <div class="user-card-actions"><button type="button" class="users-button" onclick="openUserModal('${u.id}')">Editar</button><button type="button" class="users-button users-button-soft" aria-expanded="false" aria-controls="user-access-${u.id}" onclick="toggleUserAccess('${u.id}',this)">Acesso</button></div>
+      <section class="user-access-panel" id="user-access-${u.id}" hidden>
+        <div class="user-access-panel-copy"><strong>Senha protegida</strong><span>A senha atual não pode ser recuperada. Defina uma nova senha para exibi-la e copiá-la com o login.</span></div>
+        <div class="user-access-password"><label for="usr-nova-senha-${u.id}">Nova senha</label><input type="password" id="usr-nova-senha-${u.id}" autocomplete="new-password" minlength="6" placeholder="Mínimo de 6 caracteres" value="${esc(_recentUserPasswords.get(u.id)||'')}"><label class="user-access-show"><input type="checkbox" onchange="_toggleSenha('usr-nova-senha-${u.id}',this.id)" id="usr-show-pass-${u.id}"> Mostrar</label></div>
+        <div class="user-access-panel-actions"><button type="button" class="users-button users-button-primary" onclick="changeUserPassword('${u.id}','card')">Salvar nova senha</button><button type="button" class="users-button" id="usr-copy-access-${u.id}" onclick="copyUserAccess('${u.id}')" ${_recentUserPasswords.has(u.id)?'':'disabled'}>Copiar login e senha</button></div>
+        <span class="user-access-status" id="usr-access-status-${u.id}" aria-live="polite">${_recentUserPasswords.has(u.id)?'Nova senha salva nesta sessão e pronta para copiar.':''}</span>
+      </section>
     </article>`;
   }).join('');
   const svcKey=localStorage.getItem('sb_service_role_key')||'';
@@ -2315,6 +2326,20 @@ window.openUserPasswordModal=function(id){
   openUserModal(id);
   const input=document.getElementById('usr-nova-senha');
   input?.focus();input?.scrollIntoView({block:'center'});
+};
+window.toggleUserAccess=function(id,button){
+  const panel=document.getElementById('user-access-'+id);if(!panel)return;
+  panel.hidden=!panel.hidden;button?.setAttribute('aria-expanded',String(!panel.hidden));
+  if(!panel.hidden)document.getElementById('usr-nova-senha-'+id)?.focus();
+};
+window.copyUserAccess=async function(id){
+  const u=S.users.find(x=>x.id===id),password=_recentUserPasswords.get(id);
+  if(!u||!password){toast('Defina e salve uma nova senha antes de copiar o acesso.','error');return;}
+  const login=_usernameFromEmail(u.email);
+  const url=new URL('login.html',location.href).href;
+  const message=`Acesso ao Sistema de Gestão de Atividades\n\nLogin: ${login}\nSenha: ${password}\nEndereço: ${url}`;
+  try{await navigator.clipboard.writeText(message);toast('Login e senha copiados!','success');}
+  catch{const area=document.createElement('textarea');area.value=message;document.body.append(area);area.select();document.execCommand('copy');area.remove();toast('Login e senha copiados!','success');}
 };
 function _buildPermMatrix(u){
   const p=u?.permissoes||{modulos:{}};
@@ -2409,17 +2434,23 @@ window.saveUser=async function(id){
   }
 };
 window.changeUserPassword=async function(id){
+  const source=arguments[1]||'modal';
   const u=S.users.find(x=>x.id===id);
   if(!u)return;
-  const input=document.getElementById('usr-nova-senha-'+id)||document.getElementById('usr-nova-senha');
+  const input=source==='card'?document.getElementById('usr-nova-senha-'+id):document.getElementById('usr-nova-senha');
   const pwd=(input?.value||'').trim();
   if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return;}
   const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
   try{
     if(serviceKey)await updateUserPassword(u.id,pwd,serviceKey);
     else await editUserAdminSession({action:'password',id:u.id,password:pwd});
-    input.value='';
-    toast('Senha alterada com sucesso!','info');
+    if(source==='card'){
+      _recentUserPasswords.set(id,pwd);
+      const copy=document.getElementById('usr-copy-access-'+id);if(copy)copy.disabled=false;
+      const status=document.getElementById('usr-access-status-'+id);if(status)status.textContent='Nova senha salva nesta sessão e pronta para copiar.';
+      input.type='text';const show=document.getElementById('usr-show-pass-'+id);if(show)show.checked=true;
+    }else input.value='';
+    toast('Senha alterada com sucesso!','success');
   }catch(e){
     console.error(e);
     toast('Erro ao alterar senha: '+(e.message||''),'error');
@@ -2778,9 +2809,80 @@ window.gerarPdfResumoBCCS=async function(secId){
 };
 
 // ── PDF ──
+window.gerarPdfDemanda=async function(secId){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
+  toast('Preparando relatório completo…','info',8000);
+  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,H=297,mx=13,cw=W-(mx*2),header=31,footer=14;
+  const items=S.items.filter(i=>i.atividade_id===secId);
+  const itemIds=new Set(items.map(i=>i.id));
+  const subs=S.subitems.filter(s=>itemIds.has(s.item_id));
+  const rows=buildDemandReportRows(items,subs,S.secretarias||[]);
+  const generated=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  const secretariat=S.secretarias.find(s=>s.id===sec.demanda_secretaria_id)?.name||'';
+  const logo=await loadB64('img/logo_sertania.png','png',120).catch(()=>null);
+  const setFont=(size,bold=false,color=[27,45,61])=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...color);};
+  const pageHeader=()=>{
+    doc.setFillColor(8,51,68);doc.rect(0,0,W,header,'F');doc.setFillColor(21,132,91);doc.rect(0,header-2,W,2,'F');
+    if(logo){const ratio=logo.w/logo.h,h=18,w=h*ratio;doc.addImage(logo.d,'PNG',W-mx-w,5,w,h,'demand-logo','FAST');}
+    setFont(9,true,[152,229,203]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA',mx,9);
+    setFont(15,true,[255,255,255]);doc.text('RELATÓRIO DE DEMANDAS',mx,17);
+    setFont(8,false,[218,235,240]);doc.text('Gestão de Atividades  •  Emitido em '+generated,mx,24);
+  };
+  const pageFooter=()=>{
+    doc.setFillColor(8,51,68);doc.rect(0,H-footer,W,footer,'F');doc.setFillColor(21,132,91);doc.rect(0,H-footer,W,1.2,'F');
+    setFont(8,false,[218,235,240]);doc.text('Documento gerado pelo Sistema de Gestão de Atividades',mx,H-5);
+  };
+  pageHeader();let y=header+7;
+  setFont(18,true,[12,42,62]);doc.text(String(sec.name||'DEMANDAS').toUpperCase(),mx,y+6);y+=11;
+  if(secretariat){setFont(9,true,[21,132,91]);doc.text(secretariat.toUpperCase(),mx,y+2);y+=7;}
+  if(sec.assunto||recordExtra(sec).assunto){setFont(9,true,[50,75,92]);doc.text('Assunto: '+(sec.assunto||recordExtra(sec).assunto),mx,y+2);y+=7;}
+  const groupMeta=[sec.responsaveis?'Responsáveis: '+sec.responsaveis:'',sec.start_date?'Início: '+fmtD(sec.start_date):'',sec.end_date?'Término: '+fmtD(sec.end_date):''].filter(Boolean).join('  •  ');
+  if(groupMeta){const metaLines=doc.splitTextToSize(groupMeta,cw);setFont(8.5,false,[69,91,105]);doc.text(metaLines,mx,y+2);y+=metaLines.length*4+3;}
+  if(sec.observacoes){
+    const lines=doc.splitTextToSize(sec.observacoes,cw-8),boxH=Math.max(12,lines.length*4.2+7);
+    doc.setFillColor(245,249,251);doc.setDrawColor(210,224,232);doc.roundedRect(mx,y,cw,boxH,2,2,'FD');doc.setFillColor(21,132,91);doc.rect(mx,y,2.2,boxH,'F');
+    setFont(8.5,false,[69,91,105]);doc.text(lines,mx+6,y+6);y+=boxH+4;
+  }
+  const summaryY=y,boxW=(cw-6)/3;
+  [{v:items.length,l:'ITENS PRINCIPAIS'},{v:subs.length,l:'SUBITENS'},{v:rows.filter(r=>r.priority).length,l:'PRIORITÁRIOS'}].forEach((card,index)=>{
+    const x=mx+index*(boxW+3);doc.setFillColor(index===2?255:241,index===2?248:247,index===2?230:249);doc.setDrawColor(210,224,232);doc.roundedRect(x,summaryY,boxW,17,2,2,'FD');
+    setFont(14,true,index===2?[166,93,18]:[8,81,71]);doc.text(String(card.v),x+5,summaryY+8);setFont(7.5,true,[92,113,126]);doc.text(card.l,x+5,summaryY+13);
+  });y+=22;
+  const line=(label,value)=>value?label+': '+value:'';
+  const dateOnly=value=>value?fmtD(value):'';
+  const body=rows.map(row=>{
+    const details=[line('Observação',row.observation),line('Responsável',row.responsibles),line('Solicitante',row.requester),line('Secretaria',row.secretariat),...row.extra.map(x=>line(x.label,x.value))].filter(Boolean).join('\n')||'Sem informações complementares';
+    const follow=[line('Urgência',row.urgency),row.priority?'Prioridade: Atendimento prioritário':'',line('Status',row.status),line('Prazo',dateOnly(row.deadline)),line('Conclusão',dateOnly(row.conclusion))].filter(Boolean).join('\n');
+    const register=[`Lançado por: ${row.createdBy}${row.createdAt?'\nEm: '+row.createdAt:''}`,row.updatedBy?`Última edição: ${row.updatedBy}${row.updatedAt?'\nEm: '+row.updatedAt:''}`:''].filter(Boolean).join('\n\n');
+    return [
+      {content:row.number,styles:{halign:'center',fontStyle:'bold',textColor:row.isSubitem?[79,102,118]:[8,81,71]}},
+      {content:(row.isSubitem?'SUBITEM\n':'')+row.title+'\n\n'+details,styles:{fontStyle:row.isSubitem?'normal':'bold'}},
+      follow,
+      register
+    ];
+  });
+  if(!body.length)body.push([{content:'—',styles:{halign:'center'}},{content:'Nenhum lançamento cadastrado.',colSpan:3,styles:{halign:'center',textColor:[100,116,127]}}]);
+  doc.autoTable({
+    startY:y,head:[['#','SOLICITAÇÃO E INFORMAÇÕES','ATENDIMENTO','REGISTRO']],body,
+    margin:{left:mx,right:mx,top:header+4,bottom:footer+4},rowPageBreak:'avoid',
+    styles:{fontSize:7.7,cellPadding:2.5,overflow:'linebreak',valign:'top',textColor:[35,57,72],lineColor:[205,219,227],lineWidth:.18},
+    headStyles:{fillColor:[8,81,71],textColor:[255,255,255],fontStyle:'bold',fontSize:8.2,cellPadding:3},
+    alternateRowStyles:{fillColor:[247,250,251]},columnStyles:{0:{cellWidth:10},1:{cellWidth:72},2:{cellWidth:47},3:{cellWidth:55}},
+    didParseCell:data=>{if(data.section==='body'&&rows[data.row.index]?.isSubitem)data.cell.styles.fillColor=[242,246,248];},
+    didDrawPage:data=>{if(data.pageNumber>1)pageHeader();pageFooter();}
+  });
+  pageFooter();
+  const pages=doc.internal.getNumberOfPages();for(let page=1;page<=pages;page++){doc.setPage(page);setFont(8,true,[218,235,240]);doc.text(`${page}/${pages}`,W-mx,H-5,{align:'right'});}
+  const file=('RELATORIO-'+(sec.name||'DEMANDAS')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase();
+  doc.save(file+'-'+new Date().toISOString().slice(0,10)+'.pdf');toast('Relatório completo gerado!','success');
+};
+
 window.gerarPdf=async function(secId,opts){
   if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1)return window.gerarPdfDemanda(secId);
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF\u2026','info',8000);
   const{jsPDF}=window.jspdf;

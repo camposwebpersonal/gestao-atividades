@@ -1,7 +1,13 @@
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function auditDate(value){
+ const date=typeof value?.toDate==='function'?value.toDate():value?.seconds?new Date(value.seconds*1000):value?new Date(value):null;
+ if(!date||Number.isNaN(date.getTime()))return '';
+ return date.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+}
 export function auditLabel(record){
  const author=record.created_by_name,editor=record.updated_by_name;
- return `<span>Lançado por <strong>${esc(author||'não registrado (cadastro anterior)')}</strong></span>${editor?`<span>Última edição por <strong>${esc(editor)}</strong></span>`:''}`;
+ const created=auditDate(record.created_at),updated=auditDate(record.updated_at);
+ return `<span>Lançado por <strong>${esc(author||'não registrado (cadastro anterior)')}</strong>${created?` <time datetime="${esc(String(record.created_at))}">em ${esc(created)}</time>`:''}</span>${editor?`<span>Última edição por <strong>${esc(editor)}</strong>${updated?` <time datetime="${esc(String(record.updated_at))}">em ${esc(updated)}</time>`:''}</span>`:''}`;
 }
 export function rememberRecords(table,rows,replace=false){
  const index=globalThis.__recordIndex||(globalThis.__recordIndex=new Map());
