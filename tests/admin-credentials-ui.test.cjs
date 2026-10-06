@@ -5,16 +5,23 @@ const path=require('node:path');
 
 const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 
-test('credenciais temporárias ficam somente em memória e a cópia exige senha recém-salva',()=>{
+test('credenciais temporárias ficam somente em memória e a cópia usa senha recém-salva',()=>{
   assert.match(source,/const _recentUserPasswords=new Map\(\)/);
-  assert.match(source,/if\(!u\|\|!password\)\{toast\('Defina e salve uma nova senha antes de copiar/);
+  assert.match(source,/const password=_recentUserPasswords\.get\(id\)/);
   assert.match(source,/_recentUserPasswords\.set\(id,pwd\)/);
   assert.doesNotMatch(source,/localStorage\.setItem\([^)]*(?:password|senha)/i);
 });
 
-test('cada card oferece alteração, exibição e cópia de login com a nova senha',()=>{
+test('cada card oferece geração, alteração, exibição e cópia de login com a nova senha',()=>{
   assert.match(source,/class="user-access-panel"/);
+  assert.match(source,/Gerar senha/);
   assert.match(source,/Salvar nova senha/);
-  assert.match(source,/Copiar login e senha/);
+  assert.match(source,/Salvar e copiar acesso/);
   assert.match(source,/navigator\.clipboard\.writeText\(message\)/);
+});
+
+test('copiar salva a senha digitada ou gera uma forte antes de montar a mensagem',()=>{
+  assert.match(source,/generateUserPassword\(id\)/);
+  assert.match(source,/await changeUserPassword\(id,'card'\)/);
+  assert.match(source,/crypto\.getRandomValues\(bytes\)/);
 });

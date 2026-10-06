@@ -2292,9 +2292,9 @@ function renderAdmin(){
       <div class="user-access-cell">${accesses}</div>
       <div class="user-card-actions"><button type="button" class="users-button" onclick="openUserModal('${u.id}')">Editar</button><button type="button" class="users-button users-button-soft" aria-expanded="false" aria-controls="user-access-${u.id}" onclick="toggleUserAccess('${u.id}',this)">Acesso</button></div>
       <section class="user-access-panel" id="user-access-${u.id}" hidden>
-        <div class="user-access-panel-copy"><strong>Senha protegida</strong><span>A senha atual não pode ser recuperada. Defina uma nova senha para exibi-la e copiá-la com o login.</span></div>
-        <div class="user-access-password"><label for="usr-nova-senha-${u.id}">Nova senha</label><input type="password" id="usr-nova-senha-${u.id}" autocomplete="new-password" minlength="6" placeholder="Mínimo de 6 caracteres" value="${esc(_recentUserPasswords.get(u.id)||'')}"><label class="user-access-show"><input type="checkbox" onchange="_toggleSenha('usr-nova-senha-${u.id}',this.id)" id="usr-show-pass-${u.id}"> Mostrar</label></div>
-        <div class="user-access-panel-actions"><button type="button" class="users-button users-button-primary" onclick="changeUserPassword('${u.id}','card')">Salvar nova senha</button><button type="button" class="users-button" id="usr-copy-access-${u.id}" onclick="copyUserAccess('${u.id}')" ${_recentUserPasswords.has(u.id)?'':'disabled'}>Copiar login e senha</button></div>
+        <div class="user-access-panel-copy"><strong>Senha protegida pelo Supabase</strong><span>A senha anterior não pode ser recuperada. Digite ou gere uma nova; depois ela ficará visível e poderá ser copiada.</span></div>
+        <div class="user-access-password"><label for="usr-nova-senha-${u.id}">${_recentUserPasswords.has(u.id)?'Senha definida nesta sessão':'Definir nova senha'}</label><input type="password" id="usr-nova-senha-${u.id}" autocomplete="new-password" minlength="6" placeholder="Digite ou gere uma senha" value="${esc(_recentUserPasswords.get(u.id)||'')}"><label class="user-access-show"><input type="checkbox" onchange="_toggleSenha('usr-nova-senha-${u.id}',this.id)" id="usr-show-pass-${u.id}"> Mostrar</label></div>
+        <div class="user-access-panel-actions"><button type="button" class="users-button users-button-soft" onclick="generateUserPassword('${u.id}')">Gerar senha</button><button type="button" class="users-button users-button-primary" onclick="changeUserPassword('${u.id}','card')">Salvar nova senha</button><button type="button" class="users-button" id="usr-copy-access-${u.id}" onclick="copyUserAccess('${u.id}')">Salvar e copiar acesso</button></div>
         <span class="user-access-status" id="usr-access-status-${u.id}" aria-live="polite">${_recentUserPasswords.has(u.id)?'Nova senha salva nesta sessão e pronta para copiar.':''}</span>
       </section>
     </article>`;
@@ -2332,9 +2332,23 @@ window.toggleUserAccess=function(id,button){
   panel.hidden=!panel.hidden;button?.setAttribute('aria-expanded',String(!panel.hidden));
   if(!panel.hidden)document.getElementById('usr-nova-senha-'+id)?.focus();
 };
+window.generateUserPassword=function(id){
+  const input=document.getElementById('usr-nova-senha-'+id);if(!input)return '';
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes=new Uint32Array(10);crypto.getRandomValues(bytes);
+  const password='PMS-'+Array.from(bytes,value=>alphabet[value%alphabet.length]).join('');
+  input.value=password;input.type='text';
+  const show=document.getElementById('usr-show-pass-'+id);if(show)show.checked=true;
+  const status=document.getElementById('usr-access-status-'+id);if(status)status.textContent='Senha gerada. Clique em “Salvar e copiar acesso”.';
+  input.focus();return password;
+};
 window.copyUserAccess=async function(id){
-  const u=S.users.find(x=>x.id===id),password=_recentUserPasswords.get(id);
-  if(!u||!password){toast('Defina e salve uma nova senha antes de copiar o acesso.','error');return;}
+  const u=S.users.find(x=>x.id===id),input=document.getElementById('usr-nova-senha-'+id);
+  if(!u)return;
+  if(!(input?.value||'').trim())generateUserPassword(id);
+  const typed=(input?.value||'').trim();
+  if(_recentUserPasswords.get(id)!==typed){const saved=await changeUserPassword(id,'card');if(!saved)return;}
+  const password=_recentUserPasswords.get(id);
   const login=_usernameFromEmail(u.email);
   const url=new URL('login.html',location.href).href;
   const message=`Acesso ao Sistema de Gestão de Atividades\n\nLogin: ${login}\nSenha: ${password}\nEndereço: ${url}`;
@@ -2436,10 +2450,10 @@ window.saveUser=async function(id){
 window.changeUserPassword=async function(id){
   const source=arguments[1]||'modal';
   const u=S.users.find(x=>x.id===id);
-  if(!u)return;
+  if(!u)return false;
   const input=source==='card'?document.getElementById('usr-nova-senha-'+id):document.getElementById('usr-nova-senha');
   const pwd=(input?.value||'').trim();
-  if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return;}
+  if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return false;}
   const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
   try{
     if(serviceKey)await updateUserPassword(u.id,pwd,serviceKey);
@@ -2451,9 +2465,11 @@ window.changeUserPassword=async function(id){
       input.type='text';const show=document.getElementById('usr-show-pass-'+id);if(show)show.checked=true;
     }else input.value='';
     toast('Senha alterada com sucesso!','success');
+    return true;
   }catch(e){
     console.error(e);
     toast('Erro ao alterar senha: '+(e.message||''),'error');
+    return false;
   }
 };
 window.sendUserPasswordReset=async function(id){
