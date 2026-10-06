@@ -15,6 +15,19 @@ export function rememberRecords(table,rows,replace=false){
  for(const row of rows)index.set(table+'/'+row.id,{table,record:row});
  globalThis.refreshAuditUI?.();
 }
+export function auditTarget(host,isAttendance){
+ if(isAttendance&&host.classList.contains('item-row')){
+  const header=host.querySelector(':scope > .item-header'),info=header?.querySelector(':scope > .item-info');
+  if(header&&info){
+   let inline=header.querySelector(':scope > .attendance-inline-meta');
+   if(!inline){inline=document.createElement('div');inline.className='attendance-inline-meta';info.insertAdjacentElement('afterend',inline);}
+   host.classList.add('attendance-compact');
+   return inline;
+  }
+ }
+ if(isAttendance&&host.classList.contains('sub-row'))return host.querySelector(':scope > div[style*="flex:1"]')||host;
+ return host.classList.contains('user-card')?host.querySelector('.user-identity > div'):host.tagName==='TR'?host.querySelector('td:nth-child(2)')||host.querySelector('td'):host;
+}
 export function initAuditUI(){
  let pending=false;
  const decorate=()=>{
@@ -30,23 +43,24 @@ export function initAuditUI(){
    if(host&&!hosts.has(host))hosts.set(host,entry);
   }
   for(const [host,{record,table}] of hosts){
-   const target=host.classList.contains('user-card')?host.querySelector('.user-identity > div'):host.tagName==='TR'?host.querySelector('td:nth-child(2)')||host.querySelector('td'):host;
+   const attendance=['items','subitems'].includes(table)&&window.isAttendanceRecord?.(record);
+   const target=auditTarget(host,attendance);
    if(!target)continue;
    let stamp=target.querySelector(':scope > .record-audit');
    if(!stamp){stamp=document.createElement('div');stamp.className='record-audit';target.append(stamp);}
    const markup=auditLabel(record);if(stamp.innerHTML!==markup)stamp.innerHTML=markup;
-   if(['items','subitems'].includes(table)&&window.isAttendanceRecord?.(record)){
+   if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');
     if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,stamp);}
     const badges=window.attendanceBadges(record);if(meta.innerHTML!==badges)meta.innerHTML=badges;
     if(window.userCan?.('atendimentos','editar')&&!target.querySelector(':scope > .attendance-move-button')){
-     const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent='Mover atendimento';button.onclick=()=>window.openMoveAttendance(record.id,table);target.append(button);
+     const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent='Mover';button.title='Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
     }
    }
   }
  };
  const schedule=()=>{if(!pending){pending=true;requestAnimationFrame(decorate);}};
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.attendance-record-meta,.attendance-move-button')&&!n.closest('.record-audit,.attendance-record-meta,.attendance-move-button'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem cadastrou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
