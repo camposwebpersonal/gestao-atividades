@@ -368,6 +368,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=1">
+<link rel="stylesheet" href="css/bulk-archive.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -438,6 +439,8 @@ import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=2';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
+import './js/bulk-entry.js?v=1';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1314,13 +1317,16 @@ window.openActivity=function(secId){
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
-  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const allItems=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
+  const activeItems=_cp?allItems.filter(item=>iProg(item).pct!==100):allItems;
+  const lane=_cp?activityLane(secId):'active';
+  const items=lane==='completed'?[]:activeItems;
   const _showPct=sec.show_progress_percentage!==0;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
   const allTpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
-  const allEntities=[...items,...S.subitems.filter(s=>items.some(i=>i.id===s.item_id))];
+  const allEntities=[...allItems,...S.subitems.filter(s=>allItems.some(i=>i.id===s.item_id))];
   // Normaliza nomes de campo (trim + acentuação) para evitar colunas "duplicadas"
   // quando o mesmo campo foi salvo com espaços extras ou variação de acentuação/maiúsculas.
   const _normFieldKey=k=>String(k||'').trim().normalize('NFC').replace(/\s+/g,' ').toLowerCase();
@@ -1383,9 +1389,9 @@ window.openActivity=function(secId){
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);if(_showPct)tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td>`;tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b">${statusBadge(item.status||'pendente',item.id,'item')}</td>`;}
       if(_can) tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(item.id,false,null,item.concluded==1)}</td>`;
       tbl+='</tr>';
-      const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+      const subs=[...S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem'&&(!_cp||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
       function _tblSubSubs(parentId,prefix,depth){
-        const kids=[...S.subitems.filter(s=>s.parent_id===parentId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+        const kids=[...S.subitems.filter(s=>s.parent_id===parentId&&s.parent_type==='subitem'&&(!_cp||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
         kids.forEach((c,ci)=>{
           const num=prefix+'.'+(ci+1);
           const cD=c.concluded==1;
@@ -1425,7 +1431,7 @@ window.openActivity=function(secId){
     _totHtml='';
   }else{
     itemsHtml=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
-    const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).length,0);
+    const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id&&(!_cp||s.concluded!=1)).length,0);
     _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
   }
   const _ss=sec.show_stats!==0;
@@ -1434,8 +1440,8 @@ window.openActivity=function(secId){
     <button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="recolherTodos()">📁 Recolher Tudo</button>
   </div>`;
   const statsHtml=_cp&&_ss?(()=>{
-    const total=items.length,conc=items.filter(i=>iProg(i).pct===100).length;
-    const atras=items.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
+    const total=allItems.length,conc=allItems.filter(i=>iProg(i).pct===100).length;
+    const atras=allItems.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
     const pend=total-conc-atras;
     return`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
       <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#10b981">${conc}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Concluídos</div></div>
@@ -1451,10 +1457,14 @@ window.openActivity=function(secId){
   const qField=(sec.quantitativo_campo||'').trim()||((isBccs||isEmpregos)&&tableFields.some(f=>_normFieldKey(f)==='remuneração')?'Remuneração':'');
   const showQuant=(isBccs||isEmpregos)?sec.show_quantitativo!==0:sec.show_quantitativo==1;
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
+  const archiveEntries=_cp?completedArchiveEntries(allItems,S.subitems,iProg):[];
+  const laneTabs=_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
+  const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:S.subitems,progress:iProg,canEdit:_can}):'';
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    ${_can?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
     ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
@@ -1464,7 +1474,7 @@ window.openActivity=function(secId){
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
     ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
-    ${_cp?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
+    ${_cp&&lane==='active'?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
   </div>
@@ -1477,6 +1487,8 @@ window.openActivity=function(secId){
       👤 ${esc(sec.responsaveis)}</div>`:''}
   </div>
   ${needsEmpregosRestore&&S.isAdmin?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);color:#ddd6fe;font-size:13px"><strong>Restaurando a base salarial importada…</strong><br><span style="color:#a78bfa">Os 444 colaboradores e suas remunerações serão associados a esta atividade sem criar duplicidades.</span></div>`:''}
+  ${laneTabs}
+  ${lane==='active'?`
   <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
     ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
@@ -1485,7 +1497,7 @@ window.openActivity=function(secId){
   ${expandirHtml}
   ${statsHtml}
   ${bccsHtml}
-  <div id="items-cnt">${itemsHtml}</div>${_totHtml}`);_restoreExpanded();
+  <div id="items-cnt">${itemsHtml}</div>${_totHtml}`:`${statsHtml}<div id="items-cnt">${archiveHtml}</div>`}`);_restoreExpanded();
   window._refreshAtivTable=()=>openActivity(secId);
   if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
 };
@@ -1510,9 +1522,10 @@ window.alternarExibicaoPercentual=async function(secId,mostrar){
 
 function _renderSubSubs(parentSubId,item,today,prefix,level){
   const lvl=(level||0)+1;
-  const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  if(!kids.length)return '';
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
+  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&activityLane(item.atividade_id)==='active';
+  const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem'&&(!_archiveActive||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  if(!kids.length)return '';
   const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
   const lvlClass='lvl-'+Math.min(lvl,5);
   const indent=Math.min(lvl,5)*18;
@@ -1555,10 +1568,11 @@ function renderItem(item,today,itemNum){
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
   const _nt=_sec?.controle_pendencias===0;
+  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&activityLane(item.atividade_id)==='active';
   const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=''; // O status já aparece no controle à direita; evita informação repetida.
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem');
+  const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem'&&(!_archiveActive||s.concluded!=1));
   const itemPrefix=itemNum!=null?''+itemNum:null;
   const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
@@ -1836,12 +1850,13 @@ window.excluirSelecionados=async function(secId){
 
 // ── MODAL ──
 window.openModal=function(title,sub,html){
+  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box');
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-ov').style.display='flex';
 }
-window.closeModal=function(){document.getElementById('modal-ov').style.display='none';_pRT={};};
+window.closeModal=function(){document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box');_pRT={};};
 
 // ── RESPONSÁVEIS HELPERS ──
 function _respOptions(selectedName){
@@ -3818,9 +3833,10 @@ window._doLimparAtividade=async function(secId){
 window.renderCadastros=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   const _can=S.isAdmin||window.userCanGroup?.(sec,'editar');
-  const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
+  if(_cp&&activityLane(secId)==='completed'){openActivity(secId);return;}
+  const items=[...S.items.filter(i=>i.atividade_id===secId&&(!_cp||iProg(i).pct!==100))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const today=new Date();today.setHours(0,0,0,0);
   let rows='';
   function _statusOptions(cur){
     return _ST.map(s=>`<option value="${esc(s.v)}"${cur===s.v?' selected':''}>${esc(s.l)}</option>`).join('');
@@ -3912,14 +3928,14 @@ window.renderCadastros=function(secId){
       <td style="padding:6px 8px;white-space:nowrap">${_subActions(sb,item,prefix,isNested)}</td>
     </tr>`;
     // recursive sub-subs
-    const kids=[...S.subitems.filter(s=>s.parent_id===sb.id&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const kids=[...S.subitems.filter(s=>s.parent_id===sb.id&&s.parent_type==='subitem'&&(!_cp||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     kids.forEach((c,ci)=>{row+=_rowSub(c,prefix+'.'+(ci+1),item,level+1);});
     return row;
   }
   items.forEach((it,idx)=>{
     const num=''+(idx+1);
     rows+=_rowItem(it,num);
-    const topSubs=[...S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const topSubs=[...S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem'&&(!_cp||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
     topSubs.forEach((sb,si)=>{rows+=_rowSub(sb,num+'.'+(si+1),it,0);});
   });
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
