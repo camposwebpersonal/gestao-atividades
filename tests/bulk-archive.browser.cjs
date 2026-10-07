@@ -12,7 +12,7 @@ window.S={isAdmin:true,items:[],fieldTemplates:[{atividade_id:'saneamento',scope
 window.userCanGroup=()=>true;
 window.openModal=(title,sub,html)=>{document.getElementById('modal-title').textContent=title;document.getElementById('modal-sub').textContent=sub;document.getElementById('modal-body').innerHTML=html;};
 window.closeModal=()=>{};window.loadData=async()=>{};window.openActivity=()=>window.activityOpened=true;window.toast=(message)=>window.lastToast=message;
-await import('/js/bulk-entry.js?v=1');
+await import('/js/bulk-entry.js?v=2');
 const archive=await import('/js/completed-archive.js?v=1');
 window.renderArchive=()=>{document.getElementById('archive').innerHTML=archive.renderCompletedArchive({group:window.S.secs[0],items:[{id:'april',description:'Ligação de esgoto concluída',start_date:'2026-04-12',conclusion_date:'2026-05-01',responsaveis:'Equipe A'},{id:'may',description:'Rede concluída',start_date:'2026-05-03',conclusion_date:'2026-05-09'}],subitems:[],progress:()=>({pct:100}),canEdit:true});};
 window.openBulkEntry('saneamento');window.ready=true;
