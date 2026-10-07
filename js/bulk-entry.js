@@ -1,5 +1,5 @@
 import {supabase} from '../supabase_compat.js';
-import {bulkColumns,bulkPayloads,normalizeBulkDate} from './bulk-entry-core.js?v=1';
+import {bulkColumns,bulkPayloads,normalizeBulkDate} from './bulk-entry-core.js?v=2';
 
 export {bulkColumns,bulkPayloads,normalizeBulkDate};
 
@@ -11,6 +11,7 @@ function cell(column,rowIndex,columnIndex){
  const common=`data-bulk-cell data-row="${rowIndex}" data-col="${columnIndex}" data-key="${esc(column.key)}" aria-label="${esc(column.label)} da linha ${rowIndex+1}"`;
  if(column.type==='checkbox')return `<input ${common} type="checkbox">`;
  if(column.type==='select')return `<select ${common}><option value=""></option>${(column.options||[]).map(([value,label])=>`<option value="${esc(value)}">${esc(label)}</option>`).join('')}</select>`;
+ if(column.type==='checkboxes'||column.type==='radio')return `<div ${common} class="bulk-choice-cell" tabindex="0" data-choice-type="${column.type}">${(column.options||[]).map(([value,label])=>`<label><input type="${column.type==='checkboxes'?'checkbox':'radio'}" name="bulk-choice-${rowIndex}-${columnIndex}" value="${esc(value)}"><span>${esc(label)}</span></label>`).join('')}</div>`;
  return `<input ${common} type="${column.type==='number'?'number':column.type==='date'?'text':'text'}" ${column.type==='number'?'inputmode="decimal"':''} ${column.type==='date'?'placeholder="dd/mm/aaaa"':''}>`;
 }
 
@@ -19,7 +20,7 @@ function rowHtml(index){
 }
 
 function renumber(){
- [...document.querySelectorAll('[data-bulk-row]')].forEach((row,index)=>{row.dataset.bulkRow=index;row.querySelector('th span').textContent=index+1;row.querySelector('th button').setAttribute('onclick',`bulkRemoveRow(${index})`);row.querySelectorAll('[data-bulk-cell]').forEach(cell=>{cell.dataset.row=index;cell.setAttribute('aria-label',`${state.columns[Number(cell.dataset.col)].label} da linha ${index+1}`);});});
+ [...document.querySelectorAll('[data-bulk-row]')].forEach((row,index)=>{row.dataset.bulkRow=index;row.querySelector('th span').textContent=index+1;row.querySelector('th button').setAttribute('onclick',`bulkRemoveRow(${index})`);row.querySelectorAll('[data-bulk-cell]').forEach(cell=>{cell.dataset.row=index;cell.setAttribute('aria-label',`${state.columns[Number(cell.dataset.col)].label} da linha ${index+1}`);cell.querySelectorAll('input[type="radio"]').forEach(input=>input.name=`bulk-choice-${index}-${cell.dataset.col}`);});});
  updateCount();
 }
 
@@ -34,7 +35,14 @@ function addRows(amount=10,focus=false){
  updateCount();
 }
 
-function rowHasValues(row){return [...row.querySelectorAll('[data-bulk-cell]')].some(input=>input.type==='checkbox'?input.checked:input.value.trim()!=='');}
+function cellValue(cell){
+ if(cell.dataset.choiceType){const checked=[...cell.querySelectorAll('input:checked')].map(input=>input.value);return cell.dataset.choiceType==='checkboxes'?(checked.length?checked:''):checked[0]||'';}
+ return cell.type==='checkbox'?cell.checked:String(cell.value??'').trim();
+}
+
+function clearCell(cell){if(cell.dataset.choiceType)cell.querySelectorAll('input').forEach(input=>input.checked=false);else{cell.value='';cell.checked=false;}}
+
+function rowHasValues(row){return [...row.querySelectorAll('[data-bulk-cell]')].some(cell=>{const value=cellValue(cell);return Array.isArray(value)?value.length>0:value!==''&&value!==false;});}
 
 function focusCell(row,column){
  const target=document.querySelector(`[data-row="${row}"][data-col="${column}"]`);
@@ -49,6 +57,10 @@ function updateCount(){
 
 function setCell(input,value){
  const column=state.columns[Number(input.dataset.col)],raw=String(value??'').trim();
+ if(column.type==='checkboxes'||column.type==='radio'){
+  const wanted=raw.split(/\s*(?:;|\||,)\s*/).map(item=>item.toLocaleLowerCase('pt-BR')).filter(Boolean);
+  input.querySelectorAll('input').forEach(option=>{const label=option.closest('label')?.textContent.trim().toLocaleLowerCase('pt-BR');option.checked=wanted.includes(option.value.toLocaleLowerCase('pt-BR'))||wanted.includes(label);});return;
+ }
  if(column.type==='checkbox')input.checked=/^(1|sim|s|true|x|yes)$/i.test(raw);
  else if(column.type==='select'){
   const option=[...input.options].find(item=>item.value.toLocaleLowerCase('pt-BR')===raw.toLocaleLowerCase('pt-BR')||item.textContent.toLocaleLowerCase('pt-BR')===raw.toLocaleLowerCase('pt-BR'));
@@ -59,8 +71,8 @@ function setCell(input,value){
 function readRows(validate=true){
  const rows=[];
  document.querySelectorAll('[data-bulk-row]').forEach(row=>{
-  const values={};row.querySelectorAll('[data-bulk-cell]').forEach(input=>{values[input.dataset.key]=input.type==='checkbox'?input.checked:input.value.trim();input.classList.remove('invalid');});
-  const used=Object.values(values).some(value=>value!==''&&value!==false);
+  const values={};row.querySelectorAll('[data-bulk-cell]').forEach(input=>{values[input.dataset.key]=cellValue(input);input.classList.remove('invalid');});
+  const used=Object.values(values).some(value=>Array.isArray(value)?value.length>0:value!==''&&value!==false);
   if(!used)return;
   if(validate&&!values.description){row.querySelector('[data-key="description"]')?.classList.add('invalid');throw new Error(`Informe o nome na linha ${Number(row.dataset.bulkRow)+1}.`);}
   if(validate){
@@ -104,8 +116,8 @@ window.openBulkEntry=function(groupId){
 window.bulkAddRows=(amount,focus)=>addRows(amount,focus);
 window.bulkAddCustomRows=function(){const input=document.getElementById('bulk-add-count'),amount=Math.floor(Number(input?.value));if(!Number.isInteger(amount)||amount<1){window.toast('Informe quantas linhas deseja adicionar.','error');input?.focus();return;}addRows(amount,true);document.getElementById('bulk-total-count').value=document.querySelectorAll('[data-bulk-row]').length;};
 window.bulkSetRowCount=function(){const input=document.getElementById('bulk-total-count'),desired=Math.floor(Number(input?.value));if(!Number.isInteger(desired)||desired<1||desired>500){window.toast('Informe um total entre 1 e 500 linhas.','error');input?.focus();return;}const rows=[...document.querySelectorAll('[data-bulk-row]')],current=rows.length;if(desired>current){addRows(desired-current,true);return;}if(desired===current)return;const removed=rows.slice(desired);if(removed.some(rowHasValues)&&!window.confirm(`As últimas ${current-desired} linhas possuem dados. Deseja removê-las?`)){input.value=current;return;}removed.forEach(row=>row.remove());renumber();focusCell(Math.min(desired-1,current-1),0);};
-window.bulkRemoveRow=function(index){const rows=[...document.querySelectorAll('[data-bulk-row]')];if(rows.length===1){rows[0].querySelectorAll('[data-bulk-cell]').forEach(input=>{input.value='';input.checked=false;});return updateCount();}rows[index]?.remove();renumber();const total=document.getElementById('bulk-total-count');if(total)total.value=rows.length-1;};
-window.bulkClearGrid=function(){if(!window.confirm('Limpar todos os valores digitados nesta planilha?'))return;document.querySelectorAll('[data-bulk-cell]').forEach(input=>{input.value='';input.checked=false;});renumber();};
+window.bulkRemoveRow=function(index){const rows=[...document.querySelectorAll('[data-bulk-row]')];if(rows.length===1){rows[0].querySelectorAll('[data-bulk-cell]').forEach(clearCell);return updateCount();}rows[index]?.remove();renumber();const total=document.getElementById('bulk-total-count');if(total)total.value=rows.length-1;};
+window.bulkClearGrid=function(){if(!window.confirm('Limpar todos os valores digitados nesta planilha?'))return;document.querySelectorAll('[data-bulk-cell]').forEach(clearCell);renumber();};
 window.saveBulkEntries=async function(){
  if(state.busy||!state.group)return;
  let rows;try{rows=readRows(true);}catch(error){window.toast(error.message,'error');document.querySelector('.bulk-grid .invalid')?.focus();return;}

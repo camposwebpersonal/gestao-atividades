@@ -26,7 +26,10 @@ export function bulkColumns(group,templates=[]){
   {key:'deadline_date',label:'Prazo',type:'date',width:145},
   {key:'observacao',label:'Observação',type:'text',width:260}
  );
- templates.filter(template=>template.scope==='item').sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>columns.push({key:'ef:'+template.field_name,label:template.field_name,type:template.field_type==='combobox'?'select':template.field_type||'text',width:template.field_type==='textarea'?260:170,extra:true,options:templateOptions(template).map(value=>[String(value),String(value)])}));
+ templates.filter(template=>template.scope==='item').sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>{
+  const type=template.field_type==='combobox'?'select':template.field_type||'text',choices=['checkboxes','radio'].includes(type);
+  columns.push({key:'ef:'+template.field_name,label:template.field_name,type,width:choices?Math.max(260,templateOptions(template).length*95):template.field_type==='textarea'?260:170,extra:true,options:templateOptions(template).map(value=>[String(value),String(value)])});
+ });
  return columns;
 }
 

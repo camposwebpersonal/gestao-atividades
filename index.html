@@ -369,6 +369,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=1">
 <link rel="stylesheet" href="css/bulk-archive.css?v=2">
+<link rel="stylesheet" href="css/custom-fields.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -439,8 +440,9 @@ import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=2';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=2';
+import './js/bulk-entry.js?v=3';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
+import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1385,7 +1387,7 @@ window.openActivity=function(secId){
       tbl+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${_tblCell(esc(item.description||''),'it-name',item.id,false,null)}${childBadge(item.id,false)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(item.responsaveis||''),null,item.id,false,null)}</td>`;
       tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(item.observacao||''),'it-obs',item.id,false,null)}</td>`;
-      tableFields.forEach(fn=>{const raw=_tblFieldVal(item,fn); tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,item.id,false,null)}</td>`;});
+      tableFields.forEach(fn=>{const raw=_tblFieldVal(item,fn); tbl+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(formatCustomFieldValue(raw)),fn,item.id,false,null)}</td>`;});
       if(_cp){const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);if(_showPct)tbl+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${pct}%</td>`;tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b">${statusBadge(item.status||'pendente',item.id,'item')}</td>`;}
       if(_can) tbl+=`<td style="padding:8px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(item.id,false,null,item.concluded==1)}</td>`;
       tbl+='</tr>';
@@ -1401,7 +1403,7 @@ window.openActivity=function(secId){
           tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.description||''),'it-name',c.id,true,parentId)}${childBadge(c.id,true)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#a78bfa;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.responsaveis||''),null,c.id,true,parentId)}</td>`;
           tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(c.observacao||''),'it-obs',c.id,true,parentId)}</td>`;
-          tableFields.forEach(fn=>{const raw=_tblFieldVal(c,fn); tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(raw!=null?String(raw):''),fn,c.id,true,parentId)}</td>`;});
+          tableFields.forEach(fn=>{const raw=_tblFieldVal(c,fn); tbl+=`<td style="padding:5px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b;font-size:11px">${_tblCell(esc(formatCustomFieldValue(raw)),fn,c.id,true,parentId)}</td>`;});
           if(_cp){if(_showPct)tbl+=`<td style="padding:5px 10px;color:#64748b;border-bottom:1px solid #1e293b;font-size:11px">${cD?'100%':'0%'}</td>`;tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px">${statusBadge(c.status||'pendente',c.id,'subitem')}</td>`;}
           if(_can) tbl+=`<td style="padding:5px 10px;border-bottom:1px solid #1e293b;font-size:11px;text-align:right">${_tblAct(c.id,true,parentId,c.concluded==1)}</td>`;
           tbl+='</tr>';
@@ -1416,7 +1418,7 @@ window.openActivity=function(secId){
         tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(s.description||''),'it-name',s.id,true,item.id)}${childBadge(s.id,true)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${_tblCell(esc(s.responsaveis||''),null,s.id,true,item.id)}</td>`;
         tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${_tblCell(esc(s.observacao||''),'it-obs',s.id,true,item.id)}</td>`;
-        tableFields.forEach(fn=>{const raw=_tblFieldVal(s,fn); tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(raw!=null?String(raw):''),fn,s.id,true,item.id)}</td>`;});
+        tableFields.forEach(fn=>{const raw=_tblFieldVal(s,fn); tbl+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${_tblCell(esc(formatCustomFieldValue(raw)),fn,s.id,true,item.id)}</td>`;});
         if(_cp){if(_showPct)tbl+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td>`;tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b">${statusBadge(s.status||'pendente',s.id,'subitem')}</td>`;}
         if(_can) tbl+=`<td style="padding:6px 10px;border-bottom:1px solid #1e293b;text-align:right">${_tblAct(s.id,true,item.id,s.concluded==1)}</td>`;
         tbl+='</tr>';
@@ -1591,7 +1593,7 @@ function renderItem(item,today,itemNum){
         ks.forEach(k=>{
           let label=k.replace(/^item_show_/,''), raw=ef[k];
           if(k==='show_conclusion_date'){label='Data de Demissão'; raw=s.conclusion_date!=null?fmtD(s.conclusion_date):(raw==1?'Sim':'Não');}
-          tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(label)}:</strong> ${esc(raw!=null?String(raw):'')}</span>`);
+          tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(label)}:</strong> ${esc(formatCustomFieldValue(raw))}</span>`);
         });
         if((_sec?.show_verba&&_sec?.verba_on_subitems||s.item_show_verba)&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
         if((_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems||s.item_show_verba)&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
@@ -1646,7 +1648,7 @@ function renderItem(item,today,itemNum){
         ks.forEach(k=>{
           let label=k.replace(/^item_show_/,''), raw=ef[k];
           if(k==='show_conclusion_date'){label='Data de Demissão'; raw=item.conclusion_date!=null?fmtD(item.conclusion_date):(raw==1?'Sim':'Não');}
-          tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(label)}:</strong> ${esc(raw!=null?String(raw):'')}</span>`);
+          tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(label)}:</strong> ${esc(formatCustomFieldValue(raw))}</span>`);
         });
         if((_sec?.show_verba||item.item_show_verba)&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
         if((_sec?.show_origem_verba||item.item_show_verba)&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
@@ -1955,12 +1957,12 @@ window.openSecModal=function(id){
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:8px">📋 Campos dos Itens</div>
         <div id="ftpl-item-list-${id}">${renderFieldTplList(id,'item')}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-item').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="toggleFieldTemplateOptions('${id}','item',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px">📌 Campos dos Subitens</div>
         <div id="ftpl-sub-list-${id}">${renderFieldTplList(id,'subitem')}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="document.getElementById('ftpl-opts-${id}-subitem').style.display=this.value==='combobox'?'block':'none'" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="2" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="toggleFieldTemplateOptions('${id}','subitem',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
     </div>
   </div>`:'<!-- sem id -->'}
@@ -2067,7 +2069,8 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     return`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">🗂️ Campos Personalizados</div><div style="display:flex;flex-direction:column;gap:8px">${tpls.map(t=>{
       let raw=ef[t.field_name]; if(raw===null||raw===undefined) raw=it?.[t.field_name];
       const val=raw===null||raw===undefined?'':String(raw);
-      const inp=t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`;
+      const choice=customFieldControl({...t,options:_tplOpts(t)},raw,esc);
+      const inp=choice|| (t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`);
       return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
@@ -2105,8 +2108,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
   const existingRecord=original;
-  const ef={...recordExtra(existingRecord)};
-  document.querySelectorAll('[data-ef-key]').forEach(el=>{if(el.value.trim())ef[el.dataset.efKey]=el.value.trim();else delete ef[el.dataset.efKey];});
+  const ef=collectCustomFieldValues(document,{...recordExtra(existingRecord)});
   if(Object.keys(ef).length)data.extra_fields=ef;
   else data.extra_fields={};
   const effSec=S.secs.find(s=>s.id===secId);
@@ -2785,7 +2787,7 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     const branch=lvl===0?'> ':lvl===1?'  > ':lvl===2?'    > ':lvl===3?'      > ':'        > ';
     let sc=indent+branch+s._hierNum+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
-    if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
+    if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+formatCustomFieldValue(ef[fn]);});}
     const fill=[255,255,255];
     const txt=lvlTextColors[Math.min(lvl,4)];
     const txtStyles={fillColor:fill,textColor:txt,fontSize:7.5,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
@@ -3280,7 +3282,7 @@ window.gerarPdf=async function(secId,opts){
       let cell1=item.description;
       if(item.observacao)cell1+='\nObs: '+item.observacao;
       if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
-      if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
+      if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+formatCustomFieldValue(ef[fn]);});}
       const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
       const itemRow=_cp?[
         {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[15,23,42]}},
@@ -3411,7 +3413,7 @@ window.gerarPdf=async function(secId,opts){
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
           const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
           let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;if(item.observacao)cell1+='\nObs: '+item.observacao;
-          if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
+          if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+formatCustomFieldValue(ef[fn]);});}
           const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
           const sepItemRow=_cp?[
             {content:String(sii+1),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},
@@ -3425,7 +3427,7 @@ window.gerarPdf=async function(secId,opts){
           ];
           sTblB.push(sepItemRow);
           sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+ef[fn];});}if(_cp){sTblB.push(['',sc,sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
+          sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+formatCustomFieldValue(ef[fn]);});}if(_cp){sTblB.push(['',sc,sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
           const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const sepSubRow=_cp?[
             {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
             {content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
@@ -3503,13 +3505,14 @@ window.gerarPdf=async function(secId,opts){
 };
 
 // ── CUSTOM FIELDS ──
+window.toggleFieldTemplateOptions=function(actId,scope,type){const element=document.getElementById('ftpl-opts-'+actId+'-'+scope);if(element)element.style.display=fieldTypeHasOptions(type)?'block':'none';};
 window.saveFieldTpl=async function(actId,scope,nameEl,typeEl){
   const name=document.getElementById(nameEl)?.value.trim();
   if(!name){toast('Nome obrigatório','error');return;}
   if(getFieldTpls(actId,scope).some(t=>t.field_name===name)){toast('Já existe um campo com esse nome','error');return;}
   const ftype=document.getElementById(typeEl)?.value||'text';
   let opts=[];
-  if(ftype==='combobox'){const oel=document.getElementById('ftpl-opts-'+actId+'-'+scope);opts=(oel?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(!opts.length){toast('Adicione ao menos uma opção para o combobox','error');return;}}
+  if(fieldTypeHasOptions(ftype)){const oel=document.getElementById('ftpl-opts-'+actId+'-'+scope);opts=(oel?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(!opts.length){toast('Adicione ao menos uma opção para este campo','error');return;}if(new Set(opts).size!==opts.length){toast('Há opções repetidas neste campo','error');return;}}
   const ord=Math.max(-1,...getFieldTpls(actId,scope).map(t=>Number(t.order_num)||0))+1;
   await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope,field_name:name,field_type:ftype,options:opts,order_num:ord,created_at:serverTimestamp()});
   await loadData();openSecModal(actId);
@@ -3519,7 +3522,7 @@ window.delFieldTpl=async function(id,actId){
   await deleteDoc(doc(db,'fieldTemplates',id));
   await loadData();openSecModal(actId);
 };
-const fieldTypeLabels={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (combobox)'};
+const fieldTypeLabels={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (combobox)',checkboxes:'Múltipla escolha',radio:'Escolha única'};
 window.getFieldTpls=function(actId,scope){return S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope).sort((a,b)=>(a.order_num||0)-(b.order_num||0));};
 window.renderFieldTplList=function(actId,scope){
   const ts=getFieldTpls(actId,scope);
@@ -3550,8 +3553,8 @@ window.addFieldOption=function(tplId,value=''){
 window.editFieldTplInline=function(tplId,actId){
  const tpl=S.fieldTemplates.find(t=>t.id===tplId),row=document.getElementById('ftpl-row-'+tplId);if(!tpl||!row)return;
  if(document.querySelector('.ftpl-editor')){toast('Salve ou cancele o campo que está em edição','error');return;}
- row.innerHTML=`<div class="ftpl-editor"><label>Nome do campo<input id="ftpl-edit-name-${tplId}" value="${esc(tpl.field_name)}"></label><label>Tipo<select id="ftpl-edit-type-${tplId}" onchange="document.getElementById('ftpl-options-${tplId}').hidden=this.value!=='combobox'">${Object.entries(fieldTypeLabels).map(([v,l])=>`<option value="${v}" ${v===tpl.field_type?'selected':''}>${l}</option>`).join('')}</select></label>
- <div id="ftpl-options-${tplId}" ${tpl.field_type==='combobox'?'':'hidden'}><div class="ftpl-help">Opções da lista · arraste pelo ⠿ para ordenar</div><div id="ftpl-edit-opts-${tplId}"></div><button class="btn-action" onclick="addFieldOption('${tplId}')">+ Opção</button></div>
+ row.innerHTML=`<div class="ftpl-editor"><label>Nome do campo<input id="ftpl-edit-name-${tplId}" value="${esc(tpl.field_name)}"></label><label>Tipo<select id="ftpl-edit-type-${tplId}" onchange="document.getElementById('ftpl-options-${tplId}').hidden=!['combobox','checkboxes','radio'].includes(this.value)">${Object.entries(fieldTypeLabels).map(([v,l])=>`<option value="${v}" ${v===tpl.field_type?'selected':''}>${l}</option>`).join('')}</select></label>
+ <div id="ftpl-options-${tplId}" ${fieldTypeHasOptions(tpl.field_type)?'':'hidden'}><div class="ftpl-help">Opções do campo · arraste pelo ⠿ para ordenar</div><div id="ftpl-edit-opts-${tplId}"></div><button class="btn-action" onclick="addFieldOption('${tplId}')">+ Opção</button></div>
  <div class="ftpl-editor-actions"><button class="btn-action primary" onclick="saveEditFieldTpl('${tplId}','${actId}')">Salvar campo</button><button class="btn-action" onclick="cancelEditFieldTpl('${tplId}','${actId}')">Cancelar</button></div></div>`;
  _tplOpts(tpl).forEach(o=>addFieldOption(tplId,o));
 };
@@ -3560,8 +3563,8 @@ window.saveEditFieldTpl=async function(tplId,actId){
  if(!tpl||!type)return;if(!name){toast('Nome obrigatório','error');return;}
  if(getFieldTpls(actId,tpl.scope).some(t=>t.id!==tplId&&t.field_name===name)){toast('Já existe um campo com esse nome','error');return;}
  const options=[...document.querySelectorAll('#ftpl-edit-opts-'+tplId+' input')].map(e=>e.value.trim()).filter(Boolean);
- if(type==='combobox'&&!options.length){toast('Adicione ao menos uma opção','error');return;}
- if(type==='combobox'&&new Set(options).size!==options.length){toast('Há opções repetidas na lista','error');return;}
+ if(fieldTypeHasOptions(type)&&!options.length){toast('Adicione ao menos uma opção','error');return;}
+ if(fieldTypeHasOptions(type)&&new Set(options).size!==options.length){toast('Há opções repetidas na lista','error');return;}
  const btn=document.querySelector('#ftpl-row-'+tplId+' .primary');btn.disabled=true;
  try{
    // Copia os valores para o novo nome antes de mudar o template; mantém a chave antiga como segurança.
@@ -3569,7 +3572,7 @@ window.saveEditFieldTpl=async function(tplId,actId){
      if(entities.some(e=>Object.prototype.hasOwnProperty.call(e.extra_fields,name)&&e.extra_fields[name]!==e.extra_fields[tpl.field_name]))throw new Error('Nome já utilizado nos dados cadastrados. Escolha outro nome.');
      for(const entity of entities)await updateDoc(doc(db,col,entity.id),{extra_fields:{...entity.extra_fields,[name]:entity.extra_fields[tpl.field_name]}});
    }
-   await updateDoc(doc(db,'fieldTemplates',tplId),{field_name:name,field_type:type,options:type==='combobox'?options:[]});
+   await updateDoc(doc(db,'fieldTemplates',tplId),{field_name:name,field_type:type,options:fieldTypeHasOptions(type)?options:[]});
    await loadData();cancelEditFieldTpl(tplId,actId);toast('Campo atualizado!');
  }catch(e){console.error(e);toast(e.message||'Não foi possível salvar o campo','error');btn.disabled=false;}
 };
@@ -4295,14 +4298,14 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const tpls=S.fieldTemplates.filter(t=>t.atividade_id===secId&&t.scope==='item');
   const groups=new Map();
-  for(const item of items){const ef=item.extra_fields||{};const k=ef[fieldName]||'(Não informado)';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(item);}
+  for(const item of items){const ef=item.extra_fields||{};const k=formatCustomFieldValue(ef[fieldName])||'(Não informado)';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(item);}
   if(!groups.size){chk(12);sf(10,false,[100,116,139]);doc.text('Nenhum item cadastrado nesta atividade.',mx,y+8);y+=14;}
   let totalReg=0;
   for(const[grpKey,grpItems]of groups){
     chk(16);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,10,2,2,'F');sf(10,true,[255,255,255]);doc.text(grpKey+' — '+grpItems.length+' registro(s)',mx+5,y+7);y+=13;
     const tblH=[['#','Nome / Descrição','Dados']];
     const tblB=[];let rn=0;
-    for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';if(item.secretaria_id){const secName=S.secretarias.find(s=>s.id===item.secretaria_id)?.name;if(secName)dados+='Secretaria: '+secName;}for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+ef[t.field_name];}tblB.push([String(rn),item.description||'',dados]);}
+    for(const item of grpItems){rn++;const ef=item.extra_fields||{};let dados='';if(item.secretaria_id){const secName=S.secretarias.find(s=>s.id===item.secretaria_id)?.name;if(secName)dados+='Secretaria: '+secName;}for(const t of tpls){if(ef[t.field_name])dados+=(dados?'\n':'')+t.field_name+': '+formatCustomFieldValue(ef[t.field_name]);}tblB.push([String(rn),item.description||'',dados]);}
     tblB.push(['Σ','Subtotal: '+grpItems.length+' registro(s)','']);
     totalReg+=grpItems.length;
     doc.autoTable({startY:y,head:tblH,body:tblB,margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},rowPageBreak:'avoid',styles:{fontSize:8,cellPadding:1.8,overflow:'linebreak',textColor:[26,32,44],lineColor:[200,225,200],lineWidth:0.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7.5},alternateRowStyles:{fillColor:[248,252,248]},columnStyles:{0:{cellWidth:8,halign:'center'},1:{cellWidth:52}},didParseCell:function(dat){if(dat.section!=='body')return;const r0=dat.row.raw[0];if(r0!==''&&r0!=='Σ'){dat.cell.styles.fillColor=[219,234,254];dat.cell.styles.textColor=[13,34,64];dat.cell.styles.fontStyle='bold';}else if(r0==='Σ'){dat.cell.styles.fillColor=[230,240,250];dat.cell.styles.textColor=[80,100,140];dat.cell.styles.fontStyle='italic';dat.cell.styles.fontSize=7;if(dat.column.index===0)dat.cell.text=[];}},didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
@@ -4929,7 +4932,7 @@ function _pdfBuscaSubRows(subsToRender,efFields,_cp,chkImgSubResp,rowPrefix){
     const branch=lvl===0?'> ':lvl===1?'  > ':lvl===2?'    > ':lvl===3?'      > ':'        > ';
     let sc=indent+branch+(rowPrefix?rowPrefix+'.':'')+(si+1)+'. '+s.description;
     if(s.responsaveis)sc+='\n'+indent+'  Resp: '+s.responsaveis;
-    if(efFields&&efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+ef[fn];});}
+    if(efFields&&efFields.length){const ef=s.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])sc+='\n'+indent+'  '+fn+': '+formatCustomFieldValue(ef[fn]);});}
     const fill=[255,255,255];
     const txt=lvlTextColors[Math.min(lvl,4)];
     const txtStyles={fontSize:7.5,textColor:txt,fillColor:fill,overflow:'linebreak',cellPadding:{top:2,right:3,bottom:2,left:3}};
@@ -5023,7 +5026,7 @@ async function gerarPdfBusca(){
       let itemContent=item.description||'';
       if(item.responsaveis)itemContent+='\nResp: '+item.responsaveis;
       if(item.observacao)itemContent+='\nObs: '+item.observacao;
-      if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+ef[fn];});}
+      if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])itemContent+='\n'+fn+': '+formatCustomFieldValue(ef[fn]);});}
       if(_cp)itemContent+='\nProg: '+pct+'%  |  '+(isDone?'\u2713 Conclu\u00eddo':'Pendente');
       tblB.push([
         {content:String(c++),styles:{fontSize:7.5,textColor:[26,32,44],halign:'center'}},
@@ -5052,7 +5055,7 @@ async function gerarPdfBusca(){
       const pr=S.subitems.filter(s=>s.item_id===item.id);
       const pct=pr.length>0?Math.round(pr.filter(s=>s.concluded==1).length/pr.length*100):(isDone?100:0);
       let cell1=item.description||'';if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
-      if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+ef[fn];});}
+      if(efFields.length){const ef=item.extra_fields||{};efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+formatCustomFieldValue(ef[fn]);});}
       if(_cp){
         tblB.push([{content:String(c++),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[13,34,64]}},{content:pct+'%',styles:{halign:'center',fillColor:[255,255,255],textColor:[13,34,64]}},{content:isDone?'\u2713 Conclu\u00eddo':'Pendente',styles:{fillColor:[255,255,255],textColor:isDone?[16,110,80]:[13,34,64]}},{content:item.observacao||'',styles:{fillColor:[255,255,255],textColor:[13,34,64],fontSize:7.5}}]);
       }else{
