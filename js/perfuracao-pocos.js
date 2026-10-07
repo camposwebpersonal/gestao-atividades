@@ -59,7 +59,7 @@
   const isWell=x=>V(x,'registro_tipo')==='poco';
   const isDriller=x=>V(x,'registro_tipo')==='perfurador';
   const isPlaceholder=x=>isDriller(x)&&Number(V(x,'is_placeholder',0))===1;
-  const canEdit=()=>window.S?.isAdmin||window.userCan?.('atendimentos','editar');
+  const canEdit=()=>window.S?.isAdmin||window.userCanGroup?.(window.S?.secs?.find(group=>group.id===state.secId),'editar');
   const allWells=secId=>(window.S?.subitems||[]).filter(x=>x.atividade_id===secId&&isWell(x));
   const allDrillers=secId=>(window.S?.items||[]).filter(x=>x.atividade_id===secId&&isDriller(x));
   const uppercaseMigrations=new Map();

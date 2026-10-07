@@ -83,7 +83,8 @@ export function initAuditUI(){
     let meta=target.querySelector(':scope > .attendance-record-meta');
     if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,stamp);}
     const badges=window.attendanceBadges(record);if(meta.innerHTML!==badges)meta.innerHTML=badges;
-    if(window.userCan?.('atendimentos','editar')&&!target.querySelector(':scope > .attendance-move-button')){
+    const group=window.S?.secs?.find(section=>section.id===record.atividade_id);
+    if(window.userCanGroup?.(group,'editar')&&!target.querySelector(':scope > .attendance-move-button')){
      const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent='Mover';button.title='Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
     }
    }

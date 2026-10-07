@@ -150,7 +150,7 @@ window.renderControleEstoque=function(secId){
   const sec=S.secs.find(s=>s.id===secId); if(!sec) return;
   curSecId=secId;
   ceInjectStyles();
-  const can=S.isAdmin || (window.userCan && window.userCan(window.modForSec(sec),'editar'));
+  const can=S.isAdmin || window.userCanGroup?.(sec,'editar');
   const titulo=_ceEsc(sec.ce_titulo_controle || sec.name || 'CONTROLE DE ESTOQUE');
   const secretaria=_ceEsc(sec.ce_nome_secretaria || '');
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));

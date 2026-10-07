@@ -32,3 +32,12 @@
   com a tarefa solicitada.
 - Este arquivo preserva as preferências para sessões que leiam o repositório;
   credenciais podem expirar e precisam ser verificadas novamente quando necessário.
+
+## Comportamento dinâmico esperado
+
+- Inferir e preencher automaticamente dados que já estejam determinados pelo
+  contexto. Exemplo: itens e subitens de um grupo de Demandas por Secretarias
+  devem herdar a secretaria do grupo, sem pedir que o usuário selecione de novo.
+- Ao criar recursos hierárquicos, oferecer permissões no mesmo nível de detalhe
+  da navegação (módulo, submenu/secretaria e grupo), incluindo uma opção explícita
+  para abranger automaticamente registros futuros daquele escopo.

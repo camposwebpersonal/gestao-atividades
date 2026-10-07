@@ -1,0 +1,35 @@
+const {chromium}=require('playwright');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const start=index.indexOf('function _buildPermMatrix');
+const end=index.indexOf('window.openUserModal',start);
+const implementation=index.slice(start,end);
+(async()=>{
+ const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
+ const page=await browser.newPage({viewport:{width:1100,height:900}});
+ const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ await page.setContent('<main id="root"></main>');
+ await page.addStyleTag({content:fs.readFileSync(path.join(root,'css/access-permissions.css'),'utf8')});
+ await page.evaluate(({code})=>{
+   window.esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+   window.S={secretarias:[{id:'agri',name:'AGRICULTURA',demandas_ativa:true},{id:'gab',name:'GABINETE',demandas_ativa:true}],secs:[{id:'pipa',name:'SOLICITAÇÕES DE PIPA',demanda_secretaria_id:'agri'},{id:'correios',name:'CORREIOS',demanda_secretaria_id:'gab'}]};
+   window.modForSec=()=> 'atendimentos';
+   window.MODULOS=[{id:'atendimentos',icon:'🏛️',label:'Demandas por Secretarias',desc:'Demandas municipais'}];
+   eval(code+'\nwindow.__build=_buildPermMatrix;window.__read=_readPermMatrix;');
+   document.getElementById('root').innerHTML=window.__build({permissoes:{modulos:{}}});
+ },{code:implementation});
+ assert.equal(await page.getByText('AGRICULTURA',{exact:true}).count(),1);
+ assert.equal(await page.getByText('SOLICITAÇÕES DE PIPA',{exact:true}).count(),1);
+ await page.locator('#perm-atendimentos-acesso').check();
+ await page.locator('[data-perm-scope="secretaria"][data-perm-id="agri"][data-perm-kind="gerenciar"]').check();
+ const saved=await page.evaluate(()=>window.__read());
+ assert.deepEqual(saved.modulos.atendimentos.secretarias.agri,{gerenciar:true,acesso:true});
+ assert.deepEqual(saved.modulos.atendimentos.secretarias.gab,{acesso:true});
+ assert.deepEqual(saved.modulos.atendimentos.grupos,{});
+ assert.deepEqual(errors,[]);
+ await page.screenshot({path:'/tmp/gestao-access-permissions.png',fullPage:true});
+ await browser.close();
+})().catch(error=>{console.error(error);process.exitCode=1;});

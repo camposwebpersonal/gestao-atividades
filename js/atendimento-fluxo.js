@@ -5,10 +5,11 @@ export function initAttendanceUI(moveRecord){
  window.attendanceFields=attendanceFields;window.readAttendance=readAttendance;window.attendanceBadges=attendanceBadges;
  window.isAttendanceRecord=record=>isAttendanceSection(window.S?.secs.find(s=>s.id===record.atividade_id))&&record.registro_tipo!=='perfurador'&&recordExtra(record).registro_tipo!=='perfurador';
  window.openMoveAttendance=function(id,table){
-  if(!window.userCan?.('atendimentos','editar')||!window.userCan?.('atendimentos','criar')){window.toast('Você precisa de permissão para editar e criar atendimentos.','error');return;}
   const records=table==='items'?window.S.items:window.S.subitems;const record=records.find(r=>r.id===id);if(!record)return;
+  const source=window.S.secs.find(section=>section.id===record.atividade_id);
+  if(!window.userCanGroup?.(source,'editar')){window.toast('Você não pode mover lançamentos deste grupo.','error');return;}
   window.__movingAttendance={id,table,record};
-  const targets=window.S.secs.filter(isAttendanceSection).filter(s=>s.id!==record.atividade_id);
+  const targets=window.S.secs.filter(isAttendanceSection).filter(s=>s.id!==record.atividade_id&&window.userCanGroup?.(s,'editar'));
   window.openModal('Mover atendimento',record.description||'',`<p class="attendance-move-hint">O lançamento será transferido mantendo seus dados e autoria. Escolha o grupo e confira o destino.</p><div class="form-group"><label for="move-group">Grupo de destino</label><select id="move-group" onchange="updateMoveAttendanceTarget()"><option value="">Selecione o grupo</option>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}</select></div><div id="move-target-fields"></div><div class="modal-actions"><button type="button" class="users-button" onclick="closeModal()">Cancelar</button><button id="move-attendance-submit" type="button" class="users-button users-button-primary" onclick="confirmMoveAttendance()">Mover atendimento</button></div>`);
  };
  window.updateMoveAttendanceTarget=function(){
@@ -22,6 +23,8 @@ export function initAttendanceUI(moveRecord){
   if(window.__attendanceMoveBusy)return;
   const moving=window.__movingAttendance;const target=document.getElementById('move-group').value;if(!target){window.toast('Escolha o grupo de destino.','error');return;}
   const section=window.S.secs.find(s=>s.id===target);const well=section.controle_pocos==1||recordExtra(section).controle_pocos==1;
+  const source=window.S.secs.find(s=>s.id===moving.record.atividade_id);
+  if(!window.userCanGroup?.(source,'editar')||!window.userCanGroup?.(section,'editar')){window.toast('Você não pode gerenciar um dos grupos desta transferência.','error');return;}
   const local=document.getElementById('move-local')?.value.trim();const date=document.getElementById('move-date')?.value;
   if(well&&(!local||!date)){window.toast('Informe a localidade e a data da solicitação.','error');return;}
   window.__attendanceMoveBusy=true;const button=document.getElementById('move-attendance-submit');button.disabled=true;button.textContent='Movendo…';

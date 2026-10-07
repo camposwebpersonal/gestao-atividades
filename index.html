@@ -17,7 +17,7 @@
 <script src="js/ordenacao-visual.js?v=86"></script>
 <script src="js/controle-contas.js?v=63"></script>
 <script src="js/controle-distribuicao.js?v=62"></script>
-<script src="js/controle-estoque.js?v=62"></script>
+<script src="js/controle-estoque.js?v=63"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -367,6 +367,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=76">
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
+<link rel="stylesheet" href="css/access-permissions.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -430,12 +431,13 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=69';
+import './js/modulos.js?v=70';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
-import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js';
-import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js';
+import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=2';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=2';
 import {buildDemandReportRows} from './js/demand-report.js';
+import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1304,10 +1306,11 @@ function _renderResumoFinanceiro(secId){
 
 // ── ACTIVITY DETAIL ──
 window.openActivity=function(secId){
-  curSecId=secId;
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(!S.isAdmin&&!window.userCanGroup?.(sec,'acesso')){toast('Você não tem acesso a este grupo.','error');window.renderModulo?.(window.modForSec(sec));return;}
+  curSecId=secId;
   window.rememberWorkspace?.({kind:'activity',id:secId});
-  const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
+  const _can=S.isAdmin||window.userCanGroup?.(sec,'editar');
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
@@ -1510,7 +1513,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
   const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!kids.length)return '';
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
-  const _can=S.isAdmin||window.userCan(window.modForSec(_sec),'editar');
+  const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
   const lvlClass='lvl-'+Math.min(lvl,5);
   const indent=Math.min(lvl,5)*18;
   const branchIcon=lvl===1?'>':lvl===2?'  >':lvl===3?'    >':lvl===4?'      >':'        >';
@@ -1550,7 +1553,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
 function renderItem(item,today,itemNum){
   const pr=iProg(item),col=pColor(pr.pct),done=pr.pct===100;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
-  const _can=S.isAdmin||window.userCan(window.modForSec(_sec),'editar');
+  const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
   const _nt=_sec?.controle_pendencias===0;
   const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=''; // O status já aparece no controle à direita; evita informação repetida.
@@ -1742,6 +1745,7 @@ window.saveConclusao=async function(col,id){
 };
 window.confirmarExcluirAtividade=function(id){
   const sec=S.secs.find(s=>s.id===id);
+  if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const nItems=S.items.filter(i=>i.atividade_id===id).length;
   const nSubs=S.subitems.filter(s=>S.items.some(i=>i.atividade_id===id&&i.id===s.item_id)).length;
   openModal('🗑️ Excluir Atividade',esc(sec?.name||''),
@@ -1749,6 +1753,7 @@ window.confirmarExcluirAtividade=function(id){
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#b91c1c;color:#fef2f2" onclick="deleteSec('${id}')">🗑️ Confirmar Exclusão</button></div>`);
 };
 window.deleteSec=async function(id){
+  const group=S.secs.find(s=>s.id===id);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const its=S.items.filter(i=>i.atividade_id===id);
   for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
   const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
@@ -1760,6 +1765,8 @@ window.deleteSec=async function(id){
   await loadData();closeModal();toast('Atividade excluída!');setView('mod');
 };
 window.deleteItem=async function(id,isSub){
+  const record=(isSub?S.subitems:S.items).find(x=>x.id===id),group=S.secs.find(s=>s.id===(record?.atividade_id||curSecId));
+  if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este lançamento.','error');return;}
   if(!confirm('Excluir este '+(isSub?'sub-item':'item')+(isSub?'':' e todos os seus sub-itens')+'?'))return;
   if(!isSub){
     const sbs=S.subitems.filter(s=>s.item_id===id);
@@ -1889,6 +1896,7 @@ window._toggleSenha=function(inputId,checkId){
 // ── SEC MODAL ──
 window.openSecModal=function(id){
   const s=id?S.secs.find(x=>x.id===id):null;
+  if(id&&!S.isAdmin&&!window.userCanGroup?.(s,'editar')){toast('Você não pode editar este grupo.','error');return;}
   openModal(s?'✏️ Editar Atividade':'➕ Nova Atividade','',
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveSec('${id||''}')">💾 Salvar</button></div>
   <div class="form-grid">
@@ -1950,6 +1958,8 @@ window.openSecModal=function(id){
 };
 
 window.saveSec=async function(id){
+  const existingGroup=id?S.secs.find(x=>x.id===id):null;
+  if(id&&!S.isAdmin&&!window.userCanGroup?.(existingGroup,'editar')){toast('Você não pode editar este grupo.','error');return;}
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const g=id=>document.getElementById(id);const gc=id=>g(id)?.checked?1:0;
@@ -1974,6 +1984,13 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   const col=isSub?'subitem':'item';
   const it=id?(isSub?S.subitems.find(x=>x.id===id):S.items.find(x=>x.id===id)):null;
   const sec=S.secs.find(s=>s.id===(secId||curSecId));
+  if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não tem permissão para lançar neste grupo.','error');return;}
+  const parent=isSub?(S.subitems.find(x=>x.id===parentId)||S.items.find(x=>x.id===parentId)):null;
+  const effectiveSecretary=recordSecretary(sec,it,parent);
+  const effectiveSecretaryName=S.secretarias.find(s=>s.id===effectiveSecretary)?.name||'Secretaria vinculada ao grupo';
+  const secretaryField=secretaryIsFixed(sec)
+    ?`<div class="form-group full"><label>Secretaria</label><input type="hidden" id="it-secretaria" value="${esc(effectiveSecretary)}"><div class="context-locked-field"><span>🏛️</span><div><strong>${esc(effectiveSecretaryName)}</strong><small>Definida automaticamente pelo grupo ${esc(sec?.name||'')}</small></div><b>Automático</b></div></div>`
+    :`<div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${effectiveSecretary===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`;
   openModal(id?`✏️ Editar ${isSub?'Sub-item':'Item'}`:`➕ Novo ${isSub?'Sub-item':'Item'}`,sec?'📅 '+sec.name:'',
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button></div>
   <div class="form-grid">
@@ -1981,7 +1998,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     <div class="form-group full"><label>Observação</label><textarea id="it-obs">${esc(it?.observacao||'')}</textarea></div>
     ${isAttendanceSection(sec)?`<div class="form-group full">${attendanceFields(it)}</div>`:''}
     <div class="form-group full"><label>Responsáveis</label>${_respComboHtml(it?.responsaveis||'','it-resp-wrap')}<input type="hidden" id="it-resp" value="${esc(it?.responsaveis||'')}"></div>
-    <div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${it?.secretaria_id===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+    ${secretaryField}
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
     ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#0f172a;cursor:pointer"></div>`:''}
@@ -2058,13 +2075,17 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
 };
 
 window.saveItem=async function(id,secId,isSub,parentId){
+  const group=S.secs.find(s=>s.id===secId);
+  if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não tem permissão para lançar neste grupo.','error');return;}
   const name=document.getElementById('it-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
   const respStr=_getRespFromCombos('it-resp-wrap');
   const original=id?(isSub?S.subitems:S.items).find(x=>x.id===id):null;
   const auditChanges=id&&S.isAdmin?readAdminAudit('it-audit',original,S.users):null;
-  const data={...readAttendance('at'),description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:document.getElementById('it-secretaria')?.value||null,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
+  const parent=isSub?(S.subitems.find(x=>x.id===parentId)||S.items.find(x=>x.id===parentId)):null;
+  const secretariaId=recordSecretary(group,{secretaria_id:document.getElementById('it-secretaria')?.value||original?.secretaria_id},parent)||null;
+  const data={...readAttendance('at'),description:name,observacao:document.getElementById('it-obs')?.value.trim()||'',responsaveis:respStr,secretaria_id:secretariaId,start_date:document.getElementById('it-start')?.value||null,deadline_date:document.getElementById('it-deadline')?.value||null,updated_at:serverTimestamp()};
   if(!isSub){data.atividade_id=secId;data.item_icon=document.getElementById('it-icon')?.value.trim()||'📋';data.item_color=document.getElementById('it-color')?.value||'#3B82F6';}
   else{const _pSub=S.subitems.find(x=>x.id===parentId);data.item_id=_pSub?(_pSub.item_id||parentId):parentId;if(!id){if(_pSub){data.parent_id=parentId;data.parent_type='subitem';}else{data.parent_id=parentId;data.parent_type='item';}}data.atividade_id=secId;}
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
@@ -2372,18 +2393,65 @@ function _buildPermMatrix(u){
   const p=u?.permissoes||{modulos:{}};
   const rows=window.MODULOS.map(m=>{
     const mp=p.modulos?.[m.id]||{};
-    const a=mp.acesso?'checked':'';
-    const g=mp.gerenciar?'checked':'';
-    return `<div class="admin-permission-row"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${m.icon}</span><div><div style="font-weight:700">${esc(m.label)}</div><div style="font-size:11px;color:#64748b">${esc(m.desc)}</div></div></div><div style="display:flex;align-items:center;gap:14px;font-size:12px"><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="perm-${m.id}-acesso" ${a}> Acessar</label><label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="perm-${m.id}-ger" ${g}> Gerenciar</label></div></div>`;
+    const legacy=mp.escopo_configurado!==true;
+    const a=mp.acesso||mp.gerenciar;
+    const g=mp.gerenciar||mp.editar||mp.criar;
+    const groups=S.secs.filter(group=>window.modForSec?.(group)===m.id).sort((x,y)=>(x.name||'').localeCompare(y.name||'','pt-BR'));
+    const check=(entry,kind,fallback=false)=>((kind==='acesso'?(entry?.acesso||entry?.gerenciar):entry?.gerenciar)||fallback)?'checked':'';
+    const scope=(type,id,label,entry,description='')=>`<div class="permission-scope-row permission-scope-${type}"><div><strong>${esc(label)}</strong>${description?`<small>${esc(description)}</small>`:''}</div><div class="permission-checks"><label><input type="checkbox" data-perm-module="${m.id}" data-perm-scope="${type}" data-perm-id="${esc(id)}" data-perm-kind="acesso" ${check(entry,'acesso',legacy&&a)} onchange="permissionScopeChanged(this)"> Acessar</label><label><input type="checkbox" data-perm-module="${m.id}" data-perm-scope="${type}" data-perm-id="${esc(id)}" data-perm-kind="gerenciar" ${check(entry,'gerenciar',legacy&&g)} onchange="permissionScopeChanged(this)"> Gerenciar</label></div></div>`;
+    let details='';
+    if(m.id==='atendimentos'){
+      const secretarias=(S.secretarias||[]).filter(s=>s.demandas_ativa||groups.some(group=>group.demanda_secretaria_id===s.id)).sort((x,y)=>(x.name||'').localeCompare(y.name||'','pt-BR'));
+      details=secretarias.map(secretaria=>{
+        const children=groups.filter(group=>group.demanda_secretaria_id===secretaria.id);
+        return `<section class="permission-secretary"><header>${scope('secretaria',secretaria.id,secretaria.name,mp.secretarias?.[secretaria.id],'Todos os grupos atuais e futuros desta secretaria')}</header><div class="permission-groups">${children.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')||'<p>Nenhum grupo criado ainda.</p>'}</div></section>`;
+      }).join('');
+      const unassigned=groups.filter(group=>!group.demanda_secretaria_id);
+      if(unassigned.length)details+=`<section class="permission-secretary"><h5>Grupos ainda sem secretaria</h5><div class="permission-groups">${unassigned.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')}</div></section>`;
+    }else{
+      details=scope('todos','*','Todos os grupos',mp.todos_grupos,'Inclui automaticamente os grupos criados no futuro')+`<div class="permission-groups">${groups.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')||'<p>Nenhum grupo criado ainda.</p>'}</div>`;
+    }
+    return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary><div class="permission-scope-list">${details}</div></details></section>`;
   }).join('');
-  return `<div class="form-group full"><label>Permissões por módulo</label><div>${rows}</div><div style="font-size:11px;color:var(--muted);margin-top:6px">"Acessar" permite visualizar. "Gerenciar" permite criar e editar.</div></div>`;
+  return `<div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite criar e editar. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
+window.permissionModuleChanged=function(input){
+  const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
+  if(input.checked){const details=card.querySelector('.permission-details');if(details)details.open=true;}
+  if(kind==='gerenciar'&&input.checked){const access=document.getElementById(`perm-${input.dataset.permModule}-acesso`);if(access)access.checked=true;}
+  if(kind==='acesso'&&!input.checked){const manage=document.getElementById(`perm-${input.dataset.permModule}-ger`);if(manage)manage.checked=false;card.querySelectorAll('.permission-scope-list input').forEach(el=>el.checked=false);}
+  if(input.checked&&!card.querySelector(`.permission-scope-list input[data-perm-kind="${kind}"]:checked`)){
+    const future=card.querySelectorAll(`[data-perm-scope="todos"][data-perm-kind="${kind}"], [data-perm-scope="secretaria"][data-perm-kind="${kind}"]`);
+    future.forEach(el=>el.checked=true);
+    if(kind==='gerenciar')card.querySelectorAll('[data-perm-scope="todos"][data-perm-kind="acesso"], [data-perm-scope="secretaria"][data-perm-kind="acesso"]').forEach(el=>el.checked=true);
+  }
+};
+window.permissionScopeChanged=function(input){
+  const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind,id=input.dataset.permId,scope=input.dataset.permScope;
+  if(input.checked){
+    const access=document.getElementById(`perm-${input.dataset.permModule}-acesso`);if(access)access.checked=true;
+    if(kind==='gerenciar'){const manage=document.getElementById(`perm-${input.dataset.permModule}-ger`);if(manage)manage.checked=true;const own=card.querySelector(`[data-perm-scope="${scope}"][data-perm-id="${CSS.escape(id)}"][data-perm-kind="acesso"]`);if(own)own.checked=true;}
+  }else if(kind==='acesso'){
+    const own=card.querySelector(`[data-perm-scope="${scope}"][data-perm-id="${CSS.escape(id)}"][data-perm-kind="gerenciar"]`);if(own)own.checked=false;
+  }
+};
 function _readPermMatrix(){
   const modulos={};
   (window.MODULOS||[]).forEach(m=>{
     const a=document.getElementById('perm-'+m.id+'-acesso')?.checked;
     const g=document.getElementById('perm-'+m.id+'-ger')?.checked;
-    if(a||g) modulos[m.id]={acesso:!!a,criar:!!g,editar:!!g,gerenciar:!!g};
+    if(a||g){
+      const entry={acesso:!!a,criar:!!g,editar:!!g,gerenciar:!!g,escopo_configurado:true,todos_grupos:{},secretarias:{},grupos:{}};
+      document.querySelectorAll(`[data-perm-module="${m.id}"][data-perm-scope]`).forEach(input=>{
+        if(!input.checked)return;
+        const bucket=input.dataset.permScope==='todos'?'todos_grupos':input.dataset.permScope==='secretaria'?'secretarias':'grupos';
+        if(bucket==='todos_grupos')entry.todos_grupos[input.dataset.permKind]=true;
+        else (entry[bucket][input.dataset.permId]??={})[input.dataset.permKind]=true;
+      });
+      const hasScope=entry.todos_grupos.acesso||entry.todos_grupos.gerenciar||Object.keys(entry.secretarias).length||Object.keys(entry.grupos).length;
+      if(!hasScope){entry.todos_grupos={acesso:!!a,gerenciar:!!g};}
+      modulos[m.id]=entry;
+    }
   });
   return {modulos};
 }
@@ -3749,7 +3817,7 @@ window._doLimparAtividade=async function(secId){
 // ── RENDER CADASTROS (LISTAGEM PLANA AVANÇADA) ──
 window.renderCadastros=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
-  const _can=S.isAdmin||window.userCan(window.modForSec(sec),'editar');
+  const _can=S.isAdmin||window.userCanGroup?.(sec,'editar');
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
@@ -3965,12 +4033,13 @@ window.listaAddItem=function(secId){
   openItemModal(null,secId,false,null);
 };
 window.listaAddItemAfter=async function(afterId,secId){
+  const group=S.secs.find(s=>s.id===secId);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar'))return;
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const idx=its.findIndex(i=>i.id===afterId);if(idx===-1)return;
   const newOrder=(its[idx].order_num||0)+1;
   // shift later items
   for(const it of its){if((it.order_num||0)>=newOrder){S.items.find(x=>x.id===it.id).order_num=(it.order_num||0)+1;await updateDoc(doc(db,'items',it.id),{order_num:(it.order_num||0)+1});}}
-  const data={atividade_id:secId,description:'Novo Item',observacao:'',responsaveis:'',secretaria_id:null,start_date:null,deadline_date:null,item_icon:'📋',item_color:'#3B82F6',concluded:0,order_num:newOrder,created_at:serverTimestamp()};
+  const data={atividade_id:secId,description:'Novo Item',observacao:'',responsaveis:'',secretaria_id:recordSecretary(group)||null,start_date:null,deadline_date:null,item_icon:'📋',item_color:'#3B82F6',concluded:0,order_num:newOrder,created_at:serverTimestamp()};
   await addDoc(collection(db,'items'),data);await loadData();renderCadastros(secId);toast('Item adicionado!');
 };
 window.listaAddSubChild=function(parentId,secId){
@@ -3979,12 +4048,13 @@ window.listaAddSubChild=function(parentId,secId){
 };
 window.listaAddSubSibling=async function(afterSubId,secId){
   const sb=S.subitems.find(s=>s.id===afterSubId);if(!sb)return;
+  const group=S.secs.find(s=>s.id===secId);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar'))return;
   const parentId=sb.parent_type==='subitem'?sb.parent_id:sb.item_id;
   const siblings=[...S.subitems.filter(s=>s.item_id===sb.item_id&&(sb.parent_type==='subitem'?s.parent_id===parentId&&s.parent_type==='subitem':s.parent_type!=='subitem'))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const idx=siblings.findIndex(s=>s.id===afterSubId);if(idx===-1)return;
   const newOrder=(siblings[idx].order_num||0)+1;
   for(const s of siblings){if((s.order_num||0)>=newOrder){S.subitems.find(x=>x.id===s.id).order_num=(s.order_num||0)+1;await updateDoc(doc(db,'subitems',s.id),{order_num:(s.order_num||0)+1});}}
-  const data={item_id:sb.item_id,atividade_id:secId,description:'Novo Sub-item',observacao:'',responsaveis:'',secretaria_id:null,start_date:null,deadline_date:null,concluded:0,parent_id:parentId,parent_type:sb.parent_type||'item',order_num:newOrder,created_at:serverTimestamp()};
+  const data={item_id:sb.item_id,atividade_id:secId,description:'Novo Sub-item',observacao:'',responsaveis:'',secretaria_id:recordSecretary(group,null,sb)||null,start_date:null,deadline_date:null,concluded:0,parent_id:parentId,parent_type:sb.parent_type||'item',order_num:newOrder,created_at:serverTimestamp()};
   await addDoc(collection(db,'subitems'),data);await loadData();renderCadastros(secId);toast('Sub-item adicionado!');
 };
 let _listaDragSrc=null,_listaDragEl=null;

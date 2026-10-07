@@ -1,6 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=1';
 import {supabase} from '../supabase_compat.js';
-import './perfuracao-pocos.js?v=88';
+import {modulePermission,groupPermission,demandSecretaryPermission} from './access-scope.js';
+import './perfuracao-pocos.js?v=89';
 import './controle-extintores.js?v=2';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
@@ -52,11 +53,16 @@ function _myPerms(){ if(!window.S) return {modulos:{}}; if(window.S.isAdmin) ret
 window.userCan = function(modId, action='acesso'){
   const p = _myPerms();
   if(p.all) return true;
-  const m = (p.modulos && p.modulos[modId]) || {};
-  if(action==='acesso') return m.acesso === true;
-  if(action==='criar') return m.criar === true || m.gerenciar === true;
-  if(action==='editar') return m.editar === true || m.gerenciar === true;
-  return false;
+  return modulePermission(p,modId,action);
+};
+window.userCanGroup=function(group,action='acesso'){
+ if(window.S?.isAdmin)return true;
+ if(!group)return false;
+ return groupPermission(_myPerms(),_md.modFor(group),group,action);
+};
+window.userCanDemandSecretaria=function(secretariaId,action='acesso'){
+ if(window.S?.isAdmin)return true;
+ return demandSecretaryPermission(_myPerms(),secretariaId,action);
 };
 
 const _md = {
@@ -69,7 +75,7 @@ const _md = {
   modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1||s.controle_estoque_modelo==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
   pct: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1){const ps=(window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco'));return ps.length?Math.round(ps.filter(s=>(s.status_pagamento||s.extra_fields?.status_pagamento)==='pago').length/ps.length*100):0;} const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
   ativTotal: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)return (window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco')).length; return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
-  grupos: mod => (window.S && S.secs || []).filter(s=> _md.modFor(s)===mod.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
+  grupos: mod => (window.S && S.secs || []).filter(s=>_md.modFor(s)===mod.id&&window.userCanGroup(s,'acesso')).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 
 initDemandas({groups:()=>_md.grupos(MODULOS.find(m=>m.id==='atendimentos')),pct:_md.pct,total:_md.ativTotal});
@@ -112,7 +118,8 @@ function renderModuloGrupos(mod){
   if(mod.id==='atendimentos')return renderDemandas();
   const grupos = _md.grupos(mod);
   const title = `${mod.icon} ${mod.label}`;
-  const podeCriar = window.userCan(mod.id,'criar');
+  const moduleScope=S.permissoes?.modulos?.[mod.id];
+  const podeCriar = S.isAdmin||window.userCan(mod.id,'criar')&&(moduleScope?.escopo_configurado!==true||moduleScope?.todos_grupos?.gerenciar===true);
   const podeEditar = window.userCan(mod.id,'editar');
   const admin = window.S && S.isAdmin;
   const pode = admin || podeEditar;
@@ -121,8 +128,9 @@ function renderModuloGrupos(mod){
   const cards = grupos.map((g,index)=>{
     const p=_md.pct(g), col=_md.pColor(p);
     const total=_md.ativTotal(g),well=g.controle_pocos==1||g.extra_fields?.controle_pocos==1;
+    const podeGrupo=admin||window.userCanGroup(g,'editar');
     return `<article class="module-group-row" style="--module-accent:${mod.color}" data-gid="${_md.esc(g.id)}" data-audit-id="${_md.esc(g.id)}">
-      ${pode?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
+      ${podeGrupo?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
       <button type="button" class="module-group-open" onclick="window.openActivity(${_md.arg(g.id)})">
         <span class="module-group-number">${String(index+1).padStart(2,'0')}</span>
         <span class="module-group-copy"><strong>${_md.esc(g.name||'Sem nome')}</strong>${g.observacoes?`<small>${_md.esc(g.observacoes)}</small>`:''}</span>
@@ -130,7 +138,7 @@ function renderModuloGrupos(mod){
       <span class="module-group-total"><b>${total}</b> lançamento${total===1?'':'s'}</span>
       <span class="module-group-progress" style="--progress:${col}"><span><b>${p}%</b> ${well?'pagos':'concluído'}</span><i><b style="width:${p}%"></b></i></span>
       <div class="module-group-actions">
-        ${(admin||podeEditar)?`<button type="button" class="card-btn" onclick="window.openSecModal(${_md.arg(g.id)})" aria-label="Editar ${_md.esc(g.name)}" title="Editar grupo">✎</button>`:''}
+        ${podeGrupo?`<button type="button" class="card-btn" onclick="window.openSecModal(${_md.arg(g.id)})" aria-label="Editar ${_md.esc(g.name)}" title="Editar grupo">✎</button>`:''}
         ${admin?`<button type="button" class="card-btn transfer" onclick="window.openModuleGroupTransfer(${_md.arg(g.id)},${_md.arg(mod.id)})" aria-label="Transferir ${_md.esc(g.name)}" title="Transferir lançamentos ou grupo">⇄ <span>Transferir</span></button>`:''}
         <button type="button" class="card-btn" onclick="${well?`window.gerarPdfPocos(${_md.arg(g.id)})`:`window.gerarPdf(${_md.arg(g.id)})`}" aria-label="PDF de ${_md.esc(g.name)}" title="Gerar PDF">PDF</button>
       </div>
@@ -229,6 +237,11 @@ window._ceExcluirSelecionados=async function(modId){
 window.criarGrupoModulo = async function(modId,secretariaId=null){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod) return;
   if(!window.userCan(modId,'criar')){ toast('Sem permissão para criar neste módulo','error'); return; }
+  const scope=window.S?.permissoes?.modulos?.[modId];
+  if(!window.S?.isAdmin&&scope?.escopo_configurado===true){
+    const allowed=modId==='atendimentos'?window.userCanDemandSecretaria(secretariaId,'editar'):scope.todos_grupos?.gerenciar===true;
+    if(!allowed){toast('Seu acesso permite gerenciar grupos existentes, mas não criar neste local.','error');return;}
+  }
   const base = {
     name: modId==='atendimentos'?'Novo grupo de demandas':`Novo ${mod.label}`,
     description: mod.desc,
