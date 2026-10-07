@@ -25,10 +25,21 @@ function renumber(){
 
 function addRows(amount=10,focus=false){
  const body=document.getElementById('bulk-grid-body');if(!body)return;
- const start=body.children.length;
- body.insertAdjacentHTML('beforeend',Array.from({length:amount},(_,offset)=>rowHtml(start+offset)).join(''));
+ const start=body.children.length,requested=Math.max(0,Math.floor(Number(amount)||0)),allowed=Math.min(requested,500-start);
+ if(!allowed){window.toast?.('A planilha permite até 500 linhas.','error');return;}
+ body.insertAdjacentHTML('beforeend',Array.from({length:allowed},(_,offset)=>rowHtml(start+offset)).join(''));
+ const total=document.getElementById('bulk-total-count');if(total)total.value=start+allowed;
+ if(allowed<requested)window.toast?.('A planilha foi limitada a 500 linhas.','error');
  if(focus)body.querySelector(`[data-row="${start}"][data-col="0"]`)?.focus();
  updateCount();
+}
+
+function rowHasValues(row){return [...row.querySelectorAll('[data-bulk-cell]')].some(input=>input.type==='checkbox'?input.checked:input.value.trim()!=='');}
+
+function focusCell(row,column){
+ const target=document.querySelector(`[data-row="${row}"][data-col="${column}"]`);
+ if(!target)return false;
+ target.focus();target.scrollIntoView({block:'nearest',inline:'nearest'});return true;
 }
 
 function updateCount(){
@@ -64,7 +75,7 @@ window.openBulkEntry=function(groupId){
  const group=window.S?.secs?.find(item=>item.id===groupId);
  if(!group||(!window.S.isAdmin&&!window.userCanGroup?.(group,'editar'))){window.toast('Você não pode lançar neste grupo.','error');return;}
  state.group=group;state.columns=bulkColumns(group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===groupId));state.busy=false;
- window.openModal('▦ Lançamentos em lote',group.name,`<div class="bulk-intro"><div><strong>Planilha rápida</strong><span>Digite normalmente ou copie linhas do Excel/Google Planilhas e cole em qualquer célula.</span></div><div class="bulk-shortcuts"><kbd>Tab</kbd> próxima célula <kbd>Enter</kbd> próxima linha</div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar planilha</button><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr><th>#</th>${state.columns.map(column=>`<th style="min-width:${column.width}px">${esc(column.label)}</th>`).join('')}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Até 500 lançamentos por envio. A secretaria e a autoria são preenchidas automaticamente.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">Salvar lançamentos</button></div></div>`);
+ window.openModal('▦ Lançamentos em lote',group.name,`<div class="bulk-intro"><div><strong>Planilha rápida</strong><span>Digite normalmente ou copie linhas do Excel/Google Planilhas e cole em qualquer célula.</span></div><div class="bulk-shortcuts"><kbd>← ↑ → ↓</kbd> navegar <kbd>Tab</kbd> avançar <kbd>Enter</kbd> descer</div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><label class="bulk-quantity"><span>Adicionar</span><input id="bulk-add-count" type="number" min="1" max="500" value="50" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkAddCustomRows()}"><button type="button" onclick="bulkAddCustomRows()">＋ linhas</button></label><label class="bulk-quantity"><span>Total de linhas</span><input id="bulk-total-count" type="number" min="1" max="500" value="12" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkSetRowCount()}"><button type="button" onclick="bulkSetRowCount()">Definir</button></label><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar planilha</button><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr><th>#</th>${state.columns.map(column=>`<th style="min-width:${column.width}px">${esc(column.label)}</th>`).join('')}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Até 500 lançamentos por envio. A secretaria e a autoria são preenchidas automaticamente.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">Salvar lançamentos</button></div></div>`);
  document.querySelector('#modal-ov .modal-box')?.classList.add('bulk-modal-box');
  addRows(12);
  document.getElementById('bulk-grid-body').addEventListener('input',updateCount);
@@ -78,15 +89,23 @@ window.openBulkEntry=function(groupId){
   updateCount();
  });
  document.getElementById('bulk-grid-body').addEventListener('keydown',event=>{
-  const target=event.target.closest('[data-bulk-cell]');if(!target||event.key!=='Enter')return;
-  event.preventDefault();let next=document.querySelector(`[data-row="${Number(target.dataset.row)+1}"][data-col="${target.dataset.col}"]`);if(!next){addRows(5);next=document.querySelector(`[data-row="${Number(target.dataset.row)+1}"][data-col="${target.dataset.col}"]`);}next?.focus();
+  const target=event.target.closest('[data-bulk-cell]');if(!target||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(event.key))return;
+  event.preventDefault();let row=Number(target.dataset.row),column=Number(target.dataset.col);
+  if(event.key==='ArrowLeft')column--;
+  if(event.key==='ArrowRight')column++;
+  if(event.key==='ArrowUp'||(event.key==='Enter'&&event.shiftKey))row--;
+  if(event.key==='ArrowDown'||(event.key==='Enter'&&!event.shiftKey))row++;
+  if(row>=document.querySelectorAll('[data-bulk-row]').length&&row<500)addRows(1);
+  focusCell(Math.max(0,row),Math.max(0,Math.min(column,state.columns.length-1)));
  });
  document.querySelector('[data-row="0"][data-col="0"]')?.focus();
 };
 
 window.bulkAddRows=(amount,focus)=>addRows(amount,focus);
-window.bulkRemoveRow=function(index){const rows=[...document.querySelectorAll('[data-bulk-row]')];if(rows.length===1){rows[0].querySelectorAll('input').forEach(input=>{input.value='';input.checked=false;});return updateCount();}rows[index]?.remove();renumber();};
-window.bulkClearGrid=function(){if(!window.confirm('Limpar todos os valores digitados nesta planilha?'))return;document.querySelectorAll('[data-bulk-row]').forEach((row,index)=>{if(index>=12)row.remove();});document.querySelectorAll('[data-bulk-cell]').forEach(input=>{input.value='';input.checked=false;});renumber();};
+window.bulkAddCustomRows=function(){const input=document.getElementById('bulk-add-count'),amount=Math.floor(Number(input?.value));if(!Number.isInteger(amount)||amount<1){window.toast('Informe quantas linhas deseja adicionar.','error');input?.focus();return;}addRows(amount,true);document.getElementById('bulk-total-count').value=document.querySelectorAll('[data-bulk-row]').length;};
+window.bulkSetRowCount=function(){const input=document.getElementById('bulk-total-count'),desired=Math.floor(Number(input?.value));if(!Number.isInteger(desired)||desired<1||desired>500){window.toast('Informe um total entre 1 e 500 linhas.','error');input?.focus();return;}const rows=[...document.querySelectorAll('[data-bulk-row]')],current=rows.length;if(desired>current){addRows(desired-current,true);return;}if(desired===current)return;const removed=rows.slice(desired);if(removed.some(rowHasValues)&&!window.confirm(`As últimas ${current-desired} linhas possuem dados. Deseja removê-las?`)){input.value=current;return;}removed.forEach(row=>row.remove());renumber();focusCell(Math.min(desired-1,current-1),0);};
+window.bulkRemoveRow=function(index){const rows=[...document.querySelectorAll('[data-bulk-row]')];if(rows.length===1){rows[0].querySelectorAll('[data-bulk-cell]').forEach(input=>{input.value='';input.checked=false;});return updateCount();}rows[index]?.remove();renumber();const total=document.getElementById('bulk-total-count');if(total)total.value=rows.length-1;};
+window.bulkClearGrid=function(){if(!window.confirm('Limpar todos os valores digitados nesta planilha?'))return;document.querySelectorAll('[data-bulk-cell]').forEach(input=>{input.value='';input.checked=false;});renumber();};
 window.saveBulkEntries=async function(){
  if(state.busy||!state.group)return;
  let rows;try{rows=readRows(true);}catch(error){window.toast(error.message,'error');document.querySelector('.bulk-grid .invalid')?.focus();return;}
