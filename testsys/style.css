@@ -41,7 +41,7 @@ main { padding: 0 20px; }
 .credit-card { min-height: 245px; padding: 23px 24px; color: #fff; background: linear-gradient(135deg, #a80f20 0%, #c81728 54%, #e22d37 100%); border-radius: 23px; box-shadow: 0 15px 28px rgba(125, 11, 24, .28); position: relative; overflow: hidden; }
 .credit-card::before { content: ''; position: absolute; width: 250px; height: 250px; top: -130px; right: -80px; border-radius: 50%; background: rgba(255,255,255,.09); }
 .credit-card::after { content: ''; position: absolute; width: 170px; height: 170px; bottom: -100px; left: -55px; border-radius: 50%; background: rgba(85,0,8,.16); }
-.card-topline, .card-product, .card-chip, .card-owner, .card-protection { position: relative; z-index: 1; }
+.card-topline, .card-product, .card-chip, .card-protection { position: relative; z-index: 1; }
 .card-topline { display: flex; justify-content: space-between; align-items: center; }
 .network { display: flex; align-items: center; }
 .network span { width: 23px; height: 23px; display: inline-block; border-radius: 50%; background: #eb001b; }
@@ -51,7 +51,6 @@ main { padding: 0 20px; }
 .card-product { margin-top: 25px; font-size: 23px; font-weight: 500; letter-spacing: -.4px; }
 .card-chip { width: 41px; height: 29px; margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden; border: 1px solid #9e7c2f; border-radius: 7px; background: #d8bb6d; }
 .card-chip i { border-right: 1px solid #a2833b; }
-.card-owner { margin-top: 11px; font-size: 10px; font-weight: 700; letter-spacing: 1.25px; opacity: .88; }
 .card-protection { position: absolute; right: 18px; bottom: 20px; display: flex; align-items: center; gap: 6px; padding: 8px 11px; color: #fff; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.07); border-radius: 22px; cursor: pointer; }
 .card-protection svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .carousel-dots { height: 45px; display: flex; justify-content: center; align-items: center; gap: 6px; }
