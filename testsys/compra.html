@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ec7000">
+  <title>Saborear Cafe — Simulação Itaú</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body data-page="purchase">
+  <div class="app-shell purchase-shell">
+    <div class="demo-ribbon">Ambiente demonstrativo • dados fictícios</div>
+    <header class="app-header simple-header purchase-header">
+      <a class="icon-button" href="fatura.html" aria-label="Voltar"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></a>
+      <h1>Detalhes da compra</h1>
+      <span class="header-spacer"></span>
+    </header>
+
+    <main class="purchase-page">
+      <div class="purchase-title">
+        <span class="merchant-icon large">☕</span>
+        <div><p>Aprovada</p><h2>Saborear Cafe</h2><small>25 set. 2026 • 12:23</small></div>
+      </div>
+
+      <section class="detail-card">
+        <div class="detail-row amount-detail"><span><i>$</i>Valor total</span><strong>R$ 35,60</strong></div>
+        <div class="detail-row"><span>Categoria</span><strong>Supermercados e alimentos</strong></div>
+        <div class="detail-row"><span>Forma de pagamento</span><strong>Cartão físico por chip</strong></div>
+        <div class="detail-row"><span>Cartão</span><strong>Hipercard Itaú Platinum<br>Final 7485</strong></div>
+        <div class="detail-row"><span>Lançamento</span><strong>Fatura de outubro</strong></div>
+      </section>
+
+      <section class="purchase-actions" aria-label="Ações da compra">
+        <button type="button" data-toast="Antecipação indisponível para compra à vista."><span>▣</span>Antecipar</button>
+        <button type="button" data-toast="Esta compra não foi parcelada."><span>▦</span>Parcelar</button>
+        <button type="button" data-toast="Contestação não é enviada em um ambiente demonstrativo."><span>△</span>Contestar</button>
+      </section>
+
+      <section class="help-card">
+        <div><span>?</span><div><strong>Não reconhece esta compra?</strong><p>Nesta simulação, nenhuma ação altera contas ou cartões reais.</p></div></div>
+        <button type="button" data-toast="Nenhum atendimento real é iniciado nesta demonstração.">Entender opções</button>
+      </section>
+    </main>
+  </div>
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
