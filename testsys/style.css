@@ -38,7 +38,9 @@ main { padding: 0 20px; }
 .hero-copy h1 { margin: 0 0 7px; font-size: 29px; letter-spacing: -.8px; }
 .hero-copy p:last-child { margin: 0; color: var(--muted); font-size: 14px; }
 
-.credit-card { min-height: 245px; padding: 23px 24px; color: #fff; background: linear-gradient(135deg, #a80f20 0%, #c81728 54%, #e22d37 100%); border-radius: 23px; box-shadow: 0 15px 28px rgba(125, 11, 24, .28); position: relative; overflow: hidden; }
+.card-carousel { margin: 0 -20px; padding: 0 20px 25px; display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-inline: contain; }
+.card-carousel::-webkit-scrollbar { display: none; }
+.credit-card { min-height: 245px; padding: 23px 24px; flex: 0 0 92%; color: #fff; background: linear-gradient(135deg, #a80f20 0%, #c81728 54%, #e22d37 100%); border-radius: 23px; box-shadow: 0 15px 28px rgba(125, 11, 24, .28); position: relative; overflow: hidden; scroll-snap-align: center; }
 .credit-card::before { content: ''; position: absolute; width: 250px; height: 250px; top: -130px; right: -80px; border-radius: 50%; background: rgba(255,255,255,.09); }
 .credit-card::after { content: ''; position: absolute; width: 170px; height: 170px; bottom: -100px; left: -55px; border-radius: 50%; background: rgba(85,0,8,.16); }
 .card-topline, .card-product, .card-chip, .card-protection { position: relative; z-index: 1; }
@@ -53,9 +55,13 @@ main { padding: 0 20px; }
 .card-chip i { border-right: 1px solid #a2833b; }
 .card-protection { position: absolute; right: 18px; bottom: 20px; display: flex; align-items: center; gap: 6px; padding: 8px 11px; color: #fff; background: rgba(255,255,255,.11); border: 1px solid rgba(255,255,255,.07); border-radius: 22px; cursor: pointer; }
 .card-protection svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.carousel-dots { height: 45px; display: flex; justify-content: center; align-items: center; gap: 6px; }
-.carousel-dots span { width: 31px; height: 6px; background: #393b40; border-radius: 10px; }
-.carousel-dots i { width: 6px; height: 6px; background: #d8dade; border-radius: 50%; }
+.card-click { background: linear-gradient(135deg, #f26200 0%, #ff7600 55%, #ff8b12 100%); box-shadow: 0 15px 28px rgba(218,86,0,.28); }
+.card-click::after { background: rgba(174,53,0,.14); }
+.carousel-controls { height: 38px; margin: -11px 0 12px; display: flex; justify-content: center; align-items: center; gap: 14px; }
+.carousel-controls > button { width: 34px; height: 34px; padding: 0; color: var(--muted); background: transparent; border: 0; font-size: 30px; line-height: 1; cursor: pointer; }
+.carousel-dots { display: flex; justify-content: center; align-items: center; gap: 7px; }
+.carousel-dots button { width: 7px; height: 7px; padding: 0; background: #d8dade; border: 0; border-radius: 50%; cursor: pointer; transition: width .2s, background .2s; }
+.carousel-dots button.active { width: 31px; background: #393b40; border-radius: 10px; }
 
 .summary-card { margin-bottom: 14px; padding: 22px; background: var(--surface); border: 1px solid rgba(0,0,0,.025); border-radius: 20px; box-shadow: 0 2px 8px rgba(20,24,32,.025); }
 .limit-card > div:first-child { display: flex; align-items: center; justify-content: space-between; gap: 15px; font-size: 16px; }
@@ -82,6 +88,27 @@ main { padding: 0 20px; }
 .benefits-card { padding: 0; overflow: hidden; }
 .benefits-card button { width: 100%; padding: 20px 22px; display: flex; justify-content: space-between; color: var(--ink); background: transparent; border: 0; font-size: 16px; cursor: pointer; }
 .benefits-card b { margin-right: 8px; color: var(--orange); }
+[data-card-panel][hidden] { display: none; }
+.delivery-card { padding-top: 18px; }
+.delivery-progress { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 15px; }
+.delivery-progress span { height: 6px; background: var(--navy); border-radius: 10px; }
+.delivery-row { width: 100%; padding: 17px 3px; display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 12px; color: var(--ink); background: transparent; border: 0; text-align: left; }
+.delivery-row + .delivery-row { border-top: 1px solid var(--line); }
+.delivery-row strong, .delivery-row small { display: block; }
+.delivery-row strong { margin-bottom: 5px; font-size: 17px; }
+.delivery-row small { color: var(--muted); font-size: 12px; }
+.delivery-icon { width: 31px; height: 31px; display: grid; place-items: center; color: var(--success); border: 2px solid currentColor; border-radius: 50%; font-weight: 800; }
+.delivery-icon.lock { color: var(--ink); border: 0; font-size: 22px; }
+.activation-row { cursor: pointer; }
+.activation-row > b { font-size: 24px; font-weight: 400; }
+.activation-row.activated { color: #0b6848; }
+.activation-row.activated .delivery-icon { color: var(--success); }
+.card-services { margin: 16px 0 14px; display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
+.card-services button { min-width: 0; padding: 0 2px; display: flex; flex-direction: column; align-items: center; gap: 9px; color: var(--ink); background: transparent; border: 0; font-size: 10px; line-height: 1.35; cursor: pointer; }
+.card-services button span { width: 58px; height: 58px; display: grid; place-items: center; background: #fff; border-radius: 18px; box-shadow: 0 2px 6px rgba(20,24,32,.04); font-size: 22px; }
+.activation-summary { margin: 20px 0; padding: 15px; display: flex; justify-content: space-between; gap: 12px; background: var(--canvas); border-radius: 13px; font-size: 13px; }
+.activation-icon { background: var(--navy); }
+.link-button { margin-top: 8px; min-height: 42px; color: var(--navy); background: transparent; }
 
 .bottom-nav { position: fixed; z-index: 30; bottom: 0; width: 100%; max-width: 460px; min-height: 76px; padding: 8px 9px max(9px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(4, 1fr); background: rgba(255,255,255,.96); border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
 .bottom-nav a, .bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #797b81; background: transparent; border: 0; text-decoration: none; font-size: 10px; font-weight: 600; cursor: pointer; }

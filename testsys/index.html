@@ -33,54 +33,100 @@
       <section class="hero-copy">
         <p class="eyebrow">Olá, cliente</p>
         <h1>Seus cartões</h1>
-        <p>Acompanhe o limite e a fatura do seu Hipercard.</p>
+        <p>Deslize para acompanhar e gerenciar seus cartões.</p>
       </section>
 
-      <section class="credit-card" aria-label="Hipercard Itaú Platinum final 7485">
-        <div class="card-topline">
-          <div class="network"><span></span><span></span><b>crédito</b></div>
-          <strong>7485</strong>
-        </div>
-        <div class="card-product">Hipercard Itaú Platinum</div>
-        <div class="card-chip" aria-hidden="true"><i></i><i></i><i></i></div>
-        <button type="button" class="card-protection" data-toast="Proteção extra é apenas ilustrativa nesta simulação.">
-          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v8m-4-4h8"/></svg>
-          Ativar proteção extra
-        </button>
-      </section>
-
-      <div class="carousel-dots" aria-hidden="true"><span></span><i></i><i></i></div>
-
-      <section class="summary-card limit-card">
-        <div>
-          <span>Limite disponível</span>
-          <strong data-sensitive>R$ 204,40</strong>
-        </div>
-        <div class="limit-track"><span style="width:85.17%"></span></div>
-        <small><b data-sensitive>R$ 35,60</b> usados de <b data-sensitive>R$ 240,00</b></small>
-      </section>
-
-      <section class="summary-card invoice-card">
-        <div class="invoice-heading">
-          <div>
-            <span>Fatura de outubro</span>
-            <small>Vencimento: 20 out.</small>
+      <div class="card-carousel" data-card-carousel aria-label="Seus cartões">
+        <section class="credit-card" data-card-slide="0" aria-label="Hipercard Itaú Platinum final 7485">
+          <div class="card-topline">
+            <div class="network"><span></span><span></span><b>crédito</b></div>
+            <strong>7485</strong>
           </div>
-          <strong data-sensitive>R$ 35,60</strong>
-        </div>
-        <div class="status-line"><span></span> Fatura aberta</div>
-        <div class="button-row">
-          <button class="button secondary" type="button" data-toast="Não há compras elegíveis para parcelamento.">Parcelar</button>
-          <button class="button primary" type="button" data-open-payment>Pagar</button>
-        </div>
-        <a class="text-link" href="fatura.html">Acessar fatura <span>›</span></a>
-      </section>
+          <div class="card-product">Hipercard Itaú Platinum</div>
+          <div class="card-chip" aria-hidden="true"><i></i><i></i><i></i></div>
+          <button type="button" class="card-protection" data-toast="Proteção extra é apenas ilustrativa nesta simulação.">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v8m-4-4h8"/></svg>
+            Ativar proteção extra
+          </button>
+        </section>
 
-      <section class="summary-card benefits-card">
-        <button type="button" data-toast="Área de benefícios em breve.">
-          <span><b>◆</b> Planos e benefícios</span><span>›</span>
-        </button>
-      </section>
+        <section class="credit-card card-click" data-card-slide="1" aria-label="Itaú Click Múltiplo Platinum final 5879">
+          <div class="card-topline">
+            <div class="network"><span></span><span></span><b>crédito e débito</b></div>
+            <strong>5879</strong>
+          </div>
+          <div class="card-product">Itaú Click Múltiplo Plat</div>
+          <div class="card-chip" aria-hidden="true"><i></i><i></i><i></i></div>
+          <button type="button" class="card-protection" data-toast="Proteção extra é apenas ilustrativa nesta simulação.">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M12 8v8m-4-4h8"/></svg>
+            Ativar proteção extra
+          </button>
+        </section>
+      </div>
+
+      <div class="carousel-controls" aria-label="Selecionar cartão">
+        <button type="button" data-card-prev aria-label="Cartão anterior">‹</button>
+        <div class="carousel-dots">
+          <button type="button" class="active" data-card-dot="0" aria-label="Ver Hipercard final 7485" aria-current="true"></button>
+          <button type="button" data-card-dot="1" aria-label="Ver Itaú Click final 5879"></button>
+        </div>
+        <button type="button" data-card-next aria-label="Próximo cartão">›</button>
+      </div>
+
+      <div data-card-panel="0">
+        <section class="summary-card limit-card">
+          <div>
+            <span>Limite disponível</span>
+            <strong data-sensitive>R$ 204,40</strong>
+          </div>
+          <div class="limit-track"><span style="width:85.17%"></span></div>
+          <small><b data-sensitive>R$ 35,60</b> usados de <b data-sensitive>R$ 240,00</b></small>
+        </section>
+
+        <section class="summary-card invoice-card">
+          <div class="invoice-heading">
+            <div>
+              <span>Fatura de outubro</span>
+              <small>Vencimento: 20 out.</small>
+            </div>
+            <strong data-sensitive>R$ 35,60</strong>
+          </div>
+          <div class="status-line"><span></span> Fatura aberta</div>
+          <div class="button-row">
+            <button class="button secondary" type="button" data-toast="Não há compras elegíveis para parcelamento.">Parcelar</button>
+            <button class="button primary" type="button" data-open-payment>Pagar</button>
+          </div>
+          <a class="text-link" href="fatura.html">Acessar fatura <span>›</span></a>
+        </section>
+
+        <section class="summary-card benefits-card">
+          <button type="button" data-toast="Área de benefícios em breve.">
+            <span><b>◆</b> Planos e benefícios</span><span>›</span>
+          </button>
+        </section>
+      </div>
+
+      <div data-card-panel="1" hidden>
+        <section class="summary-card delivery-card">
+          <div class="delivery-progress" aria-label="Entrega concluída"><span></span><span></span><span></span></div>
+          <div class="delivery-row delivered">
+            <span class="delivery-icon">✓</span>
+            <div><strong>Cartão entregue</strong><small>Entregue em 06 Set</small></div>
+          </div>
+          <button class="delivery-row activation-row" type="button" data-activate-card>
+            <span class="delivery-icon lock">▣</span>
+            <div><strong data-activation-label>Ativar cartão</strong><small data-activation-detail>Pronto para ativação</small></div>
+            <b>›</b>
+          </button>
+        </section>
+
+        <section class="card-services" aria-label="Serviços do cartão">
+          <button type="button" data-toast="Gestão do cartão disponível após a ativação."><span>⚙</span>Gestão do cartão</button>
+          <button type="button" data-toast="Segurança do cartão é ilustrativa nesta simulação."><span>▢</span>Segurança do cartão</button>
+          <button type="button" data-toast="Nenhuma carteira digital é alterada nesta simulação."><span>▤</span>Carteiras digitais</button>
+          <button type="button" data-toast="O cartão ainda não possui compras no débito."><span>☷</span>Compras no débito</button>
+        </section>
+      </div>
     </main>
 
     <nav class="bottom-nav" aria-label="Navegação principal">
@@ -100,6 +146,18 @@
       <p>Esta é uma simulação. Nenhum pagamento será processado.</p>
       <div class="payment-total"><span>Valor da fatura</span><strong>R$ 35,60</strong></div>
       <button class="button primary full" type="button" data-confirm-payment>Entendi</button>
+    </section>
+  </div>
+  <div class="sheet-backdrop" data-activation-sheet hidden>
+    <section class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="activation-title">
+      <div class="sheet-handle"></div>
+      <button class="sheet-close" type="button" aria-label="Fechar" data-close-activation>×</button>
+      <span class="sheet-icon activation-icon">▣</span>
+      <h2 id="activation-title">Ativar cartão final 5879?</h2>
+      <p>Esta ação apenas simula a ativação do Itaú Click Múltiplo Platinum neste navegador.</p>
+      <div class="activation-summary"><span>Cartão</span><strong>Itaú Click •••• 5879</strong></div>
+      <button class="button primary full" type="button" data-confirm-activation>Simular ativação</button>
+      <button class="button link-button full" type="button" data-close-activation>Agora não</button>
     </section>
   </div>
   <div class="toast" role="status" aria-live="polite" hidden></div>
