@@ -1,12 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {modulePermission,groupPermission,demandSecretaryPermission,scopeCount} from '../js/access-scope.js';
+import {modulePermission,groupPermission,demandSecretaryPermission,scopeCount,groupCreationPermission} from '../js/access-scope.js';
 import {recordSecretary,secretaryIsFixed} from '../js/record-context.js';
 
 test('cadastros antigos mantêm acesso aos grupos do módulo',()=>{
  const permissions={modulos:{cadastros:{acesso:true,gerenciar:true}}};
  assert.equal(groupPermission(permissions,'cadastros',{id:'correios'},'acesso'),true);
  assert.equal(groupPermission(permissions,'cadastros',{id:'correios'},'editar'),true);
+});
+
+test('criação de grupos exige a permissão geral explicitamente marcada',()=>{
+ assert.equal(groupCreationPermission({pode_criar_grupos:true}),true);
+ assert.equal(groupCreationPermission({pode_criar_grupos:false}),false);
+ assert.equal(groupCreationPermission({modulos:{cadastros:{gerenciar:true}}}),false);
 });
 
 test('escopo de todos os grupos inclui grupos futuros',()=>{

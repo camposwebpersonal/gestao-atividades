@@ -50,7 +50,7 @@ function row(g,index){
 export function renderDemandas(){
  const all=groups(),secs=sections();
  if(selected()&&!secs.some(s=>s.id===selected()))window.currentDemandSecretaria='';
-  const create=can('criar');
+  const create=window.userCanCreateGroups?.()&&can('criar');
  document.getElementById('content').innerHTML=`<section class="demand-shell" aria-labelledby="demand-title">
   <header class="demand-heading"><div><span class="workspace-kicker">Organização municipal</span><h1 id="demand-title">Demandas por Secretarias</h1><p>As demandas no lugar certo. Cada grupo, todos os seus lançamentos.</p></div><div class="demand-summary"><b>${secs.filter(s=>s.id!==UNASSIGNED).length}<small>secretarias</small></b><b>${all.length}<small>grupos</small></b><b>${all.reduce((n,g)=>n+api.total(g),0)}<small>lançamentos</small></b></div></header>
   <div class="demand-toolbar"><div class="demand-create">${window.S.isAdmin?button('＋ Nova secretaria','openDemandSecretariaModal()','primary'):''}${create?button('＋ Novo grupo','newDemandGroup()'):''}${button('PDF do módulo',"gerarRelatorioModulo('atendimentos')")}</div><div class="demand-view" role="group" aria-label="Visualização dos grupos">${button('☰ Lista',"setDemandView('list')",mode==='list'?'selected':'',`aria-pressed="${mode==='list'}"`)}${button('▦ Cards',"setDemandView('cards')",mode==='cards'?'selected':'',`aria-pressed="${mode==='cards'}"`)}</div></div>
@@ -67,7 +67,7 @@ function renderResults(){
  host.innerHTML=all.map(s=>{
   const filtered=s.groups.filter(g=>demandMatches(g,query));found+=filtered.length;
   if(query.trim()&&!filtered.length)return '';
-  return `<section class="demand-section" data-demand-section="${esc(s.id)}"><header class="demand-section-head"><div><span class="demand-section-icon ${s.id===UNASSIGNED?'pending':''}">${s.id===UNASSIGNED?'?':'▥'}</span><h2>${esc(titleFor(s))}</h2><span class="demand-count">${filtered.length}</span></div>${s.id!==UNASSIGNED&&canSecretary(s.id,'editar')?button('＋ Grupo',`newDemandGroup(${arg(s.id)})`,'',`aria-label="Criar grupo em ${esc(s.name)}"`):''}</header><div class="demand-group-list ${mode==='cards'?'demand-grid':''}">${filtered.map(row).join('')||'<div class="demand-empty">Esta secretaria está pronta para receber seus grupos.</div>'}</div></section>`;
+  return `<section class="demand-section" data-demand-section="${esc(s.id)}"><header class="demand-section-head"><div><span class="demand-section-icon ${s.id===UNASSIGNED?'pending':''}">${s.id===UNASSIGNED?'?':'▥'}</span><h2>${esc(titleFor(s))}</h2><span class="demand-count">${filtered.length}</span></div>${s.id!==UNASSIGNED&&window.userCanCreateGroups?.()&&canSecretary(s.id,'editar')?button('＋ Grupo',`newDemandGroup(${arg(s.id)})`,'',`aria-label="Criar grupo em ${esc(s.name)}"`):''}</header><div class="demand-group-list ${mode==='cards'?'demand-grid':''}">${filtered.map(row).join('')||'<div class="demand-empty">Esta secretaria está pronta para receber seus grupos.</div>'}</div></section>`;
  }).join('');
  if(!all.length||(!found&&query.trim()))host.innerHTML=`<div class="demand-empty"><strong>${query.trim()?'Nenhum grupo encontrado':'Vamos organizar as demandas'}</strong><p>${query.trim()?'Tente outro nome ou escolha todas as secretarias.':'Cadastre uma secretaria e adicione o primeiro grupo.'}</p></div>`;
  host.classList.toggle('is-busy',busy);host.setAttribute('aria-busy',String(busy));
@@ -117,6 +117,7 @@ window.confirmDemandTransfer=async function(id){
  if(result){window.closeModal();window.openDemandSecretaria(target);}else button.disabled=false;
 };
 window.newDemandGroup=async function(id=selected()){
+  if(!window.userCanCreateGroups?.()){window.toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(!can('criar')||busy||creatingGroup)return;
   if(id&&id!==UNASSIGNED){
   if(!canSecretary(id,'editar')){window.toast('Você não pode criar grupos nesta secretaria.','error');return;}

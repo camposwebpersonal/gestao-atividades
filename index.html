@@ -367,7 +367,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=76">
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
-<link rel="stylesheet" href="css/access-permissions.css?v=1">
+<link rel="stylesheet" href="css/access-permissions.css?v=2">
 <link rel="stylesheet" href="css/bulk-archive.css?v=2">
 <link rel="stylesheet" href="css/custom-fields.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -433,7 +433,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=70';
+import './js/modulos.js?v=71';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=2';
@@ -677,7 +677,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=62';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=63';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1913,6 +1913,7 @@ window._toggleSenha=function(inputId,checkId){
 // ── SEC MODAL ──
 window.openSecModal=function(id){
   const s=id?S.secs.find(x=>x.id===id):null;
+  if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(s,'editar')){toast('Você não pode editar este grupo.','error');return;}
   openModal(s?'✏️ Editar Atividade':'➕ Nova Atividade','',
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveSec('${id||''}')">💾 Salvar</button></div>
@@ -1976,6 +1977,7 @@ window.openSecModal=function(id){
 
 window.saveSec=async function(id){
   const existingGroup=id?S.secs.find(x=>x.id===id):null;
+  if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(existingGroup,'editar')){toast('Você não pode editar este grupo.','error');return;}
   const name=document.getElementById('s-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
@@ -2430,7 +2432,7 @@ function _buildPermMatrix(u){
     }
     return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary><div class="permission-scope-list">${details}</div></details></section>`;
   }).join('');
-  return `<div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite criar e editar. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
+  return `<div class="form-group full"><label>Permissões gerais</label><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos</strong><small>Desmarcado: pode alimentar e editar lançamentos nos grupos liberados, mas não pode criar novos grupos.</small></span></label></div><div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. A criação de novos grupos depende também da opção acima. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
@@ -2470,7 +2472,7 @@ function _readPermMatrix(){
       modulos[m.id]=entry;
     }
   });
-  return {modulos};
+  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,modulos};
 }
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;

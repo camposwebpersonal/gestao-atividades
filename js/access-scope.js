@@ -9,6 +9,10 @@ export function modulePermission(permissoes,moduleId,action='acesso'){
  return action==='acesso'?entry.acesso===true||entry.gerenciar===true:entry.gerenciar===true||entry.editar===true||entry.criar===true;
 }
 
+export function groupCreationPermission(permissoes){
+ return permissoes?.pode_criar_grupos===true;
+}
+
 export function groupPermission(permissoes,moduleId,group,action='acesso'){
  const module=permissoes?.modulos?.[moduleId];
  if(!modulePermission(permissoes,moduleId,action))return false;

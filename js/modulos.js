@@ -1,6 +1,6 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=1';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=2';
 import {supabase} from '../supabase_compat.js';
-import {modulePermission,groupPermission,demandSecretaryPermission} from './access-scope.js';
+import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
 import './perfuracao-pocos.js?v=89';
 import './controle-extintores.js?v=2';
 
@@ -64,6 +64,10 @@ window.userCanDemandSecretaria=function(secretariaId,action='acesso'){
  if(window.S?.isAdmin)return true;
  return demandSecretaryPermission(_myPerms(),secretariaId,action);
 };
+window.userCanCreateGroups=function(){
+ if(window.S?.isAdmin)return true;
+ return groupCreationPermission(_myPerms());
+};
 
 const _md = {
   esc: s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
@@ -119,7 +123,7 @@ function renderModuloGrupos(mod){
   const grupos = _md.grupos(mod);
   const title = `${mod.icon} ${mod.label}`;
   const moduleScope=S.permissoes?.modulos?.[mod.id];
-  const podeCriar = S.isAdmin||window.userCan(mod.id,'criar')&&(moduleScope?.escopo_configurado!==true||moduleScope?.todos_grupos?.gerenciar===true);
+  const podeCriar = S.isAdmin||window.userCanCreateGroups()&&window.userCan(mod.id,'criar')&&(moduleScope?.escopo_configurado!==true||moduleScope?.todos_grupos?.gerenciar===true);
   const podeEditar = window.userCan(mod.id,'editar');
   const admin = window.S && S.isAdmin;
   const pode = admin || podeEditar;
@@ -236,6 +240,7 @@ window._ceExcluirSelecionados=async function(modId){
 
 window.criarGrupoModulo = async function(modId,secretariaId=null){
   const mod = MODULOS.find(x=>x.id===modId); if(!mod) return;
+  if(!window.userCanCreateGroups()){ toast('Seu usuário não tem permissão para criar grupos.','error'); return; }
   if(!window.userCan(modId,'criar')){ toast('Sem permissão para criar neste módulo','error'); return; }
   const scope=window.S?.permissoes?.modulos?.[modId];
   if(!window.S?.isAdmin&&scope?.escopo_configurado===true){
