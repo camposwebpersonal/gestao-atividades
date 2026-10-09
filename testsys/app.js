@@ -80,7 +80,7 @@
     activationButton.classList.toggle('activated', active);
     activationButton.setAttribute('aria-label', active ? 'Cartão final 5879 ativado' : 'Ativar cartão final 5879');
     if (activationLabel) activationLabel.textContent = active ? 'Cartão ativado' : 'Ativar cartão';
-    if (activationDetail) activationDetail.textContent = active ? 'Ativação simulada concluída' : 'Pronto para ativação';
+    if (activationDetail) activationDetail.textContent = active ? 'Ativação concluída' : 'Pronto para ativação';
     const arrow = activationButton.querySelector(':scope > b');
     if (arrow) arrow.textContent = active ? '✓' : '›';
   }
@@ -95,7 +95,7 @@
   renderActivation(readActivation());
   activationButton?.addEventListener('click', () => {
     if (readActivation()) {
-      showToast('O cartão final 5879 já está ativado nesta simulação.');
+      showToast('O cartão final 5879 já está ativado neste protótipo.');
       return;
     }
     setActivationSheet(true);
@@ -105,7 +105,7 @@
     try { localStorage.setItem('testsys-click-5879-activated', 'true'); } catch {}
     renderActivation(true);
     setActivationSheet(false);
-    showToast('Cartão final 5879 ativado com sucesso na simulação.');
+    showToast('Cartão final 5879 ativado com sucesso.');
   });
   activationSheet?.addEventListener('click', (event) => { if (event.target === activationSheet) setActivationSheet(false); });
 
