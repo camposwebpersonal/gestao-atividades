@@ -1,7 +1,7 @@
 import {supabase} from '../supabase_compat.js';
-import {bulkColumns,bulkPayloads,normalizeBulkDate} from './bulk-entry-core.js?v=2';
+import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from './bulk-entry-core.js?v=3';
 
-export {bulkColumns,bulkPayloads,normalizeBulkDate};
+export {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads};
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const state={group:null,columns:[],busy:false};
@@ -127,8 +127,17 @@ window.saveBulkEntries=async function(){
  try{
   const current=window.S.items.filter(item=>item.atividade_id===state.group.id),start=current.length?Math.max(...current.map(item=>Number(item.order_num)||0))+1:0;
   const payloads=bulkPayloads(rows,state.group,start);
-  const {error}=await supabase.from('items').insert(payloads);if(error)throw error;
-  await window.loadData();window.closeModal();window.toast(`${rows.length} lançamentos salvos de uma vez!`,'success',6000);window.openActivity(state.group.id);
+  const saved=await persistBulkPayloads(supabase,payloads);
+  button.textContent='Atualizando a tela…';
+  await window.loadData();
+  const loadedIds=new Set((window.S.items||[]).map(item=>item.id));
+  const missing=saved.filter(item=>!loadedIds.has(item.id));
+  if(missing.length){
+   window.S.items.push(...missing);
+   console.warn('Lote salvo no banco, mas não retornou na recarga; usando resposta confirmada do Supabase.',{missing:missing.length});
+  }
+  const groupId=state.group.id;
+  window.closeModal();window.toast(`${saved.length} lançamentos salvos e confirmados no banco!`,'success',6000);window.openActivity(groupId);
  }catch(error){console.error(error);window.toast('Não foi possível salvar o lote: '+(error.message||error),'error',9000);button.disabled=false;button.textContent='Salvar lançamentos';}
  finally{state.busy=false;}
 };

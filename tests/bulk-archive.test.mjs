@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {bulkColumns,bulkPayloads,normalizeBulkDate} from '../js/bulk-entry-core.js';
+import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from '../js/bulk-entry-core.js';
 import {completedArchiveEntries,renderCompletedArchive} from '../js/completed-archive.js';
 
 test('planilha inclui atendimento e campos personalizados do grupo',()=>{
@@ -31,6 +31,16 @@ test('cem linhas viram lançamentos completos com secretaria e ordem herdadas',(
  assert.equal(payloads[0].order_num,40);
  assert.equal(payloads[99].order_num,139);
  assert.deepEqual(payloads[0].extra_fields,{Localidade:'Zona rural','Tipo de serviço':['Entupido','Tampa'],Área:'Rural',solicitante:'Morador',urgencia:'amarelo',prioritario:true});
+});
+
+test('salvamento em lote só confirma depois que o banco devolve todas as linhas',async()=>{
+ const payloads=[{id:'a',description:'A'},{id:'b',description:'B'}];
+ let requestedSelect='';
+ const client={from:table=>({insert:rows=>({select:async columns=>{requestedSelect=columns;assert.equal(table,'items');assert.deepEqual(rows,payloads);return{data:rows,error:null};}})})};
+ assert.deepEqual(await persistBulkPayloads(client,payloads),payloads);
+ assert.equal(requestedSelect,'*');
+ const incomplete={from:()=>({insert:()=>({select:async()=>({data:[payloads[0]],error:null})})})};
+ await assert.rejects(()=>persistBulkPayloads(incomplete,payloads),/confirmou 1 de 2/);
 });
 
 test('arquivo inclui itens concluídos e subitens concluídos de itens ainda abertos sem duplicar filhos',()=>{

@@ -12,7 +12,7 @@ window.S={isAdmin:true,items:[],fieldTemplates:[{atividade_id:'saneamento',scope
 window.userCanGroup=()=>true;
 window.openModal=(title,sub,html)=>{document.getElementById('modal-title').textContent=title;document.getElementById('modal-sub').textContent=sub;document.getElementById('modal-body').innerHTML=html;};
 window.closeModal=()=>{};window.loadData=async()=>{};window.openActivity=()=>window.activityOpened=true;window.toast=(message)=>window.lastToast=message;
-await import('/js/bulk-entry.js?v=3');
+await import('/js/bulk-entry.js?v=4');
 const archive=await import('/js/completed-archive.js?v=1');
 window.renderArchive=()=>{document.getElementById('archive').innerHTML=archive.renderCompletedArchive({group:window.S.secs[0],items:[{id:'april',description:'Ligação de esgoto concluída',start_date:'2026-04-12',conclusion_date:'2026-05-01',responsaveis:'Equipe A'},{id:'may',description:'Rede concluída',start_date:'2026-05-03',conclusion_date:'2026-05-09'}],subitems:[],progress:()=>({pct:100}),canEdit:true});};
 window.openBulkEntry('saneamento');window.ready=true;
@@ -22,7 +22,7 @@ window.openBulkEntry('saneamento');window.ready=true;
  const browser=await chromium.launch({executablePath:'/usr/bin/google-chrome',headless:true,args:['--no-sandbox']});
  const page=await browser.newPage({viewport:{width:1440,height:900}});const errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.route(testUrl,route=>route.fulfill({contentType:'text/html',body:fixture}));
- await page.route('**/supabase_compat.js',route=>route.fulfill({contentType:'text/javascript',body:`export const supabase={from:()=>({insert:async rows=>{window.insertedRows=rows;return {error:null};}})};`}));
+ await page.route('**/supabase_compat.js',route=>route.fulfill({contentType:'text/javascript',body:`export const supabase={from:()=>({insert:rows=>({select:async()=>{window.insertedRows=rows;return {data:rows,error:null};}})})};`}));
  await page.goto(testUrl);await page.waitForFunction(()=>window.ready);
  assert.equal(await page.locator('[data-bulk-row]').count(),12);
  await page.locator('[data-row="0"][data-col="0"]').press('ArrowRight');assert.equal(await page.evaluate(()=>document.activeElement?.dataset.col),'1');

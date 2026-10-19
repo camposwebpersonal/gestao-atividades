@@ -58,3 +58,14 @@ export function bulkPayloads(rows,group,startOrder=0,now=new Date().toISOString(
   return {id:crypto.randomUUID(),atividade_id:group.id,description:row.description.trim(),observacao:row.observacao||'',responsaveis:row.responsaveis||'',secretaria_id:fixedSecretary,start_date:normalizeBulkDate(row.start_date),deadline_date:normalizeBulkDate(row.deadline_date),item_icon:'📋',item_color:'#3B82F6',concluded:0,status:'pendente',order_num:startOrder+index,extra_fields:extra,created_at:now,updated_at:now};
  });
 }
+
+export async function persistBulkPayloads(client,payloads){
+ if(!client?.from)throw new Error('Conexão com o banco indisponível.');
+ if(!Array.isArray(payloads)||!payloads.length)throw new Error('Nenhum lançamento para salvar.');
+ const {data,error}=await client.from('items').insert(payloads).select('*');
+ if(error)throw error;
+ if(!Array.isArray(data)||data.length!==payloads.length){
+  throw new Error(`O banco confirmou ${Array.isArray(data)?data.length:0} de ${payloads.length} lançamentos. Nada foi considerado concluído.`);
+ }
+ return data;
+}
