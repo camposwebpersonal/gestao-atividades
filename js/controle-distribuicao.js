@@ -56,19 +56,9 @@ function _distGetExtra(it, chave){
 }
 
 function _distNorm(s){ return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function _distMatchesBusca(it, buscaNorm){
-  if(!buscaNorm) return true;
-  const ef = it.extra_fields || {};
-  const text = _distNorm([
-    it.description || '',
-    ef['CPF do Paciente'] || '',
-    ef['Nome do Responsável'] || '',
-    ef['CPF do Responsável'] || '',
-    ef['Fórmula'] || '',
-    ef['Número do Processo'] || '',
-    ef['Telefone'] || ''
-  ].join(' '));
-  return text.includes(buscaNorm);
+function _distMatchesBusca(it, busca){
+  if(!busca) return true;
+  return window.smartSearchRecord?window.smartSearchRecord(it,busca).matched:_distNorm(JSON.stringify(it)).includes(_distNorm(busca));
 }
 function _distStats(itens){
   const total = itens.length;
@@ -88,7 +78,7 @@ function _distStats(itens){
 window.renderControleDistribuicao = function(secId){
   const sec = S.secs.find(s => s.id === secId); if (!sec) return;
   curSecId = secId;
-  const busca = _distNorm(document.getElementById('dist-busca')?.value || '');
+  const busca = document.getElementById('dist-busca')?.value || '';
   const itens = [...S.items.filter(i => i.atividade_id === secId)].sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
   const filtrados = itens.filter(it => _distMatchesBusca(it, busca));
 
@@ -366,7 +356,7 @@ window.distExportarPDF = function(secId){
   if (!window.jspdf?.jsPDF) { toast('jsPDF não carregado', 'error'); return; }
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const buscaAtiva = _distNorm(document.getElementById('dist-busca')?.value || '');
+  const buscaAtiva = document.getElementById('dist-busca')?.value || '';
   const itens = [...S.items.filter(i => i.atividade_id === secId)].filter(it => _distMatchesBusca(it, buscaAtiva)).sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
   const agora = new Date().toLocaleDateString('pt-BR');
 

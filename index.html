@@ -15,8 +15,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="js/ordenacao-visual.js?v=86"></script>
-<script src="js/controle-contas.js?v=63"></script>
-<script src="js/controle-distribuicao.js?v=62"></script>
+<script src="js/controle-contas.js?v=64"></script>
+<script src="js/controle-distribuicao.js?v=63"></script>
 <script src="js/controle-estoque.js?v=63"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
@@ -364,7 +364,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
-<link rel="stylesheet" href="css/prefeitura-shell.css?v=76">
+<link rel="stylesheet" href="css/prefeitura-shell.css?v=77">
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=2">
@@ -383,9 +383,13 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
       <button id="redo-btn" class="redo-btn" style="opacity:.3" onclick="redoLast()" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
     </div>
     <div class="spacer"></div>
-    <div class="global-search-wrap">
-      <span aria-hidden="true">⌕</span>
-      <input id="global-search" type="search" placeholder="Buscar no sistema..." aria-label="Buscar no sistema" onkeydown="if(event.key==='Enter')executarBuscaGlobal(this.value)">
+    <button class="global-search-mobile" type="button" onclick="abrirBuscaGlobalMobile()" aria-label="Abrir busca no sistema">⌕ <span>Buscar</span></button>
+    <div class="global-search-wrap" id="global-search-wrap" role="search">
+      <span class="global-search-icon" aria-hidden="true">⌕</span>
+      <input id="global-search" type="search" placeholder="Busque pessoas, demandas, contatos..." aria-label="Buscar em todo o sistema" autocomplete="off" aria-controls="global-search-panel" aria-expanded="false" oninput="pesquisarGlobal(this.value)" onfocus="pesquisarGlobal(this.value)" onkeydown="navegarBuscaGlobal(event)">
+      <kbd class="global-search-shortcut">Ctrl K</kbd>
+      <button class="global-search-clear" type="button" aria-label="Limpar busca" onclick="limparBuscaGlobal()" hidden>×</button>
+      <div id="global-search-panel" class="global-search-panel" role="listbox" aria-label="Resultados da busca" aria-live="polite" hidden></div>
     </div>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
     <button id="install-btn" class="btn-system" onclick="openInstalarModal()">📱 <span>Instalar</span></button>
@@ -412,6 +416,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
   <footer id="app-footer"><span>Prefeitura de Sertânia</span><span>Central Integrada de Gestão</span><span class="footer-year">2026</span></footer>
 </div>
 <button id="sidebar-backdrop" type="button" aria-label="Fechar menu" onclick="closeSidebar()"></button>
+<button id="global-search-backdrop" type="button" aria-label="Fechar busca" onclick="fecharBuscaGlobal()"></button>
 <div class="modal-overlay" id="modal-ov" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
     <div class="modal-head">
@@ -433,16 +438,17 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=71';
+import './js/modulos.js?v=72';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=2';
-import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=2';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=3';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=4';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
+import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -455,15 +461,56 @@ window.toggleSidebar=function(force){
   document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded',String(open));
 };
 window.closeSidebar=function(){window.toggleSidebar(false);};
-window.executarBuscaGlobal=function(valor){
-  const q=String(valor||'').trim().toLocaleLowerCase('pt-BR');
-  if(!q)return;
-  const sec=S.secs.find(s=>String(s.name||'').toLocaleLowerCase('pt-BR').includes(q));
-  if(sec){window.openActivity(sec.id);return;}
-  const item=S.items.find(i=>String(i.description||'').toLocaleLowerCase('pt-BR').includes(q));
-  if(item?.atividade_id){window.openActivity(item.atividade_id);return;}
-  toast('Nenhum lançamento encontrado para “'+valor+'”.','info');
+window.smartSearchText=searchText;window.smartSearchRecord=searchRecord;window.normalizeSearchText=normalizeSearchText;window.highlightSearchText=highlightSearchText;
+const _gsEsc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+let _globalSearchResults=[],_globalSearchActive=-1,_globalSearchTimer=0;
+function _globalSearchEntries(){
+ const entries=[],groups=new Map((S.secs||[]).filter(group=>window.userCanGroup?.(group,'acesso')!==false).map(group=>[group.id,group]));
+ for(const module of window.MODULOS||[]){if(window.userCan?.(module.id,'acesso')!==false)entries.push({type:'module',icon:module.icon||'▦',title:module.label,context:'Área do sistema',data:module,search:[module.label,module.id,module.desc]});}
+ for(const group of groups.values())entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:'Grupo de atividades',data:group,search:[group,group.name,group.observacoes,group.assunto]});
+ for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(group)entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',data:item,group,search:[item,group.name]});}
+ const itemById=new Map((S.items||[]).map(item=>[item.id,item]));
+ for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(group)entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),data:subitem,group,search:[subitem,parent?.description,group.name]});}
+ for(const contact of S.contatos||[])entries.push({type:'contact',icon:'☏',title:contact.nome||'Contato',context:[contact.cargo,contact.setor,contact.telefone].filter(Boolean).join(' · ')||'Contato',data:contact,search:contact});
+ for(const responsible of S.responsaveis||[])entries.push({type:'responsible',icon:'♙',title:responsible.name||responsible.nome||'Responsável',context:[responsible.cargo,responsible.setor,responsible.telefone].filter(Boolean).join(' · ')||'Responsável',data:responsible,search:responsible});
+ for(const secretary of S.secretarias||[])entries.push({type:'secretary',icon:'▦',title:secretary.name||secretary.nome||'Secretaria',context:'Secretaria municipal',data:secretary,search:secretary});
+ if(S.isAdmin)for(const user of S.users||[])entries.push({type:'user',icon:'♙',title:user.displayName||user.display_name||user.name||user.email||'Usuário',context:'Usuário do sistema',data:user,search:user});
+ return entries;
+}
+const _globalTypeLabel={module:'Área',group:'Grupo',item:'Item',subitem:'Lançamento',contact:'Contato',responsible:'Responsável',secretary:'Secretaria',user:'Usuário'};
+function _renderGlobalSearch(query){
+ const panel=document.getElementById('global-search-panel'),input=document.getElementById('global-search');if(!panel||!input)return;
+ const q=String(query||'').trim(),clear=document.querySelector('.global-search-clear');if(clear)clear.hidden=!q;
+ if(!q){panel.hidden=true;input.setAttribute('aria-expanded','false');_globalSearchResults=[];return;}
+ _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,30).map(entry=>({...entry.record,score:entry.match.score}));_globalSearchActive=_globalSearchResults.length?0:-1;
+ const summary=_globalSearchResults.length?`${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} mais relevante${_globalSearchResults.length===1?'':'s'}`:'Nenhum resultado';
+ panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>↑↓ navegar · Enter abrir · Esc fechar</span></div>${_globalSearchResults.map((entry,index)=>`<button type="button" class="global-search-result${index===_globalSearchActive?' active':''}" role="option" aria-selected="${index===_globalSearchActive}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span class="global-search-result-copy"><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><span class="global-search-result-type">${_globalTypeLabel[entry.type]}</span><span class="global-search-open">↗</span></button>`).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}`;
+ panel.hidden=false;input.setAttribute('aria-expanded','true');
+}
+window.pesquisarGlobal=function(value){clearTimeout(_globalSearchTimer);_globalSearchTimer=setTimeout(()=>_renderGlobalSearch(value),70);};
+window.selecionarResultadoBuscaGlobal=function(index){_globalSearchActive=index;document.querySelectorAll('.global-search-result').forEach((button,i)=>{button.classList.toggle('active',i===index);button.setAttribute('aria-selected',String(i===index));});};
+function _focusSearchTarget(id){setTimeout(()=>{const target=document.querySelector(`[data-audit-id="${CSS.escape(String(id))}"]`);if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.add('search-arrival');setTimeout(()=>target.classList.remove('search-arrival'),2400);}},260);}
+window.ativarResultadoBuscaGlobal=function(index){
+ const entry=_globalSearchResults[index];if(!entry)return;
+ window.fecharBuscaGlobal();
+ if(entry.type==='module')window.renderModulo(entry.data.id);
+ else if(['group','item','subitem'].includes(entry.type)){window.openActivity(entry.type==='group'?entry.data.id:entry.group.id);if(entry.type!=='group')_focusSearchTarget(entry.data.id);}
+ else if(entry.type==='contact'){window.setView('cont');_focusSearchTarget(entry.data.id);}
+ else if(entry.type==='responsible'){window.setView('resp');_focusSearchTarget(entry.data.id);}
+ else if(entry.type==='secretary'){window.setView('secr');_focusSearchTarget(entry.data.id);}
+ else if(entry.type==='user'){window.setView('adm');_focusSearchTarget(entry.data.id);}
 };
+window.navegarBuscaGlobal=function(event){
+ if(event.key==='Escape'){event.preventDefault();window.fecharBuscaGlobal();return;}
+ if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(!_globalSearchResults.length)return;_globalSearchActive=(_globalSearchActive+(event.key==='ArrowDown'?1:-1)+_globalSearchResults.length)%_globalSearchResults.length;window.selecionarResultadoBuscaGlobal(_globalSearchActive);document.querySelector(`[data-search-index="${_globalSearchActive}"]`)?.scrollIntoView({block:'nearest'});return;}
+ if(event.key==='Enter'){event.preventDefault();if(_globalSearchActive>=0)window.ativarResultadoBuscaGlobal(_globalSearchActive);else _renderGlobalSearch(event.currentTarget.value);}
+};
+window.executarBuscaGlobal=function(value){_renderGlobalSearch(value);if(_globalSearchResults.length)window.ativarResultadoBuscaGlobal(0);};
+window.abrirBuscaGlobalMobile=function(){document.body.classList.add('global-search-open');const input=document.getElementById('global-search');setTimeout(()=>{input?.focus();_renderGlobalSearch(input?.value);},30);};
+window.fecharBuscaGlobal=function(){document.body.classList.remove('global-search-open');const panel=document.getElementById('global-search-panel');if(panel)panel.hidden=true;document.getElementById('global-search')?.setAttribute('aria-expanded','false');};
+window.limparBuscaGlobal=function(){const input=document.getElementById('global-search');if(input){input.value='';input.focus();}_renderGlobalSearch('');};
+document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k'){event.preventDefault();if(matchMedia('(max-width:960px)').matches)window.abrirBuscaGlobalMobile();else document.getElementById('global-search')?.focus();}});
+document.addEventListener('click',event=>{if(!event.target.closest('#global-search-wrap,.global-search-mobile'))window.fecharBuscaGlobal();});
 document.getElementById('navmenu')?.addEventListener('click',event=>{
   if(event.target.closest('button')&&window.matchMedia('(max-width: 960px)').matches)window.closeSidebar();
 });
@@ -677,7 +724,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=63';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=64';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1057,10 +1104,10 @@ window.deleteChamado=async function(id){
 // ── CONTATOS ──
 window.renderContatos=function(){
   const _filtro=document.getElementById('cont-filtro')?.value||'';
-  let contatos=S.contatos;
-  if(_filtro){contatos=contatos.filter(c=>String(c.nome).toLowerCase().includes(_filtro.toLowerCase())||String(c.cargo).toLowerCase().includes(_filtro.toLowerCase())||String(c.setor).toLowerCase().includes(_filtro.toLowerCase()));}
+  let contatos=[...S.contatos];
+  if(_filtro){contatos=contatos.map(c=>({c,match:searchRecord(c,_filtro)})).filter(x=>x.match.matched).sort((a,b)=>b.match.score-a.match.score).map(x=>x.c);}
   const rows=contatos.map((c,i)=>`<tr data-audit-id="${c.id}"><td class="registry-index">${String(i+1).padStart(2,'0')}</td><td><div class="registry-primary"><span class="registry-avatar">${esc((c.nome||'?').charAt(0))}</span><strong>${esc(c.nome)}</strong></div></td><td>${esc(c.cargo||'—')}</td><td>${esc(c.setor||'—')}</td><td>${esc(c.telefone||'—')}</td><td>${esc(c.email||'—')}</td><td class="registry-actions">${S.isAdmin?`<button class="card-btn" onclick="openContatoModal('${c.id}')" title="Editar">✎</button><button class="card-btn danger" onclick="deleteContato('${c.id}')" title="Excluir">⌫</button>`:''}</td></tr>`).join('');
-  setC(_cadastroPage({icon:'☏',title:'Contatos',subtitle:'Agenda institucional do município',count:contatos.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">＋ Novo contato</button>`:''}<button class="btn-action" onclick="gerarPDFContatos()">▤ Gerar PDF</button><label class="registry-search"><span>⌕</span><input id="cont-filtro" placeholder="Buscar por nome, cargo ou setor" oninput="renderContatos()" value="${esc(_filtro)}"></label>`,head:'<th>#</th><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>E-mail</th><th>Ações</th>',rows,emptyCols:7}));
+  setC(_cadastroPage({icon:'☏',title:'Contatos',subtitle:'Agenda institucional do município',count:contatos.length,actions:`${S.isAdmin?`<button class="btn-action primary" onclick="openContatoModal()">＋ Novo contato</button>`:''}<button class="btn-action" onclick="gerarPDFContatos()">▤ Gerar PDF</button><label class="registry-search"><span>⌕</span><input id="cont-filtro" placeholder="Nome, cargo, setor, telefone, e-mail ou endereço" oninput="renderContatos()" value="${esc(_filtro)}"></label>`,head:'<th>#</th><th>Nome</th><th>Cargo</th><th>Setor</th><th>Telefone</th><th>E-mail</th><th>Ações</th>',rows,emptyCols:7}));
 };
 window.openContatoModal=function(id){
   const c=id?S.contatos.find(x=>x.id===id):null;
@@ -2339,7 +2386,7 @@ function renderAdmin(){
     const sector=S.secretarias.find(s=>s.id===u.setor_id)?.name||u.setor||'Sem setor';
     const responsible=S.responsaveis.find(r=>r.id===u.responsavel_id)?.name;
     const accesses=u.role==='admin'?'<span class="user-full-access">Acesso total</span>':modules.length?`<details class="user-access-details"><summary>${modules.length} ${modules.length===1?'módulo liberado':'módulos liberados'}</summary><div class="user-module-list">${chips}</div></details>`:'<span class="user-muted">Sem módulos liberados</span>';
-    return `<article class="user-card" data-user-search="${esc((name+' '+login+' '+(u.email_contato||'')+' '+sector).toLowerCase())}" data-user-role="${esc(u.role||'usuario')}">
+    return `<article class="user-card" data-user-search="${esc(flattenSearchValues([u,name,login,sector,responsible,modules.map(([key])=>key)]))}" data-user-role="${esc(u.role||'usuario')}">
       <div class="user-identity"><span class="user-avatar" aria-hidden="true">${esc(initial)}</span><div><h3>${esc(name)}</h3><div class="user-login">Login: <strong>${esc(login)}</strong></div>${u.email_contato?`<div class="user-contact">${esc(u.email_contato)}</div>`:''}</div></div>
       <div class="user-role-cell"><span class="user-role user-role-${['admin','gestor'].includes(u.role)?u.role:'usuario'}">${roleNames[u.role]||'Usuário'}</span><span class="user-sector">${esc(sector)}</span>${responsible?`<span class="user-sector">${esc(responsible)}</span>`:''}</div>
       <div class="user-access-cell">${accesses}</div>
@@ -2363,13 +2410,13 @@ function renderAdmin(){
   </section>`);
 }
 window.filterAdminUsers=function(){
-  const query=(document.getElementById('users-search')?.value||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const query=(document.getElementById('users-search')?.value||'').trim();
   const role=document.getElementById('users-role-filter')?.value||'';
   let count=0;
   document.querySelectorAll('.users-admin .user-card').forEach(card=>{
-    const text=card.dataset.userSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const text=card.dataset.userSearch;
     const cardRole=card.dataset.userRole==='user'?'usuario':card.dataset.userRole;
-    card.hidden=!(text.includes(query)&&(!role||cardRole===role));
+    card.hidden=!((!query||searchText(text,query).matched)&&(!role||cardRole===role));
     if(!card.hidden)count++;
   });
   document.getElementById('users-visible-count').textContent=count+' '+(count===1?'usuário':'usuários');
@@ -4786,17 +4833,19 @@ function limparFiltroBusca(){document.getElementById('bchk-filter-field').value=
 function fecharBusca(){document.getElementById('busca-overlay').style.display='none';}
 function limparBusca(){document.getElementById('busca-input').value='';document.getElementById('busca-resultados').innerHTML='';window._buscaRes=null;}
 function _norm(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function _buscaEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function executarBusca(){
-  const q=_norm(document.getElementById('busca-input').value.trim());
+  const qRaw=document.getElementById('busca-input').value.trim();
+  const q=window.normalizeSearchText(qRaw);
   const campo=document.getElementById('busca-campo').value;
   const secId=_buscaSecId;
   const S=window.S;
   const sec=S.secs.find(s=>s.id===secId);
   if(!q||!sec){document.getElementById('busca-resultados').innerHTML='<div style="color:#64748b;text-align:center;padding:20px">Digite um termo para buscar.</div>';return;}
   const items=S.items.filter(i=>i.atividade_id===secId);
-  const _match=val=>val&&_norm(String(val)).includes(q);
+  const _match=val=>val!=null&&window.smartSearchText(val,qRaw).matched;
   const _matchIt=(it)=>{
-    if(campo==='todos')return _match(it.description)||_match(it.observacao)||_match(it.responsaveis)||_match(S.secretarias.find(s=>s.id===it.secretaria_id)?.name);
+    if(campo==='todos')return window.smartSearchText([it,S.secretarias.find(s=>s.id===it.secretaria_id)?.name],qRaw).matched;
     if(campo==='nome')return _match(it.description);
     if(campo==='resp')return _match(it.responsaveis);
     if(campo==='obs')return _match(it.observacao);
@@ -4813,7 +4862,7 @@ function executarBusca(){
     if(filterVal==='(vazio)')return !ef||!String(ef).trim();
     return String(ef||'').trim()===filterVal;
   };
-  const hl=txt=>{if(!txt)return '';const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return String(txt).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])).replace(re,'<mark style="background:#f59e0b44;color:#fcd34d;border-radius:3px;padding:0 2px">$1</mark>');};
+  const hl=txt=>window.highlightSearchText(txt,qRaw);
   const chkAllSubsItem=document.getElementById('bchk-allsubs-item').checked;
   const chkShowParent=document.getElementById('bchk-show-parent').checked;
   const chkAllSubsSub=document.getElementById('bchk-allsubs-sub').checked;
@@ -4845,7 +4894,7 @@ function executarBusca(){
   // Quantitativos por campo personalizado
   const qtFields=[];
   ftSubs.forEach(t=>{const vals={};let vazio=0;results.forEach(r=>{r.displaySubs.forEach(s=>{const v=(s.extra_fields||{})[t.field_name];if(v&&String(v).trim()){const key=String(v).trim();vals[key]=(vals[key]||0)+1;}else{vazio++;}});});if(Object.keys(vals).length>0||vazio>0)qtFields.push({field:t.field_name,vals,vazio});});
-  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:13px;color:#64748b"><strong style="color:#38bdf8">${total}</strong> resultado(s) para "<strong>${q}</strong>"${filterField?' | Filtro: '+filterField+'='+filterVal:''}</div><button onclick="gerarPdfBusca()" style="padding:8px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF dos Resultados</button></div>`;
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:13px;color:#64748b"><strong style="color:#0e7490">${total}</strong> resultado(s) para “<strong>${_buscaEsc(qRaw)}</strong>”${filterField?' | Filtro: '+_buscaEsc(filterField)+'='+_buscaEsc(filterVal):''}<br><small>Busca inteligente: acentos, palavras fora de ordem e pequenas variações são aceitos.</small></div><button onclick="gerarPdfBusca()" style="padding:8px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF dos Resultados</button></div>`;
   // Stats cards
   if(sumFields.length||qtFields.length){
     html+='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';

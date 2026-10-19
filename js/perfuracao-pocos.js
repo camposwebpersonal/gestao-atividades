@@ -414,14 +414,14 @@
   };
 
   function filteredWells(){
-    const q=state.busca.trim().toLowerCase();
+    const q=state.busca.trim();
     return orderedWells(state.secId).filter(p=>{
       const st=V(p,'status_pagamento','pendente');
       if(state.status==='pendente'&&!paymentPending(p))return false;
       if(state.status==='pago'&&st!=='pago')return false;
       if(state.execucao!=='todos'&&drillingStatus(p)!==state.execucao)return false;
       if(state.perfurador!=='todos'&&p.item_id!==state.perfurador)return false;
-      if(q&&!`${wellNumber(p)} ${p.description} ${p.responsaveis} ${p.observacao} ${drillerName(p.item_id)}`.toLowerCase().includes(q))return false;
+      if(q&&!window.smartSearchText?.([wellNumber(p),p,drillerName(p.item_id)],q).matched)return false;
       return true;
     });
   }

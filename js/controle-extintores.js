@@ -1,5 +1,6 @@
 /* Controle de extintores: inventário independente, com datas e relatório institucional. */
 import { supabase } from '../supabase_compat.js';
+import { searchRecord } from './search-engine.js';
 
 (function(){
   'use strict';
@@ -13,8 +14,8 @@ import { supabase } from '../supabase_compat.js';
   const qtyText=r=>r.capacidade==null||r.capacidade===''?'—':`${Number(r.capacidade).toLocaleString('pt-BR',{maximumFractionDigits:2})} ${esc(r.unidade_capacidade||'')}`.trim();
   const activeTab=()=>state.tabs.find(t=>t.id===state.activeTab)||state.tabs[0]||null;
   const filtered=()=>state.rows.filter(r=>{
-    const q=state.search.trim().toLocaleLowerCase('pt-BR');
-    return r.aba_id===state.activeTab&&(!state.status||state.status==='todos'||r.status===state.status)&&(!q||[r.inventory_code,r.local_nome,r.local_tipo,r.endereco,r.placa,r.tipo_extintor,r.setor_responsavel,r.observacao].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q)));
+    const q=state.search.trim();
+    return r.aba_id===state.activeTab&&(!state.status||state.status==='todos'||r.status===state.status)&&(!q||searchRecord(r,q).matched);
   });
   const render=()=>{
     const root=document.getElementById('content');if(!root)return;

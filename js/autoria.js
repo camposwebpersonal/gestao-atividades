@@ -97,8 +97,8 @@ export function initAuditUI(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
  };
  window.filterAuthorship=function(){
-  const query=document.getElementById('audit-search').value.toLowerCase();
-  const records=[...(globalThis.__recordIndex?.values()||[])].filter(({record,table})=>([record.display_name,record.name,record.description,record.nome,record.created_by_name,record.updated_by_name,table].join(' ').toLowerCase()).includes(query));
+  const query=document.getElementById('audit-search').value;
+  const records=[...(globalThis.__recordIndex?.values()||[])].map(entry=>{const fallback=[entry.record.display_name,entry.record.name,entry.record.description,entry.record.nome,entry.record.created_by_name,entry.record.updated_by_name,entry.table].join(' ').toLowerCase().includes(query.toLowerCase());const match=globalThis.smartSearchRecord?globalThis.smartSearchRecord(entry.record,query,[r=>r,r=>entry.table]):{matched:fallback,score:0};return {...entry,match};}).filter(entry=>entry.match.matched).sort((a,b)=>b.match.score-a.match.score);
   const names={atividades:'Grupo',items:'Item',subitems:'Lançamento',users:'Usuário',contas:'Conta',estoque:'Estoque',requisicoes:'Requisição',contatos:'Contato',responsaveis:'Responsável',secretarias:'Secretaria'};
   document.getElementById('audit-records').innerHTML='<p class="audit-count">'+records.length+' registro(s) encontrado(s)'+(records.length>200?' · mostrando os primeiros 200; refine a busca':'')+'</p>'+records.slice(0,200).map(({table,record})=>`<article class="audit-record"><small>${esc(names[table]||table)}</small><strong>${esc(record.display_name||record.name||record.description||record.nome||record.id)}</strong><div class="record-audit">${auditLabel(record)}</div></article>`).join('')+(records.length?'':'<p>Nenhum registro encontrado.</p>');
  };

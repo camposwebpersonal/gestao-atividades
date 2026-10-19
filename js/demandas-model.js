@@ -16,5 +16,7 @@ export function reorderDemand(ids,source,target,after=false){
  const next=ids.filter(id=>id!==source);next.splice(next.indexOf(target)+(after?1:0),0,source);return next;
 }
 export function demandMatches(group,query){
- return normalizeDemand([group.name,group.assunto,group.observacoes,group.responsaveis].join(' ')).includes(normalizeDemand(query).trim());
+ if(globalThis.smartSearchRecord)return globalThis.smartSearchRecord(group,query,[g=>g.name,g=>g.assunto,g=>g.observacoes,g=>g.responsaveis,g=>g.extra_fields]).matched;
+ const text=normalizeDemand([group.name,group.assunto,group.observacoes,group.responsaveis,JSON.stringify(group.extra_fields||{})].join(' '));
+ return normalizeDemand(query).trim().split(/\s+/).filter(Boolean).every(token=>text.includes(token));
 }

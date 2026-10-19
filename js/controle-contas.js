@@ -28,7 +28,8 @@ function _ccLocalMatchesBusca(item, local, buscaTokens, localContas){
   const obsTodas = (localContas || []).map(c=>c.observacao||'');
   const partesBusca = [item?.description, local?.description, ...Object.values(efLocal), ...obsTodas];
   const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
-  return buscaTokens.every(tok => searchable.includes(tok));
+  const rawQuery=buscaTokens.join(' ');
+  return window.smartSearchText?window.smartSearchText(partesBusca,rawQuery).matched:buscaTokens.every(tok => searchable.includes(tok));
 }
 function _ccTokenHit(text, tokens){
   if(!tokens || !tokens.length) return false;
