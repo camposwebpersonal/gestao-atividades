@@ -368,7 +368,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=2">
-<link rel="stylesheet" href="css/bulk-archive.css?v=3">
+<link rel="stylesheet" href="css/bulk-archive.css?v=4">
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -445,7 +445,7 @@ import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=3';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=4';
+import './js/bulk-entry.js?v=5';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
@@ -724,7 +724,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=64';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=65';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1899,13 +1899,13 @@ window.excluirSelecionados=async function(secId){
 
 // ── MODAL ──
 window.openModal=function(title,sub,html){
-  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box');
+  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-body').innerHTML=html;
   document.getElementById('modal-ov').style.display='flex';
 }
-window.closeModal=function(){document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box');_pRT={};};
+window.closeModal=function(){const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');_pRT={};};
 
 // ── RESPONSÁVEIS HELPERS ──
 function _respOptions(selectedName){
