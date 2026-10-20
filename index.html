@@ -438,7 +438,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
-import './js/modulos.js?v=72';
+import './js/modulos.js?v=73';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=2';
@@ -724,7 +724,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=65';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=66';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -3564,12 +3564,12 @@ window.saveFieldTpl=async function(actId,scope,nameEl,typeEl){
   if(fieldTypeHasOptions(ftype)){const oel=document.getElementById('ftpl-opts-'+actId+'-'+scope);opts=(oel?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);if(!opts.length){toast('Adicione ao menos uma opção para este campo','error');return;}if(new Set(opts).size!==opts.length){toast('Há opções repetidas neste campo','error');return;}}
   const ord=Math.max(-1,...getFieldTpls(actId,scope).map(t=>Number(t.order_num)||0))+1;
   await addDoc(collection(db,'fieldTemplates'),{atividade_id:actId,scope,field_name:name,field_type:ftype,options:opts,order_num:ord,created_at:serverTimestamp()});
-  await loadData();openSecModal(actId);
+  await loadData();if(!window.reopenFieldTemplateHost?.(actId))openSecModal(actId);
 };
 window.delFieldTpl=async function(id,actId){
   if(!confirm('Remover este campo?'))return;
   await deleteDoc(doc(db,'fieldTemplates',id));
-  await loadData();openSecModal(actId);
+  await loadData();if(!window.reopenFieldTemplateHost?.(actId))openSecModal(actId);
 };
 const fieldTypeLabels={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (combobox)',checkboxes:'Múltipla escolha',radio:'Escolha única'};
 window.getFieldTpls=function(actId,scope){return S.fieldTemplates.filter(t=>t.atividade_id===actId&&t.scope===scope).sort((a,b)=>(a.order_num||0)-(b.order_num||0));};

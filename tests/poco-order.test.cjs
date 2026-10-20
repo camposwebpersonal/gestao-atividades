@@ -52,11 +52,23 @@ test('falha de gravação é informada e não simula sucesso; sem permissão nã
 });
 test('novos poços entram no fim e editar a data não muda a ordem escolhida',async()=>{
  const a=app();a.ctx.renderPocos('s');await settle();
+ a.S.fieldTemplates=[{id:'prof',atividade_id:'s',scope:'subitem',field_name:'Profundidade',field_type:'number',order_num:0}];
+ a.nodes['pw-custom-fields']={querySelectorAll:selector=>selector==='[data-pw-ef-input]'?[{dataset:{pwEfKey:'Profundidade'},value:'180'}]:[]};
  const fields={'pw-local':'novo local','pw-data':'2020-01-01','pw-status':'pendente','pw-status-perfuracao':'executada','pw-perfurador':'d','pw-representante':'maria','pw-obs':'observação','pw-valor':'12'};
  for(const [id,value] of Object.entries(fields))a.nodes[id]={value};
  a.ctx.collection=()=>({});a.ctx.addDoc=async(ref,payload)=>a.stored.push({id:'NEW',...payload});a.ctx.closeModal=()=>{};
  await a.ctx.savePoco('');assert.deepEqual(locals(a.nodes.content.innerHTML),['ANTIGO','EXECUTADO','PAGO','SOLICITADO','NOVO LOCAL']);
  assert.equal(a.stored.find(p=>p.id==='NEW').numero,'POÇO 5');assert.equal(a.stored.find(p=>p.id==='NEW').responsaveis,'MARIA');
+ assert.equal(a.stored.find(p=>p.id==='NEW').extra_fields.Profundidade,'180');assert.match(a.nodes.content.innerHTML,/Campos dos poços/);assert.match(a.nodes.content.innerHTML,/Profundidade/);assert.match(a.nodes.content.innerHTML,/>180</);
  await a.ctx.savePoco('EXECUTADO');assert.deepEqual(a.S.subitems.slice().sort((x,y)=>x.poco_order-y.poco_order).map(p=>p.id),['ANTIGO','EXECUTADO','PAGO','SOLICITADO','NEW']);
- a.nodes['pw-data'].closest=()=>null;let modal='';a.ctx.openModal=(title,desc,html)=>{modal=html;};a.ctx.openPocoModal('NEW');assert.match(modal,/id="pw-numero" value="POÇO 5" readonly/);
+ a.nodes['pw-data'].closest=()=>null;let modal='';a.ctx.openModal=(title,desc,html)=>{modal=title+' '+html;};a.ctx.openPocoModal('NEW');assert.match(modal,/id="pw-numero" value="POÇO 5" readonly/);
+ assert.match(modal,/Campos personalizados/);assert.match(modal,/data-pw-ef-key="Profundidade" type="number" value="180"/);
+ a.ctx.renderFieldTplList=()=>'<div>Profundidade</div>';a.ctx.openPocoFieldsConfig();assert.match(modal,/Campos personalizados dos poços/);assert.match(modal,/saveFieldTpl\('s','subitem'/);assert.match(modal,/Múltipla escolha/);
+});
+
+test('PDF inclui uma seção legível para campos personalizados preenchidos',async()=>{
+ const a=app();a.S.fieldTemplates=[{id:'data',atividade_id:'s',scope:'subitem',field_name:'Data da vistoria',field_type:'date',order_num:0},{id:'solo',atividade_id:'s',scope:'subitem',field_name:'Tipo de solo',field_type:'checkboxes',order_num:1}];
+ a.S.subitems[0].extra_fields['Data da vistoria']='2026-10-20';a.S.subitems[0].extra_fields['Tipo de solo']=['ARENOSO','ROCHOSO'];
+ a.ctx.renderPocos('s');await settle();assert.match(a.nodes.content.innerHTML,/Data da vistoria/);assert.match(a.nodes.content.innerHTML,/20\/10\/2026/);assert.match(a.nodes.content.innerHTML,/ARENOSO, ROCHOSO/);
+ await a.ctx.gerarPdfPocos('s',{incluirFotos:false});assert.equal(a.tables.length,3);assert.deepEqual(Array.from(a.tables[2].head[0]),['Poço','Localidade','Informações personalizadas']);assert.match(a.tables[2].body[0][2],/Data da vistoria: 20\/10\/2026/);assert.match(a.tables[2].body[0][2],/Tipo de solo: ARENOSO, ROCHOSO/);
 });
