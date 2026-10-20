@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=3';
 import {supabase} from '../supabase_compat.js';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
-import './perfuracao-pocos.js?v=92';
+import './perfuracao-pocos.js?v=93';
 import './controle-extintores.js?v=3';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */

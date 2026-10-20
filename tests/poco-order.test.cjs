@@ -72,3 +72,15 @@ test('PDF inclui uma seção legível para campos personalizados preenchidos',as
  a.ctx.renderPocos('s');await settle();assert.match(a.nodes.content.innerHTML,/Data da vistoria/);assert.match(a.nodes.content.innerHTML,/20\/10\/2026/);assert.match(a.nodes.content.innerHTML,/ARENOSO, ROCHOSO/);
  await a.ctx.gerarPdfPocos('s',{incluirFotos:false});assert.equal(a.tables.length,3);assert.deepEqual(Array.from(a.tables[2].head[0]),['Poço','Localidade','Informações personalizadas']);assert.match(a.tables[2].body[0][2],/Data da vistoria: 20\/10\/2026/);assert.match(a.tables[2].body[0][2],/Tipo de solo: ARENOSO, ROCHOSO/);
 });
+
+test('cria qualquer quantidade de cópias, preserva dados e renumera no final',async()=>{
+ const a=app();a.S.subitems[2].extra_fields={...a.S.subitems[2].extra_fields,Profundidade:'180',imagens:['https://img.test/poco.jpg'],contatos_responsavel:[{tipo:'telefone',valor:'(87) 99999-9999'}]};a.stored[2]=JSON.parse(JSON.stringify(a.S.subitems[2]));
+ a.ctx.renderPocos('s');await settle();let modal='';a.ctx.openModal=(title,desc,html)=>{modal=title+' '+html;};a.ctx.openPocoDuplicate('PAGO');assert.match(modal,/Quantidade de novas cópias/);assert.match(modal,/\+10/);assert.match(a.nodes.content.innerHTML,/Criar cópias/);
+ a.nodes['pw-copy-count']={value:'3',focus(){}};a.nodes['pw-copy-save']={disabled:false,textContent:''};let nextId=0;a.ctx.collection=()=>({});a.ctx.addDoc=async(ref,payload)=>{const row={id:'COPY'+(++nextId),...JSON.parse(JSON.stringify(payload))};a.stored.push(row);return{id:row.id};};a.ctx.deleteDoc=async ref=>{a.stored.splice(a.stored.findIndex(p=>p.id===ref.id),1);};a.ctx.closeModal=()=>{};
+ await a.ctx.duplicatePoco('PAGO');assert.equal(a.stored.length,7);const copies=a.stored.filter(p=>p.id.startsWith('COPY'));assert.equal(copies.length,3);assert.deepEqual(copies.map(p=>p.extra_fields.numero),['POÇO 5','POÇO 6','POÇO 7']);assert.ok(copies.every(p=>p.description==='PAGO'&&p.extra_fields.Profundidade==='180'&&p.extra_fields.imagens[0]==='https://img.test/poco.jpg'));assert.equal(a.stored.filter(p=>p.id==='PAGO').length,1);
+});
+
+test('falha ao copiar desfaz os registros parciais e informa sem simular sucesso',async()=>{
+ const a=app();a.ctx.renderPocos('s');await settle();a.nodes['pw-copy-count']={value:'3',focus(){}};a.nodes['pw-copy-save']={disabled:false,textContent:''};a.ctx.collection=()=>({});let call=0;a.ctx.addDoc=async(ref,payload)=>{call++;if(call===2)throw Error('Falha simulada');const row={id:'PARTIAL'+call,...payload};a.stored.push(row);return{id:row.id};};a.ctx.deleteDoc=async ref=>{a.stored.splice(a.stored.findIndex(p=>p.id===ref.id),1);};
+ await a.ctx.duplicatePoco('PAGO');assert.equal(a.stored.length,4);assert.equal(a.stored.some(p=>p.id.startsWith('PARTIAL')),false);assert.match(a.messages.at(-1)[0],/Nenhuma cópia parcial foi mantida/);
+});
