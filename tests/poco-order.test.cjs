@@ -62,7 +62,7 @@ test('novos poços entram no fim e editar a data não muda a ordem escolhida',as
  assert.equal(a.stored.find(p=>p.id==='NEW').extra_fields.Profundidade,'180');assert.match(a.nodes.content.innerHTML,/Campos dos poços/);assert.match(a.nodes.content.innerHTML,/Profundidade/);assert.match(a.nodes.content.innerHTML,/>180</);
  await a.ctx.savePoco('EXECUTADO');assert.deepEqual(a.S.subitems.slice().sort((x,y)=>x.poco_order-y.poco_order).map(p=>p.id),['ANTIGO','EXECUTADO','PAGO','SOLICITADO','NEW']);
  a.nodes['pw-data'].closest=()=>null;let modal='';a.ctx.openModal=(title,desc,html)=>{modal=title+' '+html;};a.ctx.openPocoModal('NEW');assert.match(modal,/id="pw-numero" value="POÇO 5" readonly/);
- assert.match(modal,/Campos personalizados/);assert.match(modal,/data-pw-ef-key="Profundidade" type="number" value="180"/);
+ assert.doesNotMatch(modal,/Informações adicionais configuradas|🗂️ Campos personalizados/);assert.match(modal,/data-pw-ef-key="Profundidade" type="number" value="180"/);
  a.ctx.renderFieldTplList=()=>'<div>Profundidade</div>';a.ctx.openPocoFieldsConfig();assert.match(modal,/Campos personalizados dos poços/);assert.match(modal,/saveFieldTpl\('s','subitem'/);assert.match(modal,/Múltipla escolha/);
 });
 
