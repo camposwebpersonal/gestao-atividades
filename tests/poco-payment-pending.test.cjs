@@ -30,6 +30,11 @@ test('ordenação visual prioriza pagos, executados e solicitados, com fotos pri
  const order=[...a.nodes.content.innerHTML.matchAll(/class="pw-local">(.*?)<\/div>/g)].map(match=>match[1]);assert.deepEqual(order,['PAGO','ANTIGO','EXECUTADO','SOLICITADO COM FOTO','SOLICITADO']);assert.match(a.nodes.content.innerHTML,/Ordem de exibição/);assert.match(a.nodes.content.innerHTML,/Pagos → executados → solicitados/);assert.doesNotMatch(a.nodes.content.innerHTML,/class="pw-drag-handle"/);
 });
 
+test('ordem remota prevalece e uma nova escolha é salva no Supabase',async()=>{
+ const a=app();a.ctx.S.isAdmin=true;a.ctx.S.secs[0].extra_fields={pocos_ordem_exibicao:'manual'};const writes=[];a.ctx.db={};a.ctx.doc=(db,collection,id)=>({collection,id});a.ctx.serverTimestamp=()=> 'NOW';a.ctx.updateDoc=async(ref,payload)=>{writes.push({ref,payload});};a.ctx.renderPocos('s');assert.match(a.nodes.content.innerHTML,/value="manual" selected/);
+ const saved=await a.ctx.pocoFilter('ordem','prioridade'),write=writes.find(entry=>entry.ref.collection==='secretariats');assert.equal(saved,true);assert.equal(write.ref.id,'s');assert.equal(write.payload.pocos_ordem_exibicao,'prioridade');assert.equal(write.payload.updated_at,'NOW');assert.equal(a.ctx.S.secs[0].extra_fields.pocos_ordem_exibicao,'prioridade');assert.match(a.messages.at(-1)[0],/salva no Supabase/);
+});
+
 test('opções do PDF oferecem filtro de pagamento e checkbox para cada perfuração',()=>{
  const a=app();a.ctx.renderPocos('s');let modal='';a.ctx.openModal=(title,description,html)=>{modal=title+' '+description+' '+html;};a.ctx.openPocoPdfOptions();
  assert.match(modal,/Somente pagamentos pendentes/);assert.match(modal,/Somente pagamentos realizados/);assert.match(modal,/Solicitações sem pagamento aplicável/);assert.match(modal,/Selecionar exibidas/);assert.equal((modal.match(/data-pw-pdf-well/g)||[]).length,4);assert.match(modal,/POÇO 1/);assert.match(modal,/PAGAMENTO PENDENTE/);
