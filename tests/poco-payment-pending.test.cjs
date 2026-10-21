@@ -38,11 +38,12 @@ test('ordem remota prevalece e uma nova escolha é salva no Supabase',async()=>{
 test('opções do PDF oferecem filtro de pagamento e checkbox para cada perfuração',()=>{
  const a=app();a.ctx.renderPocos('s');let modal='';a.ctx.openModal=(title,description,html)=>{modal=title+' '+description+' '+html;};a.ctx.openPocoPdfOptions();
  assert.match(modal,/Somente pagamentos pendentes/);assert.match(modal,/Somente pagamentos realizados/);assert.match(modal,/Solicitações sem pagamento aplicável/);assert.match(modal,/Selecionar exibidas/);assert.equal((modal.match(/data-pw-pdf-well/g)||[]).length,4);assert.match(modal,/POÇO 1/);assert.match(modal,/PAGAMENTO PENDENTE/);
+ const positions=['PAGO','EXECUTADO','ANTIGO','SOLICITADO'].map(name=>modal.indexOf(`· ${name}<\/b>`));assert.ok(positions.every(position=>position>=0));assert.ok(positions[0]<positions[1]&&positions[0]<positions[2]&&positions[1]<positions[3]&&positions[2]<positions[3]);assert.match(modal,/seguem exatamente a ordem de exibição/);
 });
 
-test('PDF contém somente as perfurações marcadas, independentemente do filtro da tela',async()=>{
- const a=app();a.ctx.renderPocos('s');a.ctx.pocoFilter('status','pago');await a.ctx.gerarPdfPocos(null,{incluirFotos:false,wellIds:['EXECUTADO','PAGO']});
- assert.equal(a.tables.length,2);const descriptions=Array.from(a.tables[0].body,row=>row[1]);assert.deepEqual(descriptions.sort(),['EXECUTADO','PAGO']);assert.equal(descriptions.includes('SOLICITADO'),false);assert.equal(descriptions.includes('ANTIGO'),false);
+test('PDF contém somente as perfurações marcadas e na mesma ordem do seletor',async()=>{
+ const a=app();a.ctx.renderPocos('s');a.ctx.pocoFilter('status','pago');await a.ctx.gerarPdfPocos(null,{incluirFotos:false,wellIds:['PAGO','EXECUTADO']});
+ assert.equal(a.tables.length,2);const descriptions=Array.from(a.tables[0].body,row=>row[1]);assert.deepEqual(descriptions,['PAGO','EXECUTADO']);assert.equal(descriptions.includes('SOLICITADO'),false);assert.equal(descriptions.includes('ANTIGO'),false);
 });
 
 test('confirmação exige seleção e envia exatamente os IDs marcados',()=>{

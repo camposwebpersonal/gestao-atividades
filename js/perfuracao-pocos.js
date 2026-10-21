@@ -449,9 +449,18 @@
     if(target)return window.pocoReorder(id,target.id,direction>0);
   };
 
+  function displayOrderedWells(rows){
+    if(state.ordem!=='prioridade')return rows;
+    const rank=p=>V(p,'status_pagamento')==='pago'?0:drillingStatus(p)==='executada'?1:2;
+    return rows.map((p,index)=>({p,index})).sort((a,b)=>{
+      const ar=rank(a.p),br=rank(b.p);if(ar!==br)return ar-br;
+      if(ar>0){const ai=imageList(a.p).length?0:1,bi=imageList(b.p).length?0:1;if(ai!==bi)return ai-bi;}
+      return a.index-b.index;
+    }).map(entry=>entry.p);
+  }
+
   function filteredWells(){
-    const q=state.busca.trim();
-    const rows=orderedWells(state.secId).filter(p=>{
+    const q=state.busca.trim(),rows=orderedWells(state.secId).filter(p=>{
       const st=V(p,'status_pagamento','pendente');
       if(state.status==='pendente'&&!paymentPending(p))return false;
       if(state.status==='pago'&&st!=='pago')return false;
@@ -460,13 +469,7 @@
       if(q&&!window.smartSearchText?.([wellNumber(p),p,drillerName(p.item_id)],q).matched)return false;
       return true;
     });
-    if(state.ordem!=='prioridade')return rows;
-    const rank=p=>V(p,'status_pagamento')==='pago'?0:drillingStatus(p)==='executada'?1:2;
-    return rows.map((p,index)=>({p,index})).sort((a,b)=>{
-      const ar=rank(a.p),br=rank(b.p);if(ar!==br)return ar-br;
-      if(ar>0){const ai=imageList(a.p).length?0:1,bi=imageList(b.p).length?0:1;if(ai!==bi)return ai-bi;}
-      return a.index-b.index;
-    }).map(entry=>entry.p);
+    return displayOrderedWells(rows);
   }
 
   window.renderPocos=function(secId){
@@ -675,10 +678,10 @@
 
   window.openPocoPdfOptions=function(){
     if(pdfBusy){window.toast('O relatório já está sendo gerado. Aguarde a conclusão.','info',5000);return;}
-    const wells=orderedWells(state.secId);if(!wells.length){window.toast('Não há perfurações cadastradas para gerar o relatório.','error');return;}
+    const wells=displayOrderedWells(orderedWells(state.secId));if(!wells.length){window.toast('Não há perfurações cadastradas para gerar o relatório.','error');return;}
     const initial=['pendente','pago'].includes(state.status)?state.status:'todos';
     const rows=wells.map(p=>{const payment=V(p,'status_pagamento')==='pago'?'pago':paymentPending(p)?'pendente':'solicitada',visible=initial==='todos'||initial===payment;return `<label class="pw-pdf-well" data-pw-pdf-row data-pw-pdf-status="${payment}" ${visible?'':'hidden'}><input type="checkbox" data-pw-pdf-well value="${esc(p.id)}" ${visible?'checked':''} onchange="pocoPdfUpdateCount()"><span><b>${esc(wellNumber(p))} · ${esc(p.description||'Local não informado')}</b><small>${dateBR(p.start_date)} · ${esc(drillerName(p.item_id))}</small></span><span class="pw-pdf-pay ${payment}">${payment==='pago'?'PAGO':payment==='pendente'?'PAGAMENTO PENDENTE':'SOLICITADA'}</span></label>`;}).join('');
-    window.openModal('📄 Gerar relatório de perfurações','Filtre pelo pagamento e marque exatamente quais perfurações devem aparecer.',`<label class="pw-option-card"><input type="checkbox" id="pw-pdf-photos" checked><span><b>Incluir relatório fotográfico</b><small>Somente as fotos das perfurações selecionadas serão incluídas.</small></span></label><div class="pw-pdf-filter"><label>Status de pagamento<select id="pw-pdf-status" onchange="pocoPdfSetStatus(this.value)"><option value="todos" ${initial==='todos'?'selected':''}>Todos os lançamentos</option><option value="pendente" ${initial==='pendente'?'selected':''}>Somente pagamentos pendentes</option><option value="pago" ${initial==='pago'?'selected':''}>Somente pagamentos realizados</option><option value="solicitada">Solicitações sem pagamento aplicável</option></select></label><div class="pw-pdf-tools"><button type="button" class="pw-mini" onclick="pocoPdfToggleVisible(true)">✓ Selecionar exibidas</button><button type="button" class="pw-mini" onclick="pocoPdfToggleVisible(false)">Limpar seleção</button></div></div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px"><b style="color:#344861;font-size:12px">Escolha as perfurações</b><span id="pw-pdf-count" class="pw-pdf-count">0 selecionadas</span></div><div class="pw-pdf-wells">${rows}</div><div style="margin-top:9px;color:#64748b;font-size:11px">O PDF respeitará esta seleção e a ordem atual dos poços.</div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="confirmarPdfPocos()">📄 Gerar PDF selecionado</button></div>`);
+    window.openModal('📄 Gerar relatório de perfurações','Filtre pelo pagamento e marque exatamente quais perfurações devem aparecer.',`<label class="pw-option-card"><input type="checkbox" id="pw-pdf-photos" checked><span><b>Incluir relatório fotográfico</b><small>Somente as fotos das perfurações selecionadas serão incluídas.</small></span></label><div class="pw-pdf-filter"><label>Status de pagamento<select id="pw-pdf-status" onchange="pocoPdfSetStatus(this.value)"><option value="todos" ${initial==='todos'?'selected':''}>Todos os lançamentos</option><option value="pendente" ${initial==='pendente'?'selected':''}>Somente pagamentos pendentes</option><option value="pago" ${initial==='pago'?'selected':''}>Somente pagamentos realizados</option><option value="solicitada">Solicitações sem pagamento aplicável</option></select></label><div class="pw-pdf-tools"><button type="button" class="pw-mini" onclick="pocoPdfToggleVisible(true)">✓ Selecionar exibidas</button><button type="button" class="pw-mini" onclick="pocoPdfToggleVisible(false)">Limpar seleção</button></div></div><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:7px"><b style="color:#344861;font-size:12px">Escolha as perfurações</b><span id="pw-pdf-count" class="pw-pdf-count">0 selecionadas</span></div><div class="pw-pdf-wells">${rows}</div><div style="margin-top:9px;color:#64748b;font-size:11px">A seleção e o PDF seguem exatamente a ordem de exibição escolhida na tela principal.</div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="confirmarPdfPocos()">📄 Gerar PDF selecionado</button></div>`);
     window.pocoPdfUpdateCount();
   };
 
@@ -703,7 +706,7 @@
   window.gerarPdfPocos=async function(secId,options={}){
     if(secId)state.secId=secId;
     if(!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}
-    const selectedIds=Array.isArray(options.wellIds)?new Set(options.wellIds.map(String)):null,wells=selectedIds?orderedWells(state.secId).filter(p=>selectedIds.has(String(p.id))):filteredWells();if(!wells.length){window.toast(selectedIds?'Nenhuma perfuração selecionada foi encontrada.':'Não há perfurações nos filtros atuais','error');return;}
+    const selectedIds=Array.isArray(options.wellIds)?options.wellIds.map(String):null,byId=selectedIds?new Map(orderedWells(state.secId).map(p=>[String(p.id),p])):null,wells=selectedIds?selectedIds.map(id=>byId.get(id)).filter(Boolean):filteredWells();if(!wells.length){window.toast(selectedIds?'Nenhuma perfuração selecionada foi encontrada.':'Não há perfurações nos filtros atuais','error');return;}
     if(pdfBusy){window.toast('O relatório já está sendo gerado. Aguarde a conclusão.','info',5000);return;}
     pdfBusy=true;
     const pdfButton=document.getElementById('pw-pdf-btn');if(pdfButton){pdfButton.disabled=true;pdfButton.textContent='⏳ Gerando PDF...';}
