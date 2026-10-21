@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>Teste offline store</title><pre id="result">executando</pre>
+<script type="module">
+import {setOfflineUser,cacheRows,getCachedRows,getCachedRow,deleteCachedRow,enqueueMutation,listMutations,removeMutation} from '../js/offline-store.js';
+const result=document.getElementById('result');
+try{
+  const user='browser-test-'+crypto.randomUUID(),table='offline_test';
+  setOfflineUser(user);
+  await cacheRows(table,[{id:'a',name:'Primeiro'},{id:'b',name:'Segundo'}],{replace:true});
+  if((await getCachedRows(table)).length!==2)throw new Error('cacheRows/getCachedRows falhou');
+  if((await getCachedRow(table,'a'))?.name!=='Primeiro')throw new Error('getCachedRow falhou');
+  await enqueueMutation({type:'update',table,id:'a',payload:{name:'Alterado'}});
+  const queue=await listMutations();if(queue.length!==1||queue[0].id!=='a')throw new Error('fila persistente falhou');
+  await removeMutation(queue[0].queueId);if((await listMutations()).length)throw new Error('remoção da fila falhou');
+  await deleteCachedRow(table,'a');if(await getCachedRow(table,'a'))throw new Error('exclusão local falhou');
+  result.textContent='PASS';document.title='PASS';
+}catch(error){result.textContent='FAIL: '+error.message;document.title='FAIL';}
+</script>

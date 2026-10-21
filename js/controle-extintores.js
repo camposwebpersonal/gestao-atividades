@@ -1,5 +1,5 @@
 /* Controle de extintores: inventário independente, com datas e relatório institucional. */
-import { supabase } from '../supabase_compat.js';
+import { supabase, collection, doc, getDocs, query, orderBy, addDoc, setDoc, deleteDoc } from '../supabase_compat.js';
 import { searchRecord } from './search-engine.js';
 
 (function(){
@@ -33,7 +33,7 @@ import { searchRecord } from './search-engine.js';
   };
   async function load(){
     state.loading=true;
-    try{const [extintores,abas]=await Promise.all([supabase.from('extintores').select('*').order('local_nome').order('inventory_code'),supabase.from('extintor_abas').select('*').order('order_num').order('nome')]);if(extintores.error)throw extintores.error;if(abas.error)throw abas.error;state.rows=extintores.data||[];state.tabs=abas.data||[];if(!state.tabs.some(t=>t.id===state.activeTab))state.activeTab=state.tabs[0]?.id||'';window.extintoresCachedCount=state.rows.length;render();}
+    try{const [extintores,abas]=await Promise.all([getDocs(query(collection(supabase,'extintores'),orderBy('local_nome'),orderBy('inventory_code'))),getDocs(query(collection(supabase,'extintor_abas'),orderBy('order_num'),orderBy('nome')))]);state.rows=extintores.docs.map(d=>({id:d.id,...d.data()}));state.tabs=abas.docs.map(d=>({id:d.id,...d.data()}));if(!state.tabs.some(t=>t.id===state.activeTab))state.activeTab=state.tabs[0]?.id||'';window.extintoresCachedCount=state.rows.length;render();}
     catch(e){console.error(e);document.getElementById('content').innerHTML=`<div class="empty">Não foi possível carregar o controle de extintores.<br><small>${esc(e.message||e)}</small></div>`;}
     finally{state.loading=false;}
   }
@@ -48,7 +48,7 @@ import { searchRecord } from './search-engine.js';
   window.salvarAbaExtintores=async function(){
     const nome=field('exa-nome'),setor=field('exa-setor');if(!nome){window.toast('Informe o nome da nova aba.','error');return;}
     const id='aba-'+nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'-'+Date.now().toString(36);
-    try{const {error}=await supabase.from('extintor_abas').insert({id,nome,setor_responsavel:setor||null,order_num:(state.tabs.reduce((m,t)=>Math.max(m,Number(t.order_num)||0),0)+1)});if(error)throw error;state.activeTab=id;window.closeModal();window.toast('Aba criada. Os próximos extintores podem ser lançados nela.','success');await load();}catch(e){window.toast('Não foi possível criar a aba: '+(e.message||e),'error');}
+    try{await addDoc(collection(supabase,'extintor_abas'),{id,nome,setor_responsavel:setor||null,order_num:(state.tabs.reduce((m,t)=>Math.max(m,Number(t.order_num)||0),0)+1)});state.activeTab=id;window.closeModal();window.toast('Aba criada. Os próximos extintores podem ser lançados nela.','success');await load();}catch(e){window.toast('Não foi possível criar a aba: '+(e.message||e),'error');}
   };
   window.openExtintorModal=function(id=''){
     if(!canEdit())return;
@@ -63,11 +63,11 @@ import { searchRecord } from './search-engine.js';
     const capacity=field('ex-capacidade'),year=field('ex-ano');
     const existing=state.rows.find(x=>x.id===id);
     const payload={id:id||crypto.randomUUID(),source_key:existing?.source_key||null,aba_id:field('ex-aba'),inventory_code:codigo,registro_tipo:'extintor',categoria:existing?.categoria||'manual',setor_responsavel:field('ex-setor'),local_nome:local,local_tipo:field('ex-local-tipo'),endereco:field('ex-endereco'),placa:field('ex-placa').toLocaleUpperCase('pt-BR')||null,veiculo_modelo:existing?.veiculo_modelo||null,capacidade_passageiros:existing?.capacidade_passageiros||null,ano_referencia:year?Number(year):null,tipo_extintor:tipo,agente_extintor:field('ex-agente'),capacidade:capacity?Number(capacity):null,unidade_capacidade:field('ex-unidade'),data_inicial:field('ex-inicial')||null,data_vencimento:field('ex-vencimento')||null,status:field('ex-status'),observacao:field('ex-obs')||null,documento_origem:existing?.documento_origem||'Cadastro manual'};
-    try{const {error}=await supabase.from('extintores').upsert(payload);if(error)throw error;window.closeModal();window.toast('Extintor salvo com sucesso!','success');await load();}catch(e){window.toast('Não foi possível salvar: '+(e.message||e),'error');}
+    try{await setDoc(doc(supabase,'extintores',payload.id),payload);window.closeModal();window.toast(navigator.onLine?'Extintor salvo com sucesso!':'Extintor salvo neste aparelho e aguardando sincronização.','success');await load();}catch(e){window.toast('Não foi possível salvar: '+(e.message||e),'error');}
   };
   window.excluirExtintor=async function(id){
     const r=state.rows.find(x=>x.id===id);if(!r||!confirm(`Excluir o extintor ${r.inventory_code||r.local_nome}? Esta ação não pode ser desfeita.`))return;
-    try{const {error}=await supabase.from('extintores').delete().eq('id',id);if(error)throw error;window.toast('Extintor excluído.','success');await load();}catch(e){window.toast('Não foi possível excluir: '+(e.message||e),'error');}
+    try{await deleteDoc(doc(supabase,'extintores',id));window.toast(navigator.onLine?'Extintor excluído.':'Exclusão salva e aguardando sincronização.','success');await load();}catch(e){window.toast('Não foi possível excluir: '+(e.message||e),'error');}
   };
   window.gerarPdfExtintores=async function(){
     if(!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}

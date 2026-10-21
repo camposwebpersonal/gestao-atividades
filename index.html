@@ -32,6 +32,14 @@ img,iframe,video{max-width:100%;height:auto}
 .user-chip{display:flex;align-items:center;gap:8px;background:#0e1729;border:1px solid var(--border);border-radius:20px;padding:5px 14px 5px 8px;flex-shrink:0}
 .user-chip .av{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
 .user-chip span{font-size:12px;font-weight:600;color:#94a3b8}
+.offline-chip{display:flex;align-items:center;gap:6px;border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.1);color:#6ee7b7;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap}
+.offline-chip::before{content:'';width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.14)}
+.offline-chip.offline{color:#fde68a;border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.12)}
+.offline-chip.offline::before{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.14)}
+.offline-chip.syncing::before{background:#38bdf8;animation:pulseOffline 1s infinite}
+.offline-chip.error{color:#fecaca;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.12)}
+.offline-chip.error::before{background:#ef4444}
+@keyframes pulseOffline{50%{opacity:.3;transform:scale(.7)}}
 .btn-logout{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;flex-shrink:0}
 .btn-logout:hover{background:rgba(239,68,68,.22)}
 .undo-btn,.redo-btn{background:#0e1729;border:1px solid var(--border);color:#94a3b8;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px}
@@ -249,6 +257,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
   .brand span{display:none}
   .user-chip{padding:4px 6px 4px 4px}
   .user-chip span{display:none}
+  .offline-chip{max-width:105px;overflow:hidden;text-overflow:ellipsis;padding:5px 7px;font-size:9px}
   #navbar{padding:0 6px;gap:4px;height:auto;min-height:var(--h);flex-wrap:wrap}
   #undo-redo-bar{gap:2px}
   .undo-btn,.redo-btn{padding:4px 5px;font-size:9px}
@@ -391,6 +400,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
       <button class="global-search-clear" type="button" aria-label="Limpar busca" onclick="limparBuscaGlobal()" hidden>×</button>
       <div id="global-search-panel" class="global-search-panel" role="listbox" aria-label="Resultados da busca" aria-live="polite" hidden></div>
     </div>
+    <button id="offline-chip" class="offline-chip" type="button" onclick="sincronizarAgora()" title="Estado da conexão e sincronização">Online</button>
     <div class="user-chip"><div class="av" id="u-av">?</div><span id="u-name">…</span></div>
     <button id="install-btn" class="btn-system" onclick="openInstalarModal()">📱 <span>Instalar</span></button>
     <button id="system-btn" class="btn-system" onclick="window.location.href='exames.html'">▦ <span>Sistema</span></button>
@@ -437,7 +447,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc}from"./supabase_compat.js";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js";
 import './js/modulos.js?v=80';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -445,7 +455,7 @@ import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=3';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=5';
+import './js/bulk-entry.js?v=6';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
@@ -453,6 +463,21 @@ import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSear
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
 const db=getFirestore(fbApp);window.db=db;
+function renderOfflineState(state={}){
+  const chip=document.getElementById('offline-chip');if(!chip)return;
+  const pending=Number(state.pending)||0;
+  chip.className='offline-chip'+(!state.online?' offline':'')+(state.syncing?' syncing':'')+(state.error?' error':'');
+  chip.textContent=state.syncing?`Sincronizando${pending?' · '+pending:''}`:(!state.online?`Offline${pending?' · '+pending+' pendente'+(pending===1?'':'s'):''}`:(pending?`${pending} pendente${pending===1?'':'s'}`:'Online'));
+  chip.title=state.error?`Falha na sincronização: ${state.error}`:(pending?'Clique para tentar sincronizar agora.':'Dados sincronizados.');
+  const note=document.querySelector('.sidebar-footnote span:last-child');if(note)note.textContent=chip.textContent;
+}
+window.addEventListener('gestao-offline-state',event=>renderOfflineState(event.detail));
+window.sincronizarAgora=async()=>{
+  if(!navigator.onLine){toast('Você está offline. Os lançamentos permanecem seguros neste aparelho.','info',5000);return;}
+  try{const result=await syncOfflineNow();toast(result?.pending?'Ainda há lançamentos aguardando sincronização.':'Sincronização concluída!','success',4500);}catch(error){toast('Falha ao sincronizar: '+(error.message||error),'error',7000);}
+};
+getOfflineStatus().then(renderOfflineState);
+if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 initAttendanceUI(moveAttendanceRecord);initAuditUI();
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
 window.toggleSidebar=function(force){
@@ -724,7 +749,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=73';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=74';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -777,6 +802,7 @@ onAuthStateChanged(auth,async u=>{
   const ini=(u.displayName||u.email||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
   document.getElementById('u-av').textContent=ini;
   document.getElementById('u-name').textContent=u.displayName||u.email.split('@')[0];
+  await syncOfflineNow().catch(error=>console.error('Sincronização inicial:',error));
   try{
     const ud=await getDoc(doc(db,'users',u.uid));
     if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
@@ -789,6 +815,10 @@ onAuthStateChanged(auth,async u=>{
   }
   if(S.isAdmin){document.getElementById('nav-adm').style.display='';}
   await loadData();
+  if(navigator.onLine){
+    const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts'];
+    await Promise.allSettled(offlineTables.map(name=>getDocs(collection(db,name))));
+  }
   if(!window.restoreWorkspace())setView('mod');
   const _sp=new URLSearchParams(location.search).get('setup');
   if(_sp==='bccs')setTimeout(()=>window._setupBccs&&window._setupBccs(),500);
@@ -864,7 +894,7 @@ onAuthStateChanged(auth,async u=>{
 });
 window.doLogout=async function doLogout(){
   // A sessão local é limpa mesmo se o servidor recusar o signOut, mas o motivo fica registrado
-  try{ await auth.signOut(); }catch(e){ console.error('Falha ao encerrar sessão no servidor:', e); }
+  try{ await signOut(auth); }catch(e){ console.error('Falha ao encerrar sessão no servidor:', e); }
   for(let i=localStorage.length-1;i>=0;i--){
     const k=localStorage.key(i);
     if(k && (k.startsWith('sb-') || k.includes('auth-token') || k.includes('supabase.auth'))) localStorage.removeItem(k);
@@ -2342,17 +2372,21 @@ document.addEventListener('keydown',event=>{
 });
 
 // ── IMGBB ──
-async function imgbbUp(dataUrl){
+async function imgbbUp(dataUrl,{forceOnline=false}={}){
+  if(!forceOnline&&navigator.onLine===false)return dataUrl;
   if(!IMGBB_KEY||IMGBB_KEY.includes('COLOQUE'))throw new Error('Chave ImgBB não configurada');
   const b64=dataUrl.split(',')[1];
   if(!b64)throw new Error('Imagem inválida');
   const fd=new FormData();fd.append('key',IMGBB_KEY);fd.append('image',b64);
-  const r=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});
+  let r;
+  try{r=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});}
+  catch(error){if(!forceOnline)return dataUrl;throw error;}
   const j=await r.json().catch(()=>null);
   if(!r.ok)throw new Error(j?.error?.message||('ImgBB HTTP '+r.status));
   if(!j?.success||!j.data?.url)throw new Error(j?.error?.message||'ImgBB recusou o upload');
   return j.data.url;
 }
+registerOfflineImageUploader(imgbbUp);
 
 // Lê o arquivo como data URL propagando falhas de leitura (arquivo corrompido, permissão)
 function readFileAsDataUrl(file){

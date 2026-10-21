@@ -2,12 +2,113 @@
 // This is a pragmatic first pass; not all Firebase features are covered.
 
 import {rememberRecords} from './js/autoria.js';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0?bundle';
+import {
+  setOfflineUser, cacheRows, getCachedRows, getCachedRow, putCachedRow,
+  deleteCachedRow, enqueueMutation, listMutations, removeMutation, pendingCount,
+  applyLocalConstraints
+} from './js/offline-store.js';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const OFFLINE_AUTH_KEY = 'gestao-offline-auth-user';
+let offlineImageUploader = null;
+let syncPromise = null;
+
+function isOfflineError(error) {
+  const message = String(error?.message || error || '').toLowerCase();
+  return globalThis.navigator?.onLine === false || error instanceof TypeError ||
+    message.includes('failed to fetch') || message.includes('networkerror') ||
+    message.includes('network request failed') || message.includes('load failed');
+}
+
+async function notifyOfflineState(extra = {}) {
+  const detail = {
+    online: globalThis.navigator?.onLine !== false,
+    pending: await pendingCount().catch(() => 0),
+    syncing: Boolean(syncPromise),
+    ...extra
+  };
+  globalThis.dispatchEvent?.(new CustomEvent('gestao-offline-state', { detail }));
+  return detail;
+}
+
+async function queueMutation(mutation) {
+  await enqueueMutation(mutation);
+  await notifyOfflineState();
+}
+
+async function hasPendingMutations() {
+  return (await pendingCount().catch(() => 0)) > 0;
+}
+
+async function replaceOfflineImages(value) {
+  if (typeof value === 'string' && value.startsWith('data:image/')) {
+    if (!offlineImageUploader) throw new Error('Upload de imagem offline ainda não inicializado.');
+    return offlineImageUploader(value, { forceOnline: true });
+  }
+  if (typeof value === 'string' && value.includes('data:image/') && /^[\[{]/.test(value.trim())) {
+    let parsed;
+    try { parsed = JSON.parse(value); } catch (_) { return value; }
+    return JSON.stringify(await replaceOfflineImages(parsed));
+  }
+  if (Array.isArray(value)) return Promise.all(value.map(replaceOfflineImages));
+  if (value && typeof value === 'object') {
+    const entries = await Promise.all(Object.entries(value).map(async ([key, item]) => [key, await replaceOfflineImages(item)]));
+    return Object.fromEntries(entries);
+  }
+  return value;
+}
+
+async function executeMutation(mutation) {
+  const payload = mutation.payload ? await replaceOfflineImages(mutation.payload) : null;
+  let data, error;
+  if (mutation.type === 'upsert') {
+    ({ data, error } = await supabase.from(mutation.table).upsert(payload).select().maybeSingle());
+  } else if (mutation.type === 'update') {
+    ({ data, error } = await supabase.from(mutation.table).update(payload).eq('id', mutation.id).select().maybeSingle());
+  } else if (mutation.type === 'delete') {
+    ({ error } = await supabase.from(mutation.table).delete().eq('id', mutation.id));
+  } else throw new Error('Operação offline desconhecida.');
+  if (error) throw error;
+  if (data) await putCachedRow(mutation.table, data);
+}
+
+export function registerOfflineImageUploader(uploader) { offlineImageUploader = uploader; }
+
+export async function getOfflineStatus() { return notifyOfflineState(); }
+
+export async function syncOfflineNow() {
+  if (syncPromise) return syncPromise;
+  if (globalThis.navigator?.onLine === false) return notifyOfflineState();
+  syncPromise = (async () => {
+    await notifyOfflineState({ syncing: true });
+    const mutations = await listMutations();
+    let applied = 0;
+    for (const mutation of mutations) {
+      try {
+        await executeMutation(mutation);
+        await removeMutation(mutation.queueId);
+        applied++;
+      } catch (error) {
+        if (isOfflineError(error)) break;
+        await notifyOfflineState({ syncing: false, error: error?.message || String(error) });
+        throw error;
+      }
+    }
+    return { applied, pending: await pendingCount() };
+  })().finally(async () => {
+    syncPromise = null;
+    const state = await notifyOfflineState({ syncing: false });
+    if (!state.pending) globalThis.dispatchEvent?.(new CustomEvent('gestao-offline-synced'));
+  });
+  return syncPromise;
+}
+
+globalThis.addEventListener?.('online', () => syncOfflineNow().catch(error => console.error('Sincronização offline:', error)));
+globalThis.addEventListener?.('offline', () => notifyOfflineState());
 
 // Map Firebase collection names to Supabase table names
 const TABLE_MAP = {
@@ -116,7 +217,8 @@ export function getAuth(app) { return supabase.auth; }
 
 function mapUser(su) {
   if (!su) return null;
-  return {
+  setOfflineUser(su.id);
+  const mapped = {
     uid: su.id,
     id: su.id,
     email: su.email,
@@ -124,6 +226,15 @@ function mapUser(su) {
     emailVerified: su.email_confirmed_at ? true : false,
     metadata: su.user_metadata || {}
   };
+  try { localStorage.setItem(OFFLINE_AUTH_KEY, JSON.stringify(mapped)); } catch (_) {}
+  return mapped;
+}
+
+function cachedOfflineUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem(OFFLINE_AUTH_KEY) || 'null');
+    return user?.uid ? user : null;
+  } catch (_) { return null; }
 }
 
 export function onAuthStateChanged(auth, callback, errorCallback) {
@@ -134,7 +245,11 @@ export function onAuthStateChanged(auth, callback, errorCallback) {
   };
   // Primeiro verifica sessão existente
   auth.getSession().then(({ data, error }) => {
-    if (error) { onError(error); return; }
+    if (error) {
+      const cached = globalThis.navigator?.onLine === false && cachedOfflineUser();
+      if (cached) { initialDone = true; callback(cached); return; }
+      onError(error); return;
+    }
     if (data?.session?.user) {
       initialDone = true;
       callback(mapUser(data.session.user));
@@ -142,7 +257,7 @@ export function onAuthStateChanged(auth, callback, errorCallback) {
   }).catch(onError);
   // Também escuta mudanças, mas evita chamar null antes de verificar a sessão
   const { subscription } = auth.onAuthStateChange((event, session) => {
-    const user = mapUser(session?.user || null);
+    const user = mapUser(session?.user || null) || (globalThis.navigator?.onLine === false ? cachedOfflineUser() : null);
     if (!initialDone && !user) {
       // Aguarda um pouco para a sessão ser recuperada do storage
       setTimeout(() => {
@@ -242,7 +357,12 @@ export async function sendPasswordResetEmail(auth, email) {
 }
 
 export async function signOut(auth) {
-  const { error } = await auth.signOut();
+  let error;
+  try { ({ error } = await auth.signOut({ scope: 'local' })); }
+  finally {
+    setOfflineUser('');
+    try { localStorage.removeItem(OFFLINE_AUTH_KEY); } catch (_) {}
+  }
   if (error) throw error;
 }
 
@@ -325,27 +445,38 @@ export async function getDocs(queryRef) {
     collectionRef = queryRef._collection;
     constraints = queryRef._constraints || [];
   }
+  const table = tableName(collectionRef._path);
   const hasLimit = constraints.some(c => c._type === 'limit');
   const PAGE = 1000;
   let allRows = [];
-  if (hasLimit) {
-    const q = buildQuery(collectionRef, constraints);
-    const { data, error } = await q;
-    if (error) throw error;
-    allRows = data || [];
-  } else {
-    // Pagina para buscar TODOS os registros (Supabase limita a 1000 por requisição)
-    let offset = 0;
-    while (true) {
-      const q = buildQuery(collectionRef, constraints).range(offset, offset + PAGE - 1);
+  try {
+    // Enquanto há alterações locais, a cópia local é a fonte de verdade para não
+    // apagar inclusões/edições otimistas antes da sincronização terminar.
+    if (await hasPendingMutations()) throw Object.assign(new Error('Alterações locais pendentes'), { offlineCache: true });
+    if (hasLimit) {
+      const q = buildQuery(collectionRef, constraints);
       const { data, error } = await q;
       if (error) throw error;
-      allRows = allRows.concat(data || []);
-      if (!data || data.length < PAGE) break;
-      offset += PAGE;
+      allRows = data || [];
+    } else {
+      let offset = 0;
+      while (true) {
+        const q = buildQuery(collectionRef, constraints).range(offset, offset + PAGE - 1);
+        const { data, error } = await q;
+        if (error) throw error;
+        allRows = allRows.concat(data || []);
+        if (!data || data.length < PAGE) break;
+        offset += PAGE;
+      }
     }
+    const onlyOrdering = constraints.every(c => c._type === 'orderBy');
+    await cacheRows(table, allRows, { replace: onlyOrdering });
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    allRows = applyLocalConstraints(await getCachedRows(table), constraints, toSnake);
+    await notifyOfflineState({ usingCache: true });
   }
-  rememberRecords(tableName(collectionRef._path),allRows,true);
+  rememberRecords(table,allRows,true);
   const docs = allRows.map(row => ({
     id: row.id,
     exists: () => true,
@@ -356,8 +487,18 @@ export async function getDocs(queryRef) {
 
 export async function getDoc(docRef) {
   const table = tableName(docRef._path);
-  const { data, error } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
-  if (error) throw error;
+  let data;
+  try {
+    if (await hasPendingMutations()) throw Object.assign(new Error('Alterações locais pendentes'), { offlineCache: true });
+    const result = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
+    if (result.error) throw result.error;
+    data = result.data;
+    if (data) await putCachedRow(table, data);
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    data = await getCachedRow(table, docRef._id);
+    await notifyOfflineState({ usingCache: true });
+  }
   if (!data) return { exists: () => false, data: () => null, id: docRef._id };
   rememberRecords(table,[data]);
   return { exists: () => true, data: () => mergeExtraFields(data), id: data.id };
@@ -372,10 +513,20 @@ export async function addDoc(collectionRef, data) {
   }
   cleanPayload(payload);
   moveUnknownToExtra(table, payload);
-  const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
-  if (error) throw error;
-  rememberRecords(table,[inserted]);
-  return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
+  try {
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
+    if (error) throw error;
+    rememberRecords(table,[inserted]);
+    await putCachedRow(table, inserted);
+    return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    await putCachedRow(table, payload);
+    await queueMutation({ type: 'upsert', table, id: payload.id, payload });
+    rememberRecords(table,[payload]);
+    return { id: payload.id, path: `${collectionRef._path}/${payload.id}`, pending: true };
+  }
 }
 
 export async function setDoc(docRef, data, options) {
@@ -384,23 +535,31 @@ export async function setDoc(docRef, data, options) {
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   cleanPayload(payload);
   if (options?.merge) {
-    const { data: existing, error: e1 } = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
-    // Sem o registro atual o merge apagaria campos existentes: falha em vez de perder dados
-    if (e1) throw e1;
-    if (existing) {
-      const mergedExisting = mergeExtraFields(existing);
-      for (const [k, v] of Object.entries(mergedExisting)) {
-        if (payload[k] === undefined) payload[k] = v;
-      }
+    let existing = null;
+    if (globalThis.navigator?.onLine !== false && !await hasPendingMutations()) {
+      const result = await supabase.from(table).select('*').eq('id', docRef._id).maybeSingle();
+      if (result.error && !isOfflineError(result.error)) throw result.error;
+      existing = result.data || null;
     }
+    if (!existing) existing = await getCachedRow(table, docRef._id).catch(() => null);
+    if (existing) Object.assign(payload, { ...mergeExtraFields(existing), ...payload });
   }
   payload.id = docRef._id;
   cleanPayload(payload);
   for(const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at'])delete payload[key];
   moveUnknownToExtra(table, payload);
-  const {data:saved,error}=await supabase.from(table).upsert(payload).select().maybeSingle();
-  if(error)throw error;
-  if(saved)rememberRecords(table,[saved]);
+  try {
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    const {data:saved,error}=await supabase.from(table).upsert(payload).select().maybeSingle();
+    if(error)throw error;
+    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);}
+    return {pending:false};
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    await putCachedRow(table,payload);
+    await queueMutation({type:'upsert',table,id:docRef._id,payload});
+    return {pending:true};
+  }
 }
 
 export async function updateDoc(docRef, data) {
@@ -410,22 +569,44 @@ export async function updateDoc(docRef, data) {
   delete payload.id;
   cleanPayload(payload);
   let existingExtra = null;
+  let cachedExisting = await getCachedRow(table, docRef._id).catch(() => null);
   if (EXTRA_TABLES.has(table)) {
-    const { data: existing, error } = await supabase.from(table).select('extra_fields').eq('id', docRef._id).maybeSingle();
-    // extra_fields é reescrito por inteiro: sem o valor atual a atualização perderia campos
-    if (error) throw error;
-    if (existing?.extra_fields) existingExtra = existing.extra_fields;
+    if (globalThis.navigator?.onLine !== false && !await hasPendingMutations()) {
+      const { data: existing, error } = await supabase.from(table).select('extra_fields').eq('id', docRef._id).maybeSingle();
+      if (error && !isOfflineError(error)) throw error;
+      if (existing?.extra_fields) existingExtra = existing.extra_fields;
+    }
+    if (!existingExtra && cachedExisting?.extra_fields) existingExtra = cachedExisting.extra_fields;
   }
   moveUnknownToExtra(table, payload, existingExtra);
-  const {data:saved,error}=await supabase.from(table).update(payload).eq('id',docRef._id).select().maybeSingle();
-  if(error)throw error;
-  if(saved)rememberRecords(table,[saved]);
+  try {
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    const {data:saved,error}=await supabase.from(table).update(payload).eq('id',docRef._id).select().maybeSingle();
+    if(error)throw error;
+    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);}
+    return {pending:false};
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    cachedExisting = cachedExisting || {id:docRef._id};
+    const local = {...cachedExisting,...payload,id:docRef._id};
+    await putCachedRow(table,local);
+    await queueMutation({type:'update',table,id:docRef._id,payload});
+    rememberRecords(table,[local]);
+    return {pending:true};
+  }
 }
 
 export async function deleteDoc(docRef) {
   const table = tableName(docRef._path);
-  const { error } = await supabase.from(table).delete().eq('id', docRef._id);
-  if (error) throw error;
+  try {
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    const { error } = await supabase.from(table).delete().eq('id', docRef._id);
+    if (error) throw error;
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    await queueMutation({type:'delete',table,id:docRef._id});
+  }
+  await deleteCachedRow(table,docRef._id);
   globalThis.__recordIndex?.delete(table+'/'+docRef._id);globalThis.refreshAuditUI?.();
 }
 

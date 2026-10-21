@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js';
+import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,setDoc} from '../supabase_compat.js';
 import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from './bulk-entry-core.js?v=3';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=1';
 
@@ -7,11 +7,35 @@ export {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads};
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const state={group:null,columns:[],busy:false,drafts:[],draft:null,editor:false,selection:null,dragging:false,clipboard:null,dirty:false,saveTimer:0,scrollTimer:0,saving:null};
 const clamp=(value,min,max)=>Math.max(min,Math.min(max,Number(value)||0));
-const draftList=groupId=>window.__bulkDraftApi?.list?.(groupId)??listBulkDrafts(supabase,groupId);
-const draftCreate=payload=>window.__bulkDraftApi?.create?.(payload)??createBulkDraft(supabase,payload);
-const draftUpdate=(id,patch)=>window.__bulkDraftApi?.update?.(id,patch)??updateBulkDraft(supabase,id,patch);
-const draftDelete=id=>window.__bulkDraftApi?.delete?.(id)??deleteBulkDraft(supabase,id);
-const draftSubmit=(id,payloads)=>window.__bulkDraftApi?.submit?.(id,payloads)??submitBulkDraft(supabase,id,payloads);
+const draftList=async groupId=>{
+ if(window.__bulkDraftApi?.list)return window.__bulkDraftApi.list(groupId);
+ const snap=await getDocs(query(collection(supabase,'bulk_entry_drafts'),where('group_id','==',groupId),orderBy('updated_at','desc')));
+ return snap.docs.map(item=>({id:item.id,...item.data()}));
+};
+const draftCreate=async({groupId,title,rowCount=12,columnSignature=[]})=>{
+ if(window.__bulkDraftApi?.create)return window.__bulkDraftApi.create({groupId,title,rowCount,columnSignature});
+ const now=new Date().toISOString(),payload={owner_id:window.S?.user?.uid,group_id:groupId,title:String(title||'').trim(),row_count:rowCount,column_signature:columnSignature,grid_data:{version:1,rows:Array.from({length:rowCount},()=>({}))},scroll_top:0,scroll_left:0,active_row:0,active_col:0,created_at:now,updated_at:now};
+ if(!payload.title)throw new Error('Informe um título para o lote.');
+ const ref=await addDoc(collection(supabase,'bulk_entry_drafts'),payload);
+ return {...payload,id:ref.id,offline_pending:Boolean(ref.pending)};
+};
+const draftUpdate=async(id,patch)=>{
+ if(window.__bulkDraftApi?.update)return window.__bulkDraftApi.update(id,patch);
+ const saved={...patch,updated_at:new Date().toISOString()};
+ const result=await updateDoc(doc(supabase,'bulk_entry_drafts',id),saved);
+ return {...saved,id,offline_pending:Boolean(state.draft?.offline_pending||result?.pending)};
+};
+const draftDelete=async id=>{
+ if(window.__bulkDraftApi?.delete)return window.__bulkDraftApi.delete(id);
+ await deleteDoc(doc(supabase,'bulk_entry_drafts',id));return true;
+};
+const draftSubmit=async(id,payloads)=>{
+ if(window.__bulkDraftApi?.submit)return window.__bulkDraftApi.submit(id,payloads);
+ if(navigator.onLine&&!state.draft?.offline_pending)return submitBulkDraft(supabase,id,payloads);
+ for(const payload of payloads)await setDoc(doc(supabase,'items',payload.id),payload);
+ await deleteDoc(doc(supabase,'bulk_entry_drafts',id));
+ return payloads;
+};
 
 function localKey(id){return `bulk-draft-emergency:${window.S?.user?.uid||'unknown'}:${id}`;}
 function formatDate(value){if(!value)return 'agora';try{return new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});}catch{return 'agora';}}
@@ -121,8 +145,8 @@ async function saveDraftNow(silent=false){
  if(state.saving){await state.saving;if(state.dirty)return saveDraftNow(silent);return state.draft;}
  if(!state.dirty&&!silent)return state.draft;
  const patch=draftPatch();if(!patch.title){if(!silent)window.toast('Informe um título para este lote.','error');return state.draft;}
- state.dirty=false;status('Salvando no Supabase…','saving');
- state.saving=draftUpdate(state.draft.id,patch).then(saved=>{state.draft={...state.draft,...saved};saveEmergency({...patch,local_updated_at:saved.updated_at});status(`Salvo às ${new Date(saved.updated_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,'saved');return state.draft;}).catch(error=>{state.dirty=true;status('Cópia local segura · sem sincronizar','error');if(!silent)window.toast('O lote ficou salvo neste aparelho, mas não sincronizou: '+error.message,'error',7000);throw error;}).finally(()=>{state.saving=null;});
+ state.dirty=false;status(navigator.onLine?'Salvando…':'Salvando neste aparelho…','saving');
+ state.saving=draftUpdate(state.draft.id,patch).then(saved=>{state.draft={...state.draft,...saved};saveEmergency({...patch,local_updated_at:saved.updated_at});status(saved.offline_pending?'Salvo neste aparelho · sincronização pendente':`Salvo às ${new Date(saved.updated_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`,'saved');return state.draft;}).catch(error=>{state.dirty=true;status('Cópia local segura · sem sincronizar','error');if(!silent)window.toast('O lote ficou salvo neste aparelho, mas não sincronizou: '+error.message,'error',7000);throw error;}).finally(()=>{state.saving=null;});
  try{return await state.saving;}catch{return state.draft;}finally{if(state.dirty){clearTimeout(state.saveTimer);state.saveTimer=setTimeout(()=>saveDraftNow(true),1600);}}
 }
 
@@ -191,7 +215,7 @@ window.bulkDeleteDraft=async function(id){
  try{await draftDelete(id);localStorage.removeItem(localKey(id));state.drafts=state.drafts.filter(item=>item.id!==id);renderManager();window.toast('Lote excluído.','success');}catch(error){window.toast('Não foi possível excluir: '+error.message,'error',7000);}
 };
 window.bulkBackToDrafts=async function(){await saveDraftNow(true);state.drafts=await draftList(state.group.id).catch(()=>state.drafts);renderManager();};
-window.bulkSaveAndClose=async function(){await saveDraftNow(true);state.editor=false;window.bulkModalClosing=null;window.closeModal();window.toast('Lote salvo. Você pode continuar depois de qualquer dispositivo.','success',3500);};
+window.bulkSaveAndClose=async function(){await saveDraftNow(true);const pending=state.draft?.offline_pending;state.editor=false;window.bulkModalClosing=null;window.closeModal();window.toast(pending?'Lote salvo neste aparelho. Ele irá para os outros dispositivos após sincronizar.':'Lote salvo. Você pode continuar depois de qualquer dispositivo.','success',4500);};
 window.bulkDraftChanged=markDirty;
 window.bulkAddRows=(amount,focus)=>{addRows(amount,focus);markDirty();};
 window.bulkAddCustomRows=function(){const input=document.getElementById('bulk-add-count'),amount=Math.floor(Number(input?.value));if(!Number.isInteger(amount)||amount<1){window.toast('Informe quantas linhas deseja adicionar.','error');input?.focus();return;}addRows(amount,true);markDirty();};

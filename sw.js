@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v112';
+const CACHE_NAME = 'gestao-pms-v113';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -6,8 +6,16 @@ const STATIC_ASSETS = [
   'js/atendimento-meta.js',
   'js/atendimento-fluxo.js',
   'js/autoria.js',
+  'js/offline-store.js',
+  'supabase_compat.js',
   'js/search-engine.js',
   'js/bulk-drafts-core.js',
+  'js/bulk-entry-core.js',
+  'js/bulk-entry.js',
+  'js/completed-archive.js',
+  'js/custom-fields.js',
+  'js/record-context.js',
+  'js/access-scope.js',
   'js/demand-report.js',
   'exames.html',
   'manifest.json',
@@ -18,6 +26,10 @@ const STATIC_ASSETS = [
   'js/demandas-model.js',
   'css/demandas-secretarias.css',
   'css/prefeitura-shell.css',
+  'css/module-groups.css',
+  'css/access-permissions.css',
+  'css/bulk-archive.css',
+  'css/custom-fields.css',
   'js/perfuracao-pocos.js',
   'js/ordenacao-visual.js',
   'js/controle-contas.js',
@@ -27,6 +39,9 @@ const STATIC_ASSETS = [
   'js/requisicoes-pdf.json',
   'js/requisicoes-licitacao.json',
   'js/requisicoes-contratos.json',
+  'https://esm.sh/@supabase/supabase-js@2.49.0?bundle',
+  'https://esm.sh/node/buffer.mjs',
+  'https://esm.sh/@supabase/supabase-js@2.49.0/es2022/supabase-js.bundle.mjs',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
 ];
@@ -126,7 +141,7 @@ self.addEventListener('fetch', event => {
           putInCache(request, networkResponse.clone());
         }
         return networkResponse;
-      }).catch(err => caches.match(request).then(cached => {
+      }).catch(err => caches.match(request,{ignoreSearch:true}).then(cached => {
         if(cached)return cached;
         if(request.destination === 'document')return caches.match('index.html').then(index => index || offlineResponse(request, err));
         return offlineResponse(request, err);
@@ -137,7 +152,7 @@ self.addEventListener('fetch', event => {
 
   // Demais recursos estáticos: cache-first
   event.respondWith(
-    caches.match(request).then(response => {
+    caches.match(request,{ignoreSearch:true}).then(response => {
       if(response) return response;
       return fetch(request).then(networkResponse => {
         if(networkResponse && networkResponse.status === 200){
