@@ -25,6 +25,11 @@ test('PDF exclui solicitações dos pendentes e preserva o registro na lista',as
  const rows=a.tables[0].body,column=a.tables[0].head[0].indexOf('Pagamento');assert.equal(rows.find(row=>row[1]==='SOLICITADO')[column],'—');assert.equal(rows.find(row=>row[1]==='EXECUTADO')[column],'PENDENTE');assert.equal(rows.find(row=>row[1]==='PAGO')[column],'PAGO');assert.equal(a.tables[1].body[0][3],'2');
 });
 
+test('ordenação visual prioriza pagos, executados e solicitados, com fotos primeiro',()=>{
+ const a=app();a.ctx.S.subitems.find(p=>p.id==='ANTIGO').extra_fields.imagens=['https://img.test/antigo.jpg'];a.ctx.S.subitems.push({id:'SOLICITADO-FOTO',atividade_id:'s',item_id:'d',description:'SOLICITADO COM FOTO',extra_fields:{registro_tipo:'poco',status_perfuracao:'solicitada',status_pagamento:'pendente',imagens:['https://img.test/solicitado.jpg']}});a.ctx.renderPocos('s');
+ const order=[...a.nodes.content.innerHTML.matchAll(/class="pw-local">(.*?)<\/div>/g)].map(match=>match[1]);assert.deepEqual(order,['PAGO','ANTIGO','EXECUTADO','SOLICITADO COM FOTO','SOLICITADO']);assert.match(a.nodes.content.innerHTML,/Ordem de exibição/);assert.match(a.nodes.content.innerHTML,/Pagos → executados → solicitados/);assert.doesNotMatch(a.nodes.content.innerHTML,/class="pw-drag-handle"/);
+});
+
 test('opções do PDF oferecem filtro de pagamento e checkbox para cada perfuração',()=>{
  const a=app();a.ctx.renderPocos('s');let modal='';a.ctx.openModal=(title,description,html)=>{modal=title+' '+description+' '+html;};a.ctx.openPocoPdfOptions();
  assert.match(modal,/Somente pagamentos pendentes/);assert.match(modal,/Somente pagamentos realizados/);assert.match(modal,/Solicitações sem pagamento aplicável/);assert.match(modal,/Selecionar exibidas/);assert.equal((modal.match(/data-pw-pdf-well/g)||[]).length,4);assert.match(modal,/POÇO 1/);assert.match(modal,/PAGAMENTO PENDENTE/);
