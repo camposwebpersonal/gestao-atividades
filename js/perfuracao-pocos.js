@@ -798,7 +798,7 @@
           doc.addPage();header();footer();
           let py=top;
           sf(12.5,true,[20,82,20]);doc.text('REGISTRO FOTOGRÁFICO — '+String(wellNumber(p))+(offset?' (continuação)':''),mx,py+5);
-          const meta=(p.description||'Local não informado')+'  •  Representante: '+(p.responsaveis||'Não informado')+'  •  Perfurador: '+drillerName(p.item_id);
+          const metaParts=[p.description||'Local não informado','Representante: '+(p.responsaveis||'Não informado')];if(meaningfulDriller(p))metaParts.push('Perfurador: '+drillerName(p.item_id));const meta=metaParts.join('  •  ');
           sf(10,true,[35,52,75]);const metaLines=doc.splitTextToSize(meta,W-mx*2);doc.text(metaLines,mx,py+12);
           py+=15+Math.max(0,metaLines.length-1)*4.2;
           const labelH=6,usableH=bottom-py-gap*(rows-1)-labelH*rows,cellH=usableH/rows,cellW=(W-mx*2-gap*(cols-1))/cols;

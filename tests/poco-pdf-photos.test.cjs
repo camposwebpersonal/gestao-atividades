@@ -4,12 +4,13 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 function app(){
- const nodes={content:{innerHTML:''},'pw-view':{innerHTML:''}},tables=[],messages=[],images=[],settings=[],saved=[];
+ const nodes={content:{innerHTML:''},'pw-view':{innerHTML:''}},tables=[],messages=[],images=[],settings=[],saved=[],texts=[];
  const well=(id,status,payment)=>({id,atividade_id:'s',item_id:'d',description:id,extra_fields:{registro_tipo:'poco',status_perfuracao:status,status_pagamento:payment}});
  const S={secs:[{id:'s'}],items:[{id:'d',atividade_id:'s',description:'EMPRESA',extra_fields:{registro_tipo:'perfurador'}}],subitems:[well('SOLICITADO','solicitada','pendente'),well('EXECUTADO','executada','pendente'),well('PAGO','executada','pago'),well('ANTIGO',undefined,undefined)]};
  const pdf={lastAutoTable:{finalY:80},autoTable(options){tables.push(options);},save(name){saved.push(name);},addImage(...args){images.push(args);},splitTextToSize:text=>[text]};
  for(const name of ['setFont','setFontSize','setTextColor','setFillColor','setDrawColor','rect','roundedRect','text','addPage'])pdf[name]=()=>{};
- const ctx={S,URL,console:{error(){}},setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:()=>null,setItem(){}},document:{createElement:()=>({}),head:{appendChild(){}},getElementById:id=>nodes[id]||null,querySelectorAll:()=>[]},toast:(...args)=>messages.push(args),loadB64:async()=>null,jspdf:{jsPDF:function(options){settings.push(options);return pdf;}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/perfuracao-pocos.js'),'utf8'),ctx);return{ctx,nodes,tables,messages,images,settings,saved,pdf,S};
+ pdf.text=value=>texts.push(Array.isArray(value)?value.join(' '):String(value));
+ const ctx={S,URL,console:{error(){}},setTimeout:()=>0,clearTimeout(){},localStorage:{getItem:()=>null,setItem(){}},document:{createElement:()=>({}),head:{appendChild(){}},getElementById:id=>nodes[id]||null,querySelectorAll:()=>[]},toast:(...args)=>messages.push(args),loadB64:async()=>null,jspdf:{jsPDF:function(options){settings.push(options);return pdf;}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/perfuracao-pocos.js'),'utf8'),ctx);return{ctx,nodes,tables,messages,images,settings,saved,texts,pdf,S};
 }
 
 function photosApp(mode='ok'){
@@ -32,6 +33,10 @@ test('inclui fotos de todos os poços, compacta e limita concorrência; reutiliz
  assert.ok(a.encodings.every(e=>e.format==='image/jpeg'&&e.quality<=.38&&e.w<=640&&e.h<=640));assert.equal(a.settings[0].compress,true);
  assert.ok(a.loads.every(url=>url.includes('w=640')&&url.includes('q=35')&&!url.includes('?t=')));
  const reads=a.loads.length;await a.ctx.gerarPdfPocos('s');assert.equal(a.loads.length,reads);assert.equal(a.saved.length,2);
+});
+test('registro fotográfico omite perfurador não informado sem remover o informado',async()=>{
+ const informed=photosApp();await informed.ctx.gerarPdfPocos('s');assert.ok(informed.texts.some(text=>text.includes('Perfurador: EMPRESA')));
+ const missing=photosApp();missing.S.items[0].extra_fields.is_placeholder=1;await missing.ctx.gerarPdfPocos('s');assert.equal(missing.texts.some(text=>text.includes('Perfurador:')),false);assert.ok(missing.texts.some(text=>text.includes('Representante: Não informado')));
 });
 test('falha na versão compacta tenta origem estável sem perder fotos',async()=>{
  const a=photosApp('fallback');await a.ctx.gerarPdfPocos('s');assert.equal(a.images.length,4);assert.equal(a.saved.length,1);
