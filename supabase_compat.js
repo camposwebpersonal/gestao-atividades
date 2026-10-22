@@ -482,6 +482,26 @@ export async function getDocs(queryRef) {
   return { docs, empty: docs.length === 0, size: docs.length };
 }
 
+export async function getDocsFromCache(queryRef) {
+  let collectionRef, constraints;
+  if (queryRef._type === 'collection') {
+    collectionRef = queryRef;
+    constraints = [];
+  } else {
+    collectionRef = queryRef._collection;
+    constraints = queryRef._constraints || [];
+  }
+  const table = tableName(collectionRef._path);
+  const rows = applyLocalConstraints(await getCachedRows(table), constraints, toSnake);
+  rememberRecords(table, rows, true);
+  const docs = rows.map(row => ({
+    id: row.id,
+    exists: () => true,
+    data: () => mergeExtraFields(row)
+  }));
+  return { docs, empty: docs.length === 0, size: docs.length, fromCache: true };
+}
+
 export async function getDoc(docRef) {
   const table = tableName(docRef._path);
   let data;

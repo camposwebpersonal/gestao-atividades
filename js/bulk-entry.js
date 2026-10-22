@@ -1,4 +1,4 @@
-import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,setDoc} from '../supabase_compat.js?v=2';
+import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,setDoc} from '../supabase_compat.js?v=3';
 import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from './bulk-entry-core.js?v=3';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=1';
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v116';
+const CACHE_NAME = 'gestao-pms-v117';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -132,21 +132,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Páginas, scripts e estilos: rede primeiro. Assim, puxar para atualizar
-  // sempre procura a versão recém-publicada e o cache continua como fallback offline.
+  // Interface estática: mostra o cache imediatamente e revalida em segundo plano.
+  // As versões nos imports e a renovação deste cache entregam atualizações sem
+  // obrigar o usuário a esperar a rede em cada abertura do aplicativo.
   if(request.mode === 'navigate' || ['document','script','style','worker','manifest'].includes(request.destination)){
-    event.respondWith(
-      fetch(request).then(networkResponse => {
-        if(networkResponse && networkResponse.status === 200){
-          putInCache(request, networkResponse.clone());
-        }
-        return networkResponse;
-      }).catch(err => caches.match(request,{ignoreSearch:true}).then(cached => {
-        if(cached)return cached;
-        if(request.destination === 'document')return caches.match('index.html').then(index => index || offlineResponse(request, err));
-        return offlineResponse(request, err);
-      }))
-    );
+    const cached=caches.match(request,{ignoreSearch:true});
+    const update=fetch(request).then(networkResponse=>{
+      if(networkResponse&&networkResponse.status===200)putInCache(request,networkResponse.clone());
+      return networkResponse;
+    });
+    event.waitUntil(update.catch(()=>{}));
+    event.respondWith(cached.then(response=>response||update).catch(err=>{
+      if(request.destination==='document')return caches.match('index.html').then(index=>index||offlineResponse(request,err));
+      return offlineResponse(request,err);
+    }));
     return;
   }
 
