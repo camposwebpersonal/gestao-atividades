@@ -53,4 +53,18 @@ assert.match(source,/Criar status/);
 assert.match(source,/retirado dos lançamentos que o utilizam/);
 assert.match(source,/placeholder="dd\/mm\/yyyy"/);
 assert.match(source,/Use o formato DD\/MM\/YYYY/);
+assert.equal(typeof api.closeLicitacaoStatusMenus,'function');
+const insideTarget={};
+let outsideClosed=false,insideClosed=false;
+context.document.querySelectorAll=()=>[
+  {contains:()=>false,removeAttribute:name=>{if(name==='open')outsideClosed=true;}},
+  {contains:target=>target===insideTarget,removeAttribute:name=>{if(name==='open')insideClosed=true;}}
+];
+api.closeLicitacaoStatusMenus({target:insideTarget});
+assert.equal(outsideClosed,true);
+assert.equal(insideClosed,false);
+api.closeLicitacaoStatusMenus();
+assert.equal(insideClosed,true);
+assert.match(source,/addEventListener\?\.\('pointerdown',closeLicitacaoStatusMenus\)/);
+assert.match(source,/event\.key==='Escape'/);
 console.log('controle-licitacoes: estrutura, colunas, ordem de status, valores e PDF validados');
