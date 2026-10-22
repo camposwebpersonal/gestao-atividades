@@ -33,11 +33,17 @@ assert.deepEqual(Array.from(api.statuses({registro_tipo:'licitacao_grupo',status
 assert.equal(api.money('R$ 1.234.567,89'),1234567.89);
 assert.equal(api.money('7000,50'),7000.5);
 assert.equal(api.money(''),null);
+assert.equal(api.dateISO('22/10/2026'),'2026-10-22');
+assert.equal(api.dateISO('2026-10-22'),'2026-10-22');
+assert.equal(api.dateISO('31/02/2026'),null);
 assert.equal(api.dateBR('2026-10-22'),'22/10/2026');
+assert.equal(api.dateBR('22/10/2026'),'22/10/2026');
 assert.equal(api.pdfCell({data:'2026-10-22'},{key:'data',type:'date'}),'22/10/2026');
 assert.match(api.pdfCell({valor_global:'1.234,50'},{key:'valor_global',type:'currency'}),/1\.234,50/);
 assert.match(source,/RELATÓRIO DE LICITAÇÕES/);
 assert.match(source,/Gerar PDF deste grupo/);
 assert.match(source,/Ordem dos itens de status/);
 assert.match(source,/status_options:order/);
+assert.match(source,/placeholder="dd\/mm\/yyyy"/);
+assert.match(source,/Use o formato DD\/MM\/YYYY/);
 console.log('controle-licitacoes: estrutura, colunas, ordem de status, valores e PDF validados');
