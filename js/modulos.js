@@ -3,6 +3,7 @@ import {supabase} from '../supabase_compat.js?v=3';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
 import './perfuracao-pocos.js?v=101';
 import './controle-extintores.js?v=4';
+import './controle-licitacoes.js?v=1';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
@@ -77,8 +78,8 @@ const _md = {
   pColor: p => p===100 ? '#10b981' : p>0 ? '#3b82f6' : '#334155',
   extra: g => { try { const e=g.extra_fields||{}; return typeof e==='string' ? JSON.parse(e) : e; } catch { return {}; } },
   modFor: s => { const e=_md.extra(s); if(e.modulo) return e.modulo; if(s.controle_estoque==1||s.controle_estoque_modelo==1) return 'estoque'; if(s.controle_contas==1) return 'contas'; if(s.controle_distribuicao==1) return 'distribuicao'; return _modFromName(s.name||s.description||''); },
-  pct: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1){const ps=(window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco'));return ps.length?Math.round(ps.filter(s=>(s.status_pagamento||s.extra_fields?.status_pagamento)==='pago').length/ps.length*100):0;} const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
-  ativTotal: g => { if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)return (window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco')).length; return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
+  pct: g => { if(window.isLicitacaoGroup?.(g)){const rows=(window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='licitacao_lancamento'||s.extra_fields?.registro_tipo==='licitacao_lancamento'));return rows.length?Math.round(rows.filter(s=>{const list=s.status_list||s.extra_fields?.status_list||[];return s.concluded==1||list.includes('CONCLUÍDO');}).length/rows.length*100):0;} if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1){const ps=(window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco'));return ps.length?Math.round(ps.filter(s=>(s.status_pagamento||s.extra_fields?.status_pagamento)==='pago').length/ps.length*100):0;} const its = (window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []; if(!its.length) return 0; return Math.round(its.filter(i=>i.concluded==1).length / its.length * 100); },
+  ativTotal: g => { if(window.isLicitacaoGroup?.(g))return (window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='licitacao_lancamento'||s.extra_fields?.registro_tipo==='licitacao_lancamento')).length; if(g.controle_pocos==1||g.extra_fields?.controle_pocos==1)return (window.S?.subitems||[]).filter(s=>s.atividade_id===g.id&&(s.registro_tipo==='poco'||s.extra_fields?.registro_tipo==='poco')).length; return ((window.S && S.items && S.items.filter(i=>i.atividade_id===g.id)) || []).length; },
   grupos: mod => (window.S && S.secs || []).filter(s=>_md.modFor(s)===mod.id&&window.userCanGroup(s,'acesso')).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 

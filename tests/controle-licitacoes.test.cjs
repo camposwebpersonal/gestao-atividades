@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+
+let source=fs.readFileSync(require('node:path').join(__dirname,'../js/controle-licitacoes.js'),'utf8');
+source=source.replace(/import .*;\n/,'');
+const context={window:{S:{items:[],subitems:[],secs:[]}},navigator:{onLine:true},console,document:{}};
+vm.createContext(context);vm.runInContext(source,context);
+const api=context.window.__licitacaoTest;
+
+assert.equal(api.isLicitacaoGroup({name:'Licitação'}),true);
+assert.equal(api.isLicitacaoGroup({name:'LICITACAO'}),true);
+assert.equal(api.isLicitacaoGroup({name:'Outros',extra_fields:{controle_licitacoes:1}}),true);
+assert.equal(api.isLicitacaoGroup({name:'Perfuração de poços'}),false);
+assert.deepEqual(Array.from(api.SEED_GROUPS),['FUNDO GERAL','SEC. EDUCAÇÃO','SEC. SAÚDE','SEC. ASSISTÊNCIA SOCIAL']);
+assert.deepEqual(Array.from(api.COLUMNS,x=>x.label),['N° PROCESSO','MODALIDADE','OBJETO','FORNECEDOR / N°','CONTRATO','VALOR GLOBAL','VIGÊNCIA','OBS']);
+assert.equal(api.STATUSES.includes('RESSALVA'),true);
+assert.equal(api.money('R$ 1.234.567,89'),1234567.89);
+assert.equal(api.money('7000,50'),7000.5);
+assert.equal(api.money(''),null);
+console.log('controle-licitacoes: estrutura, colunas, status e valores validados');
