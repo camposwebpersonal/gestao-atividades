@@ -10,6 +10,27 @@ function clone(value) {
     : JSON.parse(JSON.stringify(value));
 }
 
+export function isOfflineFailure(error, online = globalThis.navigator?.onLine !== false) {
+  if (!online || error instanceof TypeError) return true;
+  const parts = [];
+  const collect = (value, depth = 0) => {
+    if (value == null || depth > 2) return;
+    if (typeof value === 'string' || typeof value === 'number') { parts.push(String(value)); return; }
+    if (typeof value === 'object') {
+      ['name', 'message', 'details', 'hint', 'code', 'status', 'statusText'].forEach(key => collect(value[key], depth + 1));
+      collect(value.cause, depth + 1);
+    }
+  };
+  collect(error);
+  const text = parts.join(' ').toLowerCase();
+  return Number(error?.status) === 0 || [
+    'failed to fetch', 'fetch failed', 'networkerror', 'network error',
+    'network request failed', 'load failed', 'err_internet_disconnected',
+    'connection refused', 'connection reset', 'connection timed out',
+    'recurso indisponível offline', 'status 503', 'service unavailable'
+  ].some(marker => text.includes(marker));
+}
+
 function database() {
   if (!('indexedDB' in globalThis)) return Promise.reject(new Error('IndexedDB indisponível neste navegador.'));
   if (dbPromise) return dbPromise;

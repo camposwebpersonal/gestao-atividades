@@ -446,8 +446,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js?v=2";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js?v=2";
 import './js/modulos.js?v=80';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -749,7 +749,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=74';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=75';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1027,9 +1027,8 @@ window.saveSecretaria=async function(id){
   const name=document.getElementById('secr-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   try{
-    if(id){await updateDoc(doc(db,'secretarias',id),{name});}
-    else{await addDoc(collection(db,'secretarias'),{name});}
-    await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderSecretarias();
+    const result=id?await updateDoc(doc(db,'secretarias',id),{name}):await addDoc(collection(db,'secretarias'),{name});
+    await loadData();closeModal();toast(result?.pending?'Secretaria salva neste aparelho. Será sincronizada automaticamente quando a internet voltar.':id?'Atualizado!':'Criado!',result?.pending?'info':'success',7000);renderSecretarias();
   }catch(e){console.error(e);toast('Erro ao salvar secretaria: '+(e.message||e),'error');}
 };
 window.deleteSecretaria=async function(id){

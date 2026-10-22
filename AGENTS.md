@@ -35,6 +35,11 @@
 
 ## Comportamento dinâmico esperado
 
+- Aplicar lógica preventiva e contextual em toda manutenção deste projeto para
+  maximizar produtividade: evitar informação redundante, ocultar em relatórios
+  colunas ou seções sem conteúdo útil, redistribuir o espaço preservando a largura
+  e destacar automaticamente os dados relevantes. Não omitir dados obrigatórios
+  nem alterar regras de negócio sem evidência; manter sempre a solução editável.
 - Inferir e preencher automaticamente dados que já estejam determinados pelo
   contexto. Exemplo: itens e subitens de um grupo de Demandas por Secretarias
   devem herdar a secretaria do grupo, sem pedir que o usuário selecione de novo.

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {applyLocalConstraints} from '../js/offline-store.js';
+import {applyLocalConstraints,isOfflineFailure} from '../js/offline-store.js';
 
 const snake=value=>value.replace(/([a-z0-9])([A-Z])/g,'$1_$2').toLowerCase();
 const where=(field,op,value)=>({_type:'where',field,op,value});
@@ -27,4 +27,13 @@ test('ordenação e limite offline preservam a consulta da interface',()=>{
 test('datas ausentes ficam no fim da ordenação offline',()=>{
   const rows=[{id:'vazio',updated_at:null},{id:'novo',updated_at:'2026-10-21'},{id:'antigo',updated_at:'2026-10-20'}];
   assert.deepEqual(applyLocalConstraints(rows,[orderBy('updatedAt','desc')],snake).map(x=>x.id),['novo','antigo','vazio']);
+});
+
+test('falhas de rede do celular são reconhecidas e enfileiradas offline',()=>{
+  assert.equal(isOfflineFailure(new TypeError('Failed to fetch'),true),true);
+  assert.equal(isOfflineFailure({details:'TypeError: Failed to fetch'},true),true);
+  assert.equal(isOfflineFailure({cause:{message:'Network request failed'}},true),true);
+  assert.equal(isOfflineFailure({status:503,message:'Service unavailable'},true),true);
+  assert.equal(isOfflineFailure({code:'42501',message:'permission denied'},true),false);
+  assert.equal(isOfflineFailure({message:'qualquer erro'},false),true);
 });

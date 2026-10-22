@@ -6,8 +6,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0?bundle
 import {
   setOfflineUser, cacheRows, getCachedRows, getCachedRow, putCachedRow,
   deleteCachedRow, enqueueMutation, listMutations, removeMutation, pendingCount,
-  applyLocalConstraints
-} from './js/offline-store.js';
+  applyLocalConstraints, isOfflineFailure
+} from './js/offline-store.js?v=2';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
@@ -18,10 +18,7 @@ let offlineImageUploader = null;
 let syncPromise = null;
 
 function isOfflineError(error) {
-  const message = String(error?.message || error || '').toLowerCase();
-  return globalThis.navigator?.onLine === false || error instanceof TypeError ||
-    message.includes('failed to fetch') || message.includes('networkerror') ||
-    message.includes('network request failed') || message.includes('load failed');
+  return isOfflineFailure(error);
 }
 
 async function notifyOfflineState(extra = {}) {
