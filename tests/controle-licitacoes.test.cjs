@@ -14,6 +14,15 @@ assert.equal(api.isLicitacaoGroup({name:'Outros',extra_fields:{controle_licitaco
 assert.equal(api.isLicitacaoGroup({name:'Perfuração de poços'}),false);
 assert.deepEqual(Array.from(api.SEED_GROUPS),['FUNDO GERAL','SEC. EDUCAÇÃO','SEC. SAÚDE','SEC. ASSISTÊNCIA SOCIAL']);
 assert.deepEqual(Array.from(api.COLUMNS,x=>x.label),['N° PROCESSO','MODALIDADE','OBJETO','FORNECEDOR / N°','CONTRATO','VALOR GLOBAL','VIGÊNCIA','OBS']);
+assert.deepEqual(Array.from(api.REQUEST_COLUMNS,x=>x.label),['DATA','OBJETO','SECRETARIA','OBS']);
+assert.deepEqual(Array.from(api.templateForName('Solicitação de Licitações'),x=>x.label),['DATA','OBJETO','SECRETARIA','OBS']);
+assert.deepEqual(Array.from(api.templateForName('Fundo Geral'),x=>x.label),['N° PROCESSO','MODALIDADE','OBJETO','FORNECEDOR / N°','CONTRATO','VALOR GLOBAL','VIGÊNCIA','OBS']);
+assert.match(api.rowStatusBadges(['PENDENTE','RESSALVA']),/PENDENTE/);
+assert.match(api.rowStatusBadges(['PENDENTE','RESSALVA']),/RESSALVA/);
+assert.match(api.rowStatusBadges([]),/SELECIONAR STATUS/);
+assert.equal(typeof context.window.openLicitacaoColumns,'function');
+assert.equal(typeof context.window.addLicitacaoColumn,'function');
+assert.equal(typeof context.window.saveLicitacaoColumns,'function');
 assert.equal(api.STATUSES.includes('RESSALVA'),true);
 assert.equal(api.money('R$ 1.234.567,89'),1234567.89);
 assert.equal(api.money('7000,50'),7000.5);
