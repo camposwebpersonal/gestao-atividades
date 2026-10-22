@@ -20,6 +20,13 @@ test('somente executados não pagos contam como pendentes, incluindo registros a
  a.ctx.pocoFilter('status','pago');assert.match(a.nodes['pw-view'].innerHTML,/pw-local">PAGO/);assert.doesNotMatch(a.nodes['pw-view'].innerHTML,/pw-local">EXECUTADO/);
  a.ctx.pocoSetTab('perfuradores');assert.match(a.nodes.content.innerHTML,/>2<\/b>Pendentes/);
 });
+test('filtro de imagens alterna entre ambos, com anexos e sem anexos',()=>{
+ const a=app();a.ctx.S.subitems.find(p=>p.id==='PAGO').extra_fields.imagens=['https://img.test/pago.jpg'];a.ctx.renderPocos('s');
+ assert.match(a.nodes.content.innerHTML,/Imagens anexadas/);assert.match(a.nodes.content.innerHTML,/Ambos \(4\)/);assert.match(a.nodes.content.innerHTML,/Somente com imagens \(1\)/);assert.match(a.nodes.content.innerHTML,/Somente sem imagens \(3\)/);
+ a.ctx.pocoFilter('imagens','com');assert.match(a.nodes['pw-view'].innerHTML,/value="com" selected/);assert.match(a.nodes['pw-view'].innerHTML,/pw-local">PAGO/);assert.doesNotMatch(a.nodes['pw-view'].innerHTML,/pw-local">EXECUTADO/);
+ a.ctx.pocoFilter('imagens','sem');assert.match(a.nodes['pw-view'].innerHTML,/value="sem" selected/);assert.doesNotMatch(a.nodes['pw-view'].innerHTML,/pw-local">PAGO/);assert.match(a.nodes['pw-view'].innerHTML,/pw-local">EXECUTADO/);
+ a.ctx.pocoFilter('imagens','ambos');assert.equal((a.nodes['pw-view'].innerHTML.match(/class="pw-card /g)||[]).length,4);
+});
 test('PDF exclui solicitações dos pendentes e preserva o registro na lista',async()=>{
  const a=app();a.ctx.renderPocos('s');await a.ctx.gerarPdfPocos('s',{incluirFotos:false});assert.equal(a.tables.length,2);
  const rows=a.tables[0].body,column=a.tables[0].head[0].indexOf('Pagamento');assert.equal(rows.find(row=>row[1]==='SOLICITADO')[column],'—');assert.equal(rows.find(row=>row[1]==='EXECUTADO')[column],'PENDENTE');assert.equal(rows.find(row=>row[1]==='PAGO')[column],'PAGO');assert.equal(a.tables[1].body[0][3],'2');
