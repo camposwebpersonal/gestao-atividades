@@ -3,7 +3,7 @@ import {supabase} from '../supabase_compat.js?v=3';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
 import './perfuracao-pocos.js?v=101';
 import './controle-extintores.js?v=4';
-import './controle-licitacoes.js?v=7';
+import './controle-licitacoes.js?v=8';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
