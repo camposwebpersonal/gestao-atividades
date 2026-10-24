@@ -378,7 +378,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=1">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=2">
-<link rel="stylesheet" href="css/bulk-archive.css?v=4">
+<link rel="stylesheet" href="css/bulk-archive.css?v=5">
+<link rel="stylesheet" href="css/trash.css?v=1">
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -419,6 +420,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
         <button class="nav-btn" id="nav-resp" onclick="setView('resp')">♙ Responsáveis</button>
         <button class="nav-btn" onclick="openAuthorship()">◎ Autoria dos registros</button>
         <button class="nav-btn" id="nav-cont" onclick="setView('cont')">☏ Contatos</button>
+        <button class="nav-btn" id="nav-trash" style="display:none" onclick="setView('trash')">♻ Lixeira</button>
         <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
       </div>
     </details>
@@ -448,8 +450,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail}from"./supabase_compat.js?v=3";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js?v=3";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=4";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js?v=4";
 import './js/modulos.js?v=91';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -457,8 +459,8 @@ import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=3';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=6';
-import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs} from './js/completed-archive.js?v=1';
+import './js/bulk-entry.js?v=7';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 
@@ -481,7 +483,7 @@ window.sincronizarAgora=async()=>{
 getOfflineStatus().then(renderOfflineState);
 if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 initAttendanceUI(moveAttendanceRecord);initAuditUI();
-window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
+window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.permanentDeleteDoc=permanentDeleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
 const _savingButtons=new Set();
 function releaseSaveButton(button){
   if(!button)return;clearTimeout(button._savingTimer);button.removeAttribute('data-saving');button.removeAttribute('aria-busy');
@@ -582,8 +584,8 @@ async function redoLast(){if(!_redoStack.length){toast('Nada para refazer','erro
 window.undoLast=undoLast;window.redoLast=redoLast;
 // wrappers para operações comuns
 window.wUpdateDoc=async function(ref,newData,oldData,name='Editar'){await updateDoc(ref,newData);pushUndo(name,async()=>await updateDoc(ref,oldData),async()=>await updateDoc(ref,newData));};
-window.wDeleteDoc=async function(ref,fullData,name='Excluir'){await deleteDoc(ref);pushUndo(name,async()=>await setDoc(ref,fullData),async()=>await deleteDoc(ref));};
-window.wAddDoc=async function(colRef,data,name='Criar'){const newRef=doc(colRef);await setDoc(newRef,data);pushUndo(name,async()=>await deleteDoc(newRef),async()=>await setDoc(newRef,data));return newRef;};
+window.wDeleteDoc=async function(ref,fullData,name='Excluir'){let trashId;const remove=async()=>{const result=await deleteDoc(ref);trashId=result?.trashId;};await remove();pushUndo(name,async()=>{if(trashId)await restoreTrashItem(trashId);else await setDoc(ref,fullData);},remove);};
+window.wAddDoc=async function(colRef,data,name='Criar'){const newRef=doc(colRef);await setDoc(newRef,data);pushUndo(name,async()=>await permanentDeleteDoc(newRef),async()=>await setDoc(newRef,data));return newRef;};
 function updateUndoUI(){const ub=document.getElementById('undo-btn'),rb=document.getElementById('redo-btn');if(ub)ub.style.opacity=_undoStack.length?1:.3;if(rb)rb.style.opacity=_redoStack.length?1:.3;}
 // atalhos de teclado undo/redo
 document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();undoLast();}if((e.ctrlKey&&(e.key==='y'||e.key==='Y'))||(e.ctrlKey&&e.shiftKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();redoLast();}});
@@ -592,7 +594,7 @@ document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[]};window.S=S;
+let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
 const EMPREGOS_DATA_VERSION='2026-06-v1';
@@ -833,12 +835,12 @@ onAuthStateChanged(auth,async u=>{
     S.isAdmin=false;S.userRole='usuario';S.userSetor=null;
     toast('Não foi possível carregar suas permissões ('+(e.message||e)+'). Acesso limitado; recarregue a página.','error',8000);
   }
-  if(S.isAdmin){document.getElementById('nav-adm').style.display='';}
+  if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-trash').style.display='';}
   const cacheReady=await loadData({cacheOnly:true});
   if(cacheReady&&!window.restoreWorkspace())setView('mod');
   await loadData();
   if(navigator.onLine){
-    const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts'];
+    const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts','trashItems'];
     Promise.allSettled(offlineTables.map(name=>getDocs(collection(db,name))));
   }
   if(!window.restoreWorkspace())setView('mod');
@@ -931,7 +933,7 @@ window.loadData=async function loadData({cacheOnly=false}={}){
     try{return await fn();}catch(e){console.error('Erro ao carregar '+label+':',e);failed.push(label+' ('+(e.message||e)+')');return{docs:[]};}
   };
   const read=cacheOnly?getDocsFromCache:getDocs;
-  const[a,b,c,ft,se,resp,usr,cont,contas,estq,req]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,cont,contas,estq,req,trash]=await Promise.all([
     safeGet('secretariats',()=>read(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
     safeGet('items',()=>read(query(collection(db,'items'),orderBy('order_num','asc')))),
     safeGet('subitems',()=>read(query(collection(db,'subitems'),orderBy('order_num','asc')))),
@@ -942,9 +944,10 @@ window.loadData=async function loadData({cacheOnly=false}={}){
     safeGet('contatos',()=>read(query(collection(db,'contatos'),orderBy('nome','asc')))),
     safeGet('contas',()=>read(query(collection(db,'contas'),orderBy('created_at','desc')))),
     safeGet('estoque',()=>read(query(collection(db,'estoque'),orderBy('created_at','desc')))),
-    safeGet('requisicoes',()=>read(query(collection(db,'requisicoes'),orderBy('numero','asc'))))
+    safeGet('requisicoes',()=>read(query(collection(db,'requisicoes'),orderBy('numero','asc')))),
+    safeGet('trashItems',()=>read(query(collection(db,'trashItems'),orderBy('deleted_at','desc'))))
   ]);
-  const hasData=[a,b,c,ft,se,resp,usr,cont,contas,estq,req].some(snapshot=>snapshot.docs.length);
+  const hasData=[a,b,c,ft,se,resp,usr,cont,contas,estq,req,trash].some(snapshot=>snapshot.docs.length);
   if(cacheOnly&&!hasData)return false;
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -961,6 +964,7 @@ window.loadData=async function loadData({cacheOnly=false}={}){
   S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
   S.estoque=estq.docs.map(d=>({id:d.id,...d.data()}));
   S.requisicoes=req.docs.map(d=>({id:d.id,...d.data()}));
+  S.trashItems=trash.docs.map(d=>({id:d.id,...d.data()}));
   if(failed.length&&!cacheOnly)toast('Falha ao carregar: '+failed.join('; ')+'. Dados podem estar incompletos.','error',9000);
   if(!cacheOnly&&S.isAdmin && !S.secs.some(s=>s.controle_estoque_modelo || (s.name||'').toUpperCase()==='CONTROLE DE ESTOQUE DE ITENS DA SECRETARIA DE SAÚDE')){
     const novo={name:'Controle de Estoque de Itens da Secretaria de Saúde',observacoes:'',responsaveis:'',start_date:null,end_date:null,order_num:S.secs.length,controle_estoque:1,controle_estoque_modelo:1,controle_pendencias:0,ce_nome_secretaria:'Secretaria de Saúde',ce_titulo_controle:'Controle de Estoque de Itens da Secretaria de Saúde',created_at:serverTimestamp(),updated_at:serverTimestamp()};
@@ -995,7 +999,7 @@ document.querySelector('main')?.addEventListener('scroll',()=>window.refreshStic
 const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
   return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
-function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:item.concluded==1?100:0,total:0,subs:[]};const done=subs.filter(s=>s.concluded==1).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs:subs};}
+function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:recordIsCompleted(item)?100:0,total:0,subs:[]};const done=subs.filter(recordIsCompleted).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs:subs};}
 
 // ── HIERARQUIA DE SUBITENS ──
 function getSubTree(itemId){
@@ -1022,14 +1026,31 @@ function flattenSubTree(tree,levelPrefix,out){
 window.setView=function(v){
   curSecId=null;
   window.rememberWorkspace?.({kind:'view',id:v});
-  ['mod','adm','secr','resp','cont'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
-  if(['adm','secr','resp','cont'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
+  ['mod','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  if(['adm','secr','resp','cont','trash'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
   if(v==='mod')window.renderModulos();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
   else if(v==='resp')renderResponsaveis();
   else if(v==='cont')renderContatos();
+  else if(v==='trash')renderTrash();
 };
+
+const _trashTypeLabels={atividades:'Grupo de lançamentos',items:'Item',subitems:'Subitem / lançamento',secretarias:'Secretaria',responsaveis:'Responsável',contatos:'Contato',chamados:'Chamado',galeria:'Imagem',field_templates:'Campo personalizado',entity_images:'Imagem vinculada',contas:'Conta',estoque:'Estoque',requisicoes:'Requisição',distribuicao:'Distribuição',users:'Usuário',bulk_entry_drafts:'Rascunho em lote',extintores:'Extintor',extintor_abas:'Aba de extintores'};
+const _trashDate=value=>{try{return new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});}catch{return 'Data não informada';}};
+window.renderTrash=function(){
+  if(!S.isAdmin){setC('<div class="empty">A lixeira é restrita à administração.</div>');return;}
+  const rows=[...(S.trashItems||[])].sort((a,b)=>String(b.deleted_at||'').localeCompare(String(a.deleted_at||'')));
+  const groups=new Map();
+  rows.forEach(row=>{const sector=row.source_secretaria_name||'Sem setor identificado',activity=row.source_activity_name||'Registros gerais';if(!groups.has(sector))groups.set(sector,new Map());const activities=groups.get(sector);if(!activities.has(activity))activities.set(activity,[]);activities.get(activity).push(row);});
+  const batchSizes=new Map();rows.forEach(row=>{if(row.batch_id)batchSizes.set(row.batch_id,(batchSizes.get(row.batch_id)||0)+1);});
+  const sections=[...groups.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([sector,activities])=>`<section class="trash-sector"><header><div><small>SETOR</small><h2>${esc(sector)}</h2></div><b>${[...activities.values()].reduce((n,list)=>n+list.length,0)}</b></header>${[...activities.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([activity,list])=>`<div class="trash-group"><div class="trash-group-title"><span>▦</span><strong>${esc(activity)}</strong><b>${list.length}</b></div><div class="trash-grid">${list.map(row=>{const search=[row.source_label,sector,activity,row.source_table,row.deleted_by_name].join(' ').toLocaleLowerCase('pt-BR'),batchCount=batchSizes.get(row.batch_id)||0;return `<article class="trash-card" data-trash-card data-search="${esc(search)}"><div class="trash-card-icon">♻</div><div class="trash-card-main"><small>${esc(_trashTypeLabels[row.source_table]||row.source_table)}</small><strong>${esc(row.source_label||'Registro sem título')}</strong><span>Excluído em ${_trashDate(row.deleted_at)}${row.deleted_by_name?' por '+esc(row.deleted_by_name):''}${batchCount>1?` · conjunto com ${batchCount} registros`:''}</span></div><div class="trash-card-actions">${batchCount>1?`<button type="button" onclick="restoreTrashBatch('${row.batch_id}')">↺ Restaurar conjunto</button>`:`<button type="button" onclick="restoreTrashRecord('${row.id}')">↺ Restaurar</button>`}<button type="button" class="danger" onclick="permanentlyDeleteTrash('${row.id}')">Excluir definitivamente</button></div></article>`;}).join('')}</div></div>`).join('')}</section>`).join('');
+  setC(`<section class="trash-page"><div class="trash-hero"><div class="trash-hero-icon">♻</div><div><div class="workspace-kicker">Proteção contra perda de dados</div><h1>Lixeira do sistema</h1><p>Tudo que é excluído permanece organizado por setor e grupo até uma decisão definitiva.</p></div><div class="trash-total"><strong>${rows.length}</strong><span>registro${rows.length===1?'':'s'}</span></div></div><div class="trash-toolbar"><label><span>⌕</span><input type="search" placeholder="Buscar na lixeira por nome, setor ou grupo..." oninput="filterTrashView(this.value)"></label><span>Somente a exclusão feita aqui é permanente.</span></div><div id="trash-results">${sections||'<div class="trash-empty"><span>✓</span><strong>A lixeira está vazia</strong><p>Nenhum registro aguarda restauração ou exclusão definitiva.</p></div>'}</div></section>`);
+};
+window.filterTrashView=function(value){const q=String(value||'').trim().toLocaleLowerCase('pt-BR');document.querySelectorAll('[data-trash-card]').forEach(card=>card.hidden=q&&!card.dataset.search.includes(q));document.querySelectorAll('.trash-group').forEach(group=>group.hidden=![...group.querySelectorAll('[data-trash-card]')].some(card=>!card.hidden));document.querySelectorAll('.trash-sector').forEach(sector=>sector.hidden=![...sector.querySelectorAll('.trash-group')].some(group=>!group.hidden));};
+window.restoreTrashRecord=async function(id){const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`Restaurar "${row.source_label||'este registro'}" para o local de origem?`))return;try{await restoreTrashItem(id);await loadData();toast('Registro restaurado com sucesso!');renderTrash();}catch(error){toast('Não foi possível restaurar: '+(error.message||error),'error',8000);}};
+window.restoreTrashBatch=async function(batchId){const rows=S.trashItems.filter(item=>item.batch_id===batchId);if(!rows.length||!confirm(`Restaurar o conjunto completo com ${rows.length} registros para seus locais de origem?`))return;const rank={secretarias:0,atividades:1,items:2,subitems:3};rows.sort((a,b)=>(rank[a.source_table]??4)-(rank[b.source_table]??4));try{for(const row of rows)await restoreTrashItem(row.id);await loadData();toast(`${rows.length} registros restaurados com sucesso!`);renderTrash();}catch(error){await loadData();toast('A restauração foi interrompida: '+(error.message||error),'error',9000);renderTrash();}};
+window.permanentlyDeleteTrash=async function(id){const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`ATENÇÃO: excluir permanentemente "${row.source_label||'este registro'}"? Esta ação não poderá ser desfeita.`))return;try{await permanentDeleteDoc(doc(db,'trashItems',id));await loadData();toast('Registro excluído permanentemente.');renderTrash();}catch(error){toast('Não foi possível excluir definitivamente: '+(error.message||error),'error',8000);}};
 
 // ── SECRETARIAS ──
 function _cadastroPage({icon,title,subtitle,count,actions,head,rows,emptyCols}){
@@ -1058,10 +1079,10 @@ window.saveSecretaria=async function(id){
   }catch(e){console.error(e);toast('Erro ao salvar secretaria: '+(e.message||e),'error');}
 };
 window.deleteSecretaria=async function(id){
-  if(!confirm('Excluir esta secretaria?'))return;
+  if(!confirm('Enviar esta secretaria para a lixeira?'))return;
   try{
     await deleteDoc(doc(db,'secretarias',id));
-    await loadData();closeModal();toast('Excluído!');renderSecretarias();
+    await loadData();closeModal();toast('Secretaria enviada para a lixeira!');renderSecretarias();
   }catch(e){console.error(e);toast('Erro ao excluir secretaria: '+(e.message||e),'error');}
 };
 
@@ -1095,9 +1116,9 @@ window.saveResponsavel=async function(id){
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderResponsaveis();
 };
 window.deleteResponsavel=async function(id){
-  if(!confirm('Excluir este responsável?'))return;
+  if(!confirm('Enviar este responsável para a lixeira?'))return;
   await deleteDoc(doc(db,'responsaveis',id));
-  await loadData();closeModal();toast('Excluído!');renderResponsaveis();
+  await loadData();closeModal();toast('Responsável enviado para a lixeira!');renderResponsaveis();
 };
 
 // ── CHAMADOS ──
@@ -1151,9 +1172,9 @@ window.saveChamado=async function(id){
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderChamados();
 };
 window.deleteChamado=async function(id){
-  if(!confirm('Excluir este chamado?'))return;
+  if(!confirm('Enviar este chamado para a lixeira?'))return;
   await deleteDoc(doc(db,'chamados',id));
-  await loadData();closeModal();toast('Excluído!');renderChamados();
+  await loadData();closeModal();toast('Chamado enviado para a lixeira!');renderChamados();
 };
 
 // ── CONTATOS ──
@@ -1183,9 +1204,9 @@ window.saveContato=async function(id){
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');renderContatos();
 };
 window.deleteContato=async function(id){
-  if(!confirm('Excluir este contato?'))return;
+  if(!confirm('Enviar este contato para a lixeira?'))return;
   await deleteDoc(doc(db,'contatos',id));
-  await loadData();closeModal();toast('Excluído!');renderContatos();
+  await loadData();closeModal();toast('Contato enviado para a lixeira!');renderContatos();
 };
 window.gerarPDFContatos=async function(){
   if(!S.contatos.length){toast('Nenhum contato para gerar PDF.','error');return;}
@@ -1423,6 +1444,8 @@ window.openActivity=function(secId){
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
   if(window.isLicitacaoGroup?.(sec)){window.renderLicitacoes(secId);return;}
   const allItems=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const itemIds=new Set(allItems.map(item=>item.id));
+  const groupSubitems=S.subitems.filter(sub=>sub.atividade_id===secId||itemIds.has(sub.item_id));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
   const activeItems=_cp?allItems.filter(item=>iProg(item).pct!==100):allItems;
@@ -1562,9 +1585,9 @@ window.openActivity=function(secId){
   const qField=(sec.quantitativo_campo||'').trim()||((isBccs||isEmpregos)&&tableFields.some(f=>_normFieldKey(f)==='remuneração')?'Remuneração':'');
   const showQuant=(isBccs||isEmpregos)?sec.show_quantitativo!==0:sec.show_quantitativo==1;
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
-  const archiveEntries=_cp?completedArchiveEntries(allItems,S.subitems,iProg):[];
+  const archiveEntries=_cp?completedArchiveEntries(allItems,groupSubitems,iProg):[];
   const laneTabs=_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
-  const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:S.subitems,progress:iProg,canEdit:_can}):'';
+  const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:groupSubitems,progress:iProg,canEdit:_can}):'';
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
@@ -1868,35 +1891,40 @@ window.confirmarExcluirAtividade=function(id){
   const nItems=S.items.filter(i=>i.atividade_id===id).length;
   const nSubs=S.subitems.filter(s=>S.items.some(i=>i.atividade_id===id&&i.id===s.item_id)).length;
   openModal('🗑️ Excluir Atividade',esc(sec?.name||''),
-    `<div style="padding:4px 0"><div style="background:#1a0505;border:1px solid #b91c1c;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#fca5a5">⚠️ Esta ação <strong>NÃO pode ser desfeita</strong>.<br>Serão excluídos: <strong>${nItems} item(ns)</strong> e <strong>${nSubs} sub-item(ns)</strong> vinculados.</div></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#b91c1c;color:#fef2f2" onclick="deleteSec('${id}')">🗑️ Confirmar Exclusão</button></div>`);
+    `<div style="padding:4px 0"><div style="background:#f5fbf8;border:1px solid #86cdb5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#185b49">♻ A atividade e todo o seu conteúdo serão enviados para a <strong>Lixeira</strong> e poderão ser restaurados.<br>Inclui: <strong>${nItems} item(ns)</strong> e <strong>${nSubs} sub-item(ns)</strong>.</div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#9f2929;color:#fef2f2" onclick="deleteSec('${id}')">♻ Enviar para a lixeira</button></div>`);
 };
 window.deleteSec=async function(id){
   const group=S.secs.find(s=>s.id===id);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
+  const batchId=crypto.randomUUID();
   const its=S.items.filter(i=>i.atividade_id===id);
-  for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));await deleteDoc(doc(db,'items',it.id));}
-  const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id));
-  const estqs=S.estoque.filter(e=>e.atividade_id===id);for(const e of estqs)await deleteDoc(doc(db,'estoque',e.id));
-  const reqs=S.requisicoes.filter(r=>r.atividade_id===id);for(const r of reqs)await deleteDoc(doc(db,'requisicoes',r.id));
-  const contas=S.contas.filter(c=>c.atividade_id===id);for(const c of contas)await deleteDoc(doc(db,'contas',c.id));
-  const distrs=(S.distribuicao||[]).filter(d=>d.atividade_id===id);for(const d of distrs)await deleteDoc(doc(db,'distribuicao',d.id));
-  await deleteDoc(doc(db,'secretariats',id));
-  await loadData();closeModal();toast('Atividade excluída!');setView('mod');
+  const trashOptions={batchId,activityId:id,activityName:group?.name,secretariaId:group?.demanda_secretaria_id};
+  for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id),trashOptions);await deleteDoc(doc(db,'items',it.id),trashOptions);}
+  const fts=S.fieldTemplates.filter(t=>t.atividade_id===id);for(const ft of fts)await deleteDoc(doc(db,'fieldTemplates',ft.id),trashOptions);
+  const estqs=S.estoque.filter(e=>e.atividade_id===id);for(const e of estqs)await deleteDoc(doc(db,'estoque',e.id),trashOptions);
+  const reqs=S.requisicoes.filter(r=>r.atividade_id===id);for(const r of reqs)await deleteDoc(doc(db,'requisicoes',r.id),trashOptions);
+  const contas=S.contas.filter(c=>c.atividade_id===id);for(const c of contas)await deleteDoc(doc(db,'contas',c.id),trashOptions);
+  const distrs=(S.distribuicao||[]).filter(d=>d.atividade_id===id);for(const d of distrs)await deleteDoc(doc(db,'distribuicao',d.id),trashOptions);
+  await deleteDoc(doc(db,'secretariats',id),trashOptions);
+  await loadData();closeModal();toast('Atividade enviada para a lixeira!');setView('mod');
 };
 window.deleteItem=async function(id,isSub){
   const record=(isSub?S.subitems:S.items).find(x=>x.id===id),group=S.secs.find(s=>s.id===(record?.atividade_id||curSecId));
   if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este lançamento.','error');return;}
-  if(!confirm('Excluir este '+(isSub?'sub-item':'item')+(isSub?'':' e todos os seus sub-itens')+'?'))return;
+  const descendants=isSub?_allSubDescendants(id):S.subitems.filter(s=>s.item_id===id);
+  if(!confirm('Enviar este '+(isSub?'sub-item':'item')+(descendants.length?` e ${descendants.length} registro(s) vinculado(s)`:``)+' para a lixeira?'))return;
+  const batchId=crypto.randomUUID();
   if(!isSub){
-    const sbs=S.subitems.filter(s=>s.item_id===id);
-    for(const sb of sbs)await wDeleteDoc(doc(db,'subitems',sb.id),{...sb},'Excluir sub-item');
+    const sbs=[...descendants].sort((a,b)=>_allSubDescendants(b.id).length-_allSubDescendants(a.id).length);
+    for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id),{batchId});
     const orig=S.items.find(i=>i.id===id);
-    if(orig)await wDeleteDoc(doc(db,'items',id),{...orig},'Excluir item');
+    if(orig)await deleteDoc(doc(db,'items',id),{batchId});
   }else{
+    for(const child of [...descendants].reverse())await deleteDoc(doc(db,'subitems',child.id),{batchId});
     const orig=S.subitems.find(s=>s.id===id);
-    if(orig)await wDeleteDoc(doc(db,'subitems',id),{...orig},'Excluir sub-item');
+    if(orig)await deleteDoc(doc(db,'subitems',id),{batchId});
   }
-  await loadData();closeModal();toast('Excluído!');openActivity(curSecId);
+  await loadData();closeModal();toast('Registro enviado para a lixeira!');openActivity(curSecId);
 };
 window.duplicarItem=async function(id,isSub,secId){
   if(!confirm('Duplicar este '+(isSub?'sub-item':'item')+' e todos os seus filhos?'))return;
@@ -1943,14 +1971,17 @@ window.excluirSelecionados=async function(secId){
   const checkboxes=document.querySelectorAll('.mass-sel:checked');
   const sel=[];checkboxes.forEach(cb=>{sel.push({id:cb.dataset.id,isSub:cb.dataset.issub==='true'});});
   if(!sel.length){toast('Nenhum item selecionado.','error');return;}
-  const items=sel.filter(s=>!s.isSub);const subs=sel.filter(s=>s.isSub);
+  const selectedItemIds=new Set(sel.filter(s=>!s.isSub).map(s=>s.id));
+  const effective=sel.filter(s=>!s.isSub||!selectedItemIds.has(S.subitems.find(x=>x.id===s.id)?.item_id));
+  const items=effective.filter(s=>!s.isSub);const subs=effective.filter(s=>s.isSub);
   const msg=[];if(items.length)msg.push(items.length+' item(s)');if(subs.length)msg.push(subs.length+' sub-item(s)');
-  if(!confirm('Excluir '+msg.join(' e ')+' selecionado(s)?'))return;
-  for(const s of sel){
-    if(!s.isSub){const sbs=S.subitems.filter(x=>x.item_id===s.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id));}
-    await deleteDoc(doc(db,s.isSub?'subitems':'items',s.id));
+  if(!confirm('Enviar '+msg.join(' e ')+' selecionado(s) para a lixeira?'))return;
+  const batchId=crypto.randomUUID();
+  for(const s of effective){
+    if(!s.isSub){const sbs=S.subitems.filter(x=>x.item_id===s.id);for(const sb of sbs)await deleteDoc(doc(db,'subitems',sb.id),{batchId});}
+    await deleteDoc(doc(db,s.isSub?'subitems':'items',s.id),{batchId});
   }
-  await loadData();toast(`${sel.length} excluído(s)!`);openActivity(secId);
+  await loadData();toast(`${effective.length} seleção(ões) enviada(s) para a lixeira!`);openActivity(secId);
 };
 
 // ── MODAL ──
@@ -2321,7 +2352,7 @@ window.handleUpload=async function(inp,type,id,isRep){
       continue;
     }
     if(isRep){
-      if(_upReplId)await deleteDoc(doc(db,'entity_images',_upReplId));
+      if(_upReplId)await permanentDeleteDoc(doc(db,'entity_images',_upReplId));
       const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems';
       await updateDoc(doc(db,coll,id),{cover_url:url});
     }
@@ -2693,9 +2724,9 @@ window.sendUserPasswordReset=async function(id){
   }
 };
 window.deleteUser=async function(id){
-  if(!confirm('Excluir este usuário?'))return;
+  if(!confirm('Enviar este cadastro de usuário para a lixeira?'))return;
   await deleteDoc(doc(db,'users',id));
-  await loadData();closeModal();toast('Excluído!');renderAdmin();
+  await loadData();closeModal();toast('Cadastro enviado para a lixeira!');renderAdmin();
 };
 
 // ── IMPORTAR ──
@@ -3628,7 +3659,7 @@ window.saveFieldTpl=async function(actId,scope,nameEl,typeEl){
   await loadData();if(!window.reopenFieldTemplateHost?.(actId))openSecModal(actId);
 };
 window.delFieldTpl=async function(id,actId){
-  if(!confirm('Remover este campo?'))return;
+  if(!confirm('Enviar este campo personalizado para a lixeira?'))return;
   await deleteDoc(doc(db,'fieldTemplates',id));
   await loadData();if(!window.reopenFieldTemplateHost?.(actId))openSecModal(actId);
 };
@@ -4709,7 +4740,7 @@ window.converterItemEmSubitem=async function(itemId,targetItemId,secId){
   for(const c of childSubs){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:subRef.id,parent_type:'subitem',item_id:targetItemId});
   }
-  await deleteDoc(doc(db,'items',itemId));
+  await permanentDeleteDoc(doc(db,'items',itemId));
   pushUndo('Converter item em sub-item',
     async()=>{
       // Recriar o item
@@ -4719,7 +4750,7 @@ window.converterItemEmSubitem=async function(itemId,targetItemId,secId){
         await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
       }
       // Deletar o subitem criado
-      await deleteDoc(doc(db,'subitems',subRef.id));
+      await permanentDeleteDoc(doc(db,'subitems',subRef.id));
       await loadData();openActivity(secId);
     },
     async()=>{
@@ -4757,7 +4788,7 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId,after=fals
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
   // 4. Deleta subitem
-  await deleteDoc(doc(db,'subitems',subId));
+  await permanentDeleteDoc(doc(db,'subitems',subId));
   // 5. Recarrega e verifica
   await loadData();
   const afterIts=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(Number(a.order_num)||0)-(Number(b.order_num)||0));
@@ -4768,7 +4799,7 @@ window.converterSubitemEmItem=async function(subId,targetItemId,secId,after=fals
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
       for(const c of childSubs){await updateDoc(doc(db,'subitems',c.id),{parent_id:subRef.id,parent_type:'subitem',item_id:targetItemId});}
-      await deleteDoc(doc(db,'items',newItemRef.id));
+      await permanentDeleteDoc(doc(db,'items',newItemRef.id));
       for(const o of oldOrders){await updateDoc(doc(db,'items',o.id),{order_num:o.order_num});}
       await loadData();openActivity(secId);
     },
@@ -4794,12 +4825,12 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId,after
   for(const c of childSubs){
     await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
   }
-  await deleteDoc(doc(db,'subitems',subId));
+  await permanentDeleteDoc(doc(db,'subitems',subId));
   pushUndo('Converter sub-item em item (Lista)',
     async()=>{
       const subRef=await addDoc(collection(db,'subitems'),{...sub,item_id:targetItemId,atividade_id:secId,parent_id:targetItemId,parent_type:'item',order_num:targetOrder,created_at:serverTimestamp()});
       for(const c of childSubs){await updateDoc(doc(db,'subitems',c.id),{parent_id:subRef.id,parent_type:'subitem',item_id:targetItemId});}
-      await deleteDoc(doc(db,'items',newItemRef.id));
+      await permanentDeleteDoc(doc(db,'items',newItemRef.id));
       for(const o of oldOrders){await updateDoc(doc(db,'items',o.id),{order_num:o.order_num});}
       await loadData();renderCadastros(secId);
     },

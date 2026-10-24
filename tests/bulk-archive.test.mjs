@@ -43,18 +43,21 @@ test('salvamento em lote só confirma depois que o banco devolve todas as linhas
  await assert.rejects(()=>persistBulkPayloads(incomplete,payloads),/confirmou 1 de 2/);
 });
 
-test('arquivo inclui itens concluídos e subitens concluídos de itens ainda abertos sem duplicar filhos',()=>{
- const items=[{id:'i1',description:'Concluído'},{id:'i2',description:'Em andamento'}];
+test('arquivo inclui cada item e subitem concluído sem esconder filhos quando o pai chega a 100%',()=>{
+ const items=[{id:'i1',description:'Concluído',concluded:1},{id:'i2',description:'Em andamento'}];
  const subs=[{id:'s1',item_id:'i1',concluded:1},{id:'s2',item_id:'i2',concluded:1,parent_type:'item',parent_id:'i2'},{id:'s3',item_id:'i2',concluded:1,parent_type:'subitem',parent_id:'s2'}];
  const progress=item=>({pct:item.id==='i1'?100:50});
  const entries=completedArchiveEntries(items,subs,progress);
- assert.deepEqual(entries.map(entry=>entry.record.id),['i1','s2']);
+ assert.deepEqual(entries.map(entry=>entry.record.id),['i1','s1','s2','s3']);
 });
 
 test('arquivo agrupa pela data da solicitação e protege o conteúdo exibido',()=>{
- const html=renderCompletedArchive({group:{id:'g1'},items:[{id:'a',description:'<script>abril</script>',start_date:'2026-04-12'},{id:'m',description:'maio',start_date:'2026-05-03'}],subitems:[],progress:()=>({pct:100}),canEdit:false});
- assert.match(html,/maio de 2026/);
- assert.match(html,/abril de 2026/);
- assert.ok(html.indexOf('maio de 2026')<html.indexOf('abril de 2026'));
+ const html=renderCompletedArchive({group:{id:'g1'},items:[{id:'a',description:'<script>abril</script>',start_date:'2026-04-12',concluded:1},{id:'m',description:'maio',start_date:'2026-05-03',status:'concluído'}],subitems:[],progress:()=>({pct:100}),canEdit:false});
+ assert.match(html,/>2026</);
+ assert.match(html,/>maio</);
+ assert.match(html,/>abril</);
+ assert.match(html,/ARQUIVO DE CONCLUÍDOS/);
+ assert.ok(html.indexOf('maio')<html.indexOf('abril'));
+ assert.doesNotMatch(html,/<details/);
  assert.doesNotMatch(html,/<script>/);
 });

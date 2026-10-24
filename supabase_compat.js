@@ -120,7 +120,9 @@ const TABLE_MAP = {
   'contatos': 'contatos',
   'galeria': 'galeria',
   'chamados': 'chamados',
-  'contas': 'contas'
+  'contas': 'contas',
+  'trashItems': 'trash_items',
+  'trash_items': 'trash_items'
 };
 
 function toSnake(str) {
@@ -613,7 +615,7 @@ export async function updateDoc(docRef, data) {
   }
 }
 
-export async function deleteDoc(docRef) {
+async function physicalDelete(docRef) {
   const table = tableName(docRef._path);
   try {
     if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
@@ -625,6 +627,93 @@ export async function deleteDoc(docRef) {
   }
   await deleteCachedRow(table,docRef._id);
   globalThis.__recordIndex?.delete(table+'/'+docRef._id);globalThis.refreshAuditUI?.();
+}
+
+function trashContext(table, row, options = {}) {
+  const state = globalThis.S || {};
+  const parentItem = state.items?.find(item => item.id === row.item_id);
+  const parentSubitem = state.subitems?.find(item => item.id === row.parent_id);
+  const activityId = options.activityId || row.atividade_id || parentItem?.atividade_id || parentSubitem?.atividade_id || (table === 'atividades' ? row.id : null);
+  const activity = state.secs?.find(item => item.id === activityId);
+  const secretariaId = options.secretariaId || row.secretaria_id || row.demanda_secretaria_id || activity?.demanda_secretaria_id || (table === 'secretarias' ? row.id : null);
+  const secretaria = state.secretarias?.find(item => item.id === secretariaId);
+  return {
+    source_label: options.label || row.description || row.name || row.nome || row.titulo || row.field_name || row.inventory_code || row.numero || 'Registro sem título',
+    source_activity_id: activityId,
+    source_activity_name: options.activityName || activity?.name || null,
+    source_secretaria_id: secretariaId,
+    source_secretaria_name: options.secretariaName || secretaria?.name || (table === 'secretarias' ? row.name : null) || null
+  };
+}
+
+async function rowForDeletion(table, id) {
+  let row = await getCachedRow(table, id).catch(() => null);
+  if (globalThis.navigator?.onLine !== false && !await hasPendingMutations()) {
+    const result = await supabase.from(table).select('*').eq('id', id).maybeSingle();
+    if (result.error && !isOfflineError(result.error)) throw result.error;
+    row = result.data || row;
+  }
+  return row;
+}
+
+async function saveRawRow(table, payload) {
+  try {
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    const {data, error} = await supabase.from(table).upsert(payload).select().maybeSingle();
+    if (error) throw error;
+    if (data) await putCachedRow(table, data);
+    return {pending:false, data};
+  } catch (error) {
+    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    await putCachedRow(table, payload);
+    await queueMutation({type:'upsert', table, id:payload.id, payload});
+    return {pending:true, data:payload};
+  }
+}
+
+export async function permanentDeleteDoc(docRef) {
+  return physicalDelete(docRef);
+}
+
+// Toda exclusão funcional é recuperável. A remoção física fica reservada à
+// própria lixeira e a rollbacks técnicos marcados explicitamente.
+export async function deleteDoc(docRef, options = {}) {
+  const table = tableName(docRef._path);
+  if (table === 'trash_items' || options.permanent === true) return physicalDelete(docRef);
+  const row = options.record || await rowForDeletion(table, docRef._id);
+  if (!row) throw new Error('A exclusão foi cancelada porque não foi possível preservar uma cópia na lixeira.');
+  const {data:sessionData} = await supabase.auth.getSession();
+  const user = sessionData?.session?.user || cachedOfflineUser();
+  if (!user?.id && !user?.uid) throw new Error('Entre novamente antes de excluir. O registro não foi alterado.');
+  const deletedBy = user.id || user.uid;
+  const trashId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const trash = {
+    id: trashId,
+    source_table: table,
+    source_id: docRef._id,
+    ...trashContext(table, row, options),
+    record_data: {...row, id:docRef._id},
+    batch_id: options.batchId || null,
+    deleted_by: deletedBy,
+    deleted_by_name: options.deletedByName || globalThis.S?.me?.displayName || globalThis.S?.user?.displayName || user.email?.split('@')[0] || 'Usuário',
+    deleted_at: new Date().toISOString()
+  };
+  const saved = await saveRawRow('trash_items', trash);
+  await physicalDelete(docRef);
+  return {trashId, pending:saved.pending};
+}
+
+export async function restoreTrashItem(trashId) {
+  const trash = await rowForDeletion('trash_items', trashId);
+  if (!trash) throw new Error('Registro não encontrado na lixeira.');
+  const sourceTable = tableName(trash.source_table);
+  if (!/^[a-z][a-z0-9_]*$/.test(sourceTable)) throw new Error('Origem inválida; a restauração foi bloqueada.');
+  const existing = await rowForDeletion(sourceTable, trash.source_id);
+  if (existing) throw new Error('Já existe um registro ativo com o mesmo identificador. Nada foi sobrescrito.');
+  const raw = typeof trash.record_data === 'string' ? JSON.parse(trash.record_data) : trash.record_data;
+  const result = await saveRawRow(sourceTable, {...raw, id:trash.source_id});
+  await physicalDelete({_path:'trash_items', _id:trashId});
+  return result;
 }
 
 export function writeBatch(db) {

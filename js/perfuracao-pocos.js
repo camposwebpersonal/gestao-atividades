@@ -584,7 +584,8 @@
       }
       await window.loadData();await saveWellSequence(state.secId);window.closeModal();window.toast(`${quantity} ${quantity===1?'cópia criada':'cópias criadas'} com sucesso!`,'success',6000);window.renderPocos(state.secId);
     }catch(error){
-      const rollback=await Promise.allSettled(created.map(ref=>window.deleteDoc(window.doc(window.db,'subitems',ref.id))));await window.loadData?.();window.renderPocos(state.secId);
+      const removePartial=window.permanentDeleteDoc||window.deleteDoc;
+      const rollback=await Promise.allSettled(created.map(ref=>removePartial(window.doc(window.db,'subitems',ref.id))));await window.loadData?.();window.renderPocos(state.secId);
       const rollbackFailed=rollback.some(result=>result.status==='rejected');window.toast(rollbackFailed?'A cópia falhou e nem todos os registros parciais puderam ser desfeitos. Verifique a lista.':'Não foi possível criar todas as cópias. Nenhuma cópia parcial foi mantida.','error',9000);console.error('Erro ao copiar perfuração',error);
       if(button){button.disabled=false;button.textContent='📑 Criar cópias';}
     }
@@ -670,7 +671,7 @@
     try{await window.updateDoc(window.doc(window.db,'subitems',id),{status_pagamento:status,data_pagamento:status==='pago'?isoToday():null,updated_at:window.serverTimestamp()});await window.loadData();window.toast(status==='pago'?'Pagamento confirmado!':'Pagamento voltou para pendente.');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao atualizar pagamento: '+(e.message||e),'error');}
   };
 
-  window.deletePoco=async function(id){if(!confirm('Excluir definitivamente este lançamento de perfuração?'))return;try{await window.deleteDoc(window.doc(window.db,'subitems',id));await window.loadData();await saveWellSequence(state.secId);window.toast('Lançamento excluído!');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao excluir: '+(e.message||e),'error');}};
+  window.deletePoco=async function(id){if(!confirm('Enviar este lançamento de perfuração para a lixeira?'))return;try{await window.deleteDoc(window.doc(window.db,'subitems',id));await window.loadData();await saveWellSequence(state.secId);window.toast('Lançamento enviado para a lixeira!');window.renderPocos(state.secId);}catch(e){window.toast('Erro ao excluir: '+(e.message||e),'error');}};
 
   window.openPerfuradorModal=function(id){
     const d=id?allDrillers(state.secId).find(x=>x.id===id):null;

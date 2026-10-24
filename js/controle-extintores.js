@@ -1,5 +1,5 @@
 /* Controle de extintores: inventário independente, com datas e relatório institucional. */
-import { supabase, collection, doc, getDocs, query, orderBy, addDoc, setDoc, deleteDoc } from '../supabase_compat.js?v=3';
+import { supabase, collection, doc, getDocs, query, orderBy, addDoc, setDoc, deleteDoc } from '../supabase_compat.js?v=4';
 import { searchRecord } from './search-engine.js';
 
 (function(){
@@ -66,8 +66,8 @@ import { searchRecord } from './search-engine.js';
     try{await setDoc(doc(supabase,'extintores',payload.id),payload);window.closeModal();window.toast(navigator.onLine?'Extintor salvo com sucesso!':'Extintor salvo neste aparelho e aguardando sincronização.','success');await load();}catch(e){window.toast('Não foi possível salvar: '+(e.message||e),'error');}
   };
   window.excluirExtintor=async function(id){
-    const r=state.rows.find(x=>x.id===id);if(!r||!confirm(`Excluir o extintor ${r.inventory_code||r.local_nome}? Esta ação não pode ser desfeita.`))return;
-    try{await deleteDoc(doc(supabase,'extintores',id));window.toast(navigator.onLine?'Extintor excluído.':'Exclusão salva e aguardando sincronização.','success');await load();}catch(e){window.toast('Não foi possível excluir: '+(e.message||e),'error');}
+    const r=state.rows.find(x=>x.id===id);if(!r||!confirm(`Enviar o extintor ${r.inventory_code||r.local_nome} para a lixeira?`))return;
+    try{await deleteDoc(doc(supabase,'extintores',id));window.toast(navigator.onLine?'Extintor enviado para a lixeira.':'Exclusão salva e aguardando sincronização.','success');await load();}catch(e){window.toast('Não foi possível excluir: '+(e.message||e),'error');}
   };
   window.gerarPdfExtintores=async function(){
     if(!window.jspdf?.jsPDF){window.toast('jsPDF não carregado','error');return;}

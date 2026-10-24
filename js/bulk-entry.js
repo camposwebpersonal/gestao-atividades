@@ -1,4 +1,4 @@
-import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,setDoc} from '../supabase_compat.js?v=3';
+import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=4';
 import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from './bulk-entry-core.js?v=3';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=1';
 
@@ -33,7 +33,7 @@ const draftSubmit=async(id,payloads)=>{
  if(window.__bulkDraftApi?.submit)return window.__bulkDraftApi.submit(id,payloads);
  if(navigator.onLine&&!state.draft?.offline_pending)return submitBulkDraft(supabase,id,payloads);
  for(const payload of payloads)await setDoc(doc(supabase,'items',payload.id),payload);
- await deleteDoc(doc(supabase,'bulk_entry_drafts',id));
+ await permanentDeleteDoc(doc(supabase,'bulk_entry_drafts',id));
  return payloads;
 };
 
@@ -211,8 +211,8 @@ window.bulkCreateDraft=async function(){
 };
 window.bulkOpenDraft=id=>{const draft=state.drafts.find(item=>item.id===id);if(draft)renderEditor(draft);};
 window.bulkDeleteDraft=async function(id){
- const draft=state.drafts.find(item=>item.id===id);if(!draft||!window.confirm(`Excluir definitivamente o lote “${draft.title}”?\n\nOs lançamentos ainda não enviados serão perdidos.`))return;
- try{await draftDelete(id);localStorage.removeItem(localKey(id));state.drafts=state.drafts.filter(item=>item.id!==id);renderManager();window.toast('Lote excluído.','success');}catch(error){window.toast('Não foi possível excluir: '+error.message,'error',7000);}
+ const draft=state.drafts.find(item=>item.id===id);if(!draft||!window.confirm(`Enviar o lote “${draft.title}” para a lixeira?\n\nEle poderá ser restaurado pela administração.`))return;
+ try{await draftDelete(id);localStorage.removeItem(localKey(id));state.drafts=state.drafts.filter(item=>item.id!==id);renderManager();window.toast('Lote enviado para a lixeira.','success');}catch(error){window.toast('Não foi possível excluir: '+error.message,'error',7000);}
 };
 window.bulkBackToDrafts=async function(){await saveDraftNow(true);state.drafts=await draftList(state.group.id).catch(()=>state.drafts);renderManager();};
 window.bulkSaveAndClose=async function(){await saveDraftNow(true);const pending=state.draft?.offline_pending;state.editor=false;window.bulkModalClosing=null;window.closeModal();window.toast(pending?'Lote salvo neste aparelho. Ele irá para os outros dispositivos após sincronizar.':'Lote salvo. Você pode continuar depois de qualquer dispositivo.','success',4500);};
