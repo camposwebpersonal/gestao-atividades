@@ -10,7 +10,7 @@ const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 
 test('carrega a densidade de cabeçalhos depois da densidade de lançamentos', () => {
   const records = html.indexOf('css/record-density.css?v=7');
-  const headers = html.indexOf('css/header-density.css?v=3');
+  const headers = html.indexOf('css/header-density.css?v=4');
   assert.ok(records >= 0);
   assert.ok(headers > records);
 });
@@ -19,6 +19,7 @@ test('compacta por estrutura sem reduzir o tamanho das fontes aprovadas', () => 
   assert.match(css, /--header-height:\s*62px/);
   assert.match(css, /\.top-actions-fixed\s*\{/);
   assert.match(css, /\.activity-page-heading\s*\{/);
+  assert.match(css, /font-size:\s*clamp\(1\.25rem, 1\.55vw, 1\.55rem\)/);
   assert.match(css, /\.activity-heading-row\s*\{/);
   assert.match(css, /\.activity-tools-row\s*\{/);
   assert.match(css, /\.activity-command-summary-row\s*\{/);
@@ -40,7 +41,7 @@ test('mantém reorganização responsiva dos cabeçalhos sem esmagar conteúdo',
 });
 
 test('inclui a nova camada no cache offline com versão renovada', () => {
-  assert.match(sw, /gestao-pms-v138/);
+  assert.match(sw, /gestao-pms-v139/);
   assert.match(sw, /'css\/header-density\.css'/);
 });
 

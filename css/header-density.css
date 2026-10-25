@@ -227,7 +227,7 @@
 }
 
 .activity-page-heading .page-title {
-  font-size: clamp(1.35rem, 1.85vw, 1.8rem) !important;
+  font-size: clamp(1.25rem, 1.55vw, 1.55rem) !important;
   line-height: 1 !important;
 }
 
@@ -594,7 +594,7 @@ body[data-workspace="atendimentos"] #content {
   }
 
   .activity-page-heading .page-title {
-    font-size: clamp(1.25rem, 6.2vw, 1.6rem) !important;
+    font-size: clamp(1.15rem, 5.4vw, 1.35rem) !important;
   }
 
   .activity-tools-row {
