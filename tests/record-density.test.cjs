@@ -12,6 +12,12 @@ test('modo de alta densidade cobre lançamentos, poços, tabelas e celular',()=>
   for(const selector of ['.item-header','.sub-row','.pw-card-body','.cc-mobile-card','.registry-table td','.lic-grid td'])assert.match(css,new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(css,/min-height:25px!important/);
-  assert.match(page,/css\/record-density\.css\?v=1/);
+  assert.match(page,/css\/record-density\.css\?v=2/);
   assert.match(worker,/css\/record-density\.css/);
+});
+
+test('auditoria de concluídos permanece dentro do cartão compacto',()=>{
+  const audit=fs.readFileSync(path.join(root,'js/autoria.js'),'utf8');
+  assert.match(audit,/host\.classList\.contains\('completed-row'\)/);
+  assert.match(css,/attendance-inline-meta>\.record-audit/);
 });

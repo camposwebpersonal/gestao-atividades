@@ -46,6 +46,10 @@ export function rememberRecords(table,rows,replace=false){
  globalThis.refreshAuditUI?.();
 }
 export function auditTarget(host,isAttendance){
+ if(isAttendance&&host.classList.contains('completed-row')){
+  const main=host.querySelector(':scope > .completed-row-main');
+  if(main){host.classList.add('completed-audit-compact');return main;}
+ }
  if(isAttendance&&host.classList.contains('item-row')){
   const header=host.querySelector(':scope > .item-header'),info=header?.querySelector(':scope > .item-info');
   if(header&&info){
