@@ -595,7 +595,7 @@ document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')
 let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
-let S={user:null,isAdmin:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[]};window.S=S;
+let S={user:null,isAdmin:false,canViewTrash:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
 const EMPREGOS_DATA_VERSION='2026-06-v1';
@@ -828,15 +828,16 @@ onAuthStateChanged(auth,async u=>{
   syncOfflineNow().catch(error=>console.error('Sincronização inicial:',error));
   try{
     const ud=await getDoc(doc(db,'users',u.uid));
-    if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
-    else{S.isAdmin=false;S.userRole='usuario';S.userSetor=null;toast('Seu login não possui perfil cadastrado. Solicite ao administrador a regularização do acesso.','error',8000);}
+    if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.canViewTrash=d.permissoes?.pode_ver_lixeira===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
+    else{S.isAdmin=false;S.canViewTrash=false;S.userRole='usuario';S.userSetor=null;toast('Seu login não possui perfil cadastrado. Solicite ao administrador a regularização do acesso.','error',8000);}
   }catch(e){
     // Falha ao ler o perfil não pode conceder privilégios: assume o menor nível
     console.error('Erro ao carregar perfil do usuário',e);
-    S.isAdmin=false;S.userRole='usuario';S.userSetor=null;
+    S.isAdmin=false;S.canViewTrash=false;S.userRole='usuario';S.userSetor=null;
     toast('Não foi possível carregar suas permissões ('+(e.message||e)+'). Acesso limitado; recarregue a página.','error',8000);
   }
-  if(S.isAdmin){document.getElementById('nav-adm').style.display='';document.getElementById('nav-trash').style.display='';}
+  if(S.isAdmin)document.getElementById('nav-adm').style.display='';
+  document.getElementById('nav-trash').style.display=S.canViewTrash?'':'none';
   const cacheReady=await loadData({cacheOnly:true});
   if(cacheReady&&!window.restoreWorkspace())setView('mod');
   await loadData();
@@ -959,6 +960,8 @@ window.loadData=async function loadData({cacheOnly=false}={}){
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
   S.me=S.users.find(u=>u.id===S.user?.uid)||{};
   S.permissoes=S.me.permissoes||{modulos:{},pode_criar:false,pode_editar:false};
+  S.canViewTrash=S.permissoes.pode_ver_lixeira===true;
+  const trashNav=document.getElementById('nav-trash');if(trashNav)trashNav.style.display=S.canViewTrash?'':'none';
   S.chamados=[];
   S.galeria=[];
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
@@ -1025,6 +1028,7 @@ function flattenSubTree(tree,levelPrefix,out){
 
 // ── NAV ──
 window.setView=function(v){
+  if(v==='trash'&&!S.canViewTrash){toast('Seu usuário não tem permissão para visualizar a lixeira.','error');v='mod';}
   curSecId=null;
   window.rememberWorkspace?.({kind:'view',id:v});
   ['mod','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
@@ -1040,18 +1044,18 @@ window.setView=function(v){
 const _trashTypeLabels={atividades:'Grupo de lançamentos',items:'Item',subitems:'Subitem / lançamento',secretarias:'Secretaria',responsaveis:'Responsável',contatos:'Contato',chamados:'Chamado',galeria:'Imagem',field_templates:'Campo personalizado',entity_images:'Imagem vinculada',contas:'Conta',estoque:'Estoque',requisicoes:'Requisição',distribuicao:'Distribuição',users:'Usuário',bulk_entry_drafts:'Rascunho em lote',extintores:'Extintor',extintor_abas:'Aba de extintores'};
 const _trashDate=value=>{try{return new Date(value).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});}catch{return 'Data não informada';}};
 window.renderTrash=function(){
-  if(!S.isAdmin){setC('<div class="empty">A lixeira é restrita à administração.</div>');return;}
+  if(!S.canViewTrash){setC('<div class="empty">Seu usuário não tem permissão para visualizar a lixeira.</div>');return;}
   const rows=[...(S.trashItems||[])].sort((a,b)=>String(b.deleted_at||'').localeCompare(String(a.deleted_at||'')));
   const groups=new Map();
   rows.forEach(row=>{const sector=row.source_secretaria_name||'Sem setor identificado',activity=row.source_activity_name||'Registros gerais';if(!groups.has(sector))groups.set(sector,new Map());const activities=groups.get(sector);if(!activities.has(activity))activities.set(activity,[]);activities.get(activity).push(row);});
   const batchSizes=new Map();rows.forEach(row=>{if(row.batch_id)batchSizes.set(row.batch_id,(batchSizes.get(row.batch_id)||0)+1);});
-  const sections=[...groups.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([sector,activities])=>`<section class="trash-sector"><header><div><small>SETOR</small><h2>${esc(sector)}</h2></div><b>${[...activities.values()].reduce((n,list)=>n+list.length,0)}</b></header>${[...activities.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([activity,list])=>`<div class="trash-group"><div class="trash-group-title"><span>▦</span><strong>${esc(activity)}</strong><b>${list.length}</b></div><div class="trash-grid">${list.map(row=>{const search=[row.source_label,sector,activity,row.source_table,row.deleted_by_name].join(' ').toLocaleLowerCase('pt-BR'),batchCount=batchSizes.get(row.batch_id)||0;return `<article class="trash-card" data-trash-card data-search="${esc(search)}"><div class="trash-card-icon">♻</div><div class="trash-card-main"><small>${esc(_trashTypeLabels[row.source_table]||row.source_table)}</small><strong>${esc(row.source_label||'Registro sem título')}</strong><span>Excluído em ${_trashDate(row.deleted_at)}${row.deleted_by_name?' por '+esc(row.deleted_by_name):''}${batchCount>1?` · conjunto com ${batchCount} registros`:''}</span></div><div class="trash-card-actions">${batchCount>1?`<button type="button" onclick="restoreTrashBatch('${row.batch_id}')">↺ Restaurar conjunto</button>`:`<button type="button" onclick="restoreTrashRecord('${row.id}')">↺ Restaurar</button>`}<button type="button" class="danger" onclick="permanentlyDeleteTrash('${row.id}')">Excluir definitivamente</button></div></article>`;}).join('')}</div></div>`).join('')}</section>`).join('');
+  const sections=[...groups.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([sector,activities])=>`<section class="trash-sector"><header><div><small>SETOR</small><h2>${esc(sector)}</h2></div><b>${[...activities.values()].reduce((n,list)=>n+list.length,0)}</b></header>${[...activities.entries()].sort(([a],[b])=>a.localeCompare(b,'pt-BR')).map(([activity,list])=>`<div class="trash-group"><div class="trash-group-title"><span>▦</span><strong>${esc(activity)}</strong><b>${list.length}</b></div><div class="trash-grid">${list.map(row=>{const search=[row.source_label,sector,activity,row.source_table,row.deleted_by_name].join(' ').toLocaleLowerCase('pt-BR'),batchCount=batchSizes.get(row.batch_id)||0;return `<article class="trash-card" data-trash-card data-search="${esc(search)}"><div class="trash-card-icon">♻</div><div class="trash-card-main"><small>${esc(_trashTypeLabels[row.source_table]||row.source_table)}</small><strong>${esc(row.source_label||'Registro sem título')}</strong><span>Excluído em ${_trashDate(row.deleted_at)}${row.deleted_by_name?' por '+esc(row.deleted_by_name):''}${batchCount>1?` · conjunto com ${batchCount} registros`:''}</span></div><div class="trash-card-actions">${S.isAdmin?(batchCount>1?`<button type="button" onclick="restoreTrashBatch('${row.batch_id}')">↺ Restaurar conjunto</button>`:`<button type="button" onclick="restoreTrashRecord('${row.id}')">↺ Restaurar</button>`)+`<button type="button" class="danger" onclick="permanentlyDeleteTrash('${row.id}')">Excluir definitivamente</button>`:'<span>Somente visualização</span>'}</div></article>`;}).join('')}</div></div>`).join('')}</section>`).join('');
   setC(`<section class="trash-page"><div class="trash-hero"><div class="trash-hero-icon">♻</div><div><div class="workspace-kicker">Proteção contra perda de dados</div><h1>Lixeira do sistema</h1><p>Tudo que é excluído permanece organizado por setor e grupo até uma decisão definitiva.</p></div><div class="trash-total"><strong>${rows.length}</strong><span>registro${rows.length===1?'':'s'}</span></div></div><div class="trash-toolbar"><label><span>⌕</span><input type="search" placeholder="Buscar na lixeira por nome, setor ou grupo..." oninput="filterTrashView(this.value)"></label><span>Somente a exclusão feita aqui é permanente.</span></div><div id="trash-results">${sections||'<div class="trash-empty"><span>✓</span><strong>A lixeira está vazia</strong><p>Nenhum registro aguarda restauração ou exclusão definitiva.</p></div>'}</div></section>`);
 };
 window.filterTrashView=function(value){const q=String(value||'').trim().toLocaleLowerCase('pt-BR');document.querySelectorAll('[data-trash-card]').forEach(card=>card.hidden=q&&!card.dataset.search.includes(q));document.querySelectorAll('.trash-group').forEach(group=>group.hidden=![...group.querySelectorAll('[data-trash-card]')].some(card=>!card.hidden));document.querySelectorAll('.trash-sector').forEach(sector=>sector.hidden=![...sector.querySelectorAll('.trash-group')].some(group=>!group.hidden));};
-window.restoreTrashRecord=async function(id){const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`Restaurar "${row.source_label||'este registro'}" para o local de origem?`))return;try{await restoreTrashItem(id);await loadData();toast('Registro restaurado com sucesso!');renderTrash();}catch(error){toast('Não foi possível restaurar: '+(error.message||error),'error',8000);}};
-window.restoreTrashBatch=async function(batchId){const rows=S.trashItems.filter(item=>item.batch_id===batchId);if(!rows.length||!confirm(`Restaurar o conjunto completo com ${rows.length} registros para seus locais de origem?`))return;const rank={secretarias:0,atividades:1,items:2,subitems:3};rows.sort((a,b)=>(rank[a.source_table]??4)-(rank[b.source_table]??4));try{for(const row of rows)await restoreTrashItem(row.id);await loadData();toast(`${rows.length} registros restaurados com sucesso!`);renderTrash();}catch(error){await loadData();toast('A restauração foi interrompida: '+(error.message||error),'error',9000);renderTrash();}};
-window.permanentlyDeleteTrash=async function(id){const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`ATENÇÃO: excluir permanentemente "${row.source_label||'este registro'}"? Esta ação não poderá ser desfeita.`))return;try{await permanentDeleteDoc(doc(db,'trashItems',id));await loadData();toast('Registro excluído permanentemente.');renderTrash();}catch(error){toast('Não foi possível excluir definitivamente: '+(error.message||error),'error',8000);}};
+window.restoreTrashRecord=async function(id){if(!S.isAdmin){toast('Somente administradores autorizados podem restaurar registros.','error');return;}const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`Restaurar "${row.source_label||'este registro'}" para o local de origem?`))return;try{await restoreTrashItem(id);await loadData();toast('Registro restaurado com sucesso!');renderTrash();}catch(error){toast('Não foi possível restaurar: '+(error.message||error),'error',8000);}};
+window.restoreTrashBatch=async function(batchId){if(!S.isAdmin){toast('Somente administradores autorizados podem restaurar registros.','error');return;}const rows=S.trashItems.filter(item=>item.batch_id===batchId);if(!rows.length||!confirm(`Restaurar o conjunto completo com ${rows.length} registros para seus locais de origem?`))return;const rank={secretarias:0,atividades:1,items:2,subitems:3};rows.sort((a,b)=>(rank[a.source_table]??4)-(rank[b.source_table]??4));try{for(const row of rows)await restoreTrashItem(row.id);await loadData();toast(`${rows.length} registros restaurados com sucesso!`);renderTrash();}catch(error){await loadData();toast('A restauração foi interrompida: '+(error.message||error),'error',9000);renderTrash();}};
+window.permanentlyDeleteTrash=async function(id){if(!S.isAdmin){toast('Somente administradores autorizados podem excluir definitivamente.','error');return;}const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`ATENÇÃO: excluir permanentemente "${row.source_label||'este registro'}"? Esta ação não poderá ser desfeita.`))return;try{await permanentDeleteDoc(doc(db,'trashItems',id));await loadData();toast('Registro excluído permanentemente.');renderTrash();}catch(error){toast('Não foi possível excluir definitivamente: '+(error.message||error),'error',8000);}};
 
 // ── SECRETARIAS ──
 function _cadastroPage({icon,title,subtitle,count,actions,head,rows,emptyCols}){
@@ -2572,7 +2576,7 @@ function _buildPermMatrix(u){
     }
     return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary><div class="permission-scope-list">${details}</div></details></section>`;
   }).join('');
-  return `<div class="form-group full"><label>Permissões gerais</label><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos</strong><small>Desmarcado: pode alimentar e editar lançamentos nos grupos liberados, mas não pode criar novos grupos.</small></span></label></div><div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. A criação de novos grupos depende também da opção acima. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
+  return `<div class="form-group full"><label>Permissões gerais</label><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos</strong><small>Desmarcado: pode alimentar e editar lançamentos nos grupos liberados, mas não pode criar novos grupos.</small></span></label><label class="permission-create-groups"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Permite abrir e consultar todos os registros excluídos. Restaurar e excluir definitivamente continuam restritos a administradores.</small></span></label></div><div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. A criação de novos grupos depende também da opção acima. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
@@ -2612,7 +2616,7 @@ function _readPermMatrix(){
       modulos[m.id]=entry;
     }
   });
-  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,modulos};
+  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,pode_ver_lixeira:document.getElementById('usr-can-view-trash')?.checked===true,modulos};
 }
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
