@@ -13,8 +13,8 @@ window.userCanGroup=()=>true;
 window.openModal=(title,sub,html)=>{document.getElementById('modal-title').textContent=title;document.getElementById('modal-sub').textContent=sub;document.getElementById('modal-body').innerHTML=html;};
 window.closeModal=()=>{};window.loadData=async()=>{};window.openActivity=()=>window.activityOpened=true;window.toast=(message)=>window.lastToast=message;
 await import('/js/bulk-entry.js?v=5');
-const archive=await import('/js/completed-archive.js?v=2');
-window.renderArchive=()=>{document.getElementById('archive').innerHTML=archive.renderCompletedArchive({group:window.S.secs[0],items:[{id:'april',description:'Ligação de esgoto concluída',start_date:'2026-04-12',conclusion_date:'2026-05-01',responsaveis:'Equipe A'},{id:'may',description:'Rede concluída',start_date:'2026-05-03',conclusion_date:'2026-05-09'}],subitems:[],progress:()=>({pct:100}),canEdit:true});};
+const archive=await import('/js/completed-archive.js?v=3');
+window.renderArchive=()=>{document.getElementById('archive').innerHTML=archive.renderCompletedArchive({group:window.S.secs[0],items:[{id:'april',description:'Ligação de esgoto concluída',start_date:'2026-04-12',conclusion_date:'2026-05-01',responsaveis:'Equipe A',concluded:1},{id:'may',description:'Rede concluída',start_date:'2026-05-03',conclusion_date:'2026-05-09',concluded:1}],subitems:[],progress:()=>({pct:100}),canEdit:true});};
 await window.openBulkEntry('saneamento');window.ready=true;
 </script></body></html>`;
 
@@ -56,7 +56,7 @@ export const supabase={
  const saved=await page.evaluate(()=>({first:window.insertedRows[0],last:window.insertedRows.at(-1),toast:window.lastToast,opened:window.activityOpened}));
  assert.equal(saved.first.description,'Solicitação 1');assert.equal(saved.first.start_date,'2026-04-05');assert.equal(saved.first.secretaria_id,'agricultura');assert.equal(saved.first.extra_fields.Localidade,'Zona rural');assert.deepEqual(saved.first.extra_fields['Tipo de serviço'],['Estourado','Tampa']);assert.equal(saved.first.extra_fields.Área,'Rural');assert.equal(saved.first.extra_fields.urgencia,'amarelo');assert.equal(saved.last.description,'Solicitação 100');assert.equal(saved.opened,true);assert.match(saved.toast,/100 lançamentos/);
  await page.evaluate(()=>window.renderArchive());
- assert.equal(await page.locator('.completed-month-card').count(),2);assert.equal(await page.getByText('abril',{exact:true}).count(),1);assert.equal(await page.getByText('maio',{exact:true}).count(),1);assert.equal(await page.locator('.completed-year').count(),1);
+ assert.equal(await page.locator('.completed-month-card').count(),2);assert.equal(await page.getByText('abril',{exact:true}).count(),1);assert.equal(await page.getByText('maio',{exact:true}).count(),2);assert.equal(await page.locator('.completed-year').count(),1);assert.equal(await page.locator('.completed-selected-month').count(),1);assert.equal(await page.locator('.completed-selected-month .completed-row').count(),1);
  await page.screenshot({path:'/tmp/gestao-bulk-archive-desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:780});await page.waitForTimeout(100);
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'a interface criou rolagem horizontal fora da planilha no celular');

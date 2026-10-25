@@ -58,6 +58,9 @@ test('arquivo agrupa pela data da solicitação e protege o conteúdo exibido',(
  assert.match(html,/>abril</);
  assert.match(html,/ARQUIVO DE CONCLUÍDOS/);
  assert.ok(html.indexOf('maio')<html.indexOf('abril'));
+ assert.equal((html.match(/class="completed-month-card/g)||[]).length,2);
+ assert.equal((html.match(/class="completed-row"/g)||[]).length,1);
+ assert.match(html,/completed-selected-month/);
  assert.doesNotMatch(html,/<details/);
  assert.doesNotMatch(html,/<script>/);
 });
