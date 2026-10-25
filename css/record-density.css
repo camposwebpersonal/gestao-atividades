@@ -1,0 +1,38 @@
+/* Alta densidade para cadastros e lançamentos: mais informação por tela. */
+.item-row{margin-bottom:4px!important;border-radius:9px!important}
+.item-header{gap:5px!important;min-height:30px;padding:4px 7px!important}
+.item-header>.mass-sel{width:13px!important;height:13px!important;margin-right:1px!important}
+.item-header>.drag-handle{padding:0!important;font-size:12px!important}
+.item-header>span[style*="font-size:20px"]{font-size:14px!important}
+.item-name{gap:3px!important;font-size:11px!important;line-height:1.08!important}
+.item-meta{display:inline;margin:0 5px 0 0!important;font-size:8px!important;line-height:1.05!important}
+.item-header .badge{padding:2px 5px!important;font-size:8px!important}
+.item-header .card-btn{min-height:24px!important;padding:3px 6px!important;border-radius:6px!important;font-size:8px!important}
+.item-header .pring{transform:scale(.78);margin:-5px}
+.item-row>[id^="ib-"]{padding:0 7px 5px!important}
+.sub-row{gap:4px!important;min-height:27px;margin-bottom:2px!important;padding-top:3px!important;padding-bottom:3px!important;border-radius:6px!important;line-height:1.05!important}
+.sub-row>.mass-sel{width:12px!important;height:12px!important;margin-right:0!important}
+.sub-row .drag-handle,.sub-row .hier-branch,.sub-row .hier-num{font-size:8px!important}
+.sub-row .hier-num{min-width:17px!important}
+.sub-row>div{line-height:1.05!important}.sub-row>div>div:first-child{font-size:10px!important}.sub-row>div>div:not(:first-child){margin-top:1px!important;font-size:8px!important}
+.sub-row>span[style*="border-radius:999px"]{padding:2px 5px!important;font-size:8px!important}
+.sub-row .card-btn{min-height:22px!important;padding:2px 5px!important;border-radius:5px!important;font-size:8px!important}
+.list-row{min-height:34px!important;padding:5px 8px!important;gap:6px!important}.list-row .lr-icon{width:28px!important;height:28px!important;font-size:16px!important}.list-row .lr-title{font-size:11px!important}.list-row .lr-meta{font-size:8px!important}
+
+/* Poços e demais cartões operacionais. */
+.pw-list{gap:4px!important}.pw-card{border-radius:8px!important}.pw-card-head{gap:5px!important;padding:5px 8px!important}.pw-card-head>div[style*="font-size:22px"]{font-size:15px!important}.pw-local{font-size:12px!important}.pw-num{font-size:8px!important}.pw-badge{padding:2px 5px!important;font-size:7px!important}.pw-card-body{gap:4px 7px!important;padding:5px 8px!important}.pw-field small{margin-bottom:0!important;font-size:7px!important}.pw-field div{font-size:9px!important;line-height:1.12!important}.pw-custom-card{gap:4px!important;padding-top:4px!important}.pw-card-actions{gap:3px!important;padding:4px 8px!important}.pw-mini{min-height:24px!important;padding:3px 6px!important;font-size:8px!important}.pw-drag-handle{padding:1px 6px!important;font-size:16px!important}
+.cc-mobile-card{margin-bottom:4px!important;padding:6px!important;border-radius:7px!important}.cc-mobile-title{margin-bottom:3px!important;font-size:11px!important}.cc-mobile-row{margin-bottom:2px!important;font-size:9px!important}
+
+/* Linhas tabulares do sistema. */
+.registry-table th,.activity-data-table th,.cc-table th,.ce-table th{padding:4px 6px!important;font-size:8px!important;line-height:1.05!important}
+.registry-table td,.activity-data-table td,.cc-table td,.ce-table td{padding:3px 6px!important;font-size:9px!important;line-height:1.08!important}
+.registry-avatar,.registry-index{width:25px!important;height:25px!important;margin-right:4px!important;border-radius:7px!important}.registry-actions button{min-height:25px!important;padding:3px 6px!important}
+.lic-grid th{padding:5px 6px!important}.lic-grid td,.lic-cell{height:28px!important}.lic-cell{padding:2px 6px!important;font-size:10px!important}.lic-row-status summary{padding:3px 5px!important;font-size:8px!important}
+
+@media(max-width:760px){
+ .item-header{flex-wrap:wrap!important;gap:3px!important;padding:3px 5px!important}.item-info{flex:1 1 150px!important;min-width:120px!important}.item-name{font-size:10px!important}.item-meta{font-size:7px!important}.item-header .card-btn{min-height:23px!important;padding:2px 5px!important;font-size:7px!important}.item-header>img{max-height:22px!important}
+ .sub-row{flex-wrap:wrap!important;gap:3px!important;min-height:25px!important;padding-top:2px!important;padding-bottom:2px!important}.sub-row>div{flex:1 1 130px!important}.sub-row .card-btn{min-height:21px!important;padding:2px 4px!important;font-size:7px!important}
+ .pw-card-head{align-items:center!important}.pw-card-body{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:3px 6px!important;padding:4px 6px!important}.pw-card-actions{padding:3px 6px!important}.pw-mini{min-height:23px!important;font-size:7px!important}.pw-photos{gap:3px!important}.pw-photo{height:42px!important}
+ .registry-table td,.activity-data-table td,.cc-table td,.ce-table td{padding:3px 4px!important;font-size:8px!important}
+}
+@media(max-width:420px){.pw-card-body{grid-template-columns:repeat(2,minmax(0,1fr))!important}.item-header>.pring{display:none}.item-header>span[id^="chev-"]{font-size:8px!important}.sub-row img{max-height:20px!important;max-width:28px!important}}

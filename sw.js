@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v127';
+const CACHE_NAME = 'gestao-pms-v128';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -32,6 +32,7 @@ const STATIC_ASSETS = [
   'css/trash.css',
   'css/custom-fields.css',
   'css/controle-licitacoes.css',
+  'css/record-density.css',
   'js/perfuracao-pocos.js',
   'js/ordenacao-visual.js',
   'js/controle-contas.js',

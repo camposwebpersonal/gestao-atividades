@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from '../js/bulk-entry-core.js';
-import {completedArchiveEntries,renderCompletedArchive} from '../js/completed-archive.js';
+import {clearCompletedArchiveMonth,completedArchiveEntries,renderCompletedArchive,selectCompletedArchiveMonth} from '../js/completed-archive.js';
 
 test('planilha inclui atendimento e campos personalizados do grupo',()=>{
  globalThis.window={modForSec:()=> 'atendimentos'};
@@ -51,16 +51,25 @@ test('arquivo inclui cada item e subitem concluído sem esconder filhos quando o
  assert.deepEqual(entries.map(entry=>entry.record.id),['i1','s1','s2','s3']);
 });
 
-test('arquivo agrupa pela data da solicitação e protege o conteúdo exibido',()=>{
- const html=renderCompletedArchive({group:{id:'g1'},items:[{id:'a',description:'<script>abril</script>',start_date:'2026-04-12',concluded:1},{id:'m',description:'maio',start_date:'2026-05-03',status:'concluído'}],subitems:[],progress:()=>({pct:100}),canEdit:false});
+test('arquivo agrupa pela data da solicitação e abre o mês em tela própria',()=>{
+ const data={group:{id:'g1'},items:[{id:'a',description:'<script>abril</script>',start_date:'2026-04-12',concluded:1},{id:'m',description:'maio',start_date:'2026-05-03',status:'concluído'}],subitems:[],progress:()=>({pct:100}),canEdit:false};
+ const html=renderCompletedArchive(data);
  assert.match(html,/>2026</);
  assert.match(html,/>maio</);
  assert.match(html,/>abril</);
  assert.match(html,/ARQUIVO DE CONCLUÍDOS/);
  assert.ok(html.indexOf('maio')<html.indexOf('abril'));
  assert.equal((html.match(/class="completed-month-card/g)||[]).length,2);
- assert.equal((html.match(/class="completed-row"/g)||[]).length,1);
- assert.match(html,/completed-selected-month/);
+ assert.equal((html.match(/class="completed-row"/g)||[]).length,0);
+ assert.doesNotMatch(html,/completed-month-screen/);
+ assert.match(html,/Abrir mês/);
  assert.doesNotMatch(html,/<details/);
  assert.doesNotMatch(html,/<script>/);
+ selectCompletedArchiveMonth('g1','2026-04');
+ const detail=renderCompletedArchive(data);
+ assert.match(detail,/completed-month-screen/);
+ assert.match(detail,/>ABR-2026</);
+ assert.equal((detail.match(/class="completed-row"/g)||[]).length,1);
+ assert.doesNotMatch(detail,/completed-month-card/);
+ clearCompletedArchiveMonth('g1');
 });
