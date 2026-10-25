@@ -6,7 +6,7 @@
 }
 
 #content {
-  padding-top: 4px;
+  padding-top: 1px;
   padding-bottom: 18px;
 }
 
@@ -210,8 +210,8 @@
 /* Cabeçalho das atividades e lançamentos */
 .top-actions-fixed {
   gap: 4px !important;
-  margin-bottom: 3px !important;
-  padding-bottom: 2px !important;
+  margin-bottom: 2px !important;
+  padding: 0 0 2px !important;
 }
 
 .top-actions-fixed .btn-action,
@@ -269,7 +269,25 @@
   align-items: center;
   gap: 5px;
   flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+.activity-command-summary-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  flex-wrap: wrap;
   margin-bottom: 5px;
+}
+
+.activity-command-summary-row>.activity-tools-row {
+  flex: 0 1 auto;
+}
+
+.activity-command-summary-row>.activity-stats {
+  min-width: 500px;
+  flex: 1 1 600px;
+  margin-bottom: 0 !important;
 }
 
 .activity-view-options>label {
@@ -283,8 +301,13 @@
 }
 
 .activity-stat {
-  padding: 5px 8px !important;
+  padding: 3px 6px !important;
   border-radius: 8px !important;
+}
+
+.activity-stat>div:first-child,
+.activity-stat>div:last-child {
+  line-height: 1 !important;
 }
 
 .activity-stat>div:last-child {
@@ -303,7 +326,7 @@
 
 /* Demandas por secretarias */
 body[data-workspace="atendimentos"] #content {
-  padding-top: 4px !important;
+  padding-top: 1px !important;
   padding-bottom: 18px !important;
 }
 
@@ -558,7 +581,7 @@ body[data-workspace="atendimentos"] #content {
 
   #content,
   body[data-workspace="atendimentos"] #content {
-    padding: 4px 8px 14px !important;
+    padding: 2px 8px 14px !important;
   }
 
   .top-actions-fixed {
@@ -576,6 +599,12 @@ body[data-workspace="atendimentos"] #content {
 
   .activity-tools-row {
     gap: 4px;
+  }
+
+  .activity-command-summary-row>.activity-tools-row,
+  .activity-command-summary-row>.activity-stats {
+    min-width: 0;
+    flex-basis: 100%;
   }
 
   .dashboard-heading,
