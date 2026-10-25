@@ -12,7 +12,7 @@ test('modo de alta densidade cobre lançamentos, poços, tabelas e celular',()=>
   for(const selector of ['.item-header','.sub-row','.pw-card-body','.cc-mobile-card','.registry-table td','.lic-grid td'])assert.match(css,new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(css,/min-height:25px!important/);
-  assert.match(page,/css\/record-density\.css\?v=3/);
+  assert.match(page,/css\/record-density\.css\?v=4/);
   assert.match(worker,/css\/record-density\.css/);
 });
 
@@ -29,4 +29,16 @@ test('compactação preserva fontes legíveis e reduz apenas os espaços',()=>{
   assert.match(css,/\.item-header\{[^}]*padding:1px 5px!important/);
   assert.match(archive,/\.completed-row-main>strong\{font-size:11px/);
   assert.match(archive,/\.completed-row\{[^}]*padding:1px 5px/);
+});
+
+test('conteúdo quebra linha sem sobreposição ou corte em zoom',()=>{
+  const archive=fs.readFileSync(path.join(root,'css/bulk-archive.css'),'utf8');
+  const completed=fs.readFileSync(path.join(root,'js/completed-archive.js'),'utf8');
+  const audit=fs.readFileSync(path.join(root,'js/autoria.js'),'utf8');
+  assert.match(css,/attendance-inline-meta[^}]*flex-wrap:wrap!important/);
+  assert.match(css,/record-audit[^}]*white-space:normal!important/);
+  assert.match(archive,/completed-row-main[^}]*flex-wrap:wrap/);
+  assert.match(archive,/completed-row-main>strong[^}]*overflow-wrap:anywhere/);
+  assert.match(completed,/class="completed-row-side"/);
+  assert.match(audit,/moveTarget\.insertBefore\(button/);
 });
