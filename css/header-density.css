@@ -1,0 +1,615 @@
+/* Densidade estrutural dos cabeçalhos.
+   Mantém a tipografia aprovada e recupera espaço por paddings, margens e gaps. */
+
+:root {
+  --header-height: 62px;
+}
+
+#content {
+  padding-top: 12px;
+  padding-bottom: 18px;
+}
+
+.page-title,
+.dashboard-heading h1,
+.registry-heading h1,
+.users-page-header h1,
+.demand-heading h1,
+.lic-hero h1,
+.lic-table-title h1 {
+  margin-top: 0 !important;
+  margin-bottom: 1px !important;
+}
+
+.page-sub,
+.dashboard-heading p,
+.registry-heading p,
+.users-page-header p,
+.demand-heading p,
+.lic-hero p,
+.lic-scope-head p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  line-height: 1.22 !important;
+}
+
+.workspace-kicker,
+.lic-kicker {
+  margin-bottom: 3px !important;
+}
+
+/* Barra institucional superior */
+#navbar {
+  padding-inline: clamp(10px, 1.7vw, 24px);
+  gap: 8px;
+}
+
+#navbar .brand {
+  gap: 7px;
+}
+
+#navbar .brand img {
+  width: 39px;
+  height: 39px;
+}
+
+.brand-copy small {
+  margin-top: 2px;
+}
+
+#undo-redo-bar {
+  margin-left: 2px;
+}
+
+.undo-btn,
+.redo-btn,
+.btn-system,
+.btn-logout {
+  min-height: 34px;
+  padding: 5px 9px;
+}
+
+.user-chip {
+  min-height: 36px;
+  padding: 2px 9px 2px 4px;
+}
+
+.user-chip .av {
+  width: 29px;
+  height: 29px;
+}
+
+.global-search-wrap {
+  height: 36px;
+  gap: 7px;
+  padding-inline: 10px;
+}
+
+/* Cabeçalhos de páginas, painéis e cadastros */
+.dashboard-heading,
+.registry-heading,
+.users-page-header {
+  gap: 9px !important;
+  margin-bottom: 6px !important;
+}
+
+.dashboard-date,
+.registry-count {
+  padding: 5px 9px !important;
+}
+
+.registry-heading>div:first-child {
+  gap: 8px !important;
+}
+
+.registry-heading-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+}
+
+.registry-toolbar {
+  gap: 5px !important;
+  padding: 4px 6px !important;
+  margin-bottom: 5px !important;
+}
+
+.registry-search input {
+  min-height: 30px !important;
+}
+
+.users-overview {
+  gap: 4px 15px !important;
+  padding: 4px 9px !important;
+  margin-bottom: 6px !important;
+}
+
+.users-toolbar {
+  gap: 7px !important;
+  margin-bottom: 6px !important;
+}
+
+.users-toolbar label {
+  margin-bottom: 2px !important;
+}
+
+.users-toolbar :is(input, select) {
+  min-height: 32px !important;
+  padding-block: 5px !important;
+}
+
+/* Página inicial e painel */
+.home-shell {
+  gap: 10px !important;
+}
+
+.home-hero {
+  gap: 13px !important;
+  padding: 13px 17px !important;
+  border-radius: 15px !important;
+}
+
+.home-title {
+  margin-bottom: 5px !important;
+}
+
+.home-copy {
+  margin-block: 0 !important;
+  line-height: 1.35 !important;
+}
+
+.home-total {
+  padding: 9px 12px !important;
+}
+
+.home-total span {
+  margin-top: 3px !important;
+}
+
+.home-directory-head {
+  gap: 8px !important;
+  padding: 9px 13px !important;
+}
+
+.dashboard-banner {
+  gap: 10px !important;
+  padding: 9px 13px !important;
+  margin-bottom: 7px !important;
+}
+
+.dashboard-banner>div {
+  gap: 9px !important;
+}
+
+.dashboard-banner-mark {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+}
+
+.dashboard-banner p {
+  margin-top: 1px !important;
+}
+
+.dashboard-kpis {
+  gap: 7px !important;
+  margin-bottom: 8px !important;
+}
+
+.dashboard-kpis article {
+  min-height: 70px !important;
+  gap: 8px !important;
+  padding: 8px 11px !important;
+}
+
+.kpi-icon {
+  flex-basis: 36px !important;
+  height: 36px !important;
+}
+
+/* Cabeçalho das atividades e lançamentos */
+.top-actions-fixed {
+  gap: 4px !important;
+  margin-bottom: 5px !important;
+  padding-bottom: 4px !important;
+}
+
+.top-actions-fixed .btn-action,
+.activity-view-options .btn-action,
+.activity-expand-tools .btn-action {
+  min-height: 30px !important;
+  padding-block: 4px !important;
+}
+
+.activity-page-heading {
+  margin-bottom: 5px !important;
+}
+
+.activity-page-heading>img {
+  max-height: 55px !important;
+  margin-bottom: 4px !important;
+}
+
+.activity-page-heading .page-sub {
+  margin-bottom: 3px !important;
+}
+
+.activity-page-heading>div[style*="margin-top:-8px"] {
+  margin-top: 2px !important;
+  margin-bottom: 3px !important;
+}
+
+.activity-view-options,
+.activity-expand-tools {
+  gap: 5px !important;
+  margin-bottom: 5px !important;
+}
+
+.activity-stats {
+  gap: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+.activity-stat {
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+}
+
+.activity-stat>div:last-child {
+  margin-top: 0 !important;
+}
+
+.activity-lanes {
+  margin-bottom: 6px !important;
+  padding: 4px !important;
+}
+
+.activity-lanes button {
+  min-height: 38px !important;
+  padding-block: 5px !important;
+}
+
+/* Demandas por secretarias */
+body[data-workspace="atendimentos"] #content {
+  padding-top: 12px !important;
+  padding-bottom: 18px !important;
+}
+
+.demand-heading {
+  gap: 9px !important;
+  margin-bottom: 6px !important;
+}
+
+.demand-heading h1 {
+  line-height: 1.08 !important;
+}
+
+.demand-summary {
+  gap: 12px !important;
+  padding: 5px 10px !important;
+}
+
+.demand-toolbar {
+  gap: 5px !important;
+  margin-bottom: 5px !important;
+}
+
+.demand-toolbar .btn-action,
+.demand-section-head .btn-action {
+  min-height: 30px !important;
+  padding-block: 4px !important;
+}
+
+.demand-filterbar {
+  gap: 6px !important;
+  padding: 5px 7px !important;
+  border-radius: 9px !important;
+}
+
+.demand-filter select {
+  min-height: 30px !important;
+  padding-block: 4px !important;
+}
+
+.demand-search input {
+  min-height: 30px !important;
+  padding-block: 3px !important;
+}
+
+.demand-context {
+  margin: 5px 0 2px !important;
+}
+
+.demand-section {
+  margin-top: 5px !important;
+}
+
+.demand-section-head {
+  padding-block: 3px !important;
+}
+
+.module-groups-toolbar {
+  gap: 5px !important;
+  margin-bottom: 6px !important;
+}
+
+/* Licitações */
+.lic-page {
+  padding-bottom: 14px !important;
+}
+
+.lic-hero {
+  gap: 10px !important;
+  padding: 9px 13px !important;
+  border-radius: 13px !important;
+}
+
+.lic-hero-stats {
+  gap: 4px !important;
+}
+
+.lic-hero-stats span {
+  padding: 4px 7px !important;
+}
+
+.lic-toolbar {
+  gap: 5px !important;
+  margin: 5px 0 !important;
+}
+
+.lic-search input {
+  min-height: 30px !important;
+  padding-block: 4px !important;
+}
+
+.lic-year-tabs {
+  gap: 4px !important;
+  padding: 1px 1px 5px !important;
+}
+
+.lic-year-tabs button {
+  padding: 5px 8px !important;
+}
+
+.lic-scope-head {
+  gap: 6px !important;
+  margin: 4px 0 6px !important;
+}
+
+.lic-table-title {
+  gap: 7px !important;
+  padding: 6px 8px !important;
+  margin-bottom: 4px !important;
+}
+
+.lic-table-title-actions {
+  gap: 4px !important;
+}
+
+.lic-grid-hint {
+  gap: 6px !important;
+  padding: 4px 7px !important;
+}
+
+/* Lixeira */
+.trash-page {
+  gap: 6px !important;
+}
+
+.trash-hero {
+  gap: 8px !important;
+  padding: 8px 11px !important;
+  border-radius: 12px !important;
+}
+
+.trash-hero-icon {
+  width: 38px !important;
+  height: 38px !important;
+}
+
+.trash-hero h1 {
+  margin-block: 0 !important;
+}
+
+.trash-hero p {
+  margin-block: 1px 0 !important;
+  line-height: 1.2 !important;
+}
+
+.trash-total {
+  padding: 5px 9px !important;
+}
+
+.trash-toolbar {
+  gap: 5px !important;
+  padding: 5px 7px !important;
+}
+
+.trash-sector>header {
+  padding: 6px 9px !important;
+}
+
+.trash-group {
+  padding: 6px !important;
+}
+
+.trash-group-title {
+  margin-bottom: 4px !important;
+}
+
+/* Perfuração de poços */
+.pw-hero {
+  padding: 10px 14px !important;
+  margin-bottom: 6px !important;
+  border-radius: 13px !important;
+}
+
+.pw-hero-title {
+  margin-block: 1px !important;
+}
+
+.pw-toolbar {
+  gap: 5px !important;
+  padding-block: 4px !important;
+  margin-bottom: 5px !important;
+}
+
+.pw-tabs {
+  gap: 3px !important;
+}
+
+.pw-tab,
+.pw-toolbar .btn-action {
+  min-height: 30px !important;
+  padding-block: 4px !important;
+}
+
+.pw-filters {
+  gap: 6px !important;
+  padding: 6px 8px !important;
+  margin-bottom: 5px !important;
+}
+
+.pw-payment-shortcuts {
+  gap: 4px !important;
+  margin-bottom: 3px !important;
+}
+
+.pw-filter-group {
+  gap: 2px !important;
+}
+
+.pw-filter-group :is(input, select) {
+  min-height: 31px !important;
+  padding-block: 4px !important;
+}
+
+.pw-order-hint {
+  margin-bottom: 5px !important;
+  padding: 4px 7px !important;
+}
+
+/* Cabeçalhos de planilhas e modais de lançamento */
+.bulk-modal-box .modal-head {
+  padding: 7px 12px !important;
+}
+
+.bulk-intro {
+  gap: 8px !important;
+  padding: 5px 10px !important;
+}
+
+.bulk-toolbar {
+  gap: 5px !important;
+  padding: 5px 9px !important;
+}
+
+.bulk-drafts-banner,
+.bulk-new-draft {
+  gap: 6px !important;
+  padding: 7px 9px !important;
+}
+
+.bulk-drafts-manager {
+  gap: 7px !important;
+}
+
+.ce-header {
+  gap: 6px !important;
+  margin-bottom: 6px !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --header-height: 58px;
+  }
+
+  #content,
+  body[data-workspace="atendimentos"] #content {
+    padding: 8px 8px 14px !important;
+  }
+
+  .top-actions-fixed {
+    row-gap: 4px !important;
+  }
+
+  .dashboard-heading,
+  .registry-heading,
+  .users-page-header,
+  .demand-heading,
+  .lic-hero,
+  .lic-scope-head {
+    gap: 5px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .dashboard-date,
+  .registry-count {
+    align-self: flex-start !important;
+    padding: 4px 7px !important;
+  }
+
+  .home-hero,
+  .lic-hero {
+    padding: 8px 10px !important;
+  }
+
+  .home-totals {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-banner {
+    padding: 7px 9px !important;
+  }
+
+  .dashboard-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .demand-summary {
+    width: 100%;
+    padding: 4px 7px !important;
+  }
+
+  .demand-filterbar,
+  .pw-filters {
+    gap: 5px !important;
+    padding: 5px !important;
+  }
+
+  .lic-table-title {
+    padding: 5px 6px !important;
+  }
+
+  .trash-hero {
+    padding: 7px 8px !important;
+  }
+
+  .trash-toolbar>* {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .activity-stats {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-stat {
+    min-width: 0 !important;
+  }
+
+  .trash-hero {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+
+  .trash-total {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

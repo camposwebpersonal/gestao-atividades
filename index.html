@@ -383,6 +383,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="stylesheet" href="css/record-density.css?v=7">
+<link rel="stylesheet" href="css/header-density.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -1568,7 +1569,7 @@ window.openActivity=function(secId){
     _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
   }
   const _ss=sec.show_stats!==0;
-  const expandirHtml=`<div style="display:flex;gap:8px;margin-bottom:10px">
+  const expandirHtml=`<div class="activity-expand-tools" style="display:flex;gap:8px;margin-bottom:10px">
     <button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="expandirTodos()">📂 Expandir Tudo</button>
     <button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="recolherTodos()">📁 Recolher Tudo</button>
   </div>`;
@@ -1576,12 +1577,12 @@ window.openActivity=function(secId){
     const total=allItems.length,conc=allItems.filter(i=>iProg(i).pct===100).length;
     const atras=allItems.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
     const pend=total-conc-atras;
-    return`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#10b981">${conc}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Concluídos</div></div>
-      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#3b82f6">${pend}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Pendentes</div></div>
-      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">${atras}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Atrasados</div></div>
-      <div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
-      ${_showPct?`<div style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#38bdf8">${total?Math.round((conc/total)*100):0}%</div><div style="font-size:10px;color:#64748b;margin-top:2px">Progresso Geral</div></div>`:''}
+    return`<div class="activity-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#10b981">${conc}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Concluídos</div></div>
+      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#3b82f6">${pend}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Pendentes</div></div>
+      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">${atras}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Atrasados</div></div>
+      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
+      ${_showPct?`<div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#38bdf8">${total?Math.round((conc/total)*100):0}%</div><div style="font-size:10px;color:#64748b;margin-top:2px">Progresso Geral</div></div>`:''}
     </div>`;
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
@@ -1611,7 +1612,7 @@ window.openActivity=function(secId){
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
   </div>
-  <div style="margin-bottom:18px">
+  <div class="activity-page-heading" style="margin-bottom:18px">
     ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;cursor:pointer;display:block;background:transparent" onclick="openGal('activity','${secId}','${esc(sec.name)}')" loading="lazy">`:''}
     <div class="page-title">${esc(sec.name)}</div>
     <div class="page-sub">${esc(sec.observacoes||'Detalhes e progresso da atividade')}</div>
@@ -1622,7 +1623,7 @@ window.openActivity=function(secId){
   ${needsEmpregosRestore&&S.isAdmin?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);color:#ddd6fe;font-size:13px"><strong>Restaurando a base salarial importada…</strong><br><span style="color:#a78bfa">Os 444 colaboradores e suas remunerações serão associados a esta atividade sem criar duplicidades.</span></div>`:''}
   ${laneTabs}
   ${lane==='active'?`
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  <div class="activity-view-options" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
     <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
     ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
   </div>
