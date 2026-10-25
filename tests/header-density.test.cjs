@@ -10,7 +10,7 @@ const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 
 test('carrega a densidade de cabeçalhos depois da densidade de lançamentos', () => {
   const records = html.indexOf('css/record-density.css?v=7');
-  const headers = html.indexOf('css/header-density.css?v=4');
+  const headers = html.indexOf('css/header-density.css?v=5');
   assert.ok(records >= 0);
   assert.ok(headers > records);
 });
@@ -23,6 +23,7 @@ test('compacta por estrutura sem reduzir o tamanho das fontes aprovadas', () => 
   assert.match(css, /\.activity-heading-row\s*\{/);
   assert.match(css, /\.activity-tools-row\s*\{/);
   assert.match(css, /\.activity-command-summary-row\s*\{/);
+  assert.match(css, /\.activity-audit-popover\s*\{/);
   assert.match(css, /\.activity-stats\s*\{/);
   assert.match(css, /\.demand-heading\s*\{/);
   assert.match(css, /\.lic-hero\s*\{/);
@@ -41,7 +42,7 @@ test('mantém reorganização responsiva dos cabeçalhos sem esmagar conteúdo',
 });
 
 test('inclui a nova camada no cache offline com versão renovada', () => {
-  assert.match(sw, /gestao-pms-v139/);
+  assert.match(sw, /gestao-pms-v140/);
   assert.match(sw, /'css\/header-density\.css'/);
 });
 
@@ -51,11 +52,14 @@ test('a tela de atividade expõe classes semânticas para todos os blocos do cab
     'activity-heading-row',
     'activity-tools-row',
     'activity-command-summary-row',
+    'activity-audit-popover',
     'activity-view-options',
     'activity-expand-tools',
     'activity-stats',
     'activity-stat'
   ]) assert.match(html, new RegExp(`class="[^"]*${className}`));
-  assert.match(html, /<div class="activity-heading-row">[\s\S]*?\$\{laneTabs\}[\s\S]*?<\/div>/);
+  assert.match(html, /<div class="activity-heading-row" data-audit-skip>[\s\S]*?\$\{laneTabs\}[\s\S]*?<\/div>/);
   assert.match(html, /<div class="activity-command-summary-row">[\s\S]*?activity-tools-row[\s\S]*?\$\{expandirHtml\}[\s\S]*?\$\{statsHtml\}[\s\S]*?<\/div>/);
+  assert.match(html, /data-audit-skip/);
+  assert.match(html, /Mostrar informações de criação e edição/);
 });

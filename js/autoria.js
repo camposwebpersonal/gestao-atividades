@@ -73,7 +73,7 @@ export function initAuditUI(){
   const byId=new Map();for(const entry of globalThis.__recordIndex?.values()||[])byId.set(String(entry.record.id),entry);
   const hosts=new Map();
   for(const el of content.querySelectorAll('[onclick],[data-audit-id],[data-lista-id],[data-sort-id],[data-well-id]')){
-   if(el.closest('.record-audit'))continue;
+   if(el.closest('.record-audit,[data-audit-skip]'))continue;
    const recordId=el.dataset.auditId||el.dataset.listaId||el.dataset.sortId||el.dataset.wellId;
    const keys=recordId?[recordId]:[...(el.getAttribute('onclick')||'').matchAll(/['"]([^'"]+)['"]/g)].map(m=>m[1]);
    const entry=keys.map(id=>byId.get(id)).find(Boolean);if(!entry)continue;
