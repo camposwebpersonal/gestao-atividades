@@ -59,7 +59,11 @@ export function auditTarget(host,isAttendance){
    return inline;
   }
  }
- if(isAttendance&&host.classList.contains('sub-row'))return host.querySelector(':scope > div[style*="flex:1"]')||host;
+ if(isAttendance&&host.classList.contains('sub-row')){
+  const info=host.querySelector(':scope > div[style*="flex:1"]');
+  if(info){host.classList.add('attendance-sub-compact');return info;}
+  return host;
+ }
  return host.classList.contains('user-card')?host.querySelector('.user-identity > div'):host.tagName==='TR'?host.querySelector('td:nth-child(2)')||host.querySelector('td'):host;
 }
 export function initAuditUI(){

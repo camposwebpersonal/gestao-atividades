@@ -12,7 +12,7 @@ test('modo de alta densidade cobre lançamentos, poços, tabelas e celular',()=>
   for(const selector of ['.item-header','.sub-row','.pw-card-body','.cc-mobile-card','.registry-table td','.lic-grid td'])assert.match(css,new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(css,/min-height:0!important/);
-  assert.match(page,/css\/record-density\.css\?v=6/);
+  assert.match(page,/css\/record-density\.css\?v=7/);
   assert.match(worker,/css\/record-density\.css/);
 });
 
@@ -51,4 +51,14 @@ test('cartões eliminam padding vertical sem empilhar responsável e secretaria'
   assert.match(css,/\.sub-row\{[^}]*padding-top:0!important[^}]*padding-bottom:0!important/);
   assert.match(css,/\.pw-card-head\{[^}]*padding:0 6px!important/);
   assert.match(archive,/\.completed-row\{[^}]*padding:0 5px/);
+});
+
+test('subitens compactam metadados e indicadores preservam alto contraste',()=>{
+  const audit=fs.readFileSync(path.join(root,'js/autoria.js'),'utf8');
+  assert.match(audit,/host\.classList\.add\('attendance-sub-compact'\)/);
+  assert.match(css,/\.attendance-sub-compact>div\[style\*="flex:1"\]\{[^}]*display:flex!important[^}]*flex-wrap:wrap!important/);
+  assert.match(css,/\.attendance-sub-compact \.record-audit\{[^}]*flex-wrap:wrap!important[^}]*white-space:normal!important/);
+  assert.match(page,/class="record-info-badge"/);
+  assert.match(css,/\.record-info-badge\{[^}]*background:#e7f1f5!important[^}]*color:#214a63!important/);
+  assert.doesNotMatch(page,/background:#1e3a5f;color:#60a5fa[^`]*sub-item\(ns\)/);
 });
