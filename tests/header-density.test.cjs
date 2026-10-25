@@ -10,7 +10,7 @@ const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 
 test('carrega a densidade de cabeçalhos depois da densidade de lançamentos', () => {
   const records = html.indexOf('css/record-density.css?v=7');
-  const headers = html.indexOf('css/header-density.css?v=1');
+  const headers = html.indexOf('css/header-density.css?v=2');
   assert.ok(records >= 0);
   assert.ok(headers > records);
 });
@@ -19,13 +19,15 @@ test('compacta por estrutura sem reduzir o tamanho das fontes aprovadas', () => 
   assert.match(css, /--header-height:\s*62px/);
   assert.match(css, /\.top-actions-fixed\s*\{/);
   assert.match(css, /\.activity-page-heading\s*\{/);
+  assert.match(css, /\.activity-heading-row\s*\{/);
+  assert.match(css, /\.activity-tools-row\s*\{/);
   assert.match(css, /\.activity-stats\s*\{/);
   assert.match(css, /\.demand-heading\s*\{/);
   assert.match(css, /\.lic-hero\s*\{/);
   assert.match(css, /\.pw-hero\s*\{/);
   assert.match(css, /\.trash-hero\s*\{/);
   assert.match(css, /\.registry-heading/);
-  assert.doesNotMatch(css, /font-size\s*:/i);
+  assert.doesNotMatch(css, /\.activity-stat[^}]*font-size\s*:/is);
   assert.equal((css.match(/\{/g) || []).length, (css.match(/\}/g) || []).length);
 });
 
@@ -37,16 +39,20 @@ test('mantém reorganização responsiva dos cabeçalhos sem esmagar conteúdo',
 });
 
 test('inclui a nova camada no cache offline com versão renovada', () => {
-  assert.match(sw, /gestao-pms-v136/);
+  assert.match(sw, /gestao-pms-v137/);
   assert.match(sw, /'css\/header-density\.css'/);
 });
 
 test('a tela de atividade expõe classes semânticas para todos os blocos do cabeçalho', () => {
   for (const className of [
     'activity-page-heading',
+    'activity-heading-row',
+    'activity-tools-row',
     'activity-view-options',
     'activity-expand-tools',
     'activity-stats',
     'activity-stat'
   ]) assert.match(html, new RegExp(`class="[^"]*${className}`));
+  assert.match(html, /<div class="activity-heading-row">[\s\S]*?\$\{laneTabs\}[\s\S]*?<\/div>/);
+  assert.match(html, /<div class="activity-tools-row">[\s\S]*?activity-view-options[\s\S]*?\$\{expandirHtml\}[\s\S]*?<\/div>/);
 });
