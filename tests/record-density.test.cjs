@@ -12,7 +12,7 @@ test('modo de alta densidade cobre lançamentos, poços, tabelas e celular',()=>
   for(const selector of ['.item-header','.sub-row','.pw-card-body','.cc-mobile-card','.registry-table td','.lic-grid td'])assert.match(css,new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(css,/min-height:25px!important/);
-  assert.match(page,/css\/record-density\.css\?v=4/);
+  assert.match(page,/css\/record-density\.css\?v=5/);
   assert.match(worker,/css\/record-density\.css/);
 });
 
@@ -41,4 +41,10 @@ test('conteúdo quebra linha sem sobreposição ou corte em zoom',()=>{
   assert.match(archive,/completed-row-main>strong[^}]*overflow-wrap:anywhere/);
   assert.match(completed,/class="completed-row-side"/);
   assert.match(audit,/moveTarget\.insertBefore\(button/);
+});
+
+test('bloco principal ocupa toda a altura útil sem folga vertical',()=>{
+  assert.match(css,/attendance-compact>\.item-header>\.item-info\{[^}]*align-self:stretch!important/);
+  assert.match(css,/attendance-compact>\.item-header>\.item-info\{[^}]*justify-content:space-between!important/);
+  assert.match(css,/attendance-compact>\.item-header>\.item-info\{[^}]*padding-block:0!important/);
 });
