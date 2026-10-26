@@ -51,7 +51,7 @@ test('arquivo inclui cada item e subitem concluído sem esconder filhos quando o
  assert.deepEqual(entries.map(entry=>entry.record.id),['i1','s1','s2','s3']);
 });
 
-test('arquivo agrupa pela data da solicitação e abre o mês em tela própria',()=>{
+test('arquivo agrupa pela Data Início e abre o mês em tela própria',()=>{
  const data={group:{id:'g1'},items:[{id:'a',description:'<script>abril</script>',start_date:'2026-04-12',concluded:1},{id:'m',description:'maio',start_date:'2026-05-03',status:'concluído'}],subitems:[],progress:()=>({pct:100}),canEdit:false};
  const html=renderCompletedArchive(data);
  assert.match(html,/>2026</);
@@ -72,4 +72,32 @@ test('arquivo agrupa pela data da solicitação e abre o mês em tela própria',
  assert.equal((detail.match(/class="completed-row"/g)||[]).length,1);
  assert.doesNotMatch(detail,/completed-month-card/);
  clearCompletedArchiveMonth('g1');
+});
+
+test('arquivo concluído usa Data Início do item ou subitem, nunca a data da conclusão',()=>{
+ const data={
+  group:{id:'datas-inicio'},
+  items:[
+   {id:'pai',description:'Item janeiro',start_date:'2025-01-15',conclusion_date:'2026-10-26',concluded:1},
+   {id:'pai-sub',description:'Pai abril',start_date:'2024-04-10'}
+  ],
+  subitems:[
+   {id:'sub-propria',item_id:'pai-sub',description:'Subitem março',start_date:'2023-03-20',conclusion_date:'2026-10-26',concluded:1},
+   {id:'sub-herdada',item_id:'pai-sub',description:'Subitem herda abril',conclusion_date:'2026-10-26',concluded:1}
+  ],
+  progress:()=>({pct:100}),canEdit:false
+ };
+ const html=renderCompletedArchive(data);
+ assert.match(html,/MÊS DA DATA INÍCIO/);
+ assert.match(html,/>2025</);assert.match(html,/>janeiro</);
+ assert.match(html,/>2024</);assert.match(html,/>abril</);
+ assert.match(html,/>2023</);assert.match(html,/>março</);
+ assert.doesNotMatch(html,/>2026</);
+ selectCompletedArchiveMonth('datas-inicio','2023-03');
+ const ownDate=renderCompletedArchive(data);
+ assert.match(ownDate,/Subitem março/);assert.doesNotMatch(ownDate,/Subitem herda abril/);
+ selectCompletedArchiveMonth('datas-inicio','2024-04');
+ const inheritedDate=renderCompletedArchive(data);
+ assert.match(inheritedDate,/Subitem herda abril/);assert.doesNotMatch(inheritedDate,/Subitem março/);
+ clearCompletedArchiveMonth('datas-inicio');
 });

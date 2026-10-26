@@ -2,6 +2,8 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
+const interfaceSource=fs.readFileSync(path.join(__dirname,'../js/demandas-secretarias.js'),'utf8');
+const moduleSource=fs.readFileSync(path.join(__dirname,'../js/modulos.js'),'utf8');
 const model=import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(path.join(__dirname,'../js/demandas-model.js'))).toString('base64'));
 test('secretarias vazias aparecem, cadastros alheios não; vínculos inválidos ficam a classificar',async()=>{
  const {demandSections}=await model;
@@ -22,4 +24,11 @@ test('busca encontra nome, assunto e responsável sem depender de acentos',async
  assert.equal(demandMatches({name:'Grupo',assunto:'Iluminação'},'ILUMINACAO'),true);
  assert.equal(demandMatches({responsaveis:'João'},'joao'),true);
  assert.equal(demandMatches({name:'Estradas'},'poço'),false);
+});
+test('visualização principal permite escolha temporária e padrão global persistido nos grupos',()=>{
+ assert.match(interfaceSource,/★ Salvar padrão para todos/);
+ assert.match(interfaceSource,/for\(const group of all\)await window\.updateDoc[\s\S]*demandas_view_default:mode/);
+ assert.match(interfaceSource,/window\.resetDemandView/);
+ assert.doesNotMatch(interfaceSource,/localStorage\.setItem\('pms-demandas-view'/);
+ assert.match(moduleSource,/base\.demandas_view_default=window\.getDemandViewDefault/);
 });

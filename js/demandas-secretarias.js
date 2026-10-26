@@ -3,8 +3,7 @@ import {UNASSIGNED,demandSections,demandSecretaria,reorderDemand,demandMatches} 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Encode IDs before embedding in handlers (including apostrophes in legacy IDs).
 const arg=s=>esc(JSON.stringify(String(s??'')));
-let api,mode='list',query='',busy=false,drag=null,creatingGroup=false;
-try{mode=localStorage.getItem('pms-demandas-view')==='cards'?'cards':'list';}catch{}
+let api,mode='list',query='',busy=false,drag=null,creatingGroup=false,modeInitialized=false;
 const can=action=>window.userCan?.('atendimentos',action);
 const groups=()=>api.groups();
 const canGroup=(group,action='acesso')=>window.userCanGroup?.(group,action);
@@ -18,6 +17,12 @@ const selected=()=>window.currentDemandSecretaria||'';
 const selectionLabel=()=>sections().find(s=>s.id===selected())?.name||'Todas as secretarias';
 const secretaryOf=g=>demandSecretaria(g,window.S.secretarias||[]);
 const canOrder=group=>can('editar')&&(!group||canGroup(group,'editar'))&&!query.trim()&&!busy;
+const extraOf=group=>{try{return typeof group?.extra_fields==='string'?JSON.parse(group.extra_fields):group?.extra_fields||{};}catch{return {};}};
+const savedView=()=>{
+ const configured=groups().find(group=>['list','cards'].includes(group.demandas_view_default||extraOf(group).demandas_view_default));
+ return (configured?.demandas_view_default||extraOf(configured).demandas_view_default)==='cards'?'cards':'list';
+};
+function ensureView(){if(!modeInitialized){mode=savedView();modeInitialized=true;}}
 function button(label,fn,cls='',attrs=''){return `<button type="button" class="btn-action ${cls}" onclick="${fn}" ${attrs}>${label}</button>`;}
 function titleFor(s){return s.id===UNASSIGNED?s.name:/secretaria/i.test(s.name)?s.name:`Secretaria de ${s.name}`;}
 export function initDemandas(options){api=options;}
@@ -29,8 +34,21 @@ window.openDemandSecretaria=function(id=''){
  window.currentDemandSecretaria=id;query='';window.renderModulo('atendimentos');
 };
 window.setDemandView=function(value){
- mode=value==='cards'?'cards':'list';try{localStorage.setItem('pms-demandas-view',mode);}catch{}
+ mode=value==='cards'?'cards':'list';
  renderDemandas();
+};
+window.getDemandViewDefault=()=>savedView();
+window.resetDemandView=function(){mode=savedView();renderDemandas();};
+window.saveDemandViewDefault=async function(){
+ if(!window.S?.isAdmin){window.toast('Somente o administrador pode alterar o padrão de todos os usuários.','error');return;}
+ const all=groups();if(!all.length){window.toast('Cadastre ao menos um grupo antes de salvar o padrão.','error');return;}
+ if(busy)return;busy=true;renderDemandas();
+ try{
+  for(const group of all)await window.updateDoc(window.doc(window.db,'secretariats',group.id),{demandas_view_default:mode});
+  all.forEach(group=>{group.demandas_view_default=mode;group.extra_fields={...extraOf(group),demandas_view_default:mode};});
+  window.toast(`Visualização em ${mode==='cards'?'cards':'lista'} salva como padrão para todos!`,'success',5000);
+ }catch(error){window.toast('Não foi possível salvar o padrão: '+(error.message||error),'error',7000);}
+ finally{busy=false;renderDemandas();}
 };
 window.searchDemandas=function(value){query=value;renderResults();};
 function row(g,index){
@@ -48,12 +66,13 @@ function row(g,index){
  </article>`;
 }
 export function renderDemandas(){
+ ensureView();
  const all=groups(),secs=sections();
  if(selected()&&!secs.some(s=>s.id===selected()))window.currentDemandSecretaria='';
   const create=window.userCanCreateGroups?.()&&can('criar');
  document.getElementById('content').innerHTML=`<section class="demand-shell" aria-labelledby="demand-title">
   <header class="demand-heading"><div><span class="workspace-kicker">Organização municipal</span><h1 id="demand-title">Demandas por Secretarias</h1><p>As demandas no lugar certo. Cada grupo, todos os seus lançamentos.</p></div><div class="demand-summary"><b>${secs.filter(s=>s.id!==UNASSIGNED).length}<small>secretarias</small></b><b>${all.length}<small>grupos</small></b><b>${all.reduce((n,g)=>n+api.total(g),0)}<small>lançamentos</small></b></div></header>
-  <div class="demand-toolbar"><div class="demand-create">${window.S.isAdmin?button('＋ Nova secretaria','openDemandSecretariaModal()','primary'):''}${create?button('＋ Novo grupo','newDemandGroup()'):''}${button('PDF do módulo',"gerarRelatorioModulo('atendimentos')")}</div><div class="demand-view" role="group" aria-label="Visualização dos grupos">${button('☰ Lista',"setDemandView('list')",mode==='list'?'selected':'',`aria-pressed="${mode==='list'}"`)}${button('▦ Cards',"setDemandView('cards')",mode==='cards'?'selected':'',`aria-pressed="${mode==='cards'}"`)}</div></div>
+  <div class="demand-toolbar"><div class="demand-create">${window.S.isAdmin?button('＋ Nova secretaria','openDemandSecretariaModal()','primary'):''}${create?button('＋ Novo grupo','newDemandGroup()'):''}${button('PDF do módulo',"gerarRelatorioModulo('atendimentos')")}</div><div class="demand-view-actions"><div class="demand-view" role="group" aria-label="Visualização dos grupos">${button('☰ Lista',"setDemandView('list')",mode==='list'?'selected':'',`aria-pressed="${mode==='list'}"`)}${button('▦ Cards',"setDemandView('cards')",mode==='cards'?'selected':'',`aria-pressed="${mode==='cards'}"`)}</div>${window.S.isAdmin?button('★ Salvar padrão para todos','saveDemandViewDefault()',mode===savedView()?'demand-default-saved':'demand-default-save',mode===savedView()?'disabled title="Este já é o padrão de todos"':'title="Usar esta visualização como padrão para todos os usuários"'):''}${mode!==savedView()?button('↺ Restaurar padrão','resetDemandView()','demand-view-reset'):''}</div></div>
   <div class="demand-filterbar"><label class="demand-search"><span aria-hidden="true">⌕</span><input id="demand-search" type="search" value="${esc(query)}" placeholder="Grupo, assunto, responsável ou termo relacionado…" aria-label="Buscar grupos de demandas" oninput="searchDemandas(this.value)"></label><label class="demand-filter">Secretaria <select aria-label="Filtrar por secretaria" onchange="openDemandSecretaria(this.value)"><option value="">Todas as secretarias</option>${secs.map(s=>`<option value="${esc(s.id)}" ${selected()===s.id?'selected':''}>${esc(s.name)} (${s.groups.length})</option>`).join('')}</select></label></div>
   <div class="demand-context"><span>${esc(selectionLabel())}</span><small>${can('editar')?'Arraste pela alça ⠿ para ordenar. Use ⇄ para transferir.':'Selecione um grupo para consultar os lançamentos.'}</small></div>
   ${groups().some(g=>canGroup(g,'editar'))?`<div class="demand-bulk"><label><input type="checkbox" id="ce-sel-all" onchange="_ceToggleAllGrupos(this.checked);updateDemandSelection()"> Selecionar grupos visíveis</label><button type="button" class="btn-action" id="demand-delete-selected" disabled onclick="_ceExcluirSelecionados('atendimentos')">Excluir selecionados</button></div>`:''}<div id="demand-results"></div><div id="demand-status" class="demand-sr" role="status" aria-live="polite"></div>

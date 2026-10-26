@@ -1,4 +1,4 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=3';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
 import {supabase} from '../supabase_compat.js?v=4';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
 import './perfuracao-pocos.js?v=101';
@@ -270,6 +270,7 @@ window.criarGrupoModulo = async function(modId,secretariaId=null){
   if(modId==='atendimentos'){
     if(!S.secretarias.some(s=>s.id===secretariaId&&s.demandas_ativa)){toast('Selecione uma secretaria para o grupo.','error');return;}
     base.demanda_secretaria_id=secretariaId;
+    base.demandas_view_default=window.getDemandViewDefault?.()||'list';
   }
   if(mod.flag) base[mod.flag] = 1;
   try{
