@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#131921">
+  <meta name="description" content="Protótipo demonstrativo de acompanhamento de devolução e reembolso.">
+  <title>Minha compra — Simulação Amazon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="demo-banner" role="status">
+    SIMULAÇÃO • ambiente demonstrativo • nenhuma compra ou devolução real
+  </div>
+
+  <header class="site-header">
+    <div class="header-main">
+      <a class="brand" href="#inicio" aria-label="Início da simulação Amazon">
+        <span>amazon</span><i aria-hidden="true"></i>
+        <small>simulação</small>
+      </a>
+      <button class="location" type="button" data-toast="Endereço ocultado nesta demonstração.">
+        <span aria-hidden="true">⌖</span>
+        <span><small>Enviar para</small><strong>Cliente</strong></span>
+      </button>
+      <form class="search" role="search" data-search-form>
+        <label class="sr-only" for="search-input">Pesquisar</label>
+        <input id="search-input" type="search" placeholder="Pesquisar na Amazon" autocomplete="off">
+        <button type="submit" aria-label="Pesquisar">⌕</button>
+      </form>
+      <button class="account" type="button" data-toast="Conta indisponível nesta simulação.">
+        <small>Olá, cliente</small><strong>Contas e Listas</strong>
+      </button>
+      <button class="orders" type="button" data-scroll-to="pedido">
+        <small>Devoluções</small><strong>e Pedidos</strong>
+      </button>
+      <button class="cart-button" type="button" data-scroll-to="carrinho" aria-label="Carrinho com um item">
+        <span aria-hidden="true">🛒</span><b>1</b><strong>Carrinho</strong>
+      </button>
+    </div>
+    <nav class="subnav" aria-label="Navegação da demonstração">
+      <a href="#inicio">Início</a>
+      <a href="#pedido">Seu pedido</a>
+      <a href="#devolucao">Devolução</a>
+      <a href="#reembolso">Saldo de reembolso</a>
+      <a href="#carrinho">Carrinho</a>
+    </nav>
+  </header>
+
+  <main id="inicio">
+    <nav class="breadcrumbs" aria-label="Caminho da página">
+      <a href="#inicio">Sua conta</a><span>›</span><a href="#pedido">Seus pedidos</a><span>›</span><strong>Detalhes do pedido</strong>
+    </nav>
+
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">PEDIDO SIMULADO</p>
+        <h1>Devolução e reembolso</h1>
+        <p>Pedido nº 702-0000000-0000000 • compra demonstrativa</p>
+      </div>
+      <span class="safe-badge">✓ Nenhuma transação real</span>
+    </section>
+
+    <section class="status-card" id="devolucao" aria-labelledby="return-title">
+      <div class="status-icon" aria-hidden="true">↻</div>
+      <div class="status-copy">
+        <span class="status-pill">DEVOLUÇÃO EM PROCESSAMENTO</span>
+        <h2 id="return-title">Recebemos sua solicitação de devolução</h2>
+        <p>A TV está em processo de devolução. Assim que a análise for concluída, o reembolso será atualizado nesta página.</p>
+      </div>
+      <button class="text-button" type="button" data-toast="O acompanhamento é apenas ilustrativo.">Acompanhar devolução</button>
+
+      <ol class="timeline" aria-label="Progresso da devolução">
+        <li class="complete"><span>✓</span><div><strong>Devolução solicitada</strong><small>Solicitação recebida</small></div></li>
+        <li class="active"><span>2</span><div><strong>Processamento</strong><small>Análise em andamento</small></div></li>
+        <li><span>3</span><div><strong>Reembolso</strong><small>Aguardando processamento</small></div></li>
+      </ol>
+    </section>
+
+    <div class="content-grid">
+      <section class="panel order-panel" id="pedido" aria-labelledby="order-title">
+        <div class="panel-title">
+          <div><span>COMPRA REALIZADA</span><h2 id="order-title">Hisense Smart TV 65 polegadas</h2></div>
+          <strong>R$ 2.999,00</strong>
+        </div>
+
+        <div class="product-row">
+          <div class="tv-art" role="img" aria-label="Ilustração de uma televisão Hisense de 65 polegadas">
+            <div class="tv-screen"><span>Hisense</span><small>65”</small></div>
+            <i></i>
+          </div>
+          <div class="product-info">
+            <h3>Smart TV Hisense 65” 4K UHD</h3>
+            <p>Tela grande, resolução 4K e recursos inteligentes.</p>
+            <span class="returned-label">Devolução iniciada</span>
+            <dl>
+              <div><dt>Valor da compra</dt><dd>R$ 2.999,00</dd></div>
+              <div><dt>Quantidade</dt><dd>1</dd></div>
+              <div><dt>Forma de pagamento</dt><dd>Simulada</dd></div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel refund-panel" id="reembolso" aria-labelledby="refund-title">
+        <div class="wallet-icon" aria-hidden="true">R$</div>
+        <span class="eyebrow">SALDO DE REEMBOLSO</span>
+        <h2 id="refund-title">R$ 0,00</h2>
+        <p class="pending-line"><span></span>Aguardando o reembolso ser processado</p>
+        <div class="expected-refund">
+          <span>Reembolso esperado</span>
+          <strong>R$ 2.999,00</strong>
+        </div>
+        <p class="refund-note">O saldo permanecerá zerado até a conclusão da análise da devolução.</p>
+        <button class="disabled-button" type="button" disabled>Saldo ainda indisponível</button>
+      </aside>
+    </div>
+
+    <section class="panel cart-panel" id="carrinho" aria-labelledby="cart-title">
+      <div class="cart-heading">
+        <div><span class="eyebrow">PRONTO PARA COMPRAR NOVAMENTE</span><h2 id="cart-title">A TV já está no seu carrinho</h2></div>
+        <span class="cart-count">1 item</span>
+      </div>
+      <div class="cart-product">
+        <div class="tv-art small" role="img" aria-label="Ilustração de uma televisão Hisense de 65 polegadas">
+          <div class="tv-screen"><span>Hisense</span><small>65”</small></div><i></i>
+        </div>
+        <div class="cart-copy"><strong>Smart TV Hisense 65” 4K UHD</strong><small>Em estoque • quantidade: 1</small></div>
+        <strong class="cart-price">R$ 2.999,00</strong>
+      </div>
+      <div class="checkout-row">
+        <div><span>Subtotal (1 item)</span><strong>R$ 2.999,00</strong></div>
+        <button type="button" data-toast="Compra bloqueada: aguarde o reembolso. Nenhuma cobrança foi realizada.">Aguardar reembolso para comprar</button>
+      </div>
+      <p class="checkout-warning">ⓘ A compra é apenas uma simulação e não pode ser concluída. O botão demonstra a espera pelo reembolso.</p>
+    </section>
+  </main>
+
+  <footer>
+    <strong>Protótipo independente para demonstração.</strong>
+    <span>Não é uma página oficial da Amazon e não realiza compras, devoluções ou reembolsos.</span>
+  </footer>
+
+  <div class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
