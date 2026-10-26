@@ -259,7 +259,7 @@ window.criarGrupoModulo = async function(modId,secretariaId=null){
     controle_pendencias: 0,
     controle_contas: 0,
     controle_distribuicao: 0,
-    show_stats:0, show_verba:0, verba_on_subitems:0, verba_sum_subitems:0, verba_has_obs:0,
+    show_stats:0, items_view_mode:'list', subitems_view_mode:'list', show_verba:0, verba_on_subitems:0, verba_sum_subitems:0, verba_has_obs:0,
     show_origem_verba:0, origem_verba_on_subitems:0, origem_verba_has_obs:0,
     show_documentacao:0, documentacao_on_subitems:0, documentacao_has_obs:0,
     show_licitacao:0, licitacao_on_subitems:0, licitacao_has_obs:0,

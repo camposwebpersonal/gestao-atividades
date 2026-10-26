@@ -162,6 +162,29 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .sub-row.lvl-3{border-left:3px solid #f59e0b;background:#0a0f1a}
 .sub-row.lvl-4{border-left:3px solid #a855f7;background:#0a0f1a}
 .sub-row.lvl-5{border-left:3px solid #ec4899;background:#0a0f1a}
+.activity-layout-switcher{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px;padding:4px;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.activity-layout-switcher>span{padding:0 4px;color:var(--muted);font-size:10px;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.activity-layout-switcher .layout-option{padding:5px 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;cursor:pointer}
+.activity-layout-switcher .layout-option:hover{border-color:var(--border);color:var(--text)}
+.activity-layout-switcher .layout-option.active{border-color:#0ea5e9;background:rgba(14,165,233,.12);color:#0369a1}
+.activity-layout-switcher .layout-default{margin-left:auto;padding:5px 10px;border:1px solid #a7f3d0;border-radius:7px;background:#ecfdf5;color:#047857;font-size:11px;font-weight:900;cursor:pointer}
+.activity-layout-switcher .layout-reset{padding:5px 9px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;cursor:pointer}
+.activity-default-layout-settings{display:grid;grid-template-columns:auto 1fr 1fr;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:9px;background:#0e1729}
+.activity-default-layout-settings>strong{font-size:12px;color:#38bdf8}
+.activity-default-layout-settings>label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11px;font-weight:800}
+.activity-default-layout-settings select{min-width:120px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px}
+.activity-default-layout-settings>small{grid-column:1/-1;color:var(--muted);font-size:10px}
+.activity-records.items-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:10px;align-items:start}
+.activity-records.items-cards>.item-row{min-width:0;margin:0;border-radius:14px;box-shadow:0 5px 16px rgba(15,23,42,.08)}
+.activity-records.items-cards>.item-row>.item-header{align-items:flex-start;flex-wrap:wrap;padding:10px 12px}
+.activity-records.items-cards>.item-row>.item-header>.item-info{flex:1 1 210px}
+.activity-subitem-collection{min-width:0}
+.activity-records.subitems-cards .activity-subitem-collection{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:7px;margin:7px 0}
+.activity-records.subitems-cards .activity-subtree{min-width:0}
+.activity-records.subitems-cards .activity-subtree>.sub-row{height:100%;min-width:0;margin:0;padding:7px 9px!important;border:1px solid var(--border);border-left-width:4px;border-radius:10px;background:var(--card);box-shadow:0 3px 10px rgba(15,23,42,.07);align-content:flex-start;flex-wrap:wrap}
+.activity-records.subitems-cards .activity-subtree>.sub-row>div{min-width:150px}
+.activity-records.subitems-cards .activity-subtree>.activity-subitem-collection{grid-column:1/-1;grid-template-columns:1fr;margin:6px 0 0 10px}
+.activity-records.subitems-cards .activity-subtotal{grid-column:1/-1}
 .hier-arrow{color:#64748b;font-size:10px;flex-shrink:0}
 .hier-num{font-size:10px;font-weight:700;flex-shrink:0;min-width:22px;text-align:right;color:#94a3b8}
 .hier-branch{color:#475569;font-size:10px;flex-shrink:0}
@@ -287,6 +310,16 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
   .sub-row>div{min-width:0;word-break:normal;overflow-wrap:break-word;hyphens:none}
   .item-header .card-btn{padding:3px 6px;font-size:10px}
   .sub-row .card-btn{padding:3px 5px;font-size:9px}
+  .activity-layout-switcher{gap:4px;padding:3px}
+  .activity-layout-switcher>span{width:100%;padding-top:3px}
+  .activity-layout-switcher .layout-option{flex:1;text-align:center}
+  .activity-layout-switcher .layout-default{width:100%;margin-left:0;text-align:center}
+  .activity-layout-switcher .layout-reset{width:100%}
+  .activity-default-layout-settings{grid-template-columns:1fr}
+  .activity-default-layout-settings>label{justify-content:space-between}
+  .activity-default-layout-settings>small{grid-column:auto}
+  .activity-records.items-cards{grid-template-columns:1fr}
+  .activity-records.subitems-cards .activity-subitem-collection{grid-template-columns:1fr}
   .card-btns{margin-left:0;width:100%;justify-content:flex-end}
   .cards-grid{grid-template-columns:1fr!important}
   .activity-card{overflow:hidden}
@@ -773,7 +806,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=86';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=87';
   navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1439,6 +1472,28 @@ function _renderResumoFinanceiro(secId){
 }
 
 // ── ACTIVITY DETAIL ──
+const _activityViewOverrides=new Map();
+function _savedActivityView(sec){
+  return {items:sec?.items_view_mode==='cards'?'cards':'list',subitems:sec?.subitems_view_mode==='cards'?'cards':'list'};
+}
+function _currentActivityView(sec){return _activityViewOverrides.get(sec.id)||_savedActivityView(sec);}
+window.setActivityRecordView=function(secId,scope,mode){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec||!['items','subitems'].includes(scope)||!['list','cards'].includes(mode))return;
+  const current=_currentActivityView(sec);_activityViewOverrides.set(secId,{...current,[scope]:mode});
+  const table=document.getElementById('ativ-table-mode');if(table)table.checked=false;
+  openActivity(secId);
+};
+window.saveActivityViewDefault=async function(secId){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não pode alterar o padrão deste grupo.','error');return;}
+  const view=_currentActivityView(sec);
+  try{
+    await updateDoc(doc(db,'secretariats',secId),{items_view_mode:view.items,subitems_view_mode:view.subitems,show_table:0,updated_at:serverTimestamp()});
+    sec.items_view_mode=view.items;sec.subitems_view_mode=view.subitems;sec.show_table=0;_activityViewOverrides.delete(secId);
+    toast('Visualização padrão deste grupo salva.','success');openActivity(secId);
+  }catch(error){toast('Não foi possível salvar a visualização: '+(error.message||error),'error');}
+};
+window.resetActivityRecordView=function(secId){_activityViewOverrides.delete(secId);openActivity(secId);};
 window.openActivity=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'acesso')){toast('Você não tem acesso a este grupo.','error');window.renderModulo?.(window.modForSec(sec));return;}
@@ -1459,6 +1514,7 @@ window.openActivity=function(secId){
   const items=lane==='completed'?[]:activeItems;
   const _showPct=sec.show_progress_percentage!==0;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
+  const activityView=_currentActivityView(sec),itemsViewMode=activityView.items,subitemsViewMode=activityView.subitems;
   const allTpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
   const allEntities=[...allItems,...S.subitems.filter(s=>allItems.some(i=>i.id===s.item_id))];
   // Normaliza nomes de campo (trim + acentuação) para evitar colunas "duplicadas"
@@ -1564,7 +1620,8 @@ window.openActivity=function(secId){
     itemsHtml=tbl;
     _totHtml='';
   }else{
-    itemsHtml=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+    const renderedItems=items.map((item,i)=>renderItem(item,today,i+1)).join('')||'<div class="empty">Nenhum item. Clique em "+ Item" para adicionar.</div>';
+    itemsHtml=`<div class="activity-records ${itemsViewMode==='cards'?'items-cards':'items-list'} ${subitemsViewMode==='cards'?'subitems-cards':'subitems-list'}">${renderedItems}</div>`;
     const _allSubCnt=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id&&(!_cp||s.concluded!=1)).length,0);
     _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
   }
@@ -1632,6 +1689,12 @@ window.openActivity=function(secId){
         <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
         ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
       </div>
+      <div class="activity-layout-switcher" aria-label="Visualização dos lançamentos">
+        <span>Itens</span><button type="button" class="layout-option ${itemsViewMode==='list'?'active':''}" aria-pressed="${itemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','items','list')">☰ Lista</button><button type="button" class="layout-option ${itemsViewMode==='cards'?'active':''}" aria-pressed="${itemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','items','cards')">▦ Cards</button>
+        <span>Subitens</span><button type="button" class="layout-option ${subitemsViewMode==='list'?'active':''}" aria-pressed="${subitemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','subitems','list')">☰ Lista</button><button type="button" class="layout-option ${subitemsViewMode==='cards'?'active':''}" aria-pressed="${subitemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','subitems','cards')">▦ Cards</button>
+        ${_can?`<button type="button" class="layout-default" onclick="saveActivityViewDefault('${secId}')">★ Salvar como padrão deste grupo</button>`:''}
+        ${_activityViewOverrides.has(secId)?`<button type="button" class="layout-reset" onclick="resetActivityRecordView('${secId}')">↺ Restaurar padrão</button>`:''}
+      </div>
       ${expandirHtml}
     </div>
     ${statsHtml}
@@ -1682,7 +1745,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
     if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
     if(isAttendanceSection(_sec))tags.length=0;
-    return`<div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+    return`<div class="activity-subtree"><div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
@@ -1698,10 +1761,10 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
       ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
       ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
-    </div>${_renderSubSubs(c.id,item,today,num,lvl)}`;
+    </div>${_renderSubSubs(c.id,item,today,num,lvl)}</div>`;
   }).join('');
   const subTotColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
-  return _html+`<div style="padding:2px 16px 2px ${14+indent}px;font-size:10px;color:${subTotColor};font-weight:600;text-align:right;border-left:3px solid ${subTotColor};opacity:.7">∑ Subtotal nível ${lvl}: ${kids.length} sub-item(ns)</div>`;
+  return `<div class="activity-subitem-collection activity-subitem-level-${lvl}">${_html}<div class="activity-subtotal" style="padding:2px 16px 2px ${14+indent}px;font-size:10px;color:${subTotColor};font-weight:600;text-align:right;border-left:3px solid ${subTotColor};opacity:.7">∑ Subtotal nível ${lvl}: ${kids.length} sub-item(ns)</div></div>`;
 }
 
 function renderItem(item,today,itemNum){
@@ -1715,10 +1778,10 @@ function renderItem(item,today,itemNum){
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const _topSubs=_allSubs.filter(s=>s.parent_type!=='subitem'&&(!_archiveActive||s.concluded!=1));
   const itemPrefix=itemNum!=null?''+itemNum:null;
-  const subsHtml=_topSubs.length?_topSubs.map((s,_si)=>{
+  const subsHtml=_topSubs.length?`<div class="activity-subitem-collection activity-subitem-level-1">${_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="sub-row lvl-1" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+    return`<div class="activity-subtree"><div class="sub-row lvl-1" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
@@ -1750,8 +1813,8 @@ function renderItem(item,today,itemNum){
       ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
       ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
       ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
-    </div>${_renderSubSubs(s.id,item,today,subNum)}`;
-  }).join(''):'';
+    </div>${_renderSubSubs(s.id,item,today,subNum)}</div>`;
+  }).join('')}</div>`:'';
   const iColor=item.item_color||'#3B82F6';
   return`<div class="item-row" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
@@ -2090,6 +2153,12 @@ window.openSecModal=function(id){
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-table" ${s?.show_table?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 🗂️ Sempre exibir lançamentos em tabela</label>
+      <div class="activity-default-layout-settings">
+        <strong>▦ Visualização padrão deste grupo</strong>
+        <label>Itens <select id="s-items-view-mode"><option value="list" ${s?.items_view_mode!=='cards'?'selected':''}>Lista compacta</option><option value="cards" ${s?.items_view_mode==='cards'?'selected':''}>Cards</option></select></label>
+        <label>Subitens <select id="s-subitems-view-mode"><option value="list" ${s?.subitems_view_mode!=='cards'?'selected':''}>Lista compacta</option><option value="cards" ${s?.subitems_view_mode==='cards'?'selected':''}>Cards</option></select></label>
+        <small>Essa preferência fica salva somente neste grupo e pode ser alterada temporariamente na própria tela.</small>
+      </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-quant" ${s?.show_quantitativo==1 || (s?.name||'').toUpperCase().includes('BCC')?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar quantitativo com soma</label>
       <div style="display:flex;align-items:center;gap:8px;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="text" id="s-qt-campo" placeholder="Nome do campo de valor (ex: Remuneração)" value="${esc(s?.quantitativo_campo || ((s?.name||'').toUpperCase().includes('BCC')?'Remuneração':''))}" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:13px"></div>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
@@ -2133,7 +2202,8 @@ window.saveSec=async function(id){
   const respStr=_getRespFromCombos('s-resp-wrap');
   const original=id?S.secs.find(x=>x.id===id):null;
   const auditChanges=id&&S.isAdmin?readAdminAudit('s-audit',original,S.users):null;
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:gc('s-show-table'),show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const itemsViewMode=g('s-items-view-mode')?.value==='cards'?'cards':'list',subitemsViewMode=g('s-subitems-view-mode')?.value==='cards'?'cards':'list';
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:itemsViewMode==='cards'||subitemsViewMode==='cards'?0:gc('s-show-table'),items_view_mode:itemsViewMode,subitems_view_mode:subitemsViewMode,show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   if(g('s-assunto')) data.assunto=g('s-assunto').value.trim();
   let did=id;
   if(id){
@@ -2142,6 +2212,7 @@ window.saveSec=async function(id){
   }
   else{data.order_num=S.secs.length;data.created_at=serverTimestamp();const r=await addDoc(collection(db,'secretariats'),data);did=r.id;}
   await saveRT('activity',did);
+  if(id)_activityViewOverrides.delete(id);
   await loadData();closeModal();toast(id?'Atualizado!':'Criado!');
   if(id&&curSecId===id){openActivity(id);}else if(isAttendanceSection(S.secs.find(s=>s.id===did))){window.renderModulo('atendimentos');}else{setView('mod');}
 };
