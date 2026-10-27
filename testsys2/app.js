@@ -20,7 +20,12 @@
 
   document.querySelectorAll('[data-scroll-to]').forEach((control) => {
     control.addEventListener('click', () => {
-      document.getElementById(control.dataset.scrollTo)?.scrollIntoView({ behavior: 'smooth' });
+      const target = document.getElementById(control.dataset.scrollTo);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.remove('section-highlight');
+      requestAnimationFrame(() => target.classList.add('section-highlight'));
+      setTimeout(() => target.classList.remove('section-highlight'), 1600);
     });
   });
 

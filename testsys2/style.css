@@ -62,6 +62,11 @@ main { width: min(1180px, calc(100% - 34px)); margin: 0 auto; padding: 24px 0 52
 .safe-badge { padding: 9px 12px; color: var(--green); background: #e9f7f2; border: 1px solid #bde0d4; border-radius: 100px; font-size: 11px; font-weight: 700; white-space: nowrap; }
 
 .status-card, .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+.section-highlight { animation: section-highlight 1.6s ease; }
+@keyframes section-highlight {
+  0%, 100% { box-shadow: var(--shadow); }
+  35% { box-shadow: 0 0 0 4px rgba(6,125,98,.22), 0 14px 34px rgba(19,25,33,.14); }
+}
 .status-card { padding: 25px; display: grid; grid-template-columns: 54px 1fr auto; gap: 8px 18px; align-items: center; border-top: 5px solid var(--orange); }
 .status-card.completed { border-top-color: var(--green); }
 .status-icon { width: 54px; height: 54px; display: grid; place-items: center; color: #fff; background: var(--amber); border-radius: 50%; font-size: 28px; font-weight: 700; }
