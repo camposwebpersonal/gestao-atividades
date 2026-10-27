@@ -485,8 +485,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=4";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus}from"./supabase_compat.js?v=4";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=5";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=5";
 import './js/modulos.js?v=92';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -520,6 +520,7 @@ if(navigator.storage?.persist)navigator.storage.persist().catch(()=>{});
 initAttendanceUI(moveAttendanceRecord);initAuditUI();
 window.collection=collection;window.doc=doc;window.addDoc=addDoc;window.updateDoc=updateDoc;window.deleteDoc=deleteDoc;window.permanentDeleteDoc=permanentDeleteDoc;window.getDocs=getDocs;window.getDoc=getDoc;window.query=query;window.where=where;window.orderBy=orderBy;window.serverTimestamp=serverTimestamp;window.writeBatch=writeBatch;window.setDoc=setDoc;
 const _savingButtons=new Set();
+let _lastLocalMutationAt=0;
 function releaseSaveButton(button){
   if(!button)return;clearTimeout(button._savingTimer);button.removeAttribute('data-saving');button.removeAttribute('aria-busy');
   if(button.dataset.originalLabel!==undefined){button.textContent=button.dataset.originalLabel;delete button.dataset.originalLabel;}
@@ -527,6 +528,30 @@ function releaseSaveButton(button){
 }
 function releaseSaveButtons(){for(const button of [..._savingButtons])releaseSaveButton(button);}
 window.releaseSaveButtons=releaseSaveButtons;
+const _stateTableMap={atividades:'secs',items:'items',subitems:'subitems',field_templates:'fieldTemplates',secretarias:'secretarias',responsaveis:'responsaveis',users:'users',contatos:'contatos',contas:'contas',estoque:'estoque',requisicoes:'requisicoes',trash_items:'trashItems'};
+let _liveRenderTimer=0;
+function applyLiveRecordChange({table,eventType,record,oldRecord,source}={}){
+  if(source==='local')_lastLocalMutationAt=Date.now();
+  const stateKey=_stateTableMap[table];if(!stateKey||!Array.isArray(S[stateKey]))return;
+  const id=record?.id||oldRecord?.id;if(!id)return;
+  const index=S[stateKey].findIndex(row=>row.id===id);
+  if(eventType==='DELETE'){if(index>=0)S[stateKey].splice(index,1);}
+  else if(index>=0)S[stateKey][index]={...S[stateKey][index],...record};
+  else S[stateKey].push(record);
+  if(source!=='remote')return;
+  clearTimeout(_liveRenderTimer);_liveRenderTimer=setTimeout(()=>{
+    if(curSecId)openActivity(curSecId);
+    else if(window.__currentView==='adm')renderAdmin();
+    else if(window.__currentView==='secr')renderSecretarias();
+    else if(window.__currentView==='resp')renderResponsaveis();
+    else if(window.__currentView==='cont')renderContatos();
+    else if(window.__currentView==='trash')renderTrash();
+    else window.renderModulos?.();
+  },80);
+}
+window.addEventListener?.('gestao-record-change',event=>applyLiveRecordChange(event.detail));
+let _stopLiveSync=null;
+function startLiveSync(){if(!_stopLiveSync)_stopLiveSync=subscribeToRealtimeChanges();}
 document.addEventListener('click',event=>{
   const button=event.target?.closest?.('button.btn-save');if(!button)return;
   if(button.dataset.saving==='1'||_savingButtons.size){
@@ -874,6 +899,7 @@ onAuthStateChanged(auth,async u=>{
   document.getElementById('nav-trash').style.display=S.canViewTrash?'':'none';
   const cacheReady=await loadData({cacheOnly:true});
   if(cacheReady&&!window.restoreWorkspace())setView('mod');
+  startLiveSync();
   await loadData();
   if(navigator.onLine){
     const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts','trashItems'];
@@ -963,12 +989,13 @@ window.doLogout=async function doLogout(){
 };
 
 // ── DATA ──
-window.loadData=async function loadData({cacheOnly=false}={}){
+window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   const failed=[];
   const safeGet=async(label,fn)=>{
     try{return await fn();}catch(e){console.error('Erro ao carregar '+label+':',e);failed.push(label+' ('+(e.message||e)+')');return{docs:[]};}
   };
-  const read=cacheOnly?getDocsFromCache:getDocs;
+  const recentLocalMutation=!forceRemote&&Date.now()-_lastLocalMutationAt<2500;
+  const read=(cacheOnly||recentLocalMutation)?getDocsFromCache:getDocs;
   const[a,b,c,ft,se,resp,usr,cont,contas,estq,req,trash]=await Promise.all([
     safeGet('secretariats',()=>read(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
     safeGet('items',()=>read(query(collection(db,'items'),orderBy('order_num','asc')))),
@@ -1064,6 +1091,7 @@ function flattenSubTree(tree,levelPrefix,out){
 window.setView=function(v){
   if(v==='trash'&&!S.canViewTrash){toast('Seu usuário não tem permissão para visualizar a lixeira.','error');v='mod';}
   curSecId=null;
+  window.__currentView=v;
   window.rememberWorkspace?.({kind:'view',id:v});
   ['mod','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(['adm','secr','resp','cont','trash'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
@@ -1930,36 +1958,38 @@ function _allSubDescendants(parentId){
   return out;
 }
 async function _markSubChildren(subId,d){
-  for(const c of _allSubDescendants(subId)){
+  await Promise.all(_allSubDescendants(subId).map(async c=>{
     if(c.concluded!=1){
       const cOld={concluded:c.concluded,conclusion_date:c.conclusion_date,status:c.status,auto_concluded:c.auto_concluded};
       await wUpdateDoc(doc(db,'subitems',c.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},cOld,'Concluir sub-item');
     }
-  }
+  }));
 }
 async function _unmarkSubChildren(subId){
   const desc=_allSubDescendants(subId).filter(s=>s.concluded==1);
   const hasFlag=desc.some(s=>s.auto_concluded===true);
   const toReset=hasFlag?desc.filter(s=>s.auto_concluded===true):desc;
-  for(const c of toReset){
+  await Promise.all(toReset.map(async c=>{
     const cOld={concluded:c.concluded,conclusion_date:c.conclusion_date,status:c.status,auto_concluded:c.auto_concluded};
     await wUpdateDoc(doc(db,'subitems',c.id),{concluded:0,conclusion_date:null,status:'pendente',auto_concluded:false},cOld,'Desmarcar sub-item');
-  }
+  }));
 }
 window.saveConclusao=async function(col,id){
   const _ud=document.getElementById('conc-use-date')?.checked!==false;
   const d=_ud?document.getElementById('conc-date')?.value||null:null;
   const orig=col==='item'?S.items.find(i=>i.id===id):S.subitems.find(s=>s.id===id);
+  const updates=[];
   if(orig){
     const oldData={concluded:orig.concluded,conclusion_date:orig.conclusion_date,status:orig.status};
-    await wUpdateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'},oldData,'Marcar concluído');
+    updates.push(wUpdateDoc(doc(db,col==='item'?'items':'subitems',id),{concluded:1,conclusion_date:d,status:'concluido'},oldData,'Marcar concluído'));
   }
   if(col==='item'){const sbs=S.subitems.filter(s=>s.item_id===id);for(const sb of sbs)if(sb.concluded!=1){
     const sbOld={concluded:sb.concluded,conclusion_date:sb.conclusion_date,status:sb.status,auto_concluded:sb.auto_concluded};
-    await wUpdateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},sbOld,'Concluir sub-item');
+    updates.push(wUpdateDoc(doc(db,'subitems',sb.id),{concluded:1,conclusion_date:d,status:'concluido',auto_concluded:true},sbOld,'Concluir sub-item'));
   }}
+  await Promise.all(updates);
   if(col==='subitem') await _markSubChildren(id,d);
-  await loadData();closeModal();toast('✅ Concluído!');openActivity(curSecId);
+  closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.confirmarExcluirAtividade=function(id){
   const sec=S.secs.find(s=>s.id===id);

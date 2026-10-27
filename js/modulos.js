@@ -1,5 +1,5 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
-import {supabase} from '../supabase_compat.js?v=4';
+import {supabase} from '../supabase_compat.js?v=5';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
 import './perfuracao-pocos.js?v=101';
 import './controle-extintores.js?v=4';

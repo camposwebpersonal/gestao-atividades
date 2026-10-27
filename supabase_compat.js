@@ -125,6 +125,12 @@ const TABLE_MAP = {
   'trash_items': 'trash_items'
 };
 
+const REALTIME_TABLES = [
+  'atividades','items','subitems','field_templates','secretarias','responsaveis',
+  'users','contatos','contas','estoque','requisicoes','trash_items','entity_images',
+  'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts'
+];
+
 function toSnake(str) {
   if (!str || typeof str !== 'string') return str;
   return str.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
@@ -178,6 +184,18 @@ function mergeExtraFields(row) {
     console.warn('extra_fields com JSON inválido, ignorado:', row.id, e);
   }
   return { ...row };
+}
+
+function emitRecordChange(table, eventType, row, oldRow = null, source = 'local') {
+  if (typeof globalThis.dispatchEvent !== 'function' || typeof globalThis.CustomEvent !== 'function') return;
+  const detail = {
+    table,
+    eventType,
+    record: row ? mergeExtraFields({...row}) : null,
+    oldRecord: oldRow ? mergeExtraFields({...oldRow}) : null,
+    source
+  };
+  globalThis.dispatchEvent(new CustomEvent('gestao-record-change', { detail }));
 }
 
 function moveUnknownToExtra(table, payload, existingExtra) {
@@ -538,12 +556,14 @@ export async function addDoc(collectionRef, data) {
     if (error) throw error;
     rememberRecords(table,[inserted]);
     await putCachedRow(table, inserted);
+    emitRecordChange(table, 'INSERT', inserted);
     return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
   } catch (error) {
     if (!error?.offlineCache && !isOfflineError(error)) throw error;
     await putCachedRow(table, payload);
     await queueMutation({ type: 'upsert', table, id: payload.id, payload });
     rememberRecords(table,[payload]);
+    emitRecordChange(table, 'INSERT', payload);
     return { id: payload.id, path: `${collectionRef._path}/${payload.id}`, pending: true };
   }
 }
@@ -571,12 +591,13 @@ export async function setDoc(docRef, data, options) {
     if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
     const {data:saved,error}=await supabase.from(table).upsert(payload).select().maybeSingle();
     if(error)throw error;
-    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);}
+    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved);}
     return {pending:false};
   } catch (error) {
     if (!error?.offlineCache && !isOfflineError(error)) throw error;
     await putCachedRow(table,payload);
     await queueMutation({type:'upsert',table,id:docRef._id,payload});
+    emitRecordChange(table,'UPDATE',payload);
     return {pending:true};
   }
 }
@@ -602,7 +623,7 @@ export async function updateDoc(docRef, data) {
     if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
     const {data:saved,error}=await supabase.from(table).update(payload).eq('id',docRef._id).select().maybeSingle();
     if(error)throw error;
-    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);}
+    if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved,cachedExisting);}
     return {pending:false};
   } catch (error) {
     if (!error?.offlineCache && !isOfflineError(error)) throw error;
@@ -611,6 +632,7 @@ export async function updateDoc(docRef, data) {
     await putCachedRow(table,local);
     await queueMutation({type:'update',table,id:docRef._id,payload});
     rememberRecords(table,[local]);
+    emitRecordChange(table,'UPDATE',local,cachedExisting);
     return {pending:true};
   }
 }
@@ -627,6 +649,7 @@ async function physicalDelete(docRef) {
   }
   await deleteCachedRow(table,docRef._id);
   globalThis.__recordIndex?.delete(table+'/'+docRef._id);globalThis.refreshAuditUI?.();
+  emitRecordChange(table,'DELETE',null,{id:docRef._id});
 }
 
 function trashContext(table, row, options = {}) {
@@ -768,6 +791,40 @@ export function onSnapshot(queryRef, callback, errorCallback) {
   run();
   const interval = setInterval(run, 3000);
   return () => clearInterval(interval);
+}
+
+// Sincronização imediata entre navegadores. O polling acima continua disponível
+// para compatibilidade, mas as telas principais recebem cada alteração assim que
+// o Postgres confirma a gravação.
+export function subscribeToRealtimeChanges(callback, tables = REALTIME_TABLES) {
+  const channelName = `gestao-live-${globalThis.crypto?.randomUUID?.() || Date.now()}`;
+  let channel = supabase.channel(channelName);
+  for (const table of tables) {
+    channel = channel.on('postgres_changes', {event:'*', schema:'public', table}, async payload => {
+      const eventType = payload.eventType || payload.event || 'UPDATE';
+      const row = eventType === 'DELETE' ? null : payload.new;
+      const oldRow = payload.old || null;
+      try {
+        if (eventType === 'DELETE') {
+          const id = oldRow?.id;
+          if (id) await deleteCachedRow(table,id);
+        } else if (row?.id) {
+          await putCachedRow(table,row);
+          rememberRecords(table,[row]);
+        }
+      } catch (error) {
+        console.warn('Não foi possível atualizar o cache em tempo real:',table,error);
+      }
+      emitRecordChange(table,eventType,row,oldRow,'remote');
+      callback?.({table,eventType,record:row?mergeExtraFields({...row}):null,oldRecord:oldRow?mergeExtraFields({...oldRow}):null,source:'remote'});
+    });
+  }
+  channel.subscribe(status => {
+    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+      globalThis.dispatchEvent?.(new CustomEvent('gestao-realtime-state',{detail:{status}}));
+    }
+  });
+  return () => supabase.removeChannel(channel);
 }
 
 export { supabase };

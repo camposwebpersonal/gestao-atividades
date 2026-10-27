@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js?v=4';
+import {supabase} from '../supabase_compat.js?v=5';
 import {UNASSIGNED,demandSections,demandSecretaria,reorderDemand,demandMatches} from './demandas-model.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Encode IDs before embedding in handlers (including apostrophes in legacy IDs).
