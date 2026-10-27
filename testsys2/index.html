@@ -43,7 +43,7 @@
       <a href="#pedido">Seu pedido</a>
       <a href="#devolucao">Devolução</a>
       <a href="#reembolso">Saldo de reembolso</a>
-      <a href="#carrinho">Carrinho</a>
+      <a href="#carrinho">Nova compra</a>
     </nav>
   </header>
 
@@ -55,25 +55,25 @@
     <section class="page-heading">
       <div>
         <p class="eyebrow">PEDIDO SIMULADO</p>
-        <h1>Devolução e reembolso</h1>
+        <h1>Estorno concluído e nova compra</h1>
         <p>Pedido nº 702-0000000-0000000 • compra demonstrativa</p>
       </div>
       <span class="safe-badge">✓ Nenhuma transação real</span>
     </section>
 
-    <section class="status-card" id="devolucao" aria-labelledby="return-title">
-      <div class="status-icon" aria-hidden="true">↻</div>
+    <section class="status-card completed" id="devolucao" aria-labelledby="return-title">
+      <div class="status-icon" aria-hidden="true">✓</div>
       <div class="status-copy">
-        <span class="status-pill">DEVOLUÇÃO EM PROCESSAMENTO</span>
-        <h2 id="return-title">Recebemos sua solicitação de devolução</h2>
-        <p>A TV está em processo de devolução. Assim que a análise for concluída, o reembolso será atualizado nesta página.</p>
+        <span class="status-pill">ESTORNO CONCLUÍDO</span>
+        <h2 id="return-title">O estorno de R$ 2.999,00 foi processado</h2>
+        <p>A devolução foi concluída e o valor integral já foi liberado e utilizado na nova compra da TV.</p>
       </div>
-      <button class="text-button" type="button" data-toast="O acompanhamento é apenas ilustrativo.">Acompanhar devolução</button>
+      <button class="text-button" type="button" data-toast="Estorno concluído nesta simulação demonstrativa.">Ver detalhes do estorno</button>
 
       <ol class="timeline" aria-label="Progresso da devolução">
         <li class="complete"><span>✓</span><div><strong>Devolução solicitada</strong><small>Solicitação recebida</small></div></li>
-        <li class="active"><span>2</span><div><strong>Processamento</strong><small>Análise em andamento</small></div></li>
-        <li><span>3</span><div><strong>Reembolso</strong><small>Aguardando processamento</small></div></li>
+        <li class="complete"><span>✓</span><div><strong>Análise concluída</strong><small>Produto recebido e conferido</small></div></li>
+        <li class="complete"><span>✓</span><div><strong>Estorno realizado</strong><small>R$ 2.999,00 processados</small></div></li>
       </ol>
     </section>
 
@@ -92,7 +92,7 @@
           <div class="product-info">
             <h3>Smart TV Hisense 65” 4K UHD</h3>
             <p>Tela grande, resolução 4K e recursos inteligentes.</p>
-            <span class="returned-label">Devolução iniciada</span>
+            <span class="returned-label completed-label">Devolução concluída</span>
             <dl>
               <div><dt>Valor da compra</dt><dd>R$ 2.999,00</dd></div>
               <div><dt>Quantidade</dt><dd>1</dd></div>
@@ -104,35 +104,43 @@
 
       <aside class="panel refund-panel" id="reembolso" aria-labelledby="refund-title">
         <div class="wallet-icon" aria-hidden="true">R$</div>
-        <span class="eyebrow">SALDO DE REEMBOLSO</span>
-        <h2 id="refund-title">R$ 0,00</h2>
-        <p class="pending-line"><span></span>Aguardando o reembolso ser processado</p>
+        <span class="eyebrow">ESTORNO PROCESSADO</span>
+        <h2 id="refund-title">R$ 2.999,00</h2>
+        <p class="success-line"><span>✓</span>Valor liberado com sucesso</p>
         <div class="expected-refund">
-          <span>Reembolso esperado</span>
+          <span>Utilizado na nova compra</span>
           <strong>R$ 2.999,00</strong>
         </div>
-        <p class="refund-note">O saldo permanecerá zerado até a conclusão da análise da devolução.</p>
-        <button class="disabled-button" type="button" disabled>Saldo ainda indisponível</button>
+        <p class="refund-note">O crédito foi aplicado integralmente na recompra da Smart TV Hisense. Saldo disponível atual: R$ 0,00.</p>
+        <button class="completed-button" type="button" disabled>✓ Estorno concluído</button>
       </aside>
     </div>
 
     <section class="panel cart-panel" id="carrinho" aria-labelledby="cart-title">
       <div class="cart-heading">
-        <div><span class="eyebrow">PRONTO PARA COMPRAR NOVAMENTE</span><h2 id="cart-title">A TV já está no seu carrinho</h2></div>
-        <span class="cart-count">1 item</span>
+        <div><span class="eyebrow">NOVO PEDIDO CONFIRMADO</span><h2 id="cart-title">Compra efetuada com sucesso</h2></div>
+        <span class="cart-count">Pedido confirmado</span>
       </div>
       <div class="cart-product">
         <div class="tv-art small" role="img" aria-label="Ilustração de uma televisão Hisense de 65 polegadas">
           <div class="tv-screen"><span>Hisense</span><small>65”</small></div><i></i>
         </div>
-        <div class="cart-copy"><strong>Smart TV Hisense 65” 4K UHD</strong><small>Em estoque • quantidade: 1</small></div>
+        <div class="cart-copy"><strong>Smart TV Hisense 65” 4K UHD</strong><small>Compra confirmada • quantidade: 1</small></div>
         <strong class="cart-price">R$ 2.999,00</strong>
       </div>
-      <div class="checkout-row">
-        <div><span>Subtotal (1 item)</span><strong>R$ 2.999,00</strong></div>
-        <button type="button" data-toast="Compra bloqueada: aguarde o reembolso. Nenhuma cobrança foi realizada.">Aguardar reembolso para comprar</button>
+      <div class="shipping-forecast" role="status">
+        <div class="shipping-icon" aria-hidden="true">▣</div>
+        <div>
+          <span>PREVISÃO DE POSTAGEM</span>
+          <strong>Entre 5 e 10 de novembro</strong>
+          <p>Assim que o produto for postado, informaremos a previsão de entrega. A demanda por TVs está muito alta neste final de ano.</p>
+        </div>
       </div>
-      <p class="checkout-warning">ⓘ A compra é apenas uma simulação e não pode ser concluída. O botão demonstra a espera pelo reembolso.</p>
+      <div class="checkout-row">
+        <div><span>Total do novo pedido</span><strong>R$ 2.999,00</strong></div>
+        <button class="purchase-success" type="button" data-toast="Compra confirmada nesta simulação demonstrativa.">✓ Compra efetuada com sucesso</button>
+      </div>
+      <p class="checkout-warning success-warning">ⓘ Esta confirmação é apenas uma simulação demonstrativa e não representa uma compra real.</p>
     </section>
   </main>
 
