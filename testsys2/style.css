@@ -172,8 +172,20 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .repurchase-note > span { width: 27px; height: 27px; flex: 0 0 auto; display: grid; place-items: center; color: #fff; background: var(--green); border-radius: 50%; font-size: 13px; font-weight: 800; }
 .repurchase-note p { margin: 0; font-size: 11px; line-height: 1.55; }
 
-footer { min-height: 115px; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; gap: 8px; color: #dce2e9; background: var(--navy-2); font-size: 11px; text-align: center; }
-footer strong { color: #fff; }
+.marketplace-footer { color: #dce2e9; background: var(--navy-2); font-size: 11px; }
+.back-to-top { padding: 15px 20px; display: block; color: #fff; background: #37475a; font-size: 11px; font-weight: 700; text-align: center; text-decoration: none; }
+.back-to-top:hover { background: #485769; }
+.footer-links { width: min(960px, calc(100% - 40px)); margin: 0 auto; padding: 38px 0 34px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 50px; }
+.footer-links section { min-width: 0; }
+.footer-links h2 { margin: 0 0 13px; color: #fff; font-size: 14px; }
+.footer-links a { margin: 0 0 9px; display: block; color: #dce2e9; line-height: 1.4; text-decoration: none; }
+.footer-links a:hover, .footer-legal a:hover { text-decoration: underline; }
+.footer-brand { padding: 25px 20px 17px; display: flex; align-items: center; justify-content: center; border-top: 1px solid #435162; }
+.footer-brand span { color: #fff; font-size: 24px; font-weight: 700; letter-spacing: -1.4px; }
+.footer-brand i { width: 49px; height: 13px; margin: 7px 0 0 -51px; border-bottom: 3px solid var(--orange); border-radius: 0 0 70% 70%; transform: translateY(9px) rotate(4deg); }
+.footer-legal { padding: 16px 20px 8px; display: flex; justify-content: center; flex-wrap: wrap; gap: 9px 22px; background: var(--navy); }
+.footer-legal a { color: #fff; text-decoration: none; }
+.demo-disclosure { margin: 0; padding: 4px 20px 22px; color: #aab4c0; background: var(--navy); text-align: center; }
 .toast { position: fixed; z-index: 80; left: 50%; bottom: 28px; width: max-content; max-width: calc(100% - 34px); padding: 13px 18px; color: #fff; background: #202832; border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.24); font-size: 11px; line-height: 1.45; text-align: center; transform: translate(-50%,15px); opacity: 0; transition: .2s ease; }
 .toast.show { transform: translate(-50%,0); opacity: 1; }
 
@@ -223,6 +235,7 @@ footer strong { color: #fff; }
   .repurchase-grid { grid-template-columns: 1fr; }
   .detail-group { padding: 16px; }
   .detail-list div { font-size: 11px; }
+  .footer-links { padding: 30px 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
 }
 
 @media (min-width: 651px) and (max-width: 930px) {
