@@ -32,6 +32,13 @@ test('exclusão de grupos tem checkbox, verificação de interface e bloqueio no
  assert.match(migration,/FROM PUBLIC, anon, authenticated/);
 });
 
+test('permissões gerais ficam sempre visíveis antes das permissões por módulo',()=>{
+ const general=index.indexOf('${_generalUserPermissions(u)}');
+ const modules=index.indexOf('user-form-disclosure user-form-permissions');
+ assert.ok(general>0&&modules>general);
+ assert.match(index,/user-general-permissions/);
+});
+
 test('autoria sai do corpo dos cartões e abre em botão informativo',()=>{
  assert.match(authorship,/document\.createElement\('details'\)/);
  assert.match(authorship,/record-audit-popover/);
