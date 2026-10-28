@@ -122,13 +122,14 @@ const TABLE_MAP = {
   'chamados': 'chamados',
   'contas': 'contas',
   'trashItems': 'trash_items',
-  'trash_items': 'trash_items'
+  'trash_items': 'trash_items',
+  'appSettings': 'app_settings'
 };
 
 const REALTIME_TABLES = [
   'atividades','items','subitems','field_templates','secretarias','responsaveis',
   'users','contatos','contas','estoque','requisicoes','trash_items','entity_images',
-  'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts'
+  'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts','app_settings'
 ];
 
 function toSnake(str) {

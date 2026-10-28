@@ -1,5 +1,5 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
-import {supabase} from '../supabase_compat.js?v=5';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=5';
+import {supabase} from '../supabase_compat.js?v=6';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=2';
 import './perfuracao-pocos.js?v=102';
@@ -88,6 +88,40 @@ const _md = {
   grupos: mod => (window.S && S.secs || []).filter(s=>_md.modFor(s)===mod.id&&window.userCanGroup(s,'acesso')).sort((a,b)=>(a.order_num||0)-(b.order_num||0))
 };
 
+function _navigationValue(){
+ const row=(window.S?.appSettings||[]).find(item=>item.id==='navigation');
+ try{return typeof row?.value==='string'?JSON.parse(row.value):row?.value||{};}catch{return {};}
+}
+function _configuredModules(includeHidden=false){
+ const saved=Array.isArray(_navigationValue().modules)?_navigationValue().modules:[],byId=new Map(saved.map(item=>[item.id,item]));
+ return MODULOS.map((module,index)=>{const pref=byId.get(module.id)||{};return {...module,label:String(pref.label||module.label).trim()||module.label,navigation_hidden:pref.hidden===true,navigation_order:Number.isFinite(Number(pref.order))?Number(pref.order):index,original_label:module.label};})
+  .filter(module=>includeHidden||!module.navigation_hidden)
+  .sort((a,b)=>a.navigation_order-b.navigation_order||a.label.localeCompare(b.label,'pt-BR'));
+}
+window.visibleSystemModules=()=>_configuredModules(false);
+
+function _menuOrganizerRows(){
+ return _configuredModules(true).map(module=>`<div class="menu-organizer-row ${module.navigation_hidden?'is-hidden':''}" data-module-id="${_md.esc(module.id)}" draggable="true"><span class="menu-organizer-icon" title="Arraste para reordenar">${module.icon}</span><div class="menu-organizer-name"><label>Nome exibido no menu</label><input maxlength="70" value="${_md.esc(module.label)}" aria-label="Nome de ${_md.esc(module.original_label)}"></div><div class="menu-organizer-order"><button type="button" onclick="menuOrganizerMove(this,-1)" title="Mover para cima">↑</button><button type="button" onclick="menuOrganizerMove(this,1)" title="Mover para baixo">↓</button></div><input class="menu-organizer-visible" type="checkbox" ${module.navigation_hidden?'':'checked'} hidden><button type="button" class="menu-organizer-visibility" onclick="toggleMenuOrganizerVisibility(this)">${module.navigation_hidden?'↩ Restaurar':'× Remover'}</button></div>`).join('');
+}
+window.openMenuOrganizer=function(){
+ if(!window.S?.isAdmin){window.toast('Somente administradores podem organizar o menu.','error');return;}
+ window.closeSidebar?.();
+ window.openModal('⚙ Organizar menu lateral','Renomeie, reordene ou remova áreas do menu sem apagar nenhum lançamento.',`<p class="menu-organizer-intro"><strong>Organização segura:</strong> remover uma área daqui apenas a oculta do menu. Todos os grupos, itens e lançamentos permanecem preservados.</p><div id="menu-organizer-list" class="menu-organizer-list">${_menuOrganizerRows()}</div><div class="menu-organizer-footer"><button type="button" class="reset" onclick="resetMenuOrganizer()">Restaurar nomes e ordem originais</button><div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button type="button" class="btn-save" onclick="saveMenuOrganizer()">Salvar organização</button></div></div>`);
+ const list=document.getElementById('menu-organizer-list');let dragged=null;
+ list?.addEventListener('dragstart',event=>{dragged=event.target.closest('.menu-organizer-row');dragged?.classList.add('dragging');});
+ list?.addEventListener('dragover',event=>{const target=event.target.closest('.menu-organizer-row');if(!dragged||!target||target===dragged)return;event.preventDefault();const after=event.clientY>target.getBoundingClientRect().top+target.offsetHeight/2;list.insertBefore(dragged,after?target.nextSibling:target);});
+ list?.addEventListener('dragend',()=>{dragged?.classList.remove('dragging');dragged=null;});
+};
+window.menuOrganizerMove=function(button,delta){const row=button.closest('.menu-organizer-row'),list=row?.parentElement;if(!row||!list)return;const target=delta<0?row.previousElementSibling:row.nextElementSibling;if(target)list.insertBefore(row,delta<0?target:target.nextSibling);};
+window.toggleMenuOrganizerVisibility=function(button){const row=button.closest('.menu-organizer-row'),input=row?.querySelector('.menu-organizer-visible');if(!row||!input)return;input.checked=!input.checked;row.classList.toggle('is-hidden',!input.checked);button.textContent=input.checked?'× Remover':'↩ Restaurar';};
+window.saveMenuOrganizer=async function(){
+ if(!window.S?.isAdmin)return;const rows=[...document.querySelectorAll('#menu-organizer-list .menu-organizer-row')];
+ if(!rows.some(row=>row.querySelector('.menu-organizer-visible')?.checked)){window.toast('Mantenha ao menos uma área visível no menu.','error');return;}
+ const modules=rows.map((row,order)=>({id:row.dataset.moduleId,label:row.querySelector('input:not(.menu-organizer-visible)')?.value.trim()||MODULOS.find(module=>module.id===row.dataset.moduleId)?.label||row.dataset.moduleId,hidden:!row.querySelector('.menu-organizer-visible')?.checked,order}));
+ try{await window.setDoc(window.doc(window.db,'appSettings','navigation'),{value:{modules},updated_at:window.serverTimestamp(),updated_by:window.S.user?.uid||null});await window.loadData({forceRemote:true});window.closeModal();window.renderModulos();window.toast('Menu reorganizado para todo o sistema!','success',5500);}catch(error){window.toast('Não foi possível salvar o menu: '+(error.message||error),'error',8000);}
+};
+window.resetMenuOrganizer=async function(){if(!window.S?.isAdmin||!confirm('Restaurar nomes, ordem e visibilidade originais do menu?'))return;try{await window.setDoc(window.doc(window.db,'appSettings','navigation'),{value:{modules:[]},updated_at:window.serverTimestamp(),updated_by:window.S.user?.uid||null});await window.loadData({forceRemote:true});window.closeModal();window.renderModulos();window.toast('Menu original restaurado!');}catch(error){window.toast('Não foi possível restaurar o menu: '+(error.message||error),'error',8000);}};
+
 initDemandas({groups:()=>_md.grupos(MODULOS.find(m=>m.id==='atendimentos')),pct:_md.pct,total:_md.ativTotal});
 initFieldCapture();
 
@@ -119,7 +153,7 @@ window.renderModulos = function(){
 };
 
 window.renderModulo = function(id){
-  const mod = MODULOS.find(x=>x.id===id);
+  const mod = _configuredModules(true).find(x=>x.id===id);
   if(!mod){ toast('Módulo não encontrado','error'); return; }
   if(!window.userCan(id,'acesso')){ toast('Acesso negado a este módulo','error'); return; }
   renderModuloGrupos(mod);
@@ -150,8 +184,10 @@ function renderModuloGrupos(mod){
       <span class="module-group-total"><b>${total}</b> lançamento${total===1?'':'s'}</span>
       <span class="module-group-progress" style="--progress:${col}"><span><b>${p}%</b> ${well?'pagos':'concluído'}</span><i><b style="width:${p}%"></b></i></span>
       <div class="module-group-actions">
+        ${podeGrupo?`<button type="button" class="card-btn" onclick="window.stepModuleGroup(${_md.arg(g.id)},${_md.arg(mod.id)},-1)" ${index===0?'disabled':''} aria-label="Mover ${_md.esc(g.name)} para cima" title="Mover para cima">↑</button><button type="button" class="card-btn" onclick="window.stepModuleGroup(${_md.arg(g.id)},${_md.arg(mod.id)},1)" ${index===grupos.length-1?'disabled':''} aria-label="Mover ${_md.esc(g.name)} para baixo" title="Mover para baixo">↓</button>`:''}
         ${podeGrupo?`<button type="button" class="card-btn" onclick="window.openSecModal(${_md.arg(g.id)})" aria-label="Editar ${_md.esc(g.name)}" title="Editar grupo">✎</button>`:''}
         ${admin?`<button type="button" class="card-btn transfer" onclick="window.openModuleGroupTransfer(${_md.arg(g.id)},${_md.arg(mod.id)})" aria-label="Transferir ${_md.esc(g.name)}" title="Transferir lançamentos ou grupo">⇄ <span>Transferir</span></button>`:''}
+        ${podeGrupo&&window.userCanDeleteGroups()?`<button type="button" class="card-btn danger" onclick="window.confirmarExcluirAtividade(${_md.arg(g.id)})" aria-label="Excluir ${_md.esc(g.name)}" title="Enviar grupo para a lixeira">🗑</button>`:''}
         <button type="button" class="card-btn" onclick="${well?`window.gerarPdfPocos(${_md.arg(g.id)})`:`window.gerarPdf(${_md.arg(g.id)})`}" aria-label="PDF de ${_md.esc(g.name)}" title="Gerar PDF">PDF</button>
       </div>
     </article>`;
@@ -168,8 +204,15 @@ function renderModuloGrupos(mod){
   window.refreshAuditUI?.();
 }
 
+window.stepModuleGroup=async function(id,modId,delta){
+ const mod=_configuredModules(true).find(module=>module.id===modId),group=window.S?.secs?.find(item=>item.id===id);if(!mod||!group||!window.userCanGroup?.(group,'editar'))return;
+ const list=_md.grupos(mod),index=list.findIndex(item=>item.id===id),target=index+delta;if(index<0||target<0||target>=list.length)return;
+ [list[index],list[target]]=[list[target],list[index]];
+ try{await Promise.all(list.map((item,order)=>window.updateDoc(window.doc(window.db,'secretariats',item.id),{order_num:order,updated_at:window.serverTimestamp()})));await window.loadData();renderModuloGrupos(mod);window.toast('Ordem dos grupos atualizada!','success');}catch(error){window.toast('Não foi possível reordenar: '+(error.message||error),'error',7000);}
+};
+
 function transferGroupOptions(sourceId){
-  return MODULOS.map(mod=>{
+  return _configuredModules(true).map(mod=>{
     const options=_md.grupos(mod).filter(g=>g.id!==sourceId).map(g=>`<option value="${_md.esc(g.id)}">${_md.esc(g.name||'Sem nome')}</option>`).join('');
     return options?`<optgroup label="${_md.esc(mod.label)}">${options}</optgroup>`:'';
   }).join('');
@@ -232,7 +275,7 @@ window._ceExcluirSelecionados=async function(modId){
   if(ids.some(id=>isFieldDemandGroup(S.secs.find(group=>group.id===id)))){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   const nomes=ids.map(id=>_md.esc(S.secs.find(s=>s.id===id)?.name||'Grupo')).slice(0,20).join('\n');
   const mais=ids.length>20?`\n... e mais ${ids.length-20}`:'';
-  if(!confirm(`Excluir ${ids.length} grupo(s) deste módulo?\n\n${nomes}${mais}\n\nAtenção: todos os itens, sub-itens e lançamentos vinculados também serão excluídos. Esta ação não pode ser desfeita.`)) return;
+  if(!confirm(`Enviar ${ids.length} grupo(s) para a lixeira?\n\n${nomes}${mais}\n\nTodos os itens, subitens e lançamentos vinculados irão juntos e poderão ser restaurados pela lixeira.`)) return;
   for(const id of ids){
     const its=S.items.filter(i=>i.atividade_id===id);
     for(const it of its){const sbs=S.subitems.filter(s=>s.item_id===it.id);for(const sb of sbs)await window.wDeleteDoc(doc(db,'subitems',sb.id),{...sb},'Excluir sub-item');const orig=S.items.find(i=>i.id===it.id);if(orig)await window.wDeleteDoc(doc(db,'items',it.id),{...orig},'Excluir item');}
@@ -244,7 +287,7 @@ window._ceExcluirSelecionados=async function(modId){
     const sec=S.secs.find(s=>s.id===id); if(sec) await window.wDeleteDoc(doc(db,'secretariats',id),{...sec},'Excluir grupo');
   }
   await loadData();
-  toast(ids.length+' grupo(s) excluído(s)!','success');
+  toast(ids.length+' grupo(s) enviado(s) para a lixeira!','success');
   window.renderModulo(modId);
 };
 
@@ -398,7 +441,7 @@ window.modForSec = s => _md.modFor(s);
 /* ── PAINEL INSTITUCIONAL 2026 ────────────────────────────────────────────
    A navegação foi reorganizada sem alterar as rotinas ou os dados dos módulos. */
 function _visibleModules(){
-  return MODULOS.filter(m=>window.userCan(m.id,'acesso'));
+  return _configuredModules(false).filter(m=>window.userCan(m.id,'acesso'));
 }
 
 function _moduleNumbers(mod){

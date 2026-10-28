@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js?v=5';
+import {supabase} from '../supabase_compat.js?v=6';
 import {UNASSIGNED,demandSections,demandSecretaria,reorderDemand,demandMatches} from './demandas-model.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Encode IDs before embedding in handlers (including apostrophes in legacy IDs).
@@ -63,7 +63,7 @@ function row(g,index){
   <button type="button" class="demand-open" onclick="openActivity(${arg(g.id)})"><span class="demand-number">${String(index+1).padStart(2,'0')}</span><span class="demand-copy"><strong>${esc(g.name||'Sem nome')}</strong>${subtitle?`<small title="${esc(subtitle)}">${esc(subtitle)}</small>`:''}</span></button>
   <span class="demand-total"><b>${total}</b> <span>lançamentos</span></span>
   <span class="demand-progress ${pct===100?'complete':''}" title="${pct}% ${well?'pagos':'concluídos'}"><span>${pct}% <small>${well?'pagos':'concluído'}</small></span><i><b style="width:${pct}%"></b></i></span>
-  <div class="demand-actions">${protectedGroup?'<span class="demand-permanent" title="Grupo permanente de triagem">🔒 Permanente</span>':permission?`${button('✎',`openSecModal(${arg(g.id)})`,'',`aria-label="Editar ${esc(g.name)}" title="Editar grupo"`)}${button('⇄ <span>Transferir</span>',`openDemandTransfer(${arg(g.id)})`,'demand-transfer',`aria-label="Transferir ${esc(g.name)}" title="Transferir grupo para outra secretaria"`)}`:''}${button('PDF',well?`gerarPdfPocos(${arg(g.id)})`:`gerarPdf(${arg(g.id)})`,'',`aria-label="PDF de ${esc(g.name)}"`)}</div>
+  <div class="demand-actions">${protectedGroup?'<span class="demand-permanent" title="Grupo permanente de triagem">🔒 Permanente</span>':permission?`${button('✎',`openSecModal(${arg(g.id)})`,'',`aria-label="Editar ${esc(g.name)}" title="Renomear ou editar grupo"`)}${button('⇄ <span>Transferir</span>',`openDemandTransfer(${arg(g.id)})`,'demand-transfer',`aria-label="Transferir ${esc(g.name)}" title="Transferir grupo para outra secretaria"`)}${canDelete?button('🗑 <span>Excluir</span>',`confirmarExcluirAtividade(${arg(g.id)})`,'demand-delete-direct',`aria-label="Excluir ${esc(g.name)}" title="Enviar grupo para a lixeira"`):''}`:''}${button('PDF',well?`gerarPdfPocos(${arg(g.id)})`:`gerarPdf(${arg(g.id)})`,'',`aria-label="PDF de ${esc(g.name)}"`)}</div>
  </article>`;
 }
 export function renderDemandas(){
@@ -87,7 +87,8 @@ function renderResults(){
  host.innerHTML=all.map(s=>{
   const filtered=s.groups.filter(g=>demandMatches(g,query));found+=filtered.length;
   if(query.trim()&&!filtered.length)return '';
-  return `<section class="demand-section" data-demand-section="${esc(s.id)}"><header class="demand-section-head"><div><span class="demand-section-icon ${s.id===UNASSIGNED?'pending':''}">${s.id===UNASSIGNED?'?':'▥'}</span><h2>${esc(titleFor(s))}</h2><span class="demand-count">${filtered.length}</span></div><div class="demand-section-actions">${s.id!==UNASSIGNED?button('🗺 Mapa',`openSecretaryGeoMap(${arg(s.id)})`,'demand-map-button',`aria-label="Abrir mapa de ${esc(s.name)}"`):''}${s.id!==UNASSIGNED&&window.userCanCreateGroups?.()&&canSecretary(s.id,'editar')?button('＋ Criar grupo',`newDemandGroup(${arg(s.id)})`,'demand-create-primary',`aria-label="Criar grupo em ${esc(s.name)}"`):''}</div></header><div class="demand-group-list ${mode==='cards'?'demand-grid':''}">${filtered.map(row).join('')||'<div class="demand-empty">Esta secretaria está pronta para receber seus grupos.</div>'}</div></section>`;
+  const orphanDelete=s.id===UNASSIGNED&&filtered.some(g=>canGroup(g,'editar')&&window.userCanDeleteGroups?.()&&!window.isFieldDemandGroup?.(g))?button('🗑 Excluir todas','deleteUnassignedDemands()','demand-orphan-delete'):'';
+  return `<section class="demand-section ${s.id===UNASSIGNED?'demand-section-unassigned':''}" data-demand-section="${esc(s.id)}"><header class="demand-section-head"><div><span class="demand-section-icon ${s.id===UNASSIGNED?'pending':''}">${s.id===UNASSIGNED?'?':'▥'}</span><h2>${esc(titleFor(s))}</h2><span class="demand-count">${filtered.length}</span></div><div class="demand-section-actions">${orphanDelete}${s.id!==UNASSIGNED?button('🗺 Mapa',`openSecretaryGeoMap(${arg(s.id)})`,'demand-map-button',`aria-label="Abrir mapa de ${esc(s.name)}"`):''}${s.id!==UNASSIGNED&&window.userCanCreateGroups?.()&&canSecretary(s.id,'editar')?button('＋ Criar grupo',`newDemandGroup(${arg(s.id)})`,'demand-create-primary',`aria-label="Criar grupo em ${esc(s.name)}"`):''}</div></header><div class="demand-group-list ${mode==='cards'?'demand-grid':''}">${filtered.map(row).join('')||'<div class="demand-empty">Esta secretaria está pronta para receber seus grupos.</div>'}</div></section>`;
  }).join('');
  if(!all.length||(!found&&query.trim()))host.innerHTML=`<div class="demand-empty"><strong>${query.trim()?'Nenhum grupo encontrado':'Vamos organizar as demandas'}</strong><p>${query.trim()?'Tente outro nome ou escolha todas as secretarias.':'Cadastre uma secretaria e adicione o primeiro grupo.'}</p></div>`;
  host.classList.toggle('is-busy',busy);host.setAttribute('aria-busy',String(busy));
@@ -99,6 +100,11 @@ window.updateDemandSelection=function(){
  const button=document.getElementById('demand-delete-selected'),all=document.getElementById('ce-sel-all');
  if(button){button.disabled=!count||busy;button.textContent=count?`Excluir selecionados (${count})`:'Excluir selecionados';}
  if(all){all.checked=!!boxes.length&&count===boxes.length;all.indeterminate=count>0&&count<boxes.length;}
+};
+window.deleteUnassignedDemands=function(){
+ const section=document.querySelector(`[data-demand-section="${UNASSIGNED}"]`);if(!section)return;
+ const boxes=[...section.querySelectorAll('.demand-checkbox')];if(!boxes.length){window.toast('Nenhuma demanda sem secretaria pode ser excluída pelo seu usuário.','info');return;}
+ boxes.forEach(box=>box.checked=true);window.updateDemandSelection();window._ceExcluirSelecionados('atendimentos');
 };
 async function run(operation,args,success){
  if(busy)return false;busy=true;renderResults();

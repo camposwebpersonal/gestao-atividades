@@ -6,9 +6,9 @@ export function demandSecretaria(group,secretarias){
 export function demandSections(groups,secretarias){
  const sections=secretarias.filter(s=>s.demandas_ativa||groups.some(g=>g.demanda_secretaria_id===s.id))
   .map(s=>({...s,groups:groups.filter(g=>demandSecretaria(g,secretarias)===s.id)}))
-  .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  .sort((a,b)=>(Number(a.order_num)||0)-(Number(b.order_num)||0)||a.name.localeCompare(b.name,'pt-BR'));
  const pending=groups.filter(g=>demandSecretaria(g,secretarias)===UNASSIGNED);
- if(pending.length)sections.push({id:UNASSIGNED,name:'A classificar',groups:pending});
+ if(pending.length)sections.push({id:UNASSIGNED,name:'Demandas sem secretaria',groups:pending});
  return sections;
 }
 export function reorderDemand(ids,source,target,after=false){
