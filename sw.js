@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v151';
+const CACHE_NAME = 'gestao-pms-v152';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -20,7 +20,9 @@ const STATIC_ASSETS = [
   'exames.html',
   'manifest.json',
   'bcc_data_junho_2026.json',
-  'img/logo_sertania.png',
+  'img/logo_sertania-header.webp',
+  'img/logo_sertania-icon-192.png',
+  'img/logo_sertania-icon-512.png',
   'js/modulos.js',
   'js/camera-capture.js',
   'js/camera-capture-core.js',

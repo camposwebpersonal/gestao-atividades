@@ -10,12 +10,18 @@
 <meta name="apple-mobile-web-app-title" content="Gestão PMS">
 <link rel="manifest" href="manifest.json">
 <title>Gestão de Atividades — PMS</title>
-<link rel="icon" href="img/logo_sertania.png">
-<link rel="apple-touch-icon" href="img/logo_sertania.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="icon" type="image/png" sizes="192x192" href="img/logo_sertania-icon-192.png">
+<link rel="apple-touch-icon" href="img/logo_sertania-icon-192.png">
+<link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
+<link rel="preconnect" href="https://esm.sh" crossorigin>
+<link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
+<link rel="modulepreload" href="supabase_compat.js?v=7">
+<link rel="modulepreload" href="js/modulos.js?v=98">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=86"></script>
 <script src="js/controle-contas.js?v=64"></script>
 <script src="js/controle-distribuicao.js?v=63"></script>
@@ -430,7 +436,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="app">
   <nav id="navbar">
     <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Abrir menu" aria-controls="navmenu" aria-expanded="false" onclick="toggleSidebar()">☰</button>
-    <div class="brand"><img src="img/logo_sertania.png" alt="Brasão da Prefeitura de Sertânia"><span class="brand-copy"><strong>Prefeitura de Sertânia</strong><small>Gestão de Atividades</small></span></div>
+    <div class="brand"><img src="img/logo_sertania-header.webp" width="160" height="112" fetchpriority="high" decoding="sync" alt="Brasão da Prefeitura de Sertânia"><span class="brand-copy"><strong>Prefeitura de Sertânia</strong><small>Gestão de Atividades</small></span></div>
     <div id="undo-redo-bar">
       <button id="undo-btn" class="undo-btn" style="opacity:.3" onclick="undoLast()" title="Desfazer (Ctrl+Z)">↩️ Desfazer</button>
       <button id="redo-btn" class="redo-btn" style="opacity:.3" onclick="redoLast()" title="Refazer (Ctrl+Y)">↪️ Refazer</button>
@@ -842,7 +848,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=89';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=90';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -896,6 +902,7 @@ onAuthStateChanged(auth,async u=>{
   document.getElementById('u-av').textContent=ini;
   document.getElementById('u-name').textContent=u.displayName||u.email.split('@')[0];
   syncOfflineNow().catch(error=>console.error('Sincronização inicial:',error));
+  const cacheDataPromise=loadData({cacheOnly:true});
   try{
     const ud=await getDoc(doc(db,'users',u.uid));
     if(ud.exists()){const d=ud.data();S.isAdmin=d.role==='admin'||d.isAdmin===true;S.canViewTrash=d.permissoes?.pode_ver_lixeira===true;S.userRole=d.role||'usuario';S.userSetor=d.setor_id||null;}
@@ -908,7 +915,7 @@ onAuthStateChanged(auth,async u=>{
   }
   if(S.isAdmin)document.getElementById('nav-adm').style.display='';
   document.getElementById('nav-trash').style.display=S.canViewTrash?'':'none';
-  const cacheReady=await loadData({cacheOnly:true});
+  const cacheReady=await cacheDataPromise;
   if(cacheReady&&!window.restoreWorkspace())setView('mod');
   startLiveSync();
   await loadData();

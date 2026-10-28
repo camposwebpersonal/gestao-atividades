@@ -9,49 +9,13 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "img/logo_sertania.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
+      "src": "img/logo_sertania-icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "img/logo_sertania.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "img/logo_sertania.png",
+      "src": "img/logo_sertania-icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
