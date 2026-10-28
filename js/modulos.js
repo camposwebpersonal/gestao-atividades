@@ -1,6 +1,6 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=5';
-import {supabase} from '../supabase_compat.js?v=6';
-import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission} from './access-scope.js';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=6';
+import {supabase} from '../supabase_compat.js?v=7';
+import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=2';
 import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
@@ -73,6 +73,14 @@ window.userCanCreateGroups=function(){
 window.userCanDeleteGroups=function(){
  if(window.S?.isAdmin)return true;
  return groupDeletionPermission(_myPerms());
+};
+window.userCanCreateItems=function(){
+ if(window.S?.isAdmin)return true;
+ return itemCreationPermission(_myPerms());
+};
+window.userCanDeleteItems=function(){
+ if(window.S?.isAdmin)return true;
+ return itemDeletionPermission(_myPerms());
 };
 
 const _md = {

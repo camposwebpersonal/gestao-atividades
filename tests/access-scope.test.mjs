@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {modulePermission,groupPermission,demandSecretaryPermission,scopeCount,groupCreationPermission} from '../js/access-scope.js';
+import {modulePermission,groupPermission,demandSecretaryPermission,scopeCount,groupCreationPermission,itemCreationPermission,itemDeletionPermission} from '../js/access-scope.js';
 import {recordSecretary,secretaryIsFixed} from '../js/record-context.js';
 
 test('cadastros antigos mantêm acesso aos grupos do módulo',()=>{
@@ -13,6 +13,15 @@ test('criação de grupos exige a permissão geral explicitamente marcada',()=>{
  assert.equal(groupCreationPermission({pode_criar_grupos:true}),true);
  assert.equal(groupCreationPermission({pode_criar_grupos:false}),false);
  assert.equal(groupCreationPermission({modulos:{cadastros:{gerenciar:true}}}),false);
+});
+
+test('itens e subitens continuam liberados por padrão e aceitam bloqueio independente',()=>{
+ assert.equal(itemCreationPermission({}),true);
+ assert.equal(itemDeletionPermission({}),true);
+ assert.equal(itemCreationPermission({pode_criar_itens:false}),false);
+ assert.equal(itemDeletionPermission({pode_excluir_itens:false}),false);
+ assert.equal(itemCreationPermission({pode_criar_grupos:false,pode_criar_itens:true}),true);
+ assert.equal(itemDeletionPermission({pode_excluir_grupos:false,pode_excluir_itens:true}),true);
 });
 
 test('escopo de todos os grupos inclui grupos futuros',()=>{

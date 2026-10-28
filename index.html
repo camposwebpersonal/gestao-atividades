@@ -410,9 +410,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 .resp-combo-add:hover{background:rgba(59,130,246,.25)}
 </style>
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=78">
-<link rel="stylesheet" href="css/demandas-secretarias.css?v=3">
+<link rel="stylesheet" href="css/demandas-secretarias.css?v=4">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
-<link rel="stylesheet" href="css/access-permissions.css?v=3">
+<link rel="stylesheet" href="css/access-permissions.css?v=4">
 <link rel="stylesheet" href="css/bulk-archive.css?v=11">
 <link rel="stylesheet" href="css/trash.css?v=1">
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
@@ -421,7 +421,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/header-density.css?v=5">
 <link rel="stylesheet" href="css/camera-capture.css?v=2">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=2">
-<link rel="stylesheet" href="css/geolocation.css?v=1">
+<link rel="stylesheet" href="css/geolocation.css?v=2">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -491,9 +491,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=6";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=6";
-import './js/modulos.js?v=96';
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=7";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=7";
+import './js/modulos.js?v=97';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -504,7 +504,7 @@ import './js/bulk-entry.js?v=7';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf} from './js/geolocation.js?v=1';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=2';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -1622,7 +1622,7 @@ window.openActivity=function(secId){
     let tbl='<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
-    const _tblAct=(id,isSub,parentEdit,concluded)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px;background:${concluded?'#f59e0b':'#10b981'};color:#fff" onclick="event.stopPropagation();toggleConcluidoPendente('${id}',${isSub})" title="${concluded?'Desmarcar conclusão':'Marcar como concluído'}">${concluded?'↺':'✅'}</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${id}',${isSub},'${secId}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button></div>`:'';
+    const _tblAct=(id,isSub,parentEdit,concluded)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px;background:${concluded?'#f59e0b':'#10b981'};color:#fff" onclick="event.stopPropagation();toggleConcluidoPendente('${id}',${isSub})" title="${concluded?'Desmarcar conclusão':'Marcar como concluído'}">${concluded?'↺':'✅'}</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button>${window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${id}',${isSub},'${secId}')" title="Duplicar">📋</button>`:''}${window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button>`:''}</div>`:'';
     const _tblCell=(txt,focus,id,isSub,parentEdit)=>_can?`<span style="position:relative;cursor:pointer" onmouseenter="this.querySelector('.pen').style.display='inline'" onmouseleave="this.querySelector('.pen').style.display='none'" onclick='openItemModal("${id}","${secId}",${isSub},"${parentEdit||''}",${focus?JSON.stringify(focus):'null'})'>${txt}<span class="pen" style="display:none;position:absolute;right:-4px;top:0;font-size:10px;color:#94a3b8;padding-left:4px;background:#0a1222">✏️</span></span>`:txt;
     items.forEach((item,itemNum)=>{
       const pr=iProg(item);const done=pr.pct===100;const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
@@ -1712,8 +1712,8 @@ window.openActivity=function(secId){
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
-    ${_can?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
-    ${_can?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
+    ${_can&&window.userCanCreateItems?.()?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
+    ${_can&&window.userCanCreateItems?.()?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
     ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
@@ -1815,9 +1815,8 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
       ${_can?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
       ${_can?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
+      ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
+      ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(c.id,item,today,num,lvl)}</div>`;
   }).join('');
   const subTotColor=['#3b82f6','#10b981','#f59e0b','#a855f7','#ec4899'][Math.min(lvl-1,4)];
@@ -1867,9 +1866,8 @@ function renderItem(item,today,itemNum){
       ${_nt?'':statusBadge(s.status,s.id,'subitem')}
       ${_can?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
       ${_can&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${_can?`<button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
+      ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
+      ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
     </div>${_renderSubSubs(s.id,item,today,subNum)}</div>`;
   }).join('')}</div>`:'';
   const iColor=item.item_color||'#3B82F6';
@@ -1894,10 +1892,8 @@ function renderItem(item,today,itemNum){
       ${_can?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
       ${_can&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
       ${_can&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
-      ${_can?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
-      ${_can?`<button class="card-btn" style="background:#1e3a5f;color:#60a5fa" onclick="event.stopPropagation();duplicarItem('${item.id}',false,'${item.atividade_id}')" title="Duplicar">📋</button>`:''}
-      ${_can?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button>`:''}
-      ${_can?`<button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
+      ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}
+      ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="background:#1e3a5f;color:#60a5fa" onclick="event.stopPropagation();duplicarItem('${item.id}',false,'${item.atividade_id}')" title="Duplicar">📋</button><button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',false,null)">+ Item</button><button class="card-btn" onclick="event.stopPropagation();openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub</button>`:''}
     </div>
     <div id="ib-${item.id}" style="padding:0 16px 14px;border-top:1px solid var(--border);display:none">
       ${item.observacao?`<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:#0a1222;border-radius:6px;margin:8px 0">${esc(item.observacao)}</div>`:''}
@@ -1921,7 +1917,7 @@ function renderItem(item,today,itemNum){
       ${_topSubs.length?`<div style="padding:3px 8px;font-size:11px;color:#475569;text-align:right;border-top:1px dashed #1e3a5f;margin-top:2px">∑ Subtotal: ${_topSubs.length} sub-item(ns)</div>`:''}
       ${_can&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
       ${_can&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#422006;color:#fcd34d" onclick="limparItem('${item.id}','${item.atividade_id}')">🧹 Limpar Item</button>`:''}
-      ${_can?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
+      ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="margin-top:6px" onclick="openItemModal(null,'${item.atividade_id}',true,'${item.id}')">+ Sub-item</button>`:''}
     </div>
   </div>`;
 }
@@ -2047,6 +2043,7 @@ window.deleteSec=async function(id){
   await loadData();closeModal();toast('Atividade enviada para a lixeira!');setView('mod');
 };
 window.deleteItem=async function(id,isSub){
+  if(!window.userCanDeleteItems?.()){toast('Seu usuário não tem permissão para excluir itens ou subitens.','error',7000);return;}
   const record=(isSub?S.subitems:S.items).find(x=>x.id===id),group=S.secs.find(s=>s.id===(record?.atividade_id||curSecId));
   if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este lançamento.','error');return;}
   const descendants=isSub?_allSubDescendants(id):S.subitems.filter(s=>s.item_id===id);
@@ -2065,6 +2062,7 @@ window.deleteItem=async function(id,isSub){
   await loadData();closeModal();toast('Registro enviado para a lixeira!');openActivity(curSecId);
 };
 window.duplicarItem=async function(id,isSub,secId){
+  if(!window.userCanCreateItems?.()){toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
   if(!confirm('Duplicar este '+(isSub?'sub-item':'item')+' e todos os seus filhos?'))return;
   if(!isSub){
     const orig=S.items.find(i=>i.id===id);if(!orig){toast('Item não encontrado','error');return;}
@@ -2205,6 +2203,11 @@ window.openSecModal=function(id){
   <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
     <div style="font-size:13px;font-weight:800;margin-bottom:12px;color:#38bdf8">⚙️ Configurações de Exibição</div>
     <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="geo-visibility-settings">
+        <div><strong>📍 Atalhos de geolocalização</strong><small>A localização continua disponível dentro de cada lançamento. Aqui você decide quando o atalho também aparece por fora.</small></div>
+        <label><input type="checkbox" id="s-show-group-external-geo" ${recordExtra(s).show_group_external_geolocation===true?'checked':''}><span><b>Mostrar no card/lista deste grupo</b><small>Exibe o atalho de geolocalização externamente no próprio grupo.</small></span></label>
+        <label><input type="checkbox" id="s-default-item-external-geo" ${groupExternalGeolocationDefault(s)?'checked':''}><span><b>Ativar por padrão nos itens e subitens</b><small>Novos lançamentos deste grupo já abrirão com a exposição externa marcada.</small></span></label>
+      </div>
       <label class="settings-option"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias===1||s?.controle_pendencias===true?'checked':''}> 📋 Controle de Conclusão <span>(ativa status, prazos, percentuais e acompanhamento)</span></label>
       <label class="settings-option"><input type="checkbox" id="s-show-progress-percentage" ${s?.show_progress_percentage!==0?'checked':''}> % Mostrar percentual de conclusão <span>(pode ficar desligado mantendo os status)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
@@ -2267,7 +2270,7 @@ window.saveSec=async function(id){
   const original=id?S.secs.find(x=>x.id===id):null;
   const auditChanges=id&&S.isAdmin?readAdminAudit('s-audit',original,S.users):null;
   const itemsViewMode=g('s-items-view-mode')?.value==='cards'?'cards':'list',subitemsViewMode=g('s-subitems-view-mode')?.value==='cards'?'cards':'list';
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:itemsViewMode==='cards'||subitemsViewMode==='cards'?0:gc('s-show-table'),items_view_mode:itemsViewMode,subitems_view_mode:subitemsViewMode,show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),extra_fields:{...recordExtra(existingGroup),show_group_external_geolocation:g('s-show-group-external-geo')?.checked===true,default_external_geolocation:g('s-default-item-external-geo')?.checked===true},controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:itemsViewMode==='cards'||subitemsViewMode==='cards'?0:gc('s-show-table'),items_view_mode:itemsViewMode,subitems_view_mode:subitemsViewMode,show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   if(g('s-assunto')) data.assunto=g('s-assunto').value.trim();
   let did=id;
   if(id){
@@ -2287,6 +2290,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   const it=id?(isSub?S.subitems.find(x=>x.id===id):S.items.find(x=>x.id===id)):null;
   const sec=S.secs.find(s=>s.id===(secId||curSecId));
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não tem permissão para lançar neste grupo.','error');return;}
+  if(!id&&!window.userCanCreateItems?.()){toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
   const parent=isSub?(S.subitems.find(x=>x.id===parentId)||S.items.find(x=>x.id===parentId)):null;
   const effectiveSecretary=recordSecretary(sec,it,parent);
   const effectiveSecretaryName=S.secretarias.find(s=>s.id===effectiveSecretary)?.name||'Secretaria vinculada ao grupo';
@@ -2307,6 +2311,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão ${isSub?'neste sub-item':'neste item'}</label></div>
   </div>
   ${locationEditorHtml(it,'it-geo')}
+  <label class="geo-external-option"><input type="checkbox" id="it-show-external-geo" ${externalGeolocationEnabled(it||{atividade_id:secId||curSecId},isSub?'subitems':'items')?'checked':''}><span><strong>Mostrar geolocalização externamente</strong><small>Exibe o atalho no card ou na lista sem precisar abrir este ${isSub?'subitem':'item'}. Por padrão, ele fica visível apenas aqui dentro.</small></span></label>
   ${id&&S.isAdmin?adminAuditFields(it,S.users,'it-audit'):''}
   ${(()=>{
     const _s3=S.secs.find(s=>s.id===(secId||curSecId));
@@ -2363,7 +2368,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   ${rtHtml(col,id||'',it?.resp_url||null)}
   ${imgHtml(col,id||'')}
   <div class="modal-actions">
-    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteItem('${id}',${isSub})">🗑️ Excluir</button>`:''}
+    ${id&&window.userCanDeleteItems?.()?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteItem('${id}',${isSub})">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">${isSub?'← Voltar':'Cancelar'}</button>
     <button class="btn-save" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button>
   </div>`);
@@ -2381,6 +2386,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
 window.saveItem=async function(id,secId,isSub,parentId){
   const group=S.secs.find(s=>s.id===secId);
   if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não tem permissão para lançar neste grupo.','error');return;}
+  if(!id&&!window.userCanCreateItems?.()){toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
   const name=document.getElementById('it-name')?.value.trim();
   if(!name){toast('Nome é obrigatório','error');return;}
   const colName=isSub?'subitems':'items';
@@ -2396,6 +2402,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const existingRecord=original;
   const ef=collectCustomFieldValues(document,{...recordExtra(existingRecord)});
   const geoLocation=readLocationEditor('it-geo');if(geoLocation)ef.geo_location=geoLocation;else delete ef.geo_location;
+  ef.show_external_geolocation=document.getElementById('it-show-external-geo')?.checked===true;
   data.extra_fields=ef;
   const effSec=S.secs.find(s=>s.id===secId);
   const _chk=(fl)=>isSub?(effSec?.['show_'+fl]&&effSec?.[fl+'_on_subitems']):effSec?.['show_'+fl];
@@ -2735,7 +2742,7 @@ function _buildPermMatrix(u){
 }
 function _generalUserPermissions(u){
   const p=u?.permissoes||{};
-  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode fazer com os grupos.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia grupos para a lixeira. Grupos permanentes continuam protegidos.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label></div></section>`;
+  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia grupos para a lixeira. Grupos permanentes continuam protegidos.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label></div></section>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
@@ -2775,7 +2782,7 @@ function _readPermMatrix(){
       modulos[m.id]=entry;
     }
   });
-  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,pode_excluir_grupos:document.getElementById('usr-can-delete-groups')?.checked===true,pode_ver_lixeira:document.getElementById('usr-can-view-trash')?.checked===true,modulos};
+  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,pode_excluir_grupos:document.getElementById('usr-can-delete-groups')?.checked===true,pode_criar_itens:document.getElementById('usr-can-create-items')?.checked!==false,pode_excluir_itens:document.getElementById('usr-can-delete-items')?.checked!==false,pode_ver_lixeira:document.getElementById('usr-can-view-trash')?.checked===true,modulos};
 }
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
@@ -4169,8 +4176,7 @@ window.renderCadastros=function(secId){
     if(!_can)return'';
     return`<div style="display:flex;gap:4px;flex-wrap:wrap">
       <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaOpenEdit('${it.id}',false,null,'${secId}')" title="Editar">✏️</button>
-      <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddItemAfter('${it.id}','${secId}')" title="Novo Item abaixo">+ Item</button>
-      <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubChild('${it.id}','${secId}')" title="Novo Sub-item">+ Sub</button>
+      ${window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddItemAfter('${it.id}','${secId}')" title="Novo Item abaixo">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubChild('${it.id}','${secId}')" title="Novo Sub-item">+ Sub</button>`:''}
     </div>`;
   }
   function _subActions(sb,it,prefix,isNested){
@@ -4179,8 +4185,7 @@ window.renderCadastros=function(secId){
     const parentTypeForNew=isNested?'subitem':'item';
     return`<div style="display:flex;gap:4px;flex-wrap:wrap">
       <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaOpenEdit('${sb.id}',true,'${parentForNew}','${secId}')" title="Editar">✏️</button>
-      <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubSibling('${sb.id}','${secId}')" title="Sub-item irmão">+ Sub</button>
-      <button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubChild('${sb.id}','${secId}')" title="Sub-item filho">+ Sub↓</button>
+      ${window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubSibling('${sb.id}','${secId}')" title="Sub-item irmão">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="listaAddSubChild('${sb.id}','${secId}')" title="Sub-item filho">+ Sub↓</button>`:''}
     </div>`;
   }
   function _rowItem(it,num){
@@ -4358,6 +4363,7 @@ window.listaAddItem=function(secId){
   openItemModal(null,secId,false,null);
 };
 window.listaAddItemAfter=async function(afterId,secId){
+  if(!window.userCanCreateItems?.()){toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
   const group=S.secs.find(s=>s.id===secId);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar'))return;
   const its=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const idx=its.findIndex(i=>i.id===afterId);if(idx===-1)return;
@@ -4372,6 +4378,7 @@ window.listaAddSubChild=function(parentId,secId){
   openItemModal(null,secId,true,parentId);
 };
 window.listaAddSubSibling=async function(afterSubId,secId){
+  if(!window.userCanCreateItems?.()){toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
   const sb=S.subitems.find(s=>s.id===afterSubId);if(!sb)return;
   const group=S.secs.find(s=>s.id===secId);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar'))return;
   const parentId=sb.parent_type==='subitem'?sb.parent_id:sb.item_id;

@@ -17,6 +17,16 @@ export function groupDeletionPermission(permissoes){
  return permissoes?.pode_excluir_grupos===true;
 }
 
+// Compatibilidade segura: antes destes controles existirem, alimentar os grupos
+// já era permitido a quem possuía gerenciamento. Só uma negativa explícita bloqueia.
+export function itemCreationPermission(permissoes){
+ return permissoes?.pode_criar_itens!==false;
+}
+
+export function itemDeletionPermission(permissoes){
+ return permissoes?.pode_excluir_itens!==false;
+}
+
 export function groupPermission(permissoes,moduleId,group,action='acesso'){
  const module=permissoes?.modulos?.[moduleId];
  if(!modulePermission(permissoes,moduleId,action))return false;

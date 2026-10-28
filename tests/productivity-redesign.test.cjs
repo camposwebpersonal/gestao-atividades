@@ -8,7 +8,9 @@ const modules=fs.readFileSync(path.join(root,'js/modulos.js'),'utf8');
 const authorship=fs.readFileSync(path.join(root,'js/autoria.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'css/productivity-redesign.css'),'utf8');
 const access=fs.readFileSync(path.join(root,'js/access-scope.js'),'utf8');
+const compat=fs.readFileSync(path.join(root,'supabase_compat.js'),'utf8');
 const migration=fs.readFileSync(path.join(root,'supabase/migrations/20261028155431_restrict_group_deletion_by_user_permission.sql'),'utf8');
+const itemPermissionMigration=fs.readFileSync(path.join(root,'supabase/migrations/20261028195500_restrict_item_and_subitem_mutations_by_user_permission.sql'),'utf8');
 
 test('visão geral prioriza captura e links das secretarias',()=>{
  assert.match(modules,/GESTÃO NA PALMA DA MÃO/);
@@ -37,6 +39,20 @@ test('permissões gerais ficam sempre visíveis antes das permissões por módul
  const modules=index.indexOf('user-form-disclosure user-form-permissions');
  assert.ok(general>0&&modules>general);
  assert.match(index,/user-general-permissions/);
+ assert.match(index,/id="usr-can-create-items"/);
+ assert.match(index,/id="usr-can-delete-items"/);
+ assert.match(index,/pode_criar_itens:document\.getElementById/);
+ assert.match(index,/pode_excluir_itens:document\.getElementById/);
+ assert.match(access,/itemCreationPermission/);
+ assert.match(access,/itemDeletionPermission/);
+ assert.match(itemPermissionMigration,/BEFORE INSERT ON public\.items/);
+ assert.match(itemPermissionMigration,/BEFORE INSERT ON public\.subitems/);
+ assert.match(itemPermissionMigration,/BEFORE DELETE ON public\.items/);
+ assert.match(itemPermissionMigration,/BEFORE DELETE ON public\.subitems/);
+ assert.match(itemPermissionMigration,/COALESCE\(profile_extra -> 'permissoes' ->> 'pode_criar_itens', 'true'\)/);
+ assert.match(compat,/table === 'items' \|\| table === 'subitems'[^\n]*userCanCreateItems/);
+ assert.match(compat,/table === 'items' \|\| table === 'subitems'[^\n]*userCanDeleteItems/);
+ assert.match(index,/userCanCreateItems[^\n]*openBulkEntry/);
 });
 
 test('autoria sai do corpo dos cartões e abre em botão informativo',()=>{

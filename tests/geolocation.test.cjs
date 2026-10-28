@@ -21,6 +21,17 @@ test('captura geolocalização com precisão e gera link compartilhável do Goog
  assert.match(index,/ef\.geo_location=geoLocation/);
 });
 
+test('atalho externo de geolocalização é opt-in para grupos, itens e subitens',()=>{
+ assert.match(geo,/show_group_external_geolocation===true/);
+ assert.match(geo,/show_external_geolocation/);
+ assert.match(geo,/default_external_geolocation===true/);
+ assert.match(geo,/!externalGeolocationEnabled\(record,table\)/);
+ assert.match(index,/id="it-show-external-geo"/);
+ assert.match(index,/id="s-show-group-external-geo"/);
+ assert.match(index,/id="s-default-item-external-geo"/);
+ assert.match(index,/ef\.show_external_geolocation=/);
+});
+
 test('mapa geral e mapas por secretaria exibem os pontos permitidos',()=>{
  assert.match(index,/id="nav-map"/);
  assert.match(index,/renderGeneralGeoMap/);
@@ -46,7 +57,7 @@ test('banco guarda geolocalização das fotos com limites válidos',()=>{
 });
 
 test('recursos de mapas e geolocalização ficam disponíveis offline',()=>{
- assert.match(sw,/gestao-pms-v147/);
+ assert.match(sw,/gestao-pms-v149/);
  assert.match(sw,/'js\/geolocation\.js'/);
  assert.match(sw,/'css\/geolocation\.css'/);
  assert.match(sw,/leaflet@1\.9\.4/);

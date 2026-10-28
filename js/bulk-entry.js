@@ -1,4 +1,4 @@
-import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=6';
+import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=7';
 import {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads} from './bulk-entry-core.js?v=3';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=1';
 
@@ -199,6 +199,7 @@ function renderManager(){
 }
 
 window.openBulkEntry=async function(groupId){
+ if(!window.userCanCreateItems?.()){window.toast('Seu usuário não tem permissão para criar itens ou subitens.','error',7000);return;}
  const group=window.S?.secs?.find(item=>item.id===groupId);if(!group||(!window.S.isAdmin&&!window.userCanGroup?.(group,'editar'))){window.toast('Você não pode lançar neste grupo.','error');return;}
  state.group=group;state.columns=bulkColumns(group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===groupId));state.busy=false;
  window.openModal('▦ Meus lançamentos em lote',group.name,'<div class="bulk-drafts-loading">Carregando seus lotes salvos…</div>');

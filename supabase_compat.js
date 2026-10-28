@@ -544,6 +544,9 @@ export async function getDoc(docRef) {
 
 export async function addDoc(collectionRef, data) {
   const table = tableName(collectionRef._path);
+  if ((table === 'items' || table === 'subitems') && globalThis.userCanCreateItems && !globalThis.userCanCreateItems()) {
+    throw new Error('Seu usuário não tem permissão para criar itens ou subitens.');
+  }
   const payload = {};
   for (const [k, v] of Object.entries(data)) payload[toSnake(k)] = v;
   if (!payload.id) {
@@ -704,6 +707,9 @@ export async function permanentDeleteDoc(docRef) {
 export async function deleteDoc(docRef, options = {}) {
   const table = tableName(docRef._path);
   if (table === 'trash_items' || options.permanent === true) return physicalDelete(docRef);
+  if ((table === 'items' || table === 'subitems') && globalThis.userCanDeleteItems && !globalThis.userCanDeleteItems()) {
+    throw new Error('Seu usuário não tem permissão para excluir itens ou subitens.');
+  }
   const row = options.record || await rowForDeletion(table, docRef._id);
   if (!row) throw new Error('A exclusão foi cancelada porque não foi possível preservar uma cópia na lixeira.');
   const {data:sessionData} = await supabase.auth.getSession();

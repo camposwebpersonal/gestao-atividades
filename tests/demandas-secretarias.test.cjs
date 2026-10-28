@@ -4,6 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const interfaceSource=fs.readFileSync(path.join(__dirname,'../js/demandas-secretarias.js'),'utf8');
 const moduleSource=fs.readFileSync(path.join(__dirname,'../js/modulos.js'),'utf8');
+const demandCss=fs.readFileSync(path.join(__dirname,'../css/demandas-secretarias.css'),'utf8');
 const model=import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(path.join(__dirname,'../js/demandas-model.js'))).toString('base64'));
 test('secretarias vazias aparecem, cadastros alheios não; vínculos inválidos ficam a classificar',async()=>{
  const {demandSections}=await model;
@@ -31,4 +32,9 @@ test('visualização principal permite escolha temporária e padrão global pers
  assert.match(interfaceSource,/window\.resetDemandView/);
  assert.doesNotMatch(interfaceSource,/localStorage\.setItem\('pms-demandas-view'/);
  assert.match(moduleSource,/base\.demandas_view_default=window\.getDemandViewDefault/);
+});
+test('lista de grupos usa uma linha fina no notebook e preserva a quebra responsiva',()=>{
+ assert.match(demandCss,/@media\(min-width:1100px\)/);
+ assert.match(demandCss,/\.demand-row:not\(\.demand-card\)\{[^}]*min-height:44px[^}]*flex-wrap:nowrap/);
+ assert.match(demandCss,/@media\(max-width:650px\)/);
 });

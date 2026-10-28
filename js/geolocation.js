@@ -1,9 +1,31 @@
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-const supportedTables=new Set(['atividades','items','subitems','contas']);
-const collectionFor={atividades:'secretariats',items:'items',subitems:'subitems',contas:'contas'};
+const supportedTables=new Set(['atividades','items','subitems']);
+const collectionFor={atividades:'secretariats',items:'items',subitems:'subitems'};
 
 function extraOf(record){
  try{return typeof record?.extra_fields==='string'?JSON.parse(record.extra_fields):record?.extra_fields||{};}catch{return {};}
+}
+
+function groupOf(record,table){
+ if(table==='atividades')return record;
+ let groupId=record?.atividade_id;
+ if(!groupId&&table==='subitems'){
+  const parentItem=(window.S?.items||[]).find(item=>item.id===record?.item_id);
+  groupId=parentItem?.atividade_id;
+ }
+ return (window.S?.secs||[]).find(group=>String(group.id)===String(groupId));
+}
+
+export function externalGeolocationEnabled(record,table){
+ const extra=extraOf(record);
+ if(table==='atividades')return extra.show_group_external_geolocation===true;
+ if(table!=='items'&&table!=='subitems')return false;
+ if(typeof extra.show_external_geolocation==='boolean')return extra.show_external_geolocation;
+ return extraOf(groupOf(record,table)).default_external_geolocation===true;
+}
+
+export function groupExternalGeolocationDefault(group){
+ return extraOf(group).default_external_geolocation===true;
 }
 
 export function locationOf(record){
@@ -106,7 +128,7 @@ window.captureLocationInto=async prefix=>{const button=document.querySelector(`b
 window.shareGeoLocation=shareLocation;
 window.recordLocation=locationOf;
 window.recordLocationActions=(record,table)=>{
- if(!supportedTables.has(table))return '';
+ if(!supportedTables.has(table)||!externalGeolocationEnabled(record,table))return '';
  const location=locationOf(record),label=esc(record.description||record.name||record.nome||'lançamento');
  return `<div class="geo-quick-actions">${location?`<a href="${esc(location.maps_url)}" target="_blank" rel="noopener" title="Abrir no Google Maps">📍 Mapa</a><button type="button" onclick="event.stopPropagation();shareGeoLocation('${esc(location.maps_url)}','${label}')">↗ Compartilhar</button>`:`<button type="button" class="capture" onclick="event.stopPropagation();captureRecordLocation('${table}','${esc(record.id)}')">⌖ Capturar geolocalização</button>`}</div>`;
 };
