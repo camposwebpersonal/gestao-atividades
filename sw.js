@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v150';
+const CACHE_NAME = 'gestao-pms-v151';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -24,6 +24,7 @@ const STATIC_ASSETS = [
   'js/modulos.js',
   'js/camera-capture.js',
   'js/camera-capture-core.js',
+  'js/smart-camera.js',
   'js/geolocation.js',
   'js/demandas-secretarias.js',
   'js/demandas-model.js',
@@ -38,6 +39,7 @@ const STATIC_ASSETS = [
   'css/record-density.css',
   'css/header-density.css',
   'css/camera-capture.css',
+  'css/smart-camera.css',
   'css/productivity-redesign.css',
   'css/geolocation.css',
   'js/perfuracao-pocos.js',
@@ -82,6 +84,8 @@ self.addEventListener('activate', event => {
   );
   self.clients.claim();
 });
+
+self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting();});
 
 // Falha de rede sem cópia em cache: responde com erro descritível em vez de
 // deixar o fetch estourar sem diagnóstico.
@@ -145,26 +149,20 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Interface estática: mostra o cache imediatamente e revalida em segundo plano.
-  // As versões nos imports e a renovação deste cache entregam atualizações sem
-  // obrigar o usuário a esperar a rede em cada abertura do aplicativo.
+  // Interface: rede primeiro para que F5 receba a publicação nova. A espera é
+  // curta; sem resposta, a cópia offline aparece imediatamente.
   if(request.mode === 'navigate' || ['document','script','style','worker','manifest'].includes(request.destination)){
-    const cached=caches.match(request,{ignoreSearch:true});
-    const update=fetch(request).then(networkResponse=>{
-      if(networkResponse&&networkResponse.status===200)putInCache(request,networkResponse.clone());
-      return networkResponse;
-    });
-    event.waitUntil(update.catch(()=>{}));
-    event.respondWith(cached.then(response=>response||update).catch(err=>{
-      if(request.destination==='document')return caches.match('index.html').then(index=>index||offlineResponse(request,err));
-      return offlineResponse(request,err);
-    }));
+    const network=fetch(request,{cache:'no-store'}).then(response=>{if(response&&response.status===200)putInCache(request,response.clone());return response;});
+    const cached=()=>caches.match(request).then(response=>response||(request.mode==='navigate'?caches.match('index.html'):null));
+    const offlineCached=()=>cached().then(response=>response||caches.match(request,{ignoreSearch:true}));
+    const fastFallback=new Promise(resolve=>setTimeout(()=>cached().then(resolve),1400));
+    event.respondWith(Promise.race([network,fastFallback]).then(response=>response||network).catch(err=>offlineCached().then(response=>response||offlineResponse(request,err))));
     return;
   }
 
   // Demais recursos estáticos: cache-first
   event.respondWith(
-    caches.match(request,{ignoreSearch:true}).then(response => {
+    caches.match(request).then(response => {
       if(response) return response;
       return fetch(request).then(networkResponse => {
         if(networkResponse && networkResponse.status === 200){

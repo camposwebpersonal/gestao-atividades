@@ -420,7 +420,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/record-density.css?v=7">
 <link rel="stylesheet" href="css/header-density.css?v=5">
 <link rel="stylesheet" href="css/camera-capture.css?v=2">
-<link rel="stylesheet" href="css/productivity-redesign.css?v=3">
+<link rel="stylesheet" href="css/smart-camera.css?v=1">
+<link rel="stylesheet" href="css/productivity-redesign.css?v=4">
 <link rel="stylesheet" href="css/geolocation.css?v=2">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -467,7 +468,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
     </details>
     <div class="sidebar-footnote"><span class="system-live-dot"></span><span>Sistema conectado</span></div>
   </div>
-  <main><div id="content"><div class="loading"><div class="spinner"></div> Carregando…</div></div></main>
+  <main><div id="content"><div class="startup-shell" aria-label="Preparando painel"><div class="startup-brand">GESTÃO NA PALMA DA MÃO</div><div class="startup-skeleton"><i></i><i></i><i></i></div></div></div></main>
   <footer id="app-footer"><span>Prefeitura de Sertânia</span><span>Central Integrada de Gestão</span><span class="footer-year">2026</span></footer>
 </div>
 <button id="sidebar-backdrop" type="button" aria-label="Fechar menu" onclick="closeSidebar()"></button>
@@ -493,7 +494,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=7";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=7";
-import './js/modulos.js?v=97';
+import './js/modulos.js?v=98';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -505,6 +506,9 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=2';
+import {initSmartCamera} from './js/smart-camera.js?v=1';
+
+initSmartCamera();
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -838,8 +842,8 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=88';
-  navigator.serviceWorker.register(swPath).then(()=>console.log('SW registrado')).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=89';
+    navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
 
