@@ -72,3 +72,12 @@ test('ações principais têm tamanho confortável para toque',()=>{
  assert.match(modules,/demand-create-primary/);
  assert.match(css,/min-height:48px!important/);
 });
+
+test('itens usam cartões premium uniformes e lista horizontal quando há espaço',()=>{
+ assert.match(css,/\.activity-records>\.item-row\{background:linear-gradient\(145deg,#fbfefc/);
+ assert.match(css,/\.activity-records\.items-cards\{align-items:stretch!important\}/);
+ assert.match(css,/\.activity-records\.items-cards>\.item-row\{height:100%/);
+ assert.match(css,/\.activity-records\.items-cards>\.item-row>\.item-header\{min-height:82px!important/);
+ assert.match(css,/@media\(min-width:1100px\)[\s\S]*\.activity-records\.items-list>\.item-row>\.item-header\{[^}]*flex-wrap:nowrap!important/);
+ assert.match(css,/\.activity-records\.items-list>\.item-row>\.item-header>\.item-info\{display:flex!important;align-items:center/);
+});

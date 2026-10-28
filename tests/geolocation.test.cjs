@@ -57,7 +57,7 @@ test('banco guarda geolocalização das fotos com limites válidos',()=>{
 });
 
 test('recursos de mapas e geolocalização ficam disponíveis offline',()=>{
- assert.match(sw,/gestao-pms-v149/);
+ assert.match(sw,/gestao-pms-v150/);
  assert.match(sw,/'js\/geolocation\.js'/);
  assert.match(sw,/'css\/geolocation\.css'/);
  assert.match(sw,/leaflet@1\.9\.4/);
