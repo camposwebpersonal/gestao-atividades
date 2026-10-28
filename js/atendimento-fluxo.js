@@ -9,8 +9,9 @@ export function initAttendanceUI(moveRecord){
   const source=window.S.secs.find(section=>section.id===record.atividade_id);
   if(!window.userCanGroup?.(source,'editar')){window.toast('Você não pode mover lançamentos deste grupo.','error');return;}
   window.__movingAttendance={id,table,record};
+  const fieldDemand=window.isFieldDemandGroup?.(source)===true;
   const targets=window.S.secs.filter(isAttendanceSection).filter(s=>s.id!==record.atividade_id&&window.userCanGroup?.(s,'editar'));
-  window.openModal('Mover atendimento',record.description||'',`<p class="attendance-move-hint">O lançamento será transferido mantendo seus dados e autoria. Escolha o grupo e confira o destino.</p><div class="form-group"><label for="move-group">Grupo de destino</label><select id="move-group" onchange="updateMoveAttendanceTarget()"><option value="">Selecione o grupo</option>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}</select></div><div id="move-target-fields"></div><div class="modal-actions"><button type="button" class="users-button" onclick="closeModal()">Cancelar</button><button id="move-attendance-submit" type="button" class="users-button users-button-primary" onclick="confirmMoveAttendance()">Mover atendimento</button></div>`);
+  window.openModal(fieldDemand?'Redirecionar demanda de campo':'Mover atendimento',record.description||'',`<p class="attendance-move-hint">${fieldDemand?'Confira a observação e encaminhe para o grupo correto. Fotos, dados e autoria serão preservados.':'O lançamento será transferido mantendo seus dados e autoria. Escolha o grupo e confira o destino.'}</p><div class="form-group"><label for="move-group">Grupo de destino</label><select id="move-group" onchange="updateMoveAttendanceTarget()"><option value="">Selecione o grupo</option>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}</select></div><div id="move-target-fields"></div><div class="modal-actions"><button type="button" class="users-button" onclick="closeModal()">Cancelar</button><button id="move-attendance-submit" type="button" class="users-button users-button-primary" onclick="confirmMoveAttendance()">${fieldDemand?'Redirecionar demanda':'Mover atendimento'}</button></div>`);
  };
  window.updateMoveAttendanceTarget=function(){
   const section=window.S.secs.find(s=>s.id===document.getElementById('move-group').value);const record=window.__movingAttendance.record;
@@ -27,10 +28,11 @@ export function initAttendanceUI(moveRecord){
   if(!window.userCanGroup?.(source,'editar')||!window.userCanGroup?.(section,'editar')){window.toast('Você não pode gerenciar um dos grupos desta transferência.','error');return;}
   const local=document.getElementById('move-local')?.value.trim();const date=document.getElementById('move-date')?.value;
   if(well&&(!local||!date)){window.toast('Informe a localidade e a data da solicitação.','error');return;}
-  window.__attendanceMoveBusy=true;const button=document.getElementById('move-attendance-submit');button.disabled=true;button.textContent='Movendo…';
+  const fieldDemand=window.isFieldDemandGroup?.(source)===true;
+  window.__attendanceMoveBusy=true;const button=document.getElementById('move-attendance-submit');button.disabled=true;button.textContent=fieldDemand?'Redirecionando…':'Movendo…';
   try{
    await moveRecord({source_id:moving.id,source_table:moving.table,target_group:target,target_parent:document.getElementById('move-parent')?.value||null,well_local:local||null,well_date:date||null,well_execution:document.getElementById('move-execution')?.value||'solicitada'});
-   await window.loadData();window.closeModal();window.toast('Atendimento transferido!');window.openActivity(target);
-  }catch(error){window.toast('Erro ao mover: '+error.message,'error',8000);}finally{window.__attendanceMoveBusy=false;if(button.isConnected){button.disabled=false;button.textContent='Mover atendimento';}}
+   await window.loadData();window.closeModal();window.toast(fieldDemand?'Demanda redirecionada com fotos e observação!':'Atendimento transferido!');window.openActivity(target);
+  }catch(error){window.toast('Erro ao mover: '+error.message,'error',8000);}finally{window.__attendanceMoveBusy=false;if(button.isConnected){button.disabled=false;button.textContent=fieldDemand?'Redirecionar demanda':'Mover atendimento';}}
  };
 }

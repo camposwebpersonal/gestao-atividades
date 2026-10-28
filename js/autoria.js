@@ -94,7 +94,8 @@ export function initAuditUI(){
     const group=window.S?.secs?.find(section=>section.id===record.atividade_id);
     const moveTarget=host.classList.contains('completed-row')?(host.querySelector(':scope > .completed-row-side')||target):target;
     if(window.userCanGroup?.(group,'editar')&&!host.querySelector('.attendance-move-button')){
-     const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent='Mover';button.title='Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
+     const fieldDemand=window.isFieldDemandGroup?.(group)===true;
+     const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent=fieldDemand?'Redirecionar':'Mover';button.title=fieldDemand?'Encaminhar esta demanda de campo ao grupo correto':'Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
      if(moveTarget!==target)moveTarget.insertBefore(button,moveTarget.querySelector(':scope > .completed-row-actions'));
     }
    }

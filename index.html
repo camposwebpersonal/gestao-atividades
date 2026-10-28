@@ -417,6 +417,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="stylesheet" href="css/record-density.css?v=7">
 <link rel="stylesheet" href="css/header-density.css?v=5">
+<link rel="stylesheet" href="css/camera-capture.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -487,11 +488,11 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=5";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=5";
-import './js/modulos.js?v=92';
+import './js/modulos.js?v=93';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
-import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=2';
-import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=7';
+import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
+import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=8';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=7';
@@ -1343,29 +1344,45 @@ window.renderGaleria=function(){
     </div>
     <div class="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${grid}</div>`);
 };
+let _galFiles=[];
+function _clearGalFiles(){_galFiles.forEach(entry=>URL.revokeObjectURL(entry.preview));_galFiles=[];}
+window.galAddFiles=function(input){
+  const files=Array.from(input?.files||[]).filter(file=>String(file.type||'').startsWith('image/'));input.value='';
+  if(!files.length){toast('Escolha uma imagem válida.','error');return;}
+  const free=20-_galFiles.length;files.slice(0,free).forEach(file=>_galFiles.push({file,preview:URL.createObjectURL(file)}));
+  if(files.length>free)toast('Limite de 20 fotos por envio.','info',6000);window.renderGalUploadPreview();
+};
+window.removeGalUpload=function(index){const [entry]=_galFiles.splice(index,1);if(entry)URL.revokeObjectURL(entry.preview);window.renderGalUploadPreview();};
+window.renderGalUploadPreview=function(){
+  const host=document.getElementById('gal-upload-preview'),count=document.getElementById('gal-upload-count');if(count)count.textContent=`${_galFiles.length}/20 foto${_galFiles.length===1?'':'s'}`;if(!host)return;
+  host.innerHTML=_galFiles.map((entry,index)=>`<figure class="field-photo-card"><img src="${esc(entry.preview)}" alt="Foto ${index+1}"><button type="button" onclick="removeGalUpload(${index})" aria-label="Remover foto ${index+1}">×</button><figcaption>${esc(entry.file.name||`Foto ${index+1}`)}</figcaption></figure>`).join('')||'<p>Nenhuma foto adicionada ainda.</p>';
+};
 window.openFotoUploadModal=function(){
+  _clearGalFiles();
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
-  openModal('📷 Nova Foto','',
-    `<div class="form-grid"><div class="form-group full"><label>Imagem *</label><input type="file" id="gal-file" accept="image/*" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;width:100%"></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título da foto"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
-    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="salvarFoto()">💾 Salvar</button></div>`);
+  openModal('📷 Novas Fotos','Fotografe quantas vezes precisar ou escolha várias imagens da galeria.',
+    `<div class="form-grid"><div class="form-group full"><label>Imagens *</label><div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input type="file" id="gal-camera" accept="image/*" capture="environment" onchange="galAddFiles(this)"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input type="file" id="gal-file" accept="image/*" multiple onchange="galAddFiles(this)"></label><b id="gal-upload-count">0/20 fotos</b></div><div id="gal-upload-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título comum das fotos"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
+    <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button id="gal-save" class="btn-save" onclick="salvarFoto()">💾 Salvar fotos</button></div>`);
 };
 window.salvarFoto=async function(){
-  const file=document.getElementById('gal-file')?.files[0];
-  if(!file){toast('Selecione uma imagem','error');return;}
+  if(!_galFiles.length){toast('Tire ou escolha ao menos uma imagem','error');return;}
   const titulo=document.getElementById('gal-titulo')?.value.trim()||'';
   const atividade_id=document.getElementById('gal-atividade')?.value||'';
   const data=document.getElementById('gal-data')?.value||'';
   const local=document.getElementById('gal-local')?.value.trim()||'';
   const notas=document.getElementById('gal-notas')?.value.trim()||'';
+  const button=document.getElementById('gal-save');button.disabled=true;
   try{
-    const dataUrl=await readFileAsDataUrl(file);
-    const url=await imgbbUp(dataUrl);
-    await addDoc(collection(db,'galeria'),{url,titulo,atividade_id,data,local,notas,created_at:serverTimestamp()});
-    await loadData();closeModal();toast('Foto adicionada!');renderGaleria();
+    for(let index=0;index<_galFiles.length;index+=1){
+      button.textContent=`Enviando ${index+1}/${_galFiles.length}…`;
+      const dataUrl=await readFileAsDataUrl(_galFiles[index].file);const compact=await mkThumb(dataUrl,1600,1600,.8);const url=await imgbbUp(compact);
+      await addDoc(collection(db,'galeria'),{url,titulo:_galFiles.length>1&&titulo?`${titulo} ${index+1}`:titulo,atividade_id,data,local,notas,created_at:serverTimestamp()});
+    }
+    const total=_galFiles.length;_clearGalFiles();await loadData();closeModal();toast(`${total} foto(s) adicionada(s)!`);renderGaleria();
   }catch(e){
     console.error('Falha ao salvar foto na galeria',e);
     toast('Erro ao adicionar foto: '+(e.message||e),'error',6000);
-  }
+  }finally{if(button?.isConnected){button.disabled=false;button.textContent='💾 Salvar fotos';}}
 };
 window.deleteFoto=async function(id){
   if(!confirm('Excluir esta foto?'))return;
@@ -1685,11 +1702,11 @@ window.openActivity=function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
     ${_can?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
-    ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
     ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
-    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
+    ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
@@ -1993,6 +2010,7 @@ window.saveConclusao=async function(col,id){
 };
 window.confirmarExcluirAtividade=function(id){
   const sec=S.secs.find(s=>s.id===id);
+  if(window.isFieldDemandGroup?.(sec)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const nItems=S.items.filter(i=>i.atividade_id===id).length;
   const nSubs=S.subitems.filter(s=>S.items.some(i=>i.atividade_id===id&&i.id===s.item_id)).length;
@@ -2001,7 +2019,7 @@ window.confirmarExcluirAtividade=function(id){
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#9f2929;color:#fef2f2" onclick="deleteSec('${id}')">♻ Enviar para a lixeira</button></div>`);
 };
 window.deleteSec=async function(id){
-  const group=S.secs.find(s=>s.id===id);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
+  const group=S.secs.find(s=>s.id===id);if(window.isFieldDemandGroup?.(group)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const batchId=crypto.randomUUID();
   const its=S.items.filter(i=>i.atividade_id===id);
   const trashOptions={batchId,activityId:id,activityName:group?.name,secretariaId:group?.demanda_secretaria_id};
@@ -2154,6 +2172,7 @@ window._toggleSenha=function(inputId,checkId){
 // ── SEC MODAL ──
 window.openSecModal=function(id){
   const s=id?S.secs.find(x=>x.id===id):null;
+  if(window.isFieldDemandGroup?.(s)){toast('Este é um grupo permanente de entrada. Abra-o para organizar e redirecionar as demandas.','info',7000);return;}
   if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(s,'editar')){toast('Você não pode editar este grupo.','error');return;}
   openModal(s?'✏️ Editar Atividade':'➕ Nova Atividade','',
@@ -2215,7 +2234,7 @@ window.openSecModal=function(id){
     </div>
   </div>`:'<!-- sem id -->'}
   <div class="modal-actions">
-    ${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
+    ${id&&!window.isFieldDemandGroup?.(s)?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button>
   </div>`);
@@ -2224,6 +2243,7 @@ window.openSecModal=function(id){
 
 window.saveSec=async function(id){
   const existingGroup=id?S.secs.find(x=>x.id===id):null;
+  if(window.isFieldDemandGroup?.(existingGroup)){toast('Este grupo permanente não pode ser alterado.','error');return;}
   if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(existingGroup,'editar')){toast('Você não pode editar este grupo.','error');return;}
   const name=document.getElementById('s-name')?.value.trim();
@@ -2385,13 +2405,15 @@ window.saveItem=async function(id,secId,isSub,parentId){
 
 // ── RESP THUMB ──
 function rtHtml(type,id,ex){
-  const k='rt-'+type+'-'+(id||'n'),f='rf-'+type+'-'+(id||'n');
+  const k='rt-'+type+'-'+(id||'n'),f='rf-'+type+'-'+(id||'n'),fc=f+'-camera';
   return`<div class="resp-section"><h5>👤 Foto do Responsável</h5>
     <div style="display:flex;align-items:center;gap:14px">
       <div class="resp-circle" id="${k}">${ex?`<img src="${ex}" alt="">`:'👤'}</div>
       <div style="display:flex;flex-direction:column;gap:6px">
+        <input type="file" id="${fc}" accept="image/*" capture="environment" style="display:none" onchange="prevRT(this,'${type}','${id||'n'}')">
         <input type="file" id="${f}" accept="image/*" style="display:none" onchange="prevRT(this,'${type}','${id||'n'}')">
-        <button type="button" class="btn-action" style="font-size:12px;padding:5px 12px" onclick="document.getElementById('${f}').click()">📷 Escolher Foto</button>
+        <button type="button" class="btn-action" style="font-size:12px;padding:5px 12px" onclick="document.getElementById('${fc}').click()">📸 Tirar foto</button>
+        <button type="button" class="btn-action" style="font-size:12px;padding:5px 12px" onclick="document.getElementById('${f}').click()">🖼️ Escolher foto</button>
         ${ex?`<button type="button" class="btn-action" style="font-size:11px;padding:4px 10px;color:#f87171;border-color:#f8717144" onclick="clearRT('${type}','${id||'n'}')">✕ Remover</button>`:''}
       </div>
     </div>
@@ -2432,9 +2454,10 @@ function renderImgs(cont,type,id,imgs){
         <input type="text" placeholder="Título..." value="${esc(rep.title||'')}" onchange="setImgProp('${rep.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:5px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
         <input type="text" placeholder="Observação..." value="${esc(rep.obs||'')}" onchange="setImgProp('${rep.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
         <div style="display:flex;gap:6px;margin-top:6px">
-          <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}')">🔄 Trocar</button>
+          <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','camera')">📸 Nova foto</button>
+          <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','gallery')">🖼️ Galeria</button>
           <button class="btn-action" style="font-size:11px;padding:4px 10px;color:#f87171;border-color:#f8717144" onclick="delImg('${rep.id}','${type}','${id}',true)">✕ Remover</button>
-        </div>`:`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="addImg('${type}','${id}',true,'')">➕ Adicionar Imagem</button>`}
+        </div>`:`<div class="image-source-actions"><button class="btn-action" type="button" onclick="addImg('${type}','${id}',true,'','camera')">📸 Tirar foto</button><button class="btn-action" type="button" onclick="addImg('${type}','${id}',true,'','gallery')">🖼️ Escolher foto</button></div>`}
     </div>
     <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">🗂 Galeria (${gal.length}) <span style="font-weight:400;font-size:10px">— clique direito para remover</span></div>
     <div class="gal-grid">
@@ -2443,14 +2466,16 @@ function renderImgs(cont,type,id,imgs){
         <input type="text" placeholder="Título..." value="${esc(g.title||'')}" onchange="setImgProp('${g.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:3px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
         <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
       </div>`).join('')}
-      <div style="display:inline-block;vertical-align:top"><button onclick="addImgMulti('${type}','${id}')" style="height:60px;width:70px;background:#0e1729;border:2px dashed var(--border);border-radius:6px;color:var(--muted);font-size:20px;cursor:pointer">+</button></div>
+      <div class="image-source-actions gallery-add-actions"><button type="button" onclick="addImg('${type}','${id}',false,'','camera')">📸 Tirar foto</button><button type="button" onclick="addImgMulti('${type}','${id}')">🖼️ Adicionar várias</button></div>
     </div>
+    <input type="file" id="iup-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}')">
     <input type="file" id="iup-${type}-${id}" accept="image/*" multiple style="display:none" onchange="handleUpload(this,'${type}','${id}')">
+    <input type="file" id="iup-rep-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',true)">
     <input type="file" id="iup-rep-${type}-${id}" accept="image/*" style="display:none" onchange="handleUpload(this,'${type}','${id}',true)">`;
 }
 
 let _upReplId='';
-window.addImg=function(t,id,isRep,oldId){_upReplId=oldId;document.getElementById(isRep?`iup-rep-${t}-${id}`:`iup-${t}-${id}`)?.click();};
+window.addImg=function(t,id,isRep,oldId,source='gallery'){_upReplId=oldId;const camera=source==='camera'?'-camera':'';document.getElementById(isRep?`iup-rep${camera}-${t}-${id}`:`iup${camera}-${t}-${id}`)?.click();};
 window.addImgMulti=function(t,id){document.getElementById(`iup-${t}-${id}`)?.click();};
 window.handleUpload=async function(inp,type,id,isRep){
   const files=Array.from(inp.files);if(!files.length)return;inp.value='';

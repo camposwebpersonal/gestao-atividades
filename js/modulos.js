@@ -1,7 +1,8 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
 import {supabase} from '../supabase_compat.js?v=5';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
-import './perfuracao-pocos.js?v=101';
+import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=1';
+import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
 import './controle-licitacoes.js?v=8';
 
@@ -84,6 +85,7 @@ const _md = {
 };
 
 initDemandas({groups:()=>_md.grupos(MODULOS.find(m=>m.id==='atendimentos')),pct:_md.pct,total:_md.ativTotal});
+initFieldCapture();
 
 function _mdCard(mod){
   const grupos = _md.grupos(mod);
@@ -133,7 +135,8 @@ function renderModuloGrupos(mod){
   const cards = grupos.map((g,index)=>{
     const p=_md.pct(g), col=_md.pColor(p);
     const total=_md.ativTotal(g),well=g.controle_pocos==1||g.extra_fields?.controle_pocos==1;
-    const podeGrupo=admin||window.userCanGroup(g,'editar');
+    const protegido=isFieldDemandGroup(g);
+    const podeGrupo=(admin||window.userCanGroup(g,'editar'))&&!protegido;
     return `<article class="module-group-row" style="--module-accent:${mod.color}" data-gid="${_md.esc(g.id)}" data-audit-id="${_md.esc(g.id)}">
       ${podeGrupo?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
       <button type="button" class="module-group-open" onclick="window.openActivity(${_md.arg(g.id)})">
@@ -221,6 +224,7 @@ window._ceToggleAllGrupos=function(checked){
 window._ceExcluirSelecionados=async function(modId){
   const ids=[...document.querySelectorAll('.cb-grupo:checked')].map(cb=>cb.value);
   if(!ids.length){toast('Selecione ao menos um grupo','error'); return;}
+  if(ids.some(id=>isFieldDemandGroup(S.secs.find(group=>group.id===id)))){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   const nomes=ids.map(id=>_md.esc(S.secs.find(s=>s.id===id)?.name||'Grupo')).slice(0,20).join('\n');
   const mais=ids.length>20?`\n... e mais ${ids.length-20}`:'';
   if(!confirm(`Excluir ${ids.length} grupo(s) deste módulo?\n\n${nomes}${mais}\n\nAtenção: todos os itens, sub-itens e lançamentos vinculados também serão excluídos. Esta ação não pode ser desfeita.`)) return;
@@ -482,6 +486,7 @@ window.renderModulos=function(){
   _md.setC(`<section class="dashboard-shell" aria-labelledby="dashboard-title">
     <header class="dashboard-heading"><div><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">Painel de Gestão</h1><p>Acompanhamento integrado das atividades municipais.</p></div><div class="dashboard-date">Atualizado em <strong>${new Date().toLocaleDateString('pt-BR')}</strong></div></header>
     <section class="dashboard-banner"><div><span class="dashboard-banner-mark">PMS</span><div><strong>Bem-vindo à Central de Gestão</strong><p>Indicadores reais e acesso rápido a todas as áreas operacionais.</p></div></div><button onclick="document.querySelector('.dashboard-areas')?.scrollIntoView({behavior:'smooth'})">Explorar áreas ↓</button></section>
+    ${fieldCaptureDashboardCard()}
     <div class="dashboard-kpis">
       <article><span class="kpi-icon blue">▦</span><div><small>Áreas operacionais</small><strong>${mods.length}</strong><em>disponíveis</em></div></article>
       <article><span class="kpi-icon green">✓</span><div><small>Concluídos</small><strong>${completed}</strong><em>${progress}% dos lançamentos</em></div></article>
