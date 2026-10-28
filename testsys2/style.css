@@ -155,7 +155,7 @@ dd { margin: 0; font-weight: 700; text-align: right; }
 .shipping-forecast strong { font-size: 17px; }
 .shipping-forecast p { margin: 7px 0 0; color: #4d6a61; font-size: 11px; line-height: 1.55; }
 .shipping-forecast .shipping-alert { margin-top: 13px; padding: 14px 16px; color: #173e32; background: #fff; border-left: 6px solid var(--orange); border-radius: 8px; box-shadow: 0 5px 16px rgba(19,25,33,.07); font-size: clamp(16px, 1.8vw, 21px); font-weight: 800; line-height: 1.45; letter-spacing: -.25px; }
-.shipping-demand-note { margin-top: 13px; padding: 11px 13px; display: block; color: #234e68; background: #eef7fb; border: 1px solid #b8d8e8; border-radius: 7px; font-size: .82em; line-height: 1.4; letter-spacing: 0; }
+.shipping-demand-note { margin-top: 13px; padding: 14px 15px; display: block; color: #234e68; background: #eef7fb; border: 1px solid #b8d8e8; border-radius: 7px; font-size: clamp(18px, 1.9vw, 23px); line-height: 1.4; letter-spacing: 0; }
 .shipping-window-note { margin-top: 13px; padding: 11px 13px; display: block; color: #704000; background: #fff4db; border: 1px solid #f2c775; border-radius: 7px; font-size: .82em; line-height: 1.4; letter-spacing: 0; }
 .checkout-row { padding-top: 20px; display: flex; justify-content: flex-end; align-items: center; gap: 24px; }
 .checkout-row div { text-align: right; }
