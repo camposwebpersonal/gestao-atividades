@@ -16,8 +16,9 @@ test('visão geral prioriza captura e links das secretarias',()=>{
  assert.match(modules,/secretary-launch-grid/);
  assert.match(modules,/openDemandSecretaria/);
  assert.doesNotMatch(modules.slice(modules.lastIndexOf('window.renderModulos=function()')),/Bem-vindo à Central de Gestão|dashboard-kpis|Atividades por área/);
- assert.match(css,/grid-template-columns:repeat\(3/);
+ assert.match(css,/grid-template-columns:repeat\(4/);
  assert.match(css,/@media\(max-width:620px\)/);
+ assert.doesNotMatch(modules.slice(modules.lastIndexOf('window.renderModulos=function()')),/Criar grupo/);
 });
 
 test('exclusão de grupos tem checkbox, verificação de interface e bloqueio no banco',()=>{

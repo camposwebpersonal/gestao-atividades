@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v144';
+const CACHE_NAME = 'gestao-pms-v145';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -24,6 +24,7 @@ const STATIC_ASSETS = [
   'js/modulos.js',
   'js/camera-capture.js',
   'js/camera-capture-core.js',
+  'js/geolocation.js',
   'js/demandas-secretarias.js',
   'js/demandas-model.js',
   'css/demandas-secretarias.css',
@@ -38,6 +39,7 @@ const STATIC_ASSETS = [
   'css/header-density.css',
   'css/camera-capture.css',
   'css/productivity-redesign.css',
+  'css/geolocation.css',
   'js/perfuracao-pocos.js',
   'js/ordenacao-visual.js',
   'js/controle-contas.js',
@@ -52,7 +54,9 @@ const STATIC_ASSETS = [
   'https://esm.sh/node/buffer.mjs',
   'https://esm.sh/@supabase/supabase-js@2.49.0/es2022/supabase-js.bundle.mjs',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
 ];
 
 self.addEventListener('install', event => {

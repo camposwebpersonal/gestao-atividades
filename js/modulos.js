@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
 import {supabase} from '../supabase_compat.js?v=5';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=1';
+import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=2';
 import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
 import './controle-licitacoes.js?v=8';
@@ -466,8 +466,7 @@ window.renderModulos=function(){
   const cards=secretaries.map(secretary=>{
     const own=groups.filter(group=>group.demanda_secretaria_id===secretary.id);
     const total=own.reduce((sum,group)=>sum+_md.ativTotal(group),0);
-    const canCreate=window.userCanCreateGroups()&&window.userCan('atendimentos','criar')&&window.userCanDemandSecretaria(secretary.id,'editar');
-    return `<article class="secretary-launch-card" onclick="openDemandSecretaria(${_md.arg(secretary.id)})" tabindex="0" onkeydown="if(event.key==='Enter')openDemandSecretaria(${_md.arg(secretary.id)})"><div class="secretary-launch-icon">▥</div><div class="secretary-launch-copy"><strong>${_md.esc(secretary.name)}</strong><span>${own.length} grupo(s) · ${total} lançamento(s)</span></div><div class="secretary-launch-actions"><button type="button" onclick="event.stopPropagation();openDemandSecretaria(${_md.arg(secretary.id)})">Abrir demandas <b>›</b></button>${canCreate?`<button type="button" class="create" onclick="event.stopPropagation();newDemandGroup(${_md.arg(secretary.id)})">＋ Criar grupo</button>`:''}</div></article>`;
+    return `<article class="secretary-launch-card" onclick="openDemandSecretaria(${_md.arg(secretary.id)})" tabindex="0" onkeydown="if(event.key==='Enter')openDemandSecretaria(${_md.arg(secretary.id)})"><div class="secretary-launch-icon">▥</div><div class="secretary-launch-copy"><strong>${_md.esc(secretary.name)}</strong><span>${own.length} grupo(s) · ${total} lançamento(s)</span></div><span class="secretary-launch-arrow" aria-hidden="true">›</span></article>`;
   }).join('');
   _md.setC(`<section class="dashboard-shell productivity-dashboard" aria-labelledby="dashboard-title">
     <header class="productivity-heading"><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">GESTÃO NA PALMA DA MÃO</h1></header>

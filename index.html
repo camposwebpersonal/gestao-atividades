@@ -14,6 +14,8 @@
 <link rel="apple-touch-icon" href="img/logo_sertania.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=86"></script>
 <script src="js/controle-contas.js?v=64"></script>
 <script src="js/controle-distribuicao.js?v=63"></script>
@@ -417,8 +419,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="stylesheet" href="css/record-density.css?v=7">
 <link rel="stylesheet" href="css/header-density.css?v=5">
-<link rel="stylesheet" href="css/camera-capture.css?v=1">
-<link rel="stylesheet" href="css/productivity-redesign.css?v=1">
+<link rel="stylesheet" href="css/camera-capture.css?v=2">
+<link rel="stylesheet" href="css/productivity-redesign.css?v=2">
+<link rel="stylesheet" href="css/geolocation.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -448,6 +451,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
   </nav>
   <div id="navmenu">
     <button class="nav-btn active sidebar-home" id="nav-mod" onclick="setView('mod')">⌂ Visão geral</button>
+    <button class="nav-btn sidebar-map" id="nav-map" onclick="setView('map')">⌖ Mapa geral</button>
     <div class="sidebar-heading"><span>Áreas operacionais</span><button id="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeSidebar()">×</button></div>
     <div id="sidebar-modules" aria-label="Áreas operacionais"></div>
     <details class="sidebar-secondary" id="sidebar-secondary">
@@ -489,17 +493,18 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=5";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=5";
-import './js/modulos.js?v=94';
+import './js/modulos.js?v=95';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
-import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=9';
+import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=10';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=7';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf} from './js/geolocation.js?v=1';
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -818,7 +823,7 @@ window.restoreWorkspace=function(){
   try{
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
     else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok){if(r.id==='atendimentos')window.currentDemandSecretaria=r.secretaria||'';window.renderModulo(r.id);}}
-    else if(r.kind==='view'){ok=['mod','adm','secr','resp','cont'].includes(r.id);if(ok)window.setView(r.id);}
+    else if(r.kind==='view'){ok=['mod','map','adm','secr','resp','cont'].includes(r.id);if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}
   if(ok){window.rememberWorkspace(r,true);return true;}
@@ -1095,9 +1100,10 @@ window.setView=function(v){
   curSecId=null;
   window.__currentView=v;
   window.rememberWorkspace?.({kind:'view',id:v});
-  ['mod','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  ['mod','map','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
   if(['adm','secr','resp','cont','trash'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
   if(v==='mod')window.renderModulos();
+  else if(v==='map')window.renderGeneralGeoMap();
   else if(v==='adm')renderAdmin();
   else if(v==='secr')renderSecretarias();
   else if(v==='resp')renderResponsaveis();
@@ -1334,7 +1340,7 @@ window.renderGaleria=function(){
   if(_filtroAtiv){fotos=fotos.filter(g=>g.atividade_id===_filtroAtiv);}
   const grid=fotos.map(g=>`<div style="background:#0e1729;border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer" onclick="openFotoModal('${g.id}')">
     <div style="height:160px;background:url('${esc(g.url)}') center/cover no-repeat"></div>
-    <div style="padding:10px"><div style="font-size:12px;font-weight:700;color:#e2e8f0">${esc(g.titulo||'Sem título')}</div><div style="font-size:11px;color:#64748b;margin-top:3px">${esc(g.local||'')} · ${g.data?fmtD(g.data):''}</div></div>
+    <div style="padding:10px"><div style="font-size:12px;font-weight:700;color:#e2e8f0">${esc(g.titulo||'Sem título')}</div><div style="font-size:11px;color:#64748b;margin-top:3px">${esc(g.local||'')} · ${g.data?fmtD(g.data):''}</div>${g.maps_url?`<div class="image-geo-links"><a href="${esc(g.maps_url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Google Maps</a><button type="button" onclick="event.stopPropagation();shareGeoLocation('${esc(g.maps_url)}','Localização da foto')">Compartilhar</button></div>`:''}</div>
   </div>`).join('')||'<div style="color:var(--muted);text-align:center;padding:40px">Nenhuma foto na galeria.</div>';
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}" ${_filtroAtiv===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
   setC(`<div class="page-title">🖼️ Galeria de Imagens</div><div class="page-sub">Registro fotográfico das atividades</div>
@@ -1347,22 +1353,23 @@ window.renderGaleria=function(){
 };
 let _galFiles=[];
 function _clearGalFiles(){_galFiles.forEach(entry=>URL.revokeObjectURL(entry.preview));_galFiles=[];}
-window.galAddFiles=function(input){
+window.galAddFiles=async function(input,source='gallery'){
   const files=Array.from(input?.files||[]).filter(file=>String(file.type||'').startsWith('image/'));input.value='';
   if(!files.length){toast('Escolha uma imagem válida.','error');return;}
-  const free=20-_galFiles.length;files.slice(0,free).forEach(file=>_galFiles.push({file,preview:URL.createObjectURL(file)}));
+  let location=null;if(source==='camera'){try{location=await capturePosition();toast('Localização da foto capturada!','success');}catch(error){toast(error.message+' A foto será adicionada sem localização.','info',6500);}}
+  const free=20-_galFiles.length;files.slice(0,free).forEach(file=>_galFiles.push({file,preview:URL.createObjectURL(file),location}));
   if(files.length>free)toast('Limite de 20 fotos por envio.','info',6000);window.renderGalUploadPreview();
 };
 window.removeGalUpload=function(index){const [entry]=_galFiles.splice(index,1);if(entry)URL.revokeObjectURL(entry.preview);window.renderGalUploadPreview();};
 window.renderGalUploadPreview=function(){
   const host=document.getElementById('gal-upload-preview'),count=document.getElementById('gal-upload-count');if(count)count.textContent=`${_galFiles.length}/20 foto${_galFiles.length===1?'':'s'}`;if(!host)return;
-  host.innerHTML=_galFiles.map((entry,index)=>`<figure class="field-photo-card"><img src="${esc(entry.preview)}" alt="Foto ${index+1}"><button type="button" onclick="removeGalUpload(${index})" aria-label="Remover foto ${index+1}">×</button><figcaption>${esc(entry.file.name||`Foto ${index+1}`)}</figcaption></figure>`).join('')||'<p>Nenhuma foto adicionada ainda.</p>';
+  host.innerHTML=_galFiles.map((entry,index)=>`<figure class="field-photo-card"><img src="${esc(entry.preview)}" alt="Foto ${index+1}"><button type="button" onclick="removeGalUpload(${index})" aria-label="Remover foto ${index+1}">×</button><figcaption>${esc(entry.file.name||`Foto ${index+1}`)}${entry.location?'<span>📍 Localizada</span>':''}</figcaption></figure>`).join('')||'<p>Nenhuma foto adicionada ainda.</p>';
 };
 window.openFotoUploadModal=function(){
   _clearGalFiles();
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   openModal('📷 Novas Fotos','Fotografe quantas vezes precisar ou escolha várias imagens da galeria.',
-    `<div class="form-grid"><div class="form-group full"><label>Imagens *</label><div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input type="file" id="gal-camera" accept="image/*" capture="environment" onchange="galAddFiles(this)"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input type="file" id="gal-file" accept="image/*" multiple onchange="galAddFiles(this)"></label><b id="gal-upload-count">0/20 fotos</b></div><div id="gal-upload-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título comum das fotos"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Imagens *</label><div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input type="file" id="gal-camera" accept="image/*" capture="environment" onchange="galAddFiles(this,'camera')"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input type="file" id="gal-file" accept="image/*" multiple onchange="galAddFiles(this,'gallery')"></label><b id="gal-upload-count">0/20 fotos</b></div><label class="field-stamp-option"><input id="gal-stamp-location" type="checkbox"> Gravar coordenadas e data visíveis na foto</label><div id="gal-upload-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título comum das fotos"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button id="gal-save" class="btn-save" onclick="salvarFoto()">💾 Salvar fotos</button></div>`);
 };
 window.salvarFoto=async function(){
@@ -1376,8 +1383,9 @@ window.salvarFoto=async function(){
   try{
     for(let index=0;index<_galFiles.length;index+=1){
       button.textContent=`Enviando ${index+1}/${_galFiles.length}…`;
-      const dataUrl=await readFileAsDataUrl(_galFiles[index].file);const compact=await mkThumb(dataUrl,1600,1600,.8);const url=await imgbbUp(compact);
-      await addDoc(collection(db,'galeria'),{url,titulo:_galFiles.length>1&&titulo?`${titulo} ${index+1}`:titulo,atividade_id,data,local,notas,created_at:serverTimestamp()});
+      const location=_galFiles[index].location||null,stamp=document.getElementById('gal-stamp-location')?.checked===true;
+      const dataUrl=await readFileAsDataUrl(_galFiles[index].file);const compact=await optimizePhoto(dataUrl,{location,stamp,maxDimension:1280,maxBytes:360000});const url=await imgbbUp(compact);
+      await addDoc(collection(db,'galeria'),{url,titulo:_galFiles.length>1&&titulo?`${titulo} ${index+1}`:titulo,atividade_id,data,local,notas,latitude:location?.latitude??null,longitude:location?.longitude??null,accuracy_meters:location?.accuracy??null,maps_url:location?.maps_url??null,captured_at:location?.captured_at??null,created_at:serverTimestamp()});
     }
     const total=_galFiles.length;_clearGalFiles();await loadData();closeModal();toast(`${total} foto(s) adicionada(s)!`);renderGaleria();
   }catch(e){
@@ -1396,7 +1404,7 @@ window.openFotoModal=function(id){
   openModal('📷 '+esc(g.titulo||'Foto'),'',
     `<div style="text-align:center"><img src="${esc(g.url)}" style="max-width:100%;max-height:400px;border-radius:10px;border:1px solid var(--border)"></div>
     <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:#94a3b8">
-      <div><strong style="color:#60a5fa">Atividade:</strong> ${esc(ativName)}</div>
+      <div><strong style="color:#60a5fa">Atividade:</strong> ${esc(ativName)}</div>${g.maps_url?`<div style="grid-column:1/-1" class="image-geo-links"><a href="${esc(g.maps_url)}" target="_blank" rel="noopener">📍 Abrir localização no Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(g.maps_url)}','Localização da foto')">Compartilhar</button></div>`:''}
       <div><strong style="color:#60a5fa">Data:</strong> ${g.data?fmtD(g.data):'—'}</div>
       <div><strong style="color:#60a5fa">Local:</strong> ${esc(g.local||'—')}</div>
       <div><strong style="color:#60a5fa">Notas:</strong> ${esc(g.notas||'—')}</div>
@@ -2295,6 +2303,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#0f172a;cursor:pointer"></div>`:''}
     <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão ${isSub?'neste sub-item':'neste item'}</label></div>
   </div>
+  ${locationEditorHtml(it,'it-geo')}
   ${id&&S.isAdmin?adminAuditFields(it,S.users,'it-audit'):''}
   ${(()=>{
     const _s3=S.secs.find(s=>s.id===(secId||curSecId));
@@ -2383,8 +2392,8 @@ window.saveItem=async function(id,secId,isSub,parentId){
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
   const existingRecord=original;
   const ef=collectCustomFieldValues(document,{...recordExtra(existingRecord)});
-  if(Object.keys(ef).length)data.extra_fields=ef;
-  else data.extra_fields={};
+  const geoLocation=readLocationEditor('it-geo');if(geoLocation)ef.geo_location=geoLocation;else delete ef.geo_location;
+  data.extra_fields=ef;
   const effSec=S.secs.find(s=>s.id===secId);
   const _chk=(fl)=>isSub?(effSec?.['show_'+fl]&&effSec?.[fl+'_on_subitems']):effSec?.['show_'+fl];
   if(_chk('verba')){const vbl=vbCollect();data.verbas_list=vbl;if(vbl.length){data.verba=vbl[0].v||0;data.verba_obs=vbl[0].obs||'';data.origem_verba=vbl[0].ov||'';}else{data.verba=null;data.verba_obs='';data.origem_verba='';}}
@@ -2456,7 +2465,7 @@ function renderImgs(cont,type,id,imgs){
       ${rep?`<img class="img-rep-preview" src="${esc(rep.imgbb_url)}" alt="">
         <input type="text" placeholder="Título..." value="${esc(rep.title||'')}" onchange="setImgProp('${rep.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:5px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
         <input type="text" placeholder="Observação..." value="${esc(rep.obs||'')}" onchange="setImgProp('${rep.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
-        <div style="display:flex;gap:6px;margin-top:6px">
+        ${rep.maps_url?`<div class="image-geo-links"><a href="${esc(rep.maps_url)}" target="_blank" rel="noopener">📍 Local da foto</a><button type="button" onclick="shareGeoLocation('${esc(rep.maps_url)}','Localização da foto')">Compartilhar</button></div>`:''}<div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','camera')">📸 Nova foto</button>
           <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','gallery')">🖼️ Galeria</button>
           <button class="btn-action" style="font-size:11px;padding:4px 10px;color:#f87171;border-color:#f8717144" onclick="delImg('${rep.id}','${type}','${id}',true)">✕ Remover</button>
@@ -2467,27 +2476,32 @@ function renderImgs(cont,type,id,imgs){
       ${gal.map(g=>`<div style="display:inline-block;vertical-align:top;width:90px;margin:0 4px 8px 0">
         <img class="gal-thumb" src="${esc(g.imgbb_url)}" loading="lazy" onclick="openLb('${esc(g.imgbb_url)}')" oncontextmenu="event.preventDefault();if(confirm('Remover?'))delImg('${g.id}','${type}','${id}',false)" style="width:90px;height:60px;object-fit:cover">
         <input type="text" placeholder="Título..." value="${esc(g.title||'')}" onchange="setImgProp('${g.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:3px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
-        <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
+        <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">${g.maps_url?`<div class="image-geo-links"><a href="${esc(g.maps_url)}" target="_blank" rel="noopener">📍 Mapa</a><button type="button" onclick="shareGeoLocation('${esc(g.maps_url)}','Localização da foto')">↗</button></div>`:''}
       </div>`).join('')}
       <div class="image-source-actions gallery-add-actions"><button type="button" onclick="addImg('${type}','${id}',false,'','camera')">📸 Tirar foto</button><button type="button" onclick="addImgMulti('${type}','${id}')">🖼️ Adicionar várias</button></div>
     </div>
-    <input type="file" id="iup-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}')">
+    <label class="photo-geo-option"><input type="checkbox" id="photo-stamp-${type}-${id}"> Gravar coordenadas e data visíveis nas fotos tiradas pela câmera</label>
+    <input type="file" id="iup-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',false,'camera')">
     <input type="file" id="iup-${type}-${id}" accept="image/*" multiple style="display:none" onchange="handleUpload(this,'${type}','${id}')">
-    <input type="file" id="iup-rep-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',true)">
+    <input type="file" id="iup-rep-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',true,'camera')">
     <input type="file" id="iup-rep-${type}-${id}" accept="image/*" style="display:none" onchange="handleUpload(this,'${type}','${id}',true)">`;
 }
 
 let _upReplId='';
 window.addImg=function(t,id,isRep,oldId,source='gallery'){_upReplId=oldId;const camera=source==='camera'?'-camera':'';document.getElementById(isRep?`iup-rep${camera}-${t}-${id}`:`iup${camera}-${t}-${id}`)?.click();};
 window.addImgMulti=function(t,id){document.getElementById(`iup-${t}-${id}`)?.click();};
-window.handleUpload=async function(inp,type,id,isRep){
+window.handleUpload=async function(inp,type,id,isRep,source='gallery'){
   const files=Array.from(inp.files);if(!files.length)return;inp.value='';
   toast('Enviando '+files.length+' imagem(ns)…','info');
+  let photoLocation=null;
+  if(source==='camera'){try{photoLocation=await capturePosition();}catch(error){toast(error.message+' A foto será salva sem localização.','info',6500);}}
+  const stamp=source==='camera'&&document.getElementById(`photo-stamp-${type}-${id}`)?.checked===true;
   for(const f of files){
     let url;
     try{
       const dataUrl=await readFileAsDataUrl(f);
-      url=await imgbbUp(dataUrl);
+      const compact=await optimizePhoto(dataUrl,{location:photoLocation,stamp,maxDimension:1280,maxBytes:360000});
+      url=await imgbbUp(compact);
     }catch(e){
       console.error('Falha no upload de '+f.name,e);
       toast('Erro ao enviar '+f.name+': '+(e.message||e),'error',6000);
@@ -2498,8 +2512,9 @@ window.handleUpload=async function(inp,type,id,isRep){
       const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems';
       await updateDoc(doc(db,coll,id),{cover_url:url});
     }
-    await addDoc(collection(db,'entity_images'),{entity_type:type,entity_id:id,is_representative:!!isRep,imgbb_url:url,title:'',obs:'',order_num:0,created_at:serverTimestamp()});
+    await addDoc(collection(db,'entity_images'),{entity_type:type,entity_id:id,is_representative:!!isRep,imgbb_url:url,title:'',obs:'',order_num:0,latitude:photoLocation?.latitude??null,longitude:photoLocation?.longitude??null,accuracy_meters:photoLocation?.accuracy??null,maps_url:photoLocation?.maps_url??null,captured_at:photoLocation?.captured_at??null,created_at:serverTimestamp()});
   }
+  if(photoLocation){const coll=type==='activity'?'secretariats':type==='item'?'items':'subitems',record=type==='activity'?S.secs.find(x=>x.id===id):type==='item'?S.items.find(x=>x.id===id):S.subitems.find(x=>x.id===id);await updateDoc(doc(db,coll,id),{extra_fields:{...recordExtra(record),geo_location:photoLocation},updated_at:serverTimestamp()});}
   await loadData();await loadImgs(type,id);toast('Imagens salvas!');
 };
 window.setImgProp=async function(imgId,prop,val,type,entityId){

@@ -93,6 +93,10 @@ export function initAuditUI(){
    }
    const stamp=popover.querySelector('.record-audit');
    const markup=auditLabel(record);if(stamp.innerHTML!==markup)stamp.innerHTML=markup;
+   const geoMarkup=window.recordLocationActions?.(record,table)||'';
+   let geo=target.querySelector(':scope > .geo-quick-actions');
+   if(geoMarkup){if(!geo){const holder=document.createElement('div');holder.innerHTML=geoMarkup;geo=holder.firstElementChild;target.append(geo);}else if(geo.outerHTML!==geoMarkup)geo.outerHTML=geoMarkup;}
+   else geo?.remove();
    if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');
     if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,popover);}
@@ -108,7 +112,7 @@ export function initAuditUI(){
   }
  };
  const schedule=()=>{if(!pending){pending=true;requestAnimationFrame(decorate);}};
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit-popover,.record-audit-panel,.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit-popover,.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit-popover,.record-audit-panel,.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit-popover,.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
