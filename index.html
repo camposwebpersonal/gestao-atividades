@@ -418,6 +418,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/record-density.css?v=7">
 <link rel="stylesheet" href="css/header-density.css?v=5">
 <link rel="stylesheet" href="css/camera-capture.css?v=1">
+<link rel="stylesheet" href="css/productivity-redesign.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -488,11 +489,11 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=5";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=5";
-import './js/modulos.js?v=93';
+import './js/modulos.js?v=94';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
-import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=8';
+import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=9';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=7';
@@ -1700,13 +1701,13 @@ window.openActivity=function(secId){
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
     <div style="flex:1;min-width:60px"></div>
-    ${_can?`<button class="btn-action" onclick="openItemModal(null,'${secId}',false,null)">+ Item</button>`:''}
+    ${_can?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
     ${_can?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
     ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
     ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
-    ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
+    ${_can&&window.userCanDeleteGroups?.()&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
@@ -1797,7 +1798,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       <span class="hier-num">${num}.</span>
       <span>${cD?'✅':cL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}${childBadge(c.id,true)}</div>
-        ${c.responsaveis||c.observacao||c.secretaria_id?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id?' · ':''}${c.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
+        ${c.responsaveis||c.observacao||(c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id)?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id?' · ':''}${c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
         ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
       </div>
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
@@ -1833,7 +1834,7 @@ function renderItem(item,today,itemNum){
       <span class="hier-num">${subNum}.</span>
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}${childBadge(s.id,true)}</div>
-        ${(s.responsaveis||s.observacao||s.secretaria_id||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id?' · ':''}${s.secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
+        ${(s.responsaveis||s.observacao||(s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id)||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id?' · ':''}${s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
       ${(()=>{
         const ef=s.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
         const tags=[];
@@ -1872,7 +1873,7 @@ function renderItem(item,today,itemNum){
           ${!_nt&&item.show_conclusion_date&&item.conclusion_date?`<span style="font-size:10px;color:#10b981">✅ ${fmtD(item.conclusion_date)}</span>`:''}
         </div>
         ${item.responsaveis?`<div class="item-meta">👤 ${esc(item.responsaveis)}</div>`:''}
-        ${item.secretaria_id?`<div class="item-meta" style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===item.secretaria_id)?.name||'')}</div>`:''}
+        ${item.secretaria_id&&item.secretaria_id!==_sec?.demanda_secretaria_id?`<div class="item-meta" style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===item.secretaria_id)?.name||'')}</div>`:''}
       </div>
       ${item.resp_url?`<img src="${esc(item.resp_url)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #818cf8;flex-shrink:0" loading="lazy">`:''}
       ${item.cover_url?`<img src="${esc(item.cover_url)}" style="height:32px;max-width:48px;object-fit:contain;border-radius:5px;flex-shrink:0;background:transparent;cursor:pointer" onclick="event.stopPropagation();openGal('item','${item.id}','${esc(item.description)}')" loading="lazy">`:''}
@@ -2009,6 +2010,7 @@ window.saveConclusao=async function(col,id){
   closeModal();toast('✅ Concluído!');openActivity(curSecId);
 };
 window.confirmarExcluirAtividade=function(id){
+  if(!window.userCanDeleteGroups?.()){toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
   const sec=S.secs.find(s=>s.id===id);
   if(window.isFieldDemandGroup?.(sec)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não pode excluir este grupo.','error');return;}
@@ -2019,6 +2021,7 @@ window.confirmarExcluirAtividade=function(id){
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" style="background:#9f2929;color:#fef2f2" onclick="deleteSec('${id}')">♻ Enviar para a lixeira</button></div>`);
 };
 window.deleteSec=async function(id){
+  if(!window.userCanDeleteGroups?.()){toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
   const group=S.secs.find(s=>s.id===id);if(window.isFieldDemandGroup?.(group)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const batchId=crypto.randomUUID();
   const its=S.items.filter(i=>i.atividade_id===id);
@@ -2234,7 +2237,7 @@ window.openSecModal=function(id){
     </div>
   </div>`:'<!-- sem id -->'}
   <div class="modal-actions">
-    ${id&&!window.isFieldDemandGroup?.(s)?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
+    ${id&&window.userCanDeleteGroups?.()&&!window.isFieldDemandGroup?.(s)?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button>
   </div>`);
@@ -2710,7 +2713,7 @@ function _buildPermMatrix(u){
     }
     return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary><div class="permission-scope-list">${details}</div></details></section>`;
   }).join('');
-  return `<div class="form-group full"><label>Permissões gerais</label><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos</strong><small>Desmarcado: pode alimentar e editar lançamentos nos grupos liberados, mas não pode criar novos grupos.</small></span></label><label class="permission-create-groups"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Permite abrir e consultar todos os registros excluídos. Restaurar e excluir definitivamente continuam restritos a administradores.</small></span></label></div><div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. A criação de novos grupos depende também da opção acima. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
+  return `<div class="form-group full"><label>Permissões gerais</label><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Permite enviar grupos e todo o conteúdo vinculado para a lixeira. Grupos permanentes continuam protegidos.</small></span></label><label class="permission-create-groups"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Permite abrir e consultar todos os registros excluídos. Restaurar e excluir definitivamente continuam restritos a administradores.</small></span></label></div><div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. Criar e excluir grupos dependem também das opções gerais acima. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
@@ -2750,7 +2753,7 @@ function _readPermMatrix(){
       modulos[m.id]=entry;
     }
   });
-  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,pode_ver_lixeira:document.getElementById('usr-can-view-trash')?.checked===true,modulos};
+  return {pode_criar_grupos:document.getElementById('usr-can-create-groups')?.checked===true,pode_excluir_grupos:document.getElementById('usr-can-delete-groups')?.checked===true,pode_ver_lixeira:document.getElementById('usr-can-view-trash')?.checked===true,modulos};
 }
 window.openUserModal=function(id){
   const u=id?S.users.find(x=>x.id===id):null;
@@ -4224,7 +4227,7 @@ window.renderCadastros=function(secId){
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <button class="btn-action" onclick="openActivity('${secId}')">← Voltar</button>
     <div style="font-size:15px;font-weight:800">📋 ${esc(sec.name)}</div>
-    ${_can?`<button class="btn-action" style="margin-left:auto" onclick="listaAddItem('${secId}')">+ Item</button>`:''}
+    ${_can?`<button class="btn-action primary activity-create-primary" style="margin-left:auto" onclick="listaAddItem('${secId}')">＋ Criar item</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="abrirPdfOpts('${secId}')">📄 PDF</button>
   </div>

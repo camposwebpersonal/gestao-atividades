@@ -11,7 +11,7 @@ const migration=fs.readFileSync(path.join(root,'supabase/migrations/202610091812
 test('cadastro administrativo salva a opção separada de criar grupos',()=>{
  assert.match(index,/id="usr-can-create-groups"/);
  assert.match(index,/pode_criar_grupos:document\.getElementById\('usr-can-create-groups'\)/);
- assert.match(index,/Desmarcado: pode alimentar e editar lançamentos/);
+ assert.match(index,/Permite criar novos grupos nas áreas e secretarias liberadas/);
 });
 
 test('todas as entradas principais de criação consultam a permissão geral',()=>{

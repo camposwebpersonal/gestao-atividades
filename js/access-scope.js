@@ -13,6 +13,10 @@ export function groupCreationPermission(permissoes){
  return permissoes?.pode_criar_grupos===true;
 }
 
+export function groupDeletionPermission(permissoes){
+ return permissoes?.pode_excluir_grupos===true;
+}
+
 export function groupPermission(permissoes,moduleId,group,action='acesso'){
  const module=permissoes?.modulos?.[moduleId];
  if(!modulePermission(permissoes,moduleId,action))return false;

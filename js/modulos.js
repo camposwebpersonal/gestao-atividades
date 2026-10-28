@@ -1,6 +1,6 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=4';
 import {supabase} from '../supabase_compat.js?v=5';
-import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission} from './access-scope.js';
+import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=1';
 import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
@@ -70,6 +70,10 @@ window.userCanCreateGroups=function(){
  if(window.S?.isAdmin)return true;
  return groupCreationPermission(_myPerms());
 };
+window.userCanDeleteGroups=function(){
+ if(window.S?.isAdmin)return true;
+ return groupDeletionPermission(_myPerms());
+};
 
 const _md = {
   esc: s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
@@ -130,15 +134,15 @@ function renderModuloGrupos(mod){
   const podeEditar = window.userCan(mod.id,'editar');
   const admin = window.S && S.isAdmin;
   const pode = admin || podeEditar;
-  const novo = admin || podeCriar ? `<button class="btn-action primary" onclick="window.criarGrupoModulo('${mod.id}')">+ Novo Grupo</button>` : '';
-  const mass = pode ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto"><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ce-sel-all" onchange="window._ceToggleAllGrupos(this.checked)"> Selecionar todos</label><button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="window._ceExcluirSelecionados('${mod.id}')">🗑️ Excluir selecionados</button></div>` : '';
+  const novo = admin || podeCriar ? `<button class="btn-action primary demand-create-primary" onclick="window.criarGrupoModulo('${mod.id}')">＋ Criar grupo</button>` : '';
+  const mass = pode&&window.userCanDeleteGroups() ? `<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-left:auto"><label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="ce-sel-all" onchange="window._ceToggleAllGrupos(this.checked)"> Selecionar todos</label><button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="window._ceExcluirSelecionados('${mod.id}')">🗑️ Excluir selecionados</button></div>` : '';
   const cards = grupos.map((g,index)=>{
     const p=_md.pct(g), col=_md.pColor(p);
     const total=_md.ativTotal(g),well=g.controle_pocos==1||g.extra_fields?.controle_pocos==1;
     const protegido=isFieldDemandGroup(g);
     const podeGrupo=(admin||window.userCanGroup(g,'editar'))&&!protegido;
     return `<article class="module-group-row" style="--module-accent:${mod.color}" data-gid="${_md.esc(g.id)}" data-audit-id="${_md.esc(g.id)}">
-      ${podeGrupo?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
+      ${podeGrupo&&window.userCanDeleteGroups()?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
       <button type="button" class="module-group-open" onclick="window.openActivity(${_md.arg(g.id)})">
         <span class="module-group-number">${String(index+1).padStart(2,'0')}</span>
         <span class="module-group-copy"><strong>${_md.esc(g.name||'Sem nome')}</strong>${g.observacoes?`<small>${_md.esc(g.observacoes)}</small>`:''}</span>
@@ -222,6 +226,7 @@ window._ceToggleAllGrupos=function(checked){
 };
 
 window._ceExcluirSelecionados=async function(modId){
+ if(!window.userCanDeleteGroups?.()){window.toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
   const ids=[...document.querySelectorAll('.cb-grupo:checked')].map(cb=>cb.value);
   if(!ids.length){toast('Selecione ao menos um grupo','error'); return;}
   if(ids.some(id=>isFieldDemandGroup(S.secs.find(group=>group.id===id)))){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
@@ -452,54 +457,22 @@ window.renderModulos=function(){
   </section>`);
 };
 
-/* Painel executivo V62: usa somente os dados já carregados. */
+/* Visão geral produtiva: captura em campo e acesso direto às secretarias. */
 window.renderModulos=function(){
-  const mods=_visibleModules();
-  const numbers=mods.map(mod=>({mod,..._moduleNumbers(mod)}));
-  const totalGroups=numbers.reduce((sum,item)=>sum+item.grupos.length,0);
-  const totalEntries=numbers.reduce((sum,item)=>sum+item.total,0);
-  const allowedGroups=new Set(numbers.flatMap(n=>n.grupos.map(g=>g.id)));
-  const allItems=((window.S&&S.items)||[]).filter(item=>allowedGroups.has(item.atividade_id));
-  const completed=allItems.filter(item=>item.concluded==1).length;
-  const pending=Math.max(0,allItems.length-completed);
-  const progress=allItems.length?Math.round(completed*100/allItems.length):0;
-  const maxTotal=Math.max(1,...numbers.map(n=>n.total));
-  const ranked=[...numbers].sort((a,b)=>b.total-a.total);
+  const demandModule=MODULOS.find(mod=>mod.id==='atendimentos');
+  const groups=_md.grupos(demandModule);
+  const secretaries=(S.secretarias||[]).filter(secretary=>secretary.demandas_ativa&&(S.isAdmin||window.userCanDemandSecretaria(secretary.id,'acesso')||groups.some(group=>group.demanda_secretaria_id===secretary.id))).sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR'));
   _renderSidebarModules('');
-  const bars=ranked.slice(0,7).map(({mod,total})=>`
-    <button class="dashboard-bar-row" onclick="window.renderModulo('${mod.id}')">
-      <span class="dashboard-bar-label">${mod.icon} ${_md.esc(mod.label)}</span>
-      <span class="dashboard-bar-track"><i style="width:${Math.max(total?8:0,Math.round(total*100/maxTotal))}%;--bar:${mod.color}"></i></span>
-      <strong>${total}</strong>
-    </button>`).join('');
-  const quick=ranked.slice(0,4).map(({mod,grupos,total})=>`
-    <button class="dashboard-quick-card" onclick="window.renderModulo('${mod.id}')" style="--quick:${mod.color}">
-      <span>${mod.icon}</span><div><strong>${_md.esc(mod.label)}</strong><small>${grupos.length} grupos · ${total} lançamentos</small></div><b>›</b>
-    </button>`).join('');
-  const directory=numbers.map(({mod,grupos,total})=>`
-    <button type="button" class="dashboard-area-card" onclick="window.renderModulo('${mod.id}')" style="--area:${mod.color}">
-      <span class="dashboard-area-icon">${mod.icon}</span><span><strong>${_md.esc(mod.label)}</strong><small>${grupos.length} grupos cadastrados</small></span><b>${total}</b>
-    </button>`).join('');
-  const stamp=x=>{const v=x.g.updated_at||x.g.created_at;return Number(v?.seconds||v?._seconds||Date.parse(v||0)||0);};
-  const recent=numbers.flatMap(({mod,grupos})=>grupos.map(g=>({mod,g}))).sort((a,b)=>stamp(b)-stamp(a)).slice(0,5).map(({mod,g})=>`
-    <button class="dashboard-recent-row" onclick="openActivity('${g.id}')"><span style="--recent:${mod.color}">${mod.icon}</span><div><strong>${_md.esc(g.name||'Grupo sem nome')}</strong><small>${_md.esc(mod.label)} · ${_md.ativTotal(g)} lançamentos</small></div><b>›</b></button>`).join('');
-  _md.setC(`<section class="dashboard-shell" aria-labelledby="dashboard-title">
-    <header class="dashboard-heading"><div><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">Painel de Gestão</h1><p>Acompanhamento integrado das atividades municipais.</p></div><div class="dashboard-date">Atualizado em <strong>${new Date().toLocaleDateString('pt-BR')}</strong></div></header>
-    <section class="dashboard-banner"><div><span class="dashboard-banner-mark">PMS</span><div><strong>Bem-vindo à Central de Gestão</strong><p>Indicadores reais e acesso rápido a todas as áreas operacionais.</p></div></div><button onclick="document.querySelector('.dashboard-areas')?.scrollIntoView({behavior:'smooth'})">Explorar áreas ↓</button></section>
-    ${fieldCaptureDashboardCard()}
-    <div class="dashboard-kpis">
-      <article><span class="kpi-icon blue">▦</span><div><small>Áreas operacionais</small><strong>${mods.length}</strong><em>disponíveis</em></div></article>
-      <article><span class="kpi-icon green">✓</span><div><small>Concluídos</small><strong>${completed}</strong><em>${progress}% dos lançamentos</em></div></article>
-      <article><span class="kpi-icon amber">◷</span><div><small>Em andamento</small><strong>${pending}</strong><em>requerem acompanhamento</em></div></article>
-      <article><span class="kpi-icon violet">◎</span><div><small>Total registrado</small><strong>${totalEntries}</strong><em>em ${totalGroups} grupos</em></div></article>
-    </div>
-    <div class="dashboard-main-grid">
-      <article class="dashboard-panel dashboard-chart"><header><div><h2>Atividades por área</h2><p>Volume de lançamentos cadastrados</p></div></header><div>${bars||'<p class="empty">Nenhum lançamento disponível.</p>'}</div></article>
-      <article class="dashboard-panel dashboard-progress"><header><div><h2>Progresso geral</h2><p>Conclusão dos registros</p></div></header><div class="dashboard-donut" style="--progress:${progress*3.6}deg"><div><strong>${progress}%</strong><span>concluído</span></div></div><div class="dashboard-legend"><span><i class="done"></i> ${completed} concluídos</span><span><i></i> ${pending} em andamento</span></div></article>
-      <article class="dashboard-panel dashboard-shortcuts"><header><div><h2>Acessos rápidos</h2><p>Rotinas administrativas</p></div></header><button onclick="setView('secr')">▦ <span><strong>Secretarias</strong><small>Estrutura municipal</small></span>›</button><button onclick="setView('resp')">♟ <span><strong>Responsáveis</strong><small>Agentes cadastrados</small></span>›</button><button onclick="setView('cont')">☏ <span><strong>Contatos</strong><small>Agenda institucional</small></span>›</button></article>
-    </div>
-    <div class="dashboard-lower-grid"><article class="dashboard-panel"><header><div><h2>Áreas mais movimentadas</h2><p>Acesso direto às maiores bases</p></div></header><div class="dashboard-quick-grid">${quick||'<p class="empty">Nenhuma área disponível.</p>'}</div></article><article class="dashboard-panel"><header><div><h2>Grupos recentes</h2><p>Continue de onde parou</p></div></header><div>${recent||'<p class="empty">Nenhum grupo cadastrado.</p>'}</div></article></div>
-    <article class="dashboard-panel dashboard-areas"><header><div><h2>Todas as áreas operacionais</h2><p>${mods.length} áreas disponíveis para o seu perfil</p></div></header><div class="dashboard-area-grid">${directory||'<p class="empty">Nenhuma área liberada.</p>'}</div></article>
+  const cards=secretaries.map(secretary=>{
+    const own=groups.filter(group=>group.demanda_secretaria_id===secretary.id);
+    const total=own.reduce((sum,group)=>sum+_md.ativTotal(group),0);
+    const canCreate=window.userCanCreateGroups()&&window.userCan('atendimentos','criar')&&window.userCanDemandSecretaria(secretary.id,'editar');
+    return `<article class="secretary-launch-card" onclick="openDemandSecretaria(${_md.arg(secretary.id)})" tabindex="0" onkeydown="if(event.key==='Enter')openDemandSecretaria(${_md.arg(secretary.id)})"><div class="secretary-launch-icon">▥</div><div class="secretary-launch-copy"><strong>${_md.esc(secretary.name)}</strong><span>${own.length} grupo(s) · ${total} lançamento(s)</span></div><div class="secretary-launch-actions"><button type="button" onclick="event.stopPropagation();openDemandSecretaria(${_md.arg(secretary.id)})">Abrir demandas <b>›</b></button>${canCreate?`<button type="button" class="create" onclick="event.stopPropagation();newDemandGroup(${_md.arg(secretary.id)})">＋ Criar grupo</button>`:''}</div></article>`;
+  }).join('');
+  _md.setC(`<section class="dashboard-shell productivity-dashboard" aria-labelledby="dashboard-title">
+    <header class="productivity-heading"><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">GESTÃO NA PALMA DA MÃO</h1></header>
+    <div class="dashboard-field-focus">${fieldCaptureDashboardCard()}</div>
+    <section class="secretary-launch-section"><header><div><span class="workspace-kicker">Acesso direto</span><h2>Demandas por secretaria</h2><p>Entre na área responsável ou crie um grupo sem perder tempo.</p></div></header><div class="secretary-launch-grid">${cards||'<div class="empty">Nenhuma secretaria de demandas está liberada para o seu perfil.</div>'}</div></section>
   </section>`);
 };
 

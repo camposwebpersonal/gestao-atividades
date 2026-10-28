@@ -73,7 +73,7 @@ export function initAuditUI(){
   const byId=new Map();for(const entry of globalThis.__recordIndex?.values()||[])byId.set(String(entry.record.id),entry);
   const hosts=new Map();
   for(const el of content.querySelectorAll('[onclick],[data-audit-id],[data-lista-id],[data-sort-id],[data-well-id]')){
-   if(el.closest('.record-audit,[data-audit-skip]'))continue;
+   if(el.closest('.record-audit-popover,.record-audit,[data-audit-skip]'))continue;
    const recordId=el.dataset.auditId||el.dataset.listaId||el.dataset.sortId||el.dataset.wellId;
    const keys=recordId?[recordId]:[...(el.getAttribute('onclick')||'').matchAll(/['"]([^'"]+)['"]/g)].map(m=>m[1]);
    const entry=keys.map(id=>byId.get(id)).find(Boolean);if(!entry)continue;
@@ -84,12 +84,18 @@ export function initAuditUI(){
    const attendance=['items','subitems'].includes(table)&&window.isAttendanceRecord?.(record);
    const target=auditTarget(host,attendance);
    if(!target)continue;
-   let stamp=target.querySelector(':scope > .record-audit');
-   if(!stamp){stamp=document.createElement('div');stamp.className='record-audit';target.append(stamp);}
+   let popover=target.querySelector(':scope > .record-audit-popover');
+   if(!popover){
+    popover=document.createElement('details');popover.className='record-audit-popover';
+    const summary=document.createElement('summary');summary.textContent='ⓘ';summary.setAttribute('aria-label','Informações de criação e edição');summary.title='Informações de criação e edição';
+    const panel=document.createElement('div');panel.className='record-audit-panel';
+    const audit=document.createElement('div');audit.className='record-audit';panel.append(audit);popover.append(summary,panel);target.append(popover);
+   }
+   const stamp=popover.querySelector('.record-audit');
    const markup=auditLabel(record);if(stamp.innerHTML!==markup)stamp.innerHTML=markup;
    if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');
-    if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,stamp);}
+    if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,popover);}
     const badges=window.attendanceBadges(record);if(meta.innerHTML!==badges)meta.innerHTML=badges;
     const group=window.S?.secs?.find(section=>section.id===record.atividade_id);
     const moveTarget=host.classList.contains('completed-row')?(host.querySelector(':scope > .completed-row-side')||target):target;
@@ -102,7 +108,7 @@ export function initAuditUI(){
   }
  };
  const schedule=()=>{if(!pending){pending=true;requestAnimationFrame(decorate);}};
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit-popover,.record-audit-panel,.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit-popover,.record-audit,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
