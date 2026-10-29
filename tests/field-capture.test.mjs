@@ -12,6 +12,7 @@ const hardeningMigration=fs.readFileSync(path.join(root,'supabase/migrations/202
 const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const authorship=fs.readFileSync(path.join(root,'js/autoria.js'),'utf8');
 const attendanceFlow=fs.readFileSync(path.join(root,'js/atendimento-fluxo.js'),'utf8');
+const camera=fs.readFileSync(path.join(root,'js/camera-capture.js'),'utf8');
 
 test('câmera solicita lente traseira sem limitar novas capturas',()=>{
   assert.match(cameraInputAttributes(),/capture="environment"/);
@@ -57,4 +58,14 @@ test('triagem oferece redirecionamento explícito preservando fotos e observaç�
   assert.match(authorship,/fieldDemand\?'Redirecionar':'Mover'/);
   assert.match(attendanceFlow,/Redirecionar demanda de campo/);
   assert.match(attendanceFlow,/Fotos, dados e autoria serão preservados/);
+});
+
+test('captura de campo oferece grupo opcional sem remover a triagem automática',()=>{
+  assert.match(camera,/id="field-group"/);
+  assert.match(camera,/updateFieldCaptureGroups/);
+  assert.match(camera,/!isFieldDemandGroup\(group\)/);
+  assert.match(camera,/Demandas Gerais de Campo \(triagem automática\)/);
+  assert.match(camera,/const selectedGroup=requestedGroup/);
+  assert.match(camera,/itemUpdate\.atividade_id=selectedGroup\.id/);
+  assert.match(camera,/const group=selectedGroup\|\|/);
 });

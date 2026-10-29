@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v156';
+const CACHE_NAME = 'gestao-pms-v157';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',

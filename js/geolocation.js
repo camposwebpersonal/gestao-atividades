@@ -49,20 +49,74 @@ export function capturePosition(){
  });
 }
 
+const DEFAULT_MAP_POINT=[-8.073,-37.264];
+let locationPickerState=null,lastPlaceSearch=0;
+
+function manualLocation(latitude,longitude,label='Ponto escolhido no mapa'){
+ const lat=Number(latitude),lng=Number(longitude);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||lat < -90||lat > 90||lng < -180||lng > 180)throw new Error('Coordenadas inválidas.');
+ return {latitude:Number(lat.toFixed(7)),longitude:Number(lng.toFixed(7)),accuracy:0,captured_at:new Date().toISOString(),maps_url:mapsUrl(lat,lng),source:'manual',label};
+}
+
+export async function searchPlaces(query,fetcher=fetch){
+ const clean=String(query||'').trim();if(clean.length<3)throw new Error('Digite pelo menos 3 caracteres para buscar.');
+ const elapsed=Date.now()-lastPlaceSearch;if(elapsed<1000)await new Promise(resolve=>setTimeout(resolve,1000-elapsed));lastPlaceSearch=Date.now();
+ const url=new URL('https://nominatim.openstreetmap.org/search');url.searchParams.set('format','jsonv2');url.searchParams.set('limit','5');url.searchParams.set('countrycodes','br');url.searchParams.set('accept-language','pt-BR');url.searchParams.set('q',clean);
+ const response=await fetcher(url.toString(),{headers:{Accept:'application/json'}});if(!response.ok)throw new Error('A busca de lugares está indisponível agora.');
+ const rows=await response.json();return rows.map(row=>({latitude:Number(row.lat),longitude:Number(row.lon),label:String(row.display_name||clean)})).filter(row=>Number.isFinite(row.latitude)&&Number.isFinite(row.longitude));
+}
+
+function setPickerPoint(location,{pan=true}={}){
+ if(!locationPickerState)return;locationPickerState.selected=location;
+ const point=[location.latitude,location.longitude];
+ if(locationPickerState.marker)locationPickerState.marker.setLatLng(point);else if(locationPickerState.map)locationPickerState.marker=window.L.marker(point,{draggable:true}).addTo(locationPickerState.map).on('dragend',event=>setPickerPoint(manualLocation(event.target.getLatLng().lat,event.target.getLatLng().lng)));
+ if(pan&&locationPickerState.map)locationPickerState.map.setView(point,Math.max(locationPickerState.map.getZoom(),16));
+ const status=document.getElementById('geo-picker-status');if(status)status.innerHTML=`<strong>Ponto selecionado</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.label?` · ${esc(location.label)}`:''}</small>`;
+ const confirm=document.getElementById('geo-picker-confirm');if(confirm)confirm.disabled=false;
+}
+
+async function initLocationPickerMap(){
+ for(let tries=0;tries<20&&!window.L;tries+=1)await new Promise(resolve=>setTimeout(resolve,100));
+ const host=document.getElementById('geo-picker-map');if(!host||!locationPickerState)return;
+ if(!window.L){host.innerHTML='<div class="geo-picker-map-error">O mapa não carregou. Verifique a internet e tente novamente.</div>';return;}
+ const initial=locationPickerState.selected,center=initial?[initial.latitude,initial.longitude]:DEFAULT_MAP_POINT;
+ const map=window.L.map(host,{zoomControl:true}).setView(center,initial?16:13);locationPickerState.map=map;
+ window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
+ map.on('click',event=>setPickerPoint(manualLocation(event.latlng.lat,event.latlng.lng)));
+ if(initial)setPickerPoint(initial,{pan:false});setTimeout(()=>map.invalidateSize(),80);
+}
+
+function openLocationPicker({prefix='',initial=null,onConfirm=null}={}){
+ window.closeLocationPicker?.();
+ const overlay=document.createElement('div');overlay.id='geo-picker-overlay';overlay.className='geo-picker-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','geo-picker-title');
+ overlay.innerHTML=`<div class="geo-picker-dialog"><header><div><span>LOCALIZAÇÃO DO LANÇAMENTO</span><h2 id="geo-picker-title">Escolha o ponto exato</h2><p>Use o GPS, pesquise um lugar ou toque diretamente no mapa.</p></div><button type="button" class="geo-picker-close" onclick="closeLocationPicker()" aria-label="Fechar">×</button></header><div class="geo-picker-methods"><button type="button" onclick="useGpsInLocationPicker()">⌖ Usar GPS deste aparelho</button><form onsubmit="event.preventDefault();searchLocationPicker()"><label for="geo-picker-query">Buscar lugar ou endereço</label><div><input id="geo-picker-query" autocomplete="off" placeholder="Ex.: Praça João Pereira, Sertânia"><button type="submit">Buscar</button></div></form></div><div id="geo-picker-results" class="geo-picker-results" aria-live="polite"></div><div id="geo-picker-map" class="geo-picker-map"></div><div class="geo-picker-foot"><div id="geo-picker-status"><strong>Nenhum ponto selecionado</strong><small>Toque no mapa, arraste o marcador, use o GPS ou faça uma busca.</small></div><div><button type="button" class="geo-picker-cancel" onclick="closeLocationPicker()">Cancelar</button><button type="button" id="geo-picker-confirm" onclick="confirmLocationPicker()" disabled>Usar esta localização</button></div></div><small class="geo-picker-credit">Busca e mapa por OpenStreetMap. A busca acontece somente ao apertar “Buscar”. Não informe dados pessoais sensíveis.</small></div>`;
+ document.body.append(overlay);locationPickerState={prefix,onConfirm,selected:initial,map:null,marker:null,results:[]};overlay.addEventListener('click',event=>{if(event.target===overlay)window.closeLocationPicker();});initLocationPickerMap();setTimeout(()=>document.getElementById('geo-picker-query')?.focus(),80);
+}
+
+window.openManualLocationPicker=prefix=>openLocationPicker({prefix,initial:readLocationEditor(prefix)});
+window.closeLocationPicker=()=>{locationPickerState?.map?.remove();locationPickerState=null;document.getElementById('geo-picker-overlay')?.remove();};
+window.useGpsInLocationPicker=async()=>{const button=document.querySelector('.geo-picker-methods>button');if(button){button.disabled=true;button.textContent='Localizando…';}try{setPickerPoint(await capturePosition());}catch(error){window.toast?.(error.message,'error',7000);}finally{if(button?.isConnected){button.disabled=false;button.textContent='⌖ Usar GPS deste aparelho';}}};
+window.searchLocationPicker=async()=>{const input=document.getElementById('geo-picker-query'),host=document.getElementById('geo-picker-results'),button=input?.parentElement?.querySelector('button');if(!input||!host)return;if(button)button.disabled=true;host.innerHTML='<p>Buscando…</p>';try{const rows=await searchPlaces(input.value);if(!locationPickerState)return;locationPickerState.results=rows;host.innerHTML=rows.length?rows.map((row,index)=>`<button type="button" onclick="chooseLocationSearchResult(${index})"><strong>${esc(row.label.split(',')[0])}</strong><small>${esc(row.label)}</small></button>`).join(''):'<p>Nenhum lugar encontrado. Tente incluir cidade e estado.</p>';}catch(error){host.innerHTML=`<p>${esc(error.message)}</p>`;}finally{if(button?.isConnected)button.disabled=false;}};
+window.chooseLocationSearchResult=index=>{const result=locationPickerState?.results?.[index];if(!result)return;setPickerPoint(manualLocation(result.latitude,result.longitude,result.label));document.getElementById('geo-picker-results').innerHTML='';};
+window.confirmLocationPicker=async()=>{const state=locationPickerState,location=state?.selected,button=document.getElementById('geo-picker-confirm');if(!state||!location)return;if(button){button.disabled=true;button.textContent='Salvando…';}try{if(state.onConfirm)await state.onConfirm(location);else renderEditor(state.prefix,location);document.dispatchEvent(new CustomEvent('geo:changed',{detail:{prefix:state.prefix,location}}));window.closeLocationPicker();window.toast?.('Localização selecionada!','success');}catch(error){window.toast?.(error.message||error,'error',7500);if(button?.isConnected){button.disabled=false;button.textContent='Usar esta localização';}}};
+
 function renderEditor(prefix,location){
- const host=document.getElementById(prefix+'-panel');if(!host)return;
  const lat=document.getElementById(prefix+'-lat'),lng=document.getElementById(prefix+'-lng'),accuracy=document.getElementById(prefix+'-accuracy'),captured=document.getElementById(prefix+'-captured');
  if(lat)lat.value=location?.latitude??'';if(lng)lng.value=location?.longitude??'';if(accuracy)accuracy.value=location?.accuracy??'';if(captured)captured.value=location?.captured_at??'';
- host.innerHTML=location?`<div class="geo-saved"><span>✓</span><div><strong>Localização capturada</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>';
+ const host=document.getElementById(prefix+'-panel');if(!host)return;
+ host.innerHTML=location?`<div class="geo-saved"><span>✓</span><div><strong>${location.source==='manual'?'Localização escolhida':'Localização capturada'}</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>';
 }
+window.setLocationEditorValue=renderEditor;
 
 export function locationEditorHtml(record,prefix='it-geo'){
  const location=locationOf(record);
- return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Salve o ponto exato deste lançamento e compartilhe pelo Google Maps.</small></div><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Capturar geolocalização</button></div><input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><div id="${prefix}-panel">${location?`<div class="geo-saved"><span>✓</span><div><strong>Localização capturada</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>'}</div></section>`;
+ return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Use o GPS ou escolha manualmente pesquisando e tocando no mapa.</small></div><div class="geo-editor-actions"><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Usar GPS</button><button type="button" class="manual" onclick="openManualLocationPicker('${prefix}')">🗺 Escolher no mapa</button></div></div><input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><div id="${prefix}-panel">${location?`<div class="geo-saved"><span>✓</span><div><strong>Localização salva</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>'}</div></section>`;
 }
 
 export function readLocationEditor(prefix='it-geo'){
- const latitude=Number(document.getElementById(prefix+'-lat')?.value),longitude=Number(document.getElementById(prefix+'-lng')?.value);
+ const latitudeValue=document.getElementById(prefix+'-lat')?.value,longitudeValue=document.getElementById(prefix+'-lng')?.value;
+ if(latitudeValue==null||longitudeValue==null||latitudeValue===''||longitudeValue==='')return null;
+ const latitude=Number(latitudeValue),longitude=Number(longitudeValue);
  if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return null;
  return {latitude,longitude,accuracy:Number(document.getElementById(prefix+'-accuracy')?.value)||0,captured_at:document.getElementById(prefix+'-captured')?.value||new Date().toISOString(),maps_url:mapsUrl(latitude,longitude)};
 }
@@ -135,7 +189,7 @@ window.recordLocationActions=(record,table)=>{
 window.captureRecordLocation=async(table,id)=>{
  if(!supportedTables.has(table))return;
  const entry=[...globalThis.__recordIndex?.values()||[]].find(item=>item.table===table&&String(item.record.id)===String(id));if(!entry)return;
- try{const location=await capturePosition(),extra={...extraOf(entry.record),geo_location:location};await window.updateDoc(window.doc(window.db,collectionFor[table],id),{extra_fields:extra,updated_at:window.serverTimestamp()});await window.loadData();window.toast('Localização salva!','success');window.refreshAuditUI?.();}catch(error){window.toast(error.message,'error',7500);}
+ openLocationPicker({initial:locationOf(entry.record),onConfirm:async location=>{const extra={...extraOf(entry.record),geo_location:location};await window.updateDoc(window.doc(window.db,collectionFor[table],id),{extra_fields:extra,updated_at:window.serverTimestamp()});await window.loadData();window.refreshAuditUI?.();}});
 };
 window.renderGeneralGeoMap=()=>renderMapPage();
 window.openSecretaryGeoMap=secretariaId=>{const secretary=window.S?.secretarias?.find(item=>item.id===secretariaId);renderMapPage({secretariaId,title:`Mapa · ${secretary?.name||'Secretaria'}`,back:`openDemandSecretaria('${String(secretariaId).replace(/'/g,"\\'")}')`});};

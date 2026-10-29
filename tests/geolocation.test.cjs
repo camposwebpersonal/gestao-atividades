@@ -21,6 +21,17 @@ test('captura geolocalização com precisão e gera link compartilhável do Goog
  assert.match(index,/ef\.geo_location=geoLocation/);
 });
 
+test('geolocalização também permite busca e seleção manual no mapa',()=>{
+ assert.match(geo,/openManualLocationPicker/);
+ assert.match(geo,/searchPlaces/);
+ assert.match(geo,/nominatim\.openstreetmap\.org\/search/);
+ assert.match(geo,/map\.on\('click'/);
+ assert.match(geo,/draggable:true/);
+ assert.match(geo,/Usar GPS deste aparelho/);
+ assert.match(geo,/Escolher no mapa/);
+ assert.match(geo,/A busca acontece somente ao apertar/);
+});
+
 test('atalho externo de geolocalização é opt-in para grupos, itens e subitens',()=>{
  assert.match(geo,/show_group_external_geolocation===true/);
  assert.match(geo,/show_external_geolocation/);
@@ -57,7 +68,7 @@ test('banco guarda geolocalização das fotos com limites válidos',()=>{
 });
 
 test('recursos de mapas e geolocalização ficam disponíveis offline',()=>{
- assert.match(sw,/gestao-pms-v156/);
+ assert.match(sw,/gestao-pms-v157/);
  assert.match(sw,/'js\/geolocation\.js'/);
  assert.match(sw,/'css\/geolocation\.css'/);
  assert.match(sw,/leaflet@1\.9\.4/);
