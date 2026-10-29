@@ -4,10 +4,10 @@ Sistema de gestão de atividades da **Prefeitura Municipal de Sertânia**.
 
 ## Stack
 - **Frontend:** HTML + CSS + JavaScript puro (sem framework)
-- **Banco de dados:** Firebase Firestore (realtime, sem servidor)
-- **Autenticação:** Firebase Authentication
-- **Imagens:** ImgBB API (sem base64 no banco)
-- **Hospedagem:** GitHub Pages (gratuito, sem limites de CPU)
+- **Banco de dados:** Supabase Postgres + Realtime
+- **Autenticação:** Supabase Auth
+- **Imagens:** Supabase Storage com CDN e fila offline persistente
+- **Hospedagem:** GitHub Pages
 - **Mobile:** PWA (Progressive Web App) — funciona como app nativo no Android e iOS
 
 ## Funcionalidades
@@ -36,11 +36,8 @@ Veja o arquivo **[INSTALAR_PWA.md](INSTALAR_PWA.md)** para instruções detalhad
 
 ## Configuração
 
-### 1. ImgBB API Key
-Em `index.html`, localize e substitua:
-```js
-let IMGBB_KEY="COLOQUE_SUA_CHAVE_IMGBB_AQUI";
-```
+### 1. Armazenamento de imagens
+As imagens são enviadas ao bucket `gestao-imagens` do Supabase Storage. Em falhas temporárias, a cópia otimizada permanece na fila offline do navegador e é sincronizada automaticamente; nenhuma chave externa de hospedagem de imagens é necessária.
 
 ### 2. Firebase
 O projeto já está configurado em `gestao-atividades-26257`.

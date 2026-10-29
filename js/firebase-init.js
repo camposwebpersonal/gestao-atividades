@@ -9,7 +9,3 @@ export const firebaseConfig = {
   messagingSenderId: "113932809324",
   appId: "1:113932809324:web:b441b9549106822a9cd449"
 };
-
-// ImgBB — preencher após receber a chave do usuário
-export let IMGBB_KEY = "";
-export function setImgbbKey(k) { IMGBB_KEY = k; }

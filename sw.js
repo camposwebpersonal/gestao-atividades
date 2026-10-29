@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v157';
+const CACHE_NAME = 'gestao-pms-v158';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   'js/atendimento-fluxo.js',
   'js/autoria.js',
   'js/offline-store.js',
+  'js/image-storage.js',
   'supabase_compat.js',
   'js/search-engine.js',
   'js/bulk-drafts-core.js',
@@ -136,7 +137,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // ImgBB / imagens: cache-first
+  // Imagens atuais e links legados: cache-first para abertura rápida e offline
   if(url.hostname.includes('imgbb.com') || url.hostname.includes('i.ibb.co') || request.destination === 'image'){
     event.respondWith(
       caches.match(request).then(cached => {

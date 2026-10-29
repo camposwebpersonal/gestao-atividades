@@ -15,8 +15,8 @@
 <link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
-<link rel="modulepreload" href="supabase_compat.js?v=7">
-<link rel="modulepreload" href="js/modulos.js?v=101">
+<link rel="modulepreload" href="supabase_compat.js?v=8">
+<link rel="modulepreload" href="js/modulos.js?v=102">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -499,9 +499,10 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=7";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=7";
-import './js/modulos.js?v=101';
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=8";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=8";
+import {uploadDurableImage} from './js/image-storage.js?v=1';
+import './js/modulos.js?v=102';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -667,9 +668,6 @@ window.wAddDoc=async function(colRef,data,name='Criar'){const newRef=doc(colRef)
 function updateUndoUI(){const ub=document.getElementById('undo-btn'),rb=document.getElementById('redo-btn');if(ub)ub.style.opacity=_undoStack.length?1:.3;if(rb)rb.style.opacity=_redoStack.length?1:.3;}
 // atalhos de teclado undo/redo
 document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();undoLast();}if((e.ctrlKey&&(e.key==='y'||e.key==='Y'))||(e.ctrlKey&&e.shiftKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();redoLast();}});
-
-// ── IMGBB KEY (configure após receber) ──
-let IMGBB_KEY="3a90ee7b8bd151de3ee963963bb61e83";
 
 // ── STATE ──
 let S={user:null,isAdmin:false,canViewTrash:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[],appSettings:[]};window.S=S;
@@ -849,7 +847,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=95';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=96';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -2605,20 +2603,9 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Tab'){event.preventDefault();document.getElementById('lb-close').focus({preventScroll:true});}
 });
 
-// ── IMGBB ──
+// ── ARMAZENAMENTO DURÁVEL DE IMAGENS ──
 async function imgbbUp(dataUrl,{forceOnline=false}={}){
-  if(!forceOnline&&navigator.onLine===false)return dataUrl;
-  if(!IMGBB_KEY||IMGBB_KEY.includes('COLOQUE'))throw new Error('Chave ImgBB não configurada');
-  const b64=dataUrl.split(',')[1];
-  if(!b64)throw new Error('Imagem inválida');
-  const fd=new FormData();fd.append('key',IMGBB_KEY);fd.append('image',b64);
-  let r;
-  try{r=await fetch('https://api.imgbb.com/1/upload',{method:'POST',body:fd});}
-  catch(error){if(!forceOnline)return dataUrl;throw error;}
-  const j=await r.json().catch(()=>null);
-  if(!r.ok)throw new Error(j?.error?.message||('ImgBB HTTP '+r.status));
-  if(!j?.success||!j.data?.url)throw new Error(j?.error?.message||'ImgBB recusou o upload');
-  return j.data.url;
+  return uploadDurableImage(db,dataUrl,{forceOnline});
 }
 registerOfflineImageUploader(imgbbUp);
 

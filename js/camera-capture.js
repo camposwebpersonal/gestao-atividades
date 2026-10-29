@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js?v=7';
+import {supabase} from '../supabase_compat.js?v=8';
 import {FIELD_GROUP_KEY,isFieldDemandGroup,fieldDemandTitle,cameraInputAttributes} from './camera-capture-core.js?v=1';
 import {capturePosition,optimizePhoto} from './geolocation.js?v=3';
 
@@ -87,23 +87,25 @@ export function initFieldCapture(){
     if(requestedGroup&&(!selectedGroup||String(selectedGroup.demanda_secretaria_id)!==String(secretaria)||!(window.S.isAdmin||window.userCanGroup?.(selectedGroup,'editar')))){window.toast('O grupo escolhido não pertence à secretaria ou não está liberado para seu usuário.','error');return;}
     const button=document.getElementById('field-save');window.__fieldCaptureBusy=true;button.disabled=true;
     try{
-      const urls=[],locations=[];const stamp=document.getElementById('field-stamp-location')?.checked===true;const offline=navigator.onLine===false;
+      const urls=[],locations=[];const stamp=document.getElementById('field-stamp-location')?.checked===true;const offline=navigator.onLine===false;let deferredUpload=false;
       for(let index=0;index<selectedPhotos.length;index+=1){
         button.textContent=`Otimizando foto ${index+1}/${selectedPhotos.length}…`;
         const raw=await window.readFileAsDataUrl(selectedPhotos[index].file);
         const location=selectedPhotos[index].location||fieldLocation;
         const compact=await optimizePhoto(raw,{location,stamp,maxDimension:1280,maxBytes:360000});
-        urls.push(await window.imgbbUp(compact,{forceOnline:!offline}));
+        const stored=await window.imgbbUp(compact);urls.push(stored);if(stored.startsWith('data:image/'))deferredUpload=true;
         locations.push(location);
       }
       button.textContent='Organizando a demanda…';
-      if(offline){
+      if(offline||deferredUpload){
         const group=selectedGroup||(window.S?.secs||[]).find(entry=>isFieldDemandGroup(entry)&&entry.demanda_secretaria_id===secretaria);
         if(!group)throw new Error('Abra esta secretaria uma vez com internet para preparar o grupo de entrada no aparelho.');
         const primary=locations.find(Boolean)||fieldLocation;
-        const item=await window.addDoc(window.collection(window.db,'items'),{atividade_id:group.id,description:fieldDemandTitle(observation)||'Demanda de campo',observacao:observation,secretaria_id:secretaria,item_icon:'📷',item_color:'#0f8a73',concluded:0,status:'pendente',order_num:(window.S?.items||[]).filter(entry=>entry.atividade_id===group.id).length,extra_fields:{registro_tipo:'demanda_campo',origem:'captura_rapida',captured_at:new Date().toISOString(),geo_location:primary||null},created_at:window.serverTimestamp(),updated_at:window.serverTimestamp()});
-        for(let index=0;index<urls.length;index+=1){const location=locations[index]||primary;await window.addDoc(window.collection(window.db,'entity_images'),{entity_type:'item',entity_id:item.id,is_representative:index===0,imgbb_url:urls[index],title:'',obs:observation,order_num:index,latitude:location?.latitude??null,longitude:location?.longitude??null,accuracy_meters:location?.accuracy||null,maps_url:location?.maps_url||null,captured_at:location?.captured_at||new Date().toISOString(),created_at:window.serverTimestamp()});}
-        await window.loadData();window.closeModal();window.toast(`Demanda salva neste aparelho com ${urls.length} foto(s). Ela será enviada automaticamente quando a internet voltar.`,'success',8500);window.openActivity(group.id);return;
+        const previousForce=globalThis.__forceOfflinePersistence;globalThis.__forceOfflinePersistence=true;
+        try{const item=await window.addDoc(window.collection(window.db,'items'),{atividade_id:group.id,description:fieldDemandTitle(observation)||'Demanda de campo',observacao:observation,secretaria_id:secretaria,item_icon:'📷',item_color:'#0f8a73',concluded:0,status:'pendente',order_num:(window.S?.items||[]).filter(entry=>entry.atividade_id===group.id).length,extra_fields:{registro_tipo:'demanda_campo',origem:'captura_rapida',captured_at:new Date().toISOString(),geo_location:primary||null},created_at:window.serverTimestamp(),updated_at:window.serverTimestamp()});
+          for(let index=0;index<urls.length;index+=1){const location=locations[index]||primary;await window.addDoc(window.collection(window.db,'entity_images'),{entity_type:'item',entity_id:item.id,is_representative:index===0,imgbb_url:urls[index],title:'',obs:observation,order_num:index,latitude:location?.latitude??null,longitude:location?.longitude??null,accuracy_meters:location?.accuracy||null,maps_url:location?.maps_url||null,captured_at:location?.captured_at||new Date().toISOString(),created_at:window.serverTimestamp()});}
+        }finally{globalThis.__forceOfflinePersistence=previousForce;}
+        await window.loadData();window.closeModal();window.toast(`Demanda e ${urls.length} foto(s) salvas com segurança neste aparelho. A sincronização será automática${offline?' quando a internet voltar':' assim que o armazenamento responder'}.`,'success',10000);window.openActivity(group.id);return;
       }
       const {data,error}=await supabase.rpc('create_field_demand',{target_secretaria:secretaria,observation,photo_urls:urls});
       if(error)throw error;

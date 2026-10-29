@@ -12,12 +12,15 @@ function clone(value) {
 
 export function isOfflineFailure(error, online = globalThis.navigator?.onLine !== false) {
   if (!online || error instanceof TypeError) return true;
+  const rawStatus = error?.statusCode ?? error?.status ?? error?.cause?.statusCode;
+  const status = rawStatus == null || rawStatus === '' ? null : Number(rawStatus);
+  if (status != null && ([0, 408, 425, 429].includes(status) || status >= 500)) return true;
   const parts = [];
   const collect = (value, depth = 0) => {
     if (value == null || depth > 2) return;
     if (typeof value === 'string' || typeof value === 'number') { parts.push(String(value)); return; }
     if (typeof value === 'object') {
-      ['name', 'message', 'details', 'hint', 'code', 'status', 'statusText'].forEach(key => collect(value[key], depth + 1));
+      ['name', 'message', 'details', 'hint', 'code', 'status', 'statusCode', 'statusText'].forEach(key => collect(value[key], depth + 1));
       collect(value.cause, depth + 1);
     }
   };
@@ -26,7 +29,7 @@ export function isOfflineFailure(error, online = globalThis.navigator?.onLine !=
   return Number(error?.status) === 0 || [
     'failed to fetch', 'fetch failed', 'networkerror', 'network error',
     'network request failed', 'load failed', 'err_internet_disconnected',
-    'connection refused', 'connection reset', 'connection timed out',
+    'connection refused', 'connection reset', 'connection timed out', 'maintenance',
     'recurso indisponível offline', 'status 503', 'service unavailable'
   ].some(marker => text.includes(marker));
 }

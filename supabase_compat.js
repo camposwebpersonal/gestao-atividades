@@ -2,12 +2,13 @@
 // This is a pragmatic first pass; not all Firebase features are covered.
 
 import {rememberRecords} from './js/autoria.js';
+import {hasLocalImage} from './js/image-storage.js?v=1';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0?bundle';
 import {
   setOfflineUser, cacheRows, getCachedRows, getCachedRow, putCachedRow,
   deleteCachedRow, enqueueMutation, listMutations, removeMutation, pendingCount,
   applyLocalConstraints, isOfflineFailure
-} from './js/offline-store.js?v=2';
+} from './js/offline-store.js?v=3';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
@@ -16,6 +17,27 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const OFFLINE_AUTH_KEY = 'gestao-offline-auth-user';
 let offlineImageUploader = null;
 let syncPromise = null;
+let syncRetryTimer = 0;
+let syncRetryDelay = 15000;
+
+function scheduleSyncRetry({reset=false}={}) {
+  if (reset) syncRetryDelay = 15000;
+  if (syncRetryTimer || globalThis.navigator?.onLine === false) return;
+  syncRetryTimer = globalThis.setTimeout?.(async () => {
+    syncRetryTimer = 0;
+    try {
+      const result = await syncOfflineNow();
+      if (result?.pending) {
+        syncRetryDelay = Math.min(syncRetryDelay * 2, 300000);
+        scheduleSyncRetry();
+      } else syncRetryDelay = 15000;
+    } catch (error) {
+      syncRetryDelay = Math.min(syncRetryDelay * 2, 300000);
+      console.warn('Nova tentativa de sincronização agendada:', error?.message || error);
+      scheduleSyncRetry();
+    }
+  }, syncRetryDelay) || 0;
+}
 
 function isOfflineError(error) {
   return isOfflineFailure(error);
@@ -35,6 +57,7 @@ async function notifyOfflineState(extra = {}) {
 async function queueMutation(mutation) {
   await enqueueMutation(mutation);
   await notifyOfflineState();
+  scheduleSyncRetry();
 }
 
 async function hasPendingMutations() {
@@ -75,7 +98,7 @@ async function executeMutation(mutation) {
 
 export function registerOfflineImageUploader(uploader) { offlineImageUploader = uploader; }
 
-export async function getOfflineStatus() { return notifyOfflineState(); }
+export async function getOfflineStatus() { const state=await notifyOfflineState();if(state.pending)scheduleSyncRetry();return state; }
 
 export async function syncOfflineNow() {
   if (syncPromise) return syncPromise;
@@ -104,7 +127,7 @@ export async function syncOfflineNow() {
   return syncPromise;
 }
 
-globalThis.addEventListener?.('online', () => syncOfflineNow().catch(error => console.error('Sincronização offline:', error)));
+globalThis.addEventListener?.('online', () => { scheduleSyncRetry({reset:true}); syncOfflineNow().catch(error => console.error('Sincronização offline:', error)); });
 globalThis.addEventListener?.('offline', () => notifyOfflineState());
 
 // Map Firebase collection names to Supabase table names
@@ -378,6 +401,9 @@ export async function signOut(auth) {
   let error;
   try { ({ error } = await auth.signOut({ scope: 'local' })); }
   finally {
+    if (syncRetryTimer) globalThis.clearTimeout?.(syncRetryTimer);
+    syncRetryTimer = 0;
+    syncRetryDelay = 15000;
     setOfflineUser('');
     try { localStorage.removeItem(OFFLINE_AUTH_KEY); } catch (_) {}
   }
@@ -555,7 +581,7 @@ export async function addDoc(collectionRef, data) {
   cleanPayload(payload);
   moveUnknownToExtra(table, payload);
   try {
-    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false || globalThis.__forceOfflinePersistence === true || hasLocalImage(payload)) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
     const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
     if (error) throw error;
     rememberRecords(table,[inserted]);
@@ -592,7 +618,7 @@ export async function setDoc(docRef, data, options) {
   for(const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at'])delete payload[key];
   moveUnknownToExtra(table, payload);
   try {
-    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false || globalThis.__forceOfflinePersistence === true || hasLocalImage(payload)) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
     const {data:saved,error}=await supabase.from(table).upsert(payload).select().maybeSingle();
     if(error)throw error;
     if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved);}
@@ -624,7 +650,7 @@ export async function updateDoc(docRef, data) {
   }
   moveUnknownToExtra(table, payload, existingExtra);
   try {
-    if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    if (await hasPendingMutations() || globalThis.navigator?.onLine === false || globalThis.__forceOfflinePersistence === true || hasLocalImage(payload)) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
     const {data:saved,error}=await supabase.from(table).update(payload).eq('id',docRef._id).select().maybeSingle();
     if(error)throw error;
     if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved,cachedExisting);}

@@ -4,7 +4,7 @@ function app(){
  const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8'),images=[];
  const nodes={'lb-img':{src:'',removeAttribute(){this.src='';}},lightbox:{style:{display:'none'}},'lb-close':{focus(){}}};
  class Image{constructor(){images.push(this);}decode(){return Promise.resolve();}}
- const ctx={Image,document:{getElementById:id=>nodes[id],addEventListener(){},activeElement:{isConnected:true,focus(){}}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('let _lbPreviousFocus=null'),source.indexOf('// ── IMGBB ──')),ctx);
+ const ctx={Image,document:{getElementById:id=>nodes[id],addEventListener(){},activeElement:{isConnected:true,focus(){}}}};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(source.slice(source.indexOf('let _lbPreviousFocus=null'),source.indexOf('// ── ARMAZENAMENTO DURÁVEL DE IMAGENS ──')),ctx);
  return {ctx,nodes,images};
 }
 test('miniatura aparece imediatamente e versão ampliada só substitui após carregar',async()=>{

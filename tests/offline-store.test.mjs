@@ -34,6 +34,8 @@ test('falhas de rede do celular são reconhecidas e enfileiradas offline',()=>{
   assert.equal(isOfflineFailure({details:'TypeError: Failed to fetch'},true),true);
   assert.equal(isOfflineFailure({cause:{message:'Network request failed'}},true),true);
   assert.equal(isOfflineFailure({status:503,message:'Service unavailable'},true),true);
+  assert.equal(isOfflineFailure({statusCode:503,message:'Storage maintenance'},true),true);
+  assert.equal(isOfflineFailure({status:429,message:'Muitas tentativas'},true),true);
   assert.equal(isOfflineFailure({code:'42501',message:'permission denied'},true),false);
   assert.equal(isOfflineFailure({message:'qualquer erro'},false),true);
 });

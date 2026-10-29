@@ -8,9 +8,6 @@ const firebaseConfig = {
   appId: "1:113932809324:web:b441b9549106822a9cd449"
 };
 
-// ImgBB API Key — substitua pela sua chave
-const IMGBB_API_KEY = "COLOQUE_SUA_CHAVE_AQUI";
-
 // App Config
 const APP_CONFIG = {
   name: "Gestão de Atividades PMS",
