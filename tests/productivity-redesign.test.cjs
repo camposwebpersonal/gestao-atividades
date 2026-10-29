@@ -13,10 +13,14 @@ const migration=fs.readFileSync(path.join(root,'supabase/migrations/202610281554
 const itemPermissionMigration=fs.readFileSync(path.join(root,'supabase/migrations/20261028195500_restrict_item_and_subitem_mutations_by_user_permission.sql'),'utf8');
 
 test('visão geral prioriza captura e links das secretarias',()=>{
- assert.match(modules,/GESTÃO NA PALMA DA MÃO/);
+ assert.match(modules,/Gestão na Palma da Mão/);
  assert.match(modules,/dashboard-field-focus/);
  assert.match(modules,/secretary-launch-grid/);
  assert.match(modules,/openDemandSecretaria/);
+ assert.match(modules,/dashboard-new-demand/);
+ assert.match(modules,/Buscar secretaria/);
+ assert.match(modules,/setDashboardSecretaryView/);
+ assert.match(modules,/_dashboardIcons/);
  assert.doesNotMatch(modules.slice(modules.lastIndexOf('window.renderModulos=function()')),/Bem-vindo à Central de Gestão|dashboard-kpis|Atividades por área/);
  assert.match(css,/grid-template-columns:repeat\(4/);
  assert.match(css,/@media\(max-width:620px\)/);

@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=6';
 import {supabase} from '../supabase_compat.js?v=7';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=3';
+import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=4';
 import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
 import './controle-licitacoes.js?v=8';
@@ -509,20 +509,59 @@ window.renderModulos=function(){
 };
 
 /* Visão geral produtiva: captura em campo e acesso direto às secretarias. */
+const _dashboardIcons={
+  people:'<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20v-2a5 5 0 0 1 5-5h1m12 7v-2a5 5 0 0 0-5-5h-1m-4 7v-2a5 5 0 0 1 10 0v2"/>',
+  building:'<path d="M3 21h18M5 18V8l7-4 7 4v10M9 10v6m6-6v6M8 21v-3h8v3"/>',
+  leaf:'<path d="M20 4C12 4 5 7 5 14c0 3 2 5 5 5 7 0 10-7 10-15Z"/><path d="M4 21c3-6 7-10 13-13"/>',
+  shield:'<path d="M12 3 20 6v5c0 5-3 8-8 10-5-2-8-5-8-10V6l8-3Z"/><path d="M12 8v8m-3-4h6"/>',
+  megaphone:'<path d="m3 11 13-5v12L3 14v-3Z"/><path d="M7 15v5h4l-1-4m9-7a4 4 0 0 1 0 6"/>',
+  book:'<path d="M4 5a3 3 0 0 1 3-1h5v16H7a3 3 0 0 0-3 1V5Zm16 0a3 3 0 0 0-3-1h-5v16h5a3 3 0 0 1 3 1V5Z"/>',
+  chart:'<path d="M4 20V10m6 10V4m6 16v-7m4 7H2"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  road:'<path d="m8 3-4 18m12-18 4 18M12 5v4m0 4v6"/>',
+  heart:'<path d="M20 5c-2-2-5-2-7 0l-1 1-1-1C9 3 6 3 4 5c-3 3-1 8 8 15 9-7 11-12 8-15Z"/><path d="M8 12h2l1-2 2 4 1-2h2"/>',
+  file:'<path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5M9 13h6m-6 4h6"/>',
+  gear:'<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-2-2-3-3 1a7 7 0 0 0-2-1l-1-3h-3L9 6a7 7 0 0 0-2 1L4 6 2 9l2 2a7 7 0 0 0 0 2l-2 2 2 3 3-1a7 7 0 0 0 2 1l1 3h3l1-3a7 7 0 0 0 2-1l3 1 2-3-2-2a7 7 0 0 0 .1-1Z"/>',
+  tools:'<path d="m14 7 3-3 3 3-3 3M4 20l10-10M6 4l4 4-2 2-4-4V4h2Zm9 10 5 5-1 1-5-5"/>',
+  bus:'<path d="M5 4h14a2 2 0 0 1 2 2v10H3V6a2 2 0 0 1 2-2Z"/><path d="M3 11h18M7 16v3m10-3v3M6 20h2m8 0h2"/>',
+  tree:'<path d="M12 22v-7m0 2-4-3m4 1 4-4"/><path d="M7 13a5 5 0 1 1 10 0 4 4 0 0 1-5 2 4 4 0 0 1-5-2Z"/>',
+  scales:'<path d="M12 3v18M5 7h14M7 7l-4 7h8L7 7Zm10 0-4 7h8l-4-7ZM8 21h8"/>'
+};
+function _dashboardSvg(name){return `<svg viewBox="0 0 24 24" aria-hidden="true">${_dashboardIcons[name]||_dashboardIcons.building}</svg>`;}
+function _dashboardVisual(name,index){
+  const value=String(name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  const rules=[[/ACAO SOCIAL|ASSISTENCIA/,'people','#2563eb','#e8f2ff'],[/ADMINISTRACAO|FINANCAS/,'building','#2563eb','#e8f2ff'],[/AGRICULTURA|MEIO AMBIENTE/,'leaf','#16835f','#e5f6ee'],[/CEDOCA|CONSELHO/,'people','#d84d5b','#fff0f2'],[/COMUNICACAO/,'megaphone','#6657c8','#f0edff'],[/CULTURA|TURISMO|ESPORTE/,'book','#b87818','#fff4d9'],[/DEFESA CIVIL/,'shield','#d84d5b','#fff0f2'],[/EDUCACAO/,'book','#2878b9','#e8f5ff'],[/GABINETE/,'user','#2868ad','#e9f3ff'],[/INFRAESTRUTURA|OBRAS/,'road','#a86b16','#fff2d7'],[/SAUDE/,'heart','#d94e65','#ffedf1'],[/DESENVOLVIMENTO/,'gear','#3970ba','#edf3ff'],[/SEGURANCA/,'shield','#4b57b8','#efefff'],[/SERVICOS PUBLICOS/,'tools','#a96b16','#fff2da'],[/TRANSPORTES|FROTA/,'bus','#2878b9','#e6f5ff'],[/NEMIP|PLANEJAMENTO/,'file','#7655c6','#f2edff'],[/JURIDICO/,'scales','#5266a8','#edf1ff']];
+  const matched=rules.find(([pattern])=>pattern.test(value));
+  if(matched)return{icon:matched[1],color:matched[2],soft:matched[3]};
+  const fallback=[['building','#2878b9','#e8f5ff'],['tree','#16835f','#e7f7ef'],['shield','#6657c8','#f1efff'],['people','#d84d5b','#fff0f2']][index%4];
+  return{icon:fallback[0],color:fallback[1],soft:fallback[2]};
+}
+let _dashboardSecretaryView=localStorage.getItem('dashboard-secretary-view')==='list'?'list':'grid';
+window.filterDashboardSecretaries=function(value){
+  const query=String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();let visible=0;
+  document.querySelectorAll('.secretary-launch-card').forEach(card=>{card.hidden=!!query&&!card.dataset.search.includes(query);if(!card.hidden)visible++;});
+  const count=document.getElementById('dashboard-secretary-count');if(count)count.textContent=`${visible} secretaria${visible===1?'':'s'}`;
+};
+window.setDashboardSecretaryView=function(mode){
+  _dashboardSecretaryView=mode==='list'?'list':'grid';localStorage.setItem('dashboard-secretary-view',_dashboardSecretaryView);
+  document.querySelector('.secretary-launch-grid')?.classList.toggle('is-list',_dashboardSecretaryView==='list');
+  document.querySelectorAll('[data-dashboard-view]').forEach(button=>{const active=button.dataset.dashboardView===_dashboardSecretaryView;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+};
 window.renderModulos=function(){
   const demandModule=MODULOS.find(mod=>mod.id==='atendimentos');
   const groups=_md.grupos(demandModule);
   const secretaries=(S.secretarias||[]).filter(secretary=>secretary.demandas_ativa&&(S.isAdmin||window.userCanDemandSecretaria(secretary.id,'acesso')||groups.some(group=>group.demanda_secretaria_id===secretary.id))).sort((a,b)=>(a.name||'').localeCompare(b.name||'','pt-BR'));
   _renderSidebarModules('');
-  const cards=secretaries.map(secretary=>{
+  const cards=secretaries.map((secretary,index)=>{
     const own=groups.filter(group=>group.demanda_secretaria_id===secretary.id);
     const total=own.reduce((sum,group)=>sum+_md.ativTotal(group),0);
-    return `<article class="secretary-launch-card" onclick="openDemandSecretaria(${_md.arg(secretary.id)})" tabindex="0" onkeydown="if(event.key==='Enter')openDemandSecretaria(${_md.arg(secretary.id)})"><div class="secretary-launch-icon">▥</div><div class="secretary-launch-copy"><strong>${_md.esc(secretary.name)}</strong><span>${own.length} grupo(s) · ${total} lançamento(s)</span></div><span class="secretary-launch-arrow" aria-hidden="true">›</span></article>`;
+    const visual=_dashboardVisual(secretary.name,index),search=String(secretary.name||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return `<button type="button" class="secretary-launch-card" style="--secretary-color:${visual.color};--secretary-soft:${visual.soft}" data-search="${_md.esc(search)}" onclick="openDemandSecretaria(${_md.arg(secretary.id)})"><span class="secretary-launch-icon">${_dashboardSvg(visual.icon)}</span><span class="secretary-launch-copy"><strong>${_md.esc(secretary.name)}</strong><span>${own.length} grupo(s) · ${total} lançamento(s)</span></span><span class="secretary-launch-arrow" aria-hidden="true">›</span></button>`;
   }).join('');
   _md.setC(`<section class="dashboard-shell productivity-dashboard" aria-labelledby="dashboard-title">
-    <header class="productivity-heading"><div class="workspace-kicker">Visão geral</div><h1 id="dashboard-title">GESTÃO NA PALMA DA MÃO</h1></header>
+    <header class="productivity-heading"><div><span class="workspace-kicker">Painel de gestão</span><h1 id="dashboard-title">Gestão na Palma da Mão</h1><p>Mais organização. Mais agilidade. Uma cidade bem cuidada.</p></div><button type="button" class="dashboard-new-demand" onclick="openFieldCapture()" ${secretaries.length?'':'disabled'}><b>＋</b> Nova demanda</button></header>
     <div class="dashboard-field-focus">${fieldCaptureDashboardCard()}</div>
-    <section class="secretary-launch-section"><header><div><span class="workspace-kicker">Acesso direto</span><h2>Demandas por secretaria</h2><p>Entre na área responsável ou crie um grupo sem perder tempo.</p></div></header><div class="secretary-launch-grid">${cards||'<div class="empty">Nenhuma secretaria de demandas está liberada para o seu perfil.</div>'}</div></section>
+    <section class="secretary-launch-section"><header><div><span class="workspace-kicker">Acesso direto</span><h2>Demandas por secretaria</h2><p>Acesse rapidamente as áreas de atuação do município.</p></div><div class="secretary-launch-tools"><label><span>⌕</span><input type="search" aria-label="Buscar secretaria" placeholder="Buscar secretaria..." oninput="filterDashboardSecretaries(this.value)"></label><div class="secretary-view-toggle" role="group" aria-label="Formato de visualização"><button type="button" data-dashboard-view="grid" class="${_dashboardSecretaryView==='grid'?'active':''}" aria-pressed="${_dashboardSecretaryView==='grid'}" onclick="setDashboardSecretaryView('grid')" title="Grade">▦</button><button type="button" data-dashboard-view="list" class="${_dashboardSecretaryView==='list'?'active':''}" aria-pressed="${_dashboardSecretaryView==='list'}" onclick="setDashboardSecretaryView('list')" title="Lista">☷</button></div></div></header><div class="secretary-launch-summary"><span id="dashboard-secretary-count">${secretaries.length} secretaria${secretaries.length===1?'':'s'}</span></div><div class="secretary-launch-grid ${_dashboardSecretaryView==='list'?'is-list':''}">${cards||'<div class="empty">Nenhuma secretaria de demandas está liberada para o seu perfil.</div>'}</div></section>
   </section>`);
 };
 

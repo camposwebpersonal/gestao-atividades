@@ -102,5 +102,5 @@ export function initFieldCapture(){
 
 export function fieldCaptureDashboardCard(){
   const enabled=allowedSecretarias().length>0;
-  return `<section class="field-capture-banner ${enabled?'':'disabled'}"><div class="field-capture-icon">📸</div><div><span>ATALHO DE CAMPO</span><h2>Viu uma demanda? Registre agora.</h2><p>Tire várias fotos, escreva uma observação e encaminhe direto para a secretaria responsável.</p></div><button type="button" ${enabled?'onclick="openFieldCapture()"':'disabled'}>Abrir câmera <b>→</b></button></section>`;
+  return `<section class="field-capture-banner ${enabled?'':'disabled'}"><div class="field-capture-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3a2 2 0 0 1 2 2v10H2V9a2 2 0 0 1 2-2Z"/><circle cx="12" cy="13" r="4"/><path d="M18 3v4m-2-2h4"/></svg></div><div><span>ATALHO DE CAMPO</span><h2>Viu uma demanda? Registre agora.</h2><p>Fotografe, descreva e encaminhe para a secretaria responsável.</p></div><button type="button" ${enabled?'onclick="openFieldCapture()"':'disabled'}><span>▣</span> Abrir câmera <b>›</b></button></section>`;
 }
