@@ -252,57 +252,6 @@
   margin: 0 !important;
 }
 
-.activity-audit-popover {
-  position: relative;
-  flex: 0 0 auto;
-}
-
-.activity-audit-popover>summary {
-  display: grid;
-  width: 26px;
-  height: 26px;
-  place-items: center;
-  border: 1px solid #bfd2dc;
-  border-radius: 50%;
-  background: #fff;
-  color: #41677b;
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  list-style: none;
-  cursor: pointer;
-}
-
-.activity-audit-popover>summary::-webkit-details-marker {
-  display: none;
-}
-
-.activity-audit-popover[open]>summary {
-  border-color: #168b75;
-  background: #e8f7f2;
-  color: #08725f;
-}
-
-.activity-audit-panel {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 5px);
-  right: 0;
-  width: min(360px, calc(100vw - 24px));
-  padding: 7px 9px;
-  border: 1px solid #c9d9e1;
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: 0 10px 28px rgba(15, 45, 65, .18);
-}
-
-.activity-audit-panel .record-audit {
-  display: grid;
-  gap: 3px;
-  margin: 0;
-  font-size: 10px;
-  line-height: 1.25;
-}
 
 .activity-page-heading>img {
   max-height: 55px !important;
@@ -655,13 +604,6 @@ body[data-workspace="atendimentos"] #content {
 
   .activity-lane-cluster {
     align-items: stretch;
-  }
-
-  .activity-audit-popover>summary {
-    width: 30px;
-    height: 100%;
-    min-height: 30px;
-    border-radius: 8px;
   }
 
   .activity-page-heading .page-title {

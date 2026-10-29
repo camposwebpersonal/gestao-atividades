@@ -59,11 +59,13 @@ test('permissões gerais ficam sempre visíveis antes das permissões por módul
  assert.match(index,/userCanCreateItems[^\n]*openBulkEntry/);
 });
 
-test('autoria sai do corpo dos cartões e abre em botão informativo',()=>{
- assert.match(authorship,/document\.createElement\('details'\)/);
- assert.match(authorship,/record-audit-popover/);
- assert.match(authorship,/Informações de criação e edição/);
- assert.match(css,/\.record-audit-panel/);
+test('autoria sai de cards e listas e aparece somente dentro da edição',()=>{
+ assert.doesNotMatch(authorship,/record-audit-popover/);
+ assert.match(authorship,/attachAuditToEditor/);
+ assert.match(authorship,/editor-audit-panel/);
+ assert.match(authorship,/Informações do registro/);
+ assert.match(css,/\.editor-audit-panel/);
+ assert.doesNotMatch(index,/activity-audit-popover/);
 });
 
 test('secretaria redundante é ocultada usando o grupo do próprio registro',()=>{

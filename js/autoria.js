@@ -45,6 +45,20 @@ export function rememberRecords(table,rows,replace=false){
  for(const row of rows)index.set(table+'/'+row.id,{table,record:row});
  globalThis.refreshAuditUI?.();
 }
+function indexedEntries(){
+ const byId=new Map();for(const entry of globalThis.__recordIndex?.values()||[])byId.set(String(entry.record.id),entry);return byId;
+}
+function entryForElement(element,byId=indexedEntries()){
+ if(!element)return null;
+ const identifiers=[];
+ const descendants=element.querySelectorAll?.('[data-audit-id],[data-lista-id],[data-sort-id],[data-well-id],[onclick]')||[];
+ for(const node of [element,...descendants]){
+  const direct=node.dataset?.auditId||node.dataset?.listaId||node.dataset?.sortId||node.dataset?.wellId;
+  if(direct)identifiers.push(direct);
+  for(const match of (node.getAttribute?.('onclick')||'').matchAll(/['"]([^'"]+)['"]/g))identifiers.push(match[1]);
+ }
+ return identifiers.map(id=>byId.get(String(id))).find(Boolean)||null;
+}
 export function auditTarget(host,isAttendance){
  if(isAttendance&&host.classList.contains('completed-row')){
   const main=host.querySelector(':scope > .completed-row-main');
@@ -70,13 +84,11 @@ export function initAuditUI(){
  let pending=false;
  const decorate=()=>{
   pending=false;const content=document.getElementById('content');if(!content)return;
-  const byId=new Map();for(const entry of globalThis.__recordIndex?.values()||[])byId.set(String(entry.record.id),entry);
+  const byId=indexedEntries();
   const hosts=new Map();
   for(const el of content.querySelectorAll('[onclick],[data-audit-id],[data-lista-id],[data-sort-id],[data-well-id]')){
-   if(el.closest('.record-audit-popover,.record-audit,[data-audit-skip]'))continue;
-   const recordId=el.dataset.auditId||el.dataset.listaId||el.dataset.sortId||el.dataset.wellId;
-   const keys=recordId?[recordId]:[...(el.getAttribute('onclick')||'').matchAll(/['"]([^'"]+)['"]/g)].map(m=>m[1]);
-   const entry=keys.map(id=>byId.get(id)).find(Boolean);if(!entry)continue;
+   if(el.closest('.record-audit,[data-audit-skip]'))continue;
+   const entry=entryForElement(el,byId);if(!entry)continue;
    const host=el.closest('tr,article,.user-card,.item-row,.sub-row,.pw-company,.mod-grupo-card,.sec-card,.dist-card,.ce-card,.cc-card')||el.closest('[class*="card"],[class*="row"]');
    if(host&&!hosts.has(host))hosts.set(host,entry);
   }
@@ -84,22 +96,13 @@ export function initAuditUI(){
    const attendance=['items','subitems'].includes(table)&&window.isAttendanceRecord?.(record);
    const target=auditTarget(host,attendance);
    if(!target)continue;
-   let popover=target.querySelector(':scope > .record-audit-popover');
-   if(!popover){
-    popover=document.createElement('details');popover.className='record-audit-popover';
-    const summary=document.createElement('summary');summary.textContent='ⓘ';summary.setAttribute('aria-label','Informações de criação e edição');summary.title='Informações de criação e edição';
-    const panel=document.createElement('div');panel.className='record-audit-panel';
-    const audit=document.createElement('div');audit.className='record-audit';panel.append(audit);popover.append(summary,panel);target.append(popover);
-   }
-   const stamp=popover.querySelector('.record-audit');
-   const markup=auditLabel(record);if(stamp.innerHTML!==markup)stamp.innerHTML=markup;
    const geoMarkup=window.recordLocationActions?.(record,table)||'';
    let geo=target.querySelector(':scope > .geo-quick-actions');
    if(geoMarkup){if(!geo){const holder=document.createElement('div');holder.innerHTML=geoMarkup;geo=holder.firstElementChild;target.append(geo);}else if(geo.outerHTML!==geoMarkup)geo.outerHTML=geoMarkup;}
    else geo?.remove();
    if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');
-    if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.insertBefore(meta,popover);}
+    if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.prepend(meta);}
     const badges=window.attendanceBadges(record);if(meta.innerHTML!==badges)meta.innerHTML=badges;
     const group=window.S?.secs?.find(section=>section.id===record.atividade_id);
     const moveTarget=host.classList.contains('completed-row')?(host.querySelector(':scope > .completed-row-side')||target):target;
@@ -112,7 +115,22 @@ export function initAuditUI(){
   }
  };
  const schedule=()=>{if(!pending){pending=true;requestAnimationFrame(decorate);}};
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit-popover,.record-audit-panel,.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit-popover,.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ document.addEventListener('click',event=>{
+  const source=event.target.closest?.('[onclick],[data-audit-id],[data-lista-id],[data-sort-id],[data-well-id]');
+  const entry=entryForElement(source);globalThis.__auditEditorContext=entry?{...entry,capturedAt:Date.now()}:null;
+ },true);
+ window.attachAuditToEditor=function(title,root){
+  root?.querySelectorAll('.editor-audit-panel').forEach(element=>element.remove());
+  if(!root||!/editar|alterar|configurar|corrigir|gerenciar|renovar|status/i.test(String(title||'')))return;
+  const context=globalThis.__auditEditorContext;
+  const entry=(context&&Date.now()-context.capturedAt<3000?context:null)||entryForElement(root);
+  globalThis.__auditEditorContext=null;
+  if(!entry||root.querySelector('.audit-admin-fields'))return;
+  const panel=document.createElement('details');panel.className='editor-audit-panel';
+  panel.innerHTML=`<summary><span aria-hidden="true">ⓘ</span><strong>Informações do registro</strong><small>Criação e última edição</small></summary><div class="editor-audit-content record-audit">${auditLabel(entry.record)}</div>`;
+  const actions=root.querySelector('.modal-actions');if(actions)actions.before(panel);else root.append(panel);
+ };
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();

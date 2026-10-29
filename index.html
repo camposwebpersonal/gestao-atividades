@@ -424,10 +424,10 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="stylesheet" href="css/record-density.css?v=7">
-<link rel="stylesheet" href="css/header-density.css?v=5">
+<link rel="stylesheet" href="css/header-density.css?v=6">
 <link rel="stylesheet" href="css/camera-capture.css?v=3">
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
-<link rel="stylesheet" href="css/productivity-redesign.css?v=5">
+<link rel="stylesheet" href="css/productivity-redesign.css?v=6">
 <link rel="stylesheet" href="css/geolocation.css?v=2">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -504,7 +504,7 @@ import './js/modulos.js?v=100';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
-import {initAuditUI,adminAuditFields,readAdminAudit,auditLabel} from './js/autoria.js?v=10';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=11';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=7';
@@ -848,7 +848,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=92';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=93';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1718,7 +1718,6 @@ window.openActivity=function(secId){
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
   const archiveEntries=_cp?completedArchiveEntries(allItems,groupSubitems,iProg):[];
   const laneTabs=_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
-  const activityAudit=`<details class="activity-audit-popover"><summary aria-label="Mostrar informações de criação e edição" title="Informações de criação e edição">ⓘ</summary><div class="activity-audit-panel"><div class="record-audit">${auditLabel(sec)}</div></div></details>`;
   const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:groupSubitems,progress:iProg,canEdit:_can}):'';
   setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
     <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
@@ -1747,7 +1746,7 @@ window.openActivity=function(secId){
         ${sec.resp_url?`<img src="${esc(sec.resp_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #818cf8">`:''}
         👤 ${esc(sec.responsaveis)}</div>`:''}
     </div>
-    <div class="activity-lane-cluster">${laneTabs}${activityAudit}</div>
+    <div class="activity-lane-cluster">${laneTabs}</div>
   </div>
   ${needsEmpregosRestore&&S.isAdmin?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);color:#ddd6fe;font-size:13px"><strong>Restaurando a base salarial importada…</strong><br><span style="color:#a78bfa">Os 444 colaboradores e suas remunerações serão associados a esta atividade sem criar duplicidades.</span></div>`:''}
   ${lane==='active'?`
@@ -2137,6 +2136,7 @@ window.openModal=function(title,sub,html){
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-body').innerHTML=html;
+  window.attachAuditToEditor?.(title,document.getElementById('modal-body'));
   document.getElementById('modal-ov').style.display='flex';
 }
 window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');_pRT={};};
