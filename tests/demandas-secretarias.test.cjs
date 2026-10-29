@@ -5,6 +5,7 @@ const path=require('node:path');
 const interfaceSource=fs.readFileSync(path.join(__dirname,'../js/demandas-secretarias.js'),'utf8');
 const moduleSource=fs.readFileSync(path.join(__dirname,'../js/modulos.js'),'utf8');
 const demandCss=fs.readFileSync(path.join(__dirname,'../css/demandas-secretarias.css'),'utf8');
+const premiumCss=fs.readFileSync(path.join(__dirname,'../css/demandas-premium.css'),'utf8');
 const model=import('data:text/javascript;base64,'+Buffer.from(fs.readFileSync(path.join(__dirname,'../js/demandas-model.js'))).toString('base64'));
 test('secretarias vazias aparecem, cadastros alheios não; vínculos inválidos ficam a classificar',async()=>{
  const {demandSections}=await model;
@@ -37,4 +38,15 @@ test('lista de grupos usa uma linha fina no notebook e preserva a quebra respons
  assert.match(demandCss,/@media\(min-width:1100px\)/);
  assert.match(demandCss,/\.demand-row:not\(\.demand-card\)\{[^}]*min-height:44px[^}]*flex-wrap:nowrap/);
  assert.match(demandCss,/@media\(max-width:650px\)/);
+});
+test('cards e listas premium preservam hierarquia e responsividade',()=>{
+ assert.match(interfaceSource,/function visualFor/);
+ assert.match(interfaceSource,/demand-symbol tone-/);
+ assert.match(interfaceSource,/demand-open-cta/);
+ assert.match(interfaceSource,/demand-list-head/);
+ assert.match(premiumCss,/\.demand-card\{display:grid/);
+ assert.match(premiumCss,/\.demand-list-head,\.demand-list>\.demand-row\{display:grid/);
+ assert.match(premiumCss,/@media\(max-width:900px\)/);
+ assert.match(premiumCss,/@media\(max-width:680px\)/);
+ assert.match(premiumCss,/grid-template-columns:1fr/);
 });
