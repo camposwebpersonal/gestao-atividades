@@ -1,7 +1,7 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=6';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=7';
 import {supabase} from '../supabase_compat.js?v=7';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture,isFieldDemandGroup} from './camera-capture.js?v=4';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=5';
 import './perfuracao-pocos.js?v=102';
 import './controle-extintores.js?v=4';
 import './controle-licitacoes.js?v=8';
@@ -181,8 +181,7 @@ function renderModuloGrupos(mod){
   const cards = grupos.map((g,index)=>{
     const p=_md.pct(g), col=_md.pColor(p);
     const total=_md.ativTotal(g),well=g.controle_pocos==1||g.extra_fields?.controle_pocos==1;
-    const protegido=isFieldDemandGroup(g);
-    const podeGrupo=(admin||window.userCanGroup(g,'editar'))&&!protegido;
+    const podeGrupo=admin||window.userCanGroup(g,'editar');
     return `<article class="module-group-row" style="--module-accent:${mod.color}" data-gid="${_md.esc(g.id)}" data-audit-id="${_md.esc(g.id)}">
       ${podeGrupo&&window.userCanDeleteGroups()?`<input type="checkbox" class="cb-grupo module-group-checkbox" value="${_md.esc(g.id)}" aria-label="Selecionar ${_md.esc(g.name||'grupo')}">`:''}
       <button type="button" class="module-group-open" onclick="window.openActivity(${_md.arg(g.id)})">
@@ -280,7 +279,6 @@ window._ceExcluirSelecionados=async function(modId){
  if(!window.userCanDeleteGroups?.()){window.toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
   const ids=[...document.querySelectorAll('.cb-grupo:checked')].map(cb=>cb.value);
   if(!ids.length){toast('Selecione ao menos um grupo','error'); return;}
-  if(ids.some(id=>isFieldDemandGroup(S.secs.find(group=>group.id===id)))){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   const nomes=ids.map(id=>_md.esc(S.secs.find(s=>s.id===id)?.name||'Grupo')).slice(0,20).join('\n');
   const mais=ids.length>20?`\n... e mais ${ids.length-20}`:'';
   if(!confirm(`Enviar ${ids.length} grupo(s) para a lixeira?\n\n${nomes}${mais}\n\nTodos os itens, subitens e lançamentos vinculados irão juntos e poderão ser restaurados pela lixeira.`)) return;

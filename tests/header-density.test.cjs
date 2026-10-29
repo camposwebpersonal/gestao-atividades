@@ -42,7 +42,7 @@ test('mantém reorganização responsiva dos cabeçalhos sem esmagar conteúdo',
 });
 
 test('inclui a nova camada no cache offline com versão renovada', () => {
-  assert.match(sw, /gestao-pms-v153/);
+  assert.match(sw, /gestao-pms-v154/);
   assert.match(sw, /'css\/header-density\.css'/);
   assert.match(sw, /'css\/productivity-redesign\.css'/);
 });

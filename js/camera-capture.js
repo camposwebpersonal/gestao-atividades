@@ -82,7 +82,7 @@ export function initFieldCapture(){
       button.textContent='Organizando a demanda…';
       if(offline){
         const group=(window.S?.secs||[]).find(entry=>isFieldDemandGroup(entry)&&entry.demanda_secretaria_id===secretaria);
-        if(!group)throw new Error('Abra esta secretaria uma vez com internet para preparar o grupo permanente no aparelho.');
+        if(!group)throw new Error('Abra esta secretaria uma vez com internet para preparar o grupo de entrada no aparelho.');
         const primary=locations.find(Boolean)||fieldLocation;
         const item=await window.addDoc(window.collection(window.db,'items'),{atividade_id:group.id,description:fieldDemandTitle(observation)||'Demanda de campo',observacao:observation,secretaria_id:secretaria,item_icon:'📷',item_color:'#0f8a73',concluded:0,status:'pendente',order_num:(window.S?.items||[]).filter(entry=>entry.atividade_id===group.id).length,extra_fields:{registro_tipo:'demanda_campo',origem:'captura_rapida',captured_at:new Date().toISOString(),geo_location:primary||null},created_at:window.serverTimestamp(),updated_at:window.serverTimestamp()});
         for(let index=0;index<urls.length;index+=1){const location=locations[index]||primary;await window.addDoc(window.collection(window.db,'entity_images'),{entity_type:'item',entity_id:item.id,is_representative:index===0,imgbb_url:urls[index],title:'',obs:observation,order_num:index,latitude:location?.latitude??null,longitude:location?.longitude??null,accuracy_meters:location?.accuracy||null,maps_url:location?.maps_url||null,captured_at:location?.captured_at||new Date().toISOString(),created_at:window.serverTimestamp()});}

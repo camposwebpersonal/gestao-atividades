@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=7">
-<link rel="modulepreload" href="js/modulos.js?v=99">
+<link rel="modulepreload" href="js/modulos.js?v=100">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -500,7 +500,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <script type="module">
 import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=7";
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=7";
-import './js/modulos.js?v=99';
+import './js/modulos.js?v=100';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -848,7 +848,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=91';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=92';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1725,11 +1725,11 @@ window.openActivity=function(secId){
     <div style="flex:1;min-width:60px"></div>
     ${_can&&window.userCanCreateItems?.()?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
     ${_can&&window.userCanCreateItems?.()?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
-    ${_can&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
+    ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
     ${_can?`<button class="btn-action completion-toggle ${_cp?'active':''}" onclick="alternarControleConclusao('${secId}',${_cp?'false':'true'})">${_cp?'✓ Conclusão ativada':'○ Ativar conclusão'}</button>`:''}
     ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
     ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
-    ${_can&&window.userCanDeleteGroups?.()&&!window.isFieldDemandGroup?.(sec)?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
+    ${_can&&window.userCanDeleteGroups?.()?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
@@ -2030,7 +2030,6 @@ window.saveConclusao=async function(col,id){
 window.confirmarExcluirAtividade=function(id){
   if(!window.userCanDeleteGroups?.()){toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
   const sec=S.secs.find(s=>s.id===id);
-  if(window.isFieldDemandGroup?.(sec)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const nItems=S.items.filter(i=>i.atividade_id===id).length;
   const nSubs=S.subitems.filter(s=>S.items.some(i=>i.atividade_id===id&&i.id===s.item_id)).length;
@@ -2040,7 +2039,7 @@ window.confirmarExcluirAtividade=function(id){
 };
 window.deleteSec=async function(id){
   if(!window.userCanDeleteGroups?.()){toast('Seu usuário não tem permissão para excluir grupos.','error',7000);return;}
-  const group=S.secs.find(s=>s.id===id);if(window.isFieldDemandGroup?.(group)){toast('Demandas Gerais de Campo é um grupo permanente e não pode ser excluído.','error',7000);return;}if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
+  const group=S.secs.find(s=>s.id===id);if(!S.isAdmin&&!window.userCanGroup?.(group,'editar')){toast('Você não pode excluir este grupo.','error');return;}
   const batchId=crypto.randomUUID();
   const its=S.items.filter(i=>i.atividade_id===id);
   const trashOptions={batchId,activityId:id,activityName:group?.name,secretariaId:group?.demanda_secretaria_id};
@@ -2195,7 +2194,6 @@ window._toggleSenha=function(inputId,checkId){
 // ── SEC MODAL ──
 window.openSecModal=function(id){
   const s=id?S.secs.find(x=>x.id===id):null;
-  if(window.isFieldDemandGroup?.(s)){toast('Este é um grupo permanente de entrada. Abra-o para organizar e redirecionar as demandas.','info',7000);return;}
   if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(s,'editar')){toast('Você não pode editar este grupo.','error');return;}
   openModal(s?'✏️ Editar Atividade':'➕ Nova Atividade','',
@@ -2262,7 +2260,7 @@ window.openSecModal=function(id){
     </div>
   </div>`:'<!-- sem id -->'}
   <div class="modal-actions">
-    ${id&&window.userCanDeleteGroups?.()&&!window.isFieldDemandGroup?.(s)?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
+    ${id&&window.userCanDeleteGroups?.()?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${id}')">🗑️ Excluir</button>`:''}
     <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
     <button class="btn-save" onclick="saveSec('${id||''}')">💾 Salvar</button>
   </div>`);
@@ -2271,7 +2269,6 @@ window.openSecModal=function(id){
 
 window.saveSec=async function(id){
   const existingGroup=id?S.secs.find(x=>x.id===id):null;
-  if(window.isFieldDemandGroup?.(existingGroup)){toast('Este grupo permanente não pode ser alterado.','error');return;}
   if(!id&&!S.isAdmin&&!window.userCanCreateGroups?.()){toast('Seu usuário não tem permissão para criar grupos.','error');return;}
   if(id&&!S.isAdmin&&!window.userCanGroup?.(existingGroup,'editar')){toast('Você não pode editar este grupo.','error');return;}
   const name=document.getElementById('s-name')?.value.trim();
@@ -2753,7 +2750,7 @@ function _buildPermMatrix(u){
 }
 function _generalUserPermissions(u){
   const p=u?.permissoes||{};
-  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia grupos para a lixeira. Grupos permanentes continuam protegidos.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label></div></section>`;
+  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia qualquer grupo permitido para a lixeira, inclusive grupos de entrada de campo.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label></div></section>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
