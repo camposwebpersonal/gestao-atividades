@@ -15,7 +15,7 @@
 <link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
-<link rel="modulepreload" href="supabase_compat.js?v=8">
+<link rel="modulepreload" href="supabase_compat.js?v=9">
 <link rel="modulepreload" href="js/modulos.js?v=102">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -430,6 +430,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
 <link rel="stylesheet" href="css/geolocation.css?v=3">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
+<link rel="stylesheet" href="css/supabase-status.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -470,6 +471,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
         <button class="nav-btn" onclick="openAuthorship()">◎ Autoria dos registros</button>
         <button class="nav-btn" id="nav-cont" onclick="setView('cont')">☏ Contatos</button>
         <button class="nav-btn" id="nav-trash" style="display:none" onclick="setView('trash')">♻ Lixeira</button>
+        <button class="nav-btn" id="nav-supabase-status" style="display:none" onclick="setView('supabase-status')">◉ Status do Supabase</button>
         <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
       </div>
     </details>
@@ -499,8 +501,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=8";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=8";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=9";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=9";
+import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh}from'./js/supabase-status.js?v=1';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import './js/modulos.js?v=102';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
@@ -517,6 +520,7 @@ import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,loca
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
+window.refreshSupabaseStatus=refreshSupabaseStatus;
 
 const fbApp=initializeApp({});
 const auth=getAuth(fbApp);
@@ -547,7 +551,7 @@ function releaseSaveButton(button){
 }
 function releaseSaveButtons(){for(const button of [..._savingButtons])releaseSaveButton(button);}
 window.releaseSaveButtons=releaseSaveButtons;
-const _stateTableMap={atividades:'secs',items:'items',subitems:'subitems',field_templates:'fieldTemplates',secretarias:'secretarias',responsaveis:'responsaveis',users:'users',contatos:'contatos',contas:'contas',estoque:'estoque',requisicoes:'requisicoes',trash_items:'trashItems',app_settings:'appSettings'};
+const _stateTableMap={atividades:'secs',items:'items',subitems:'subitems',field_templates:'fieldTemplates',secretarias:'secretarias',responsaveis:'responsaveis',users:'users',supabase_status_access:'statusAccess',contatos:'contatos',contas:'contas',estoque:'estoque',requisicoes:'requisicoes',trash_items:'trashItems',app_settings:'appSettings'};
 let _liveRenderTimer=0;
 function applyLiveRecordChange({table,eventType,record,oldRecord,source}={}){
   if(source==='local')_lastLocalMutationAt=Date.now();
@@ -557,6 +561,7 @@ function applyLiveRecordChange({table,eventType,record,oldRecord,source}={}){
   if(eventType==='DELETE'){if(index>=0)S[stateKey].splice(index,1);}
   else if(index>=0)S[stateKey][index]={...S[stateKey][index],...record};
   else S[stateKey].push(record);
+  if(table==='supabase_status_access')updateSupabaseStatusAccessUI();
   if(source!=='remote')return;
   clearTimeout(_liveRenderTimer);_liveRenderTimer=setTimeout(()=>{
     if(curSecId)openActivity(curSecId);
@@ -670,7 +675,7 @@ function updateUndoUI(){const ub=document.getElementById('undo-btn'),rb=document
 document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();undoLast();}if((e.ctrlKey&&(e.key==='y'||e.key==='Y'))||(e.ctrlKey&&e.shiftKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();redoLast();}});
 
 // ── STATE ──
-let S={user:null,isAdmin:false,canViewTrash:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[],appSettings:[]};window.S=S;
+let S={user:null,isAdmin:false,canViewTrash:false,canViewSupabaseStatus:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],statusAccess:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[],appSettings:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
 const EMPREGOS_DATA_VERSION='2026-06-v1';
@@ -813,7 +818,7 @@ function applyWorkspaceIdentity(r){
   const activeModule=r?.kind==='module'?r.id:(r?.kind==='activity'?window.modForSec?.(S.secs.find(sec=>sec.id===r.id)):null);
   if(r?.kind==='activity'&&activeModule==='atendimentos')window.currentDemandSecretaria=S.secs.find(sec=>sec.id===r.id)?.demanda_secretaria_id||'sem-secretaria';
   window.refreshSidebarModules?.(activeModule||'');
-  const labels={mod:'Painel de Gestão',secr:'Secretarias',resp:'Responsáveis',cont:'Contatos',adm:'Administração',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Demandas por Secretarias',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
+  const labels={mod:'Painel de Gestão',secr:'Secretarias',resp:'Responsáveis',cont:'Contatos',adm:'Administração',trash:'Lixeira','supabase-status':'Status do Supabase',financeiro:'Controle Financeiro',infraestrutura:'Infraestrutura e Poços',estoque:'Controle de Estoque',distribuicao:'Distribuição',eventos:'Eventos',projetos:'Projetos',obras:'Obras',frota:'Frota',atendimentos:'Demandas por Secretarias',rh:'Recursos Humanos',cadastros:'Cadastros',atividades:'Atividades'};
   document.title=(labels[key]||'Gestão Municipal')+' — Prefeitura de Sertânia';
 }
 window.rememberWorkspace=function(r,replace=false){
@@ -832,7 +837,7 @@ window.restoreWorkspace=function(){
   try{
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
     else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok){if(r.id==='atendimentos')window.currentDemandSecretaria=r.secretaria||'';window.renderModulo(r.id);}}
-    else if(r.kind==='view'){ok=['mod','map','adm','secr','resp','cont'].includes(r.id);if(ok)window.setView(r.id);}
+    else if(r.kind==='view'){ok=['mod','map','adm','secr','resp','cont','trash','supabase-status'].includes(r.id);if(r.id==='supabase-status'&&!canViewSupabaseStatus())ok=false;if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}
   if(ok){window.rememberWorkspace(r,true);return true;}
@@ -847,7 +852,7 @@ window.addEventListener('popstate',()=>{if(S.user)window.restoreWorkspace();});
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=96';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=97';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -914,6 +919,7 @@ onAuthStateChanged(auth,async u=>{
   }
   if(S.isAdmin)document.getElementById('nav-adm').style.display='';
   document.getElementById('nav-trash').style.display=S.canViewTrash?'':'none';
+  updateSupabaseStatusAccessUI();
   const cacheReady=await cacheDataPromise;
   if(cacheReady&&!window.restoreWorkspace())setView('mod');
   startLiveSync();
@@ -1013,7 +1019,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   };
   const recentLocalMutation=!forceRemote&&Date.now()-_lastLocalMutationAt<2500;
   const read=(cacheOnly||recentLocalMutation)?getDocsFromCache:getDocs;
-  const[a,b,c,ft,se,resp,usr,cont,contas,estq,req,trash,settings]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings]=await Promise.all([
     safeGet('secretariats',()=>read(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
     safeGet('items',()=>read(query(collection(db,'items'),orderBy('order_num','asc')))),
     safeGet('subitems',()=>read(query(collection(db,'subitems'),orderBy('order_num','asc')))),
@@ -1021,6 +1027,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
     safeGet('secretarias',()=>read(query(collection(db,'secretarias'),orderBy('name','asc')))),
     safeGet('responsaveis',()=>read(query(collection(db,'responsaveis'),orderBy('name','asc')))),
     safeGet('users',()=>read(query(collection(db,'users'),orderBy('displayName','asc')))),
+    safeGet('supabaseStatusAccess',()=>read(collection(db,'supabaseStatusAccess'))),
     safeGet('contatos',()=>read(query(collection(db,'contatos'),orderBy('nome','asc')))),
     safeGet('contas',()=>read(query(collection(db,'contas'),orderBy('created_at','desc')))),
     safeGet('estoque',()=>read(query(collection(db,'estoque'),orderBy('created_at','desc')))),
@@ -1028,7 +1035,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
     safeGet('trashItems',()=>read(query(collection(db,'trashItems'),orderBy('deleted_at','desc')))),
     safeGet('appSettings',()=>read(collection(db,'appSettings')))
   ]);
-  const hasData=[a,b,c,ft,se,resp,usr,cont,contas,estq,req,trash,settings].some(snapshot=>snapshot.docs.length);
+  const hasData=[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings].some(snapshot=>snapshot.docs.length);
   if(cacheOnly&&!hasData)return false;
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -1037,10 +1044,12 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
+  S.statusAccess=statusAccess.docs.map(d=>({id:d.id,...d.data()}));
   S.me=S.users.find(u=>u.id===S.user?.uid)||{};
   S.permissoes=S.me.permissoes||{modulos:{},pode_criar:false,pode_editar:false};
   S.canViewTrash=S.permissoes.pode_ver_lixeira===true;
   const trashNav=document.getElementById('nav-trash');if(trashNav)trashNav.style.display=S.canViewTrash?'':'none';
+  updateSupabaseStatusAccessUI();
   S.chamados=[];
   S.galeria=[];
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
@@ -1110,11 +1119,13 @@ function flattenSubTree(tree,levelPrefix,out){
 // ── NAV ──
 window.setView=function(v){
   if(v==='trash'&&!S.canViewTrash){toast('Seu usuário não tem permissão para visualizar a lixeira.','error');v='mod';}
+  if(v==='supabase-status'&&!canViewSupabaseStatus()){toast('Seu usuário não tem permissão para visualizar o status do Supabase.','error');v='mod';}
+  if(v!=='supabase-status')stopSupabaseStatusAutoRefresh();
   curSecId=null;
   window.__currentView=v;
   window.rememberWorkspace?.({kind:'view',id:v});
-  ['mod','map','adm','secr','resp','cont','trash'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
-  if(['adm','secr','resp','cont','trash'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
+  ['mod','map','adm','secr','resp','cont','trash','supabase-status'].forEach(k=>{const b=document.getElementById('nav-'+k);if(b)b.classList.toggle('active',k===v);});
+  if(['adm','secr','resp','cont','trash','supabase-status'].includes(v)){const d=document.getElementById('sidebar-secondary');if(d)d.open=true;}
   if(v==='mod')window.renderModulos();
   else if(v==='map')window.renderGeneralGeoMap();
   else if(v==='adm')renderAdmin();
@@ -1122,6 +1133,7 @@ window.setView=function(v){
   else if(v==='resp')renderResponsaveis();
   else if(v==='cont')renderContatos();
   else if(v==='trash')renderTrash();
+  else if(v==='supabase-status')renderSupabaseStatus();
 };
 
 const _trashTypeLabels={atividades:'Grupo de lançamentos',items:'Item',subitems:'Subitem / lançamento',secretarias:'Secretaria',responsaveis:'Responsável',contatos:'Contato',chamados:'Chamado',galeria:'Imagem',field_templates:'Campo personalizado',entity_images:'Imagem vinculada',contas:'Conta',estoque:'Estoque',requisicoes:'Requisição',distribuicao:'Distribuição',users:'Usuário',bulk_entry_drafts:'Rascunho em lote',extintores:'Extintor',extintor_abas:'Aba de extintores'};
@@ -2736,9 +2748,17 @@ function _buildPermMatrix(u){
   }).join('');
   return `<div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. Criar e excluir grupos dependem também das permissões gerais destacadas no início. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
+const _statusOwnerEmail='camposweb.personal@gmail.com';
+const _isStatusOwner=()=>String(S.user?.email||'').trim().toLowerCase()===_statusOwnerEmail;
+const _statusPermissionForUser=u=>String(u?.email||'').trim().toLowerCase()===_statusOwnerEmail||(S.statusAccess||[]).some(row=>row.id===u?.id&&row.allowed===true);
+async function _saveSupabaseStatusPermission(userId,allowed){
+  if(!_isStatusOwner()||!userId)return;
+  await setDoc(doc(db,'supabaseStatusAccess',userId),{allowed:allowed===true,granted_by:S.user.uid,updated_at:serverTimestamp()},{merge:true});
+}
+window._saveSupabaseStatusPermission=_saveSupabaseStatusPermission;
 function _generalUserPermissions(u){
-  const p=u?.permissoes||{};
-  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia qualquer grupo permitido para a lixeira, inclusive grupos de entrada de campo.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label></div></section>`;
+  const p=u?.permissoes||{},statusAllowed=_statusPermissionForUser(u),ownerAccount=String(u?.email||'').trim().toLowerCase()===_statusOwnerEmail,canManage=_isStatusOwner();
+  return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia qualquer grupo permitido para a lixeira, inclusive grupos de entrada de campo.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label><label class="permission-create-groups permission-supabase-status"><input type="checkbox" id="usr-can-view-supabase-status" ${statusAllowed?'checked':''} ${(ownerAccount||!canManage)?'disabled':''}><span><strong>Visualizar status do Supabase</strong><small>${ownerAccount?'Acesso permanente da conta RCAMPOS.':canManage?'Mostra uso do banco, armazenamento, fotos, limites e saúde do projeto.':'Somente RCAMPOS pode alterar esta permissão.'}</small></span></label></div></section>`;
 }
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
@@ -2810,6 +2830,7 @@ window.saveUser=async function(id){
     const setor_id=document.getElementById('usr-setor')?.value||'';
     const responsavel_id=document.getElementById('usr-resp')?.value||'';
     const permissoes=_readPermMatrix();
+    const canViewSupabaseStatus=document.getElementById('usr-can-view-supabase-status')?.checked===true;
     if(!name){toast('Nome é obrigatório','error');return;}
     if(id){
       const target=S.users.find(u=>u.id===id);
@@ -2820,6 +2841,7 @@ window.saveUser=async function(id){
       if(username!==normalizeUsername(_usernameFromEmail(target?.email))){
         await editUserAdminSession({id,username,name,profile:patch});
       }else{await updateDoc(doc(db,'users',id),patch);}
+      await window._saveSupabaseStatusPermission?.(id,canViewSupabaseStatus);
       await loadData();closeModal();toast('Atualizado!');renderAdmin();return;
     }
     const userRaw=document.getElementById('usr-user')?.value.trim();
@@ -2845,6 +2867,7 @@ window.saveUser=async function(id){
     if(!uid){toast('Não foi possível obter o ID do usuário.','error');return;}
     try{
       await setDoc(doc(db,'users',uid),{displayName:name,email,email_contato:emailContato.toLowerCase(),role,setor_id,responsavel_id,permissoes,created_at:serverTimestamp()});
+      await window._saveSupabaseStatusPermission?.(uid,canViewSupabaseStatus);
       await loadData();closeModal();toast('Usuário criado!');renderAdmin();
     }catch(saveErr){
       console.error(saveErr);

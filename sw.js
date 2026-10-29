@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v158';
+const CACHE_NAME = 'gestao-pms-v159';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   'js/custom-fields.js',
   'js/record-context.js',
   'js/access-scope.js',
+  'js/supabase-status.js',
   'js/demand-report.js',
   'exames.html',
   'manifest.json',
@@ -36,6 +37,7 @@ const STATIC_ASSETS = [
   'css/prefeitura-shell.css',
   'css/module-groups.css',
   'css/access-permissions.css',
+  'css/supabase-status.css',
   'css/bulk-archive.css',
   'css/trash.css',
   'css/custom-fields.css',

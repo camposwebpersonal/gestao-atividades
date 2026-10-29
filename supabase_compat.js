@@ -140,6 +140,7 @@ const TABLE_MAP = {
   'responsaveis': 'responsaveis',
   'entity_images': 'entity_images',
   'users': 'users',
+  'supabaseStatusAccess': 'supabase_status_access',
   'contatos': 'contatos',
   'galeria': 'galeria',
   'chamados': 'chamados',
@@ -151,7 +152,7 @@ const TABLE_MAP = {
 
 const REALTIME_TABLES = [
   'atividades','items','subitems','field_templates','secretarias','responsaveis',
-  'users','contatos','contas','estoque','requisicoes','trash_items','entity_images',
+  'users','supabase_status_access','contatos','contas','estoque','requisicoes','trash_items','entity_images',
   'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts','app_settings'
 ];
 

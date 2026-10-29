@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js?v=8';
+import {supabase} from '../supabase_compat.js?v=9';
 import {FIELD_GROUP_KEY,isFieldDemandGroup,fieldDemandTitle,cameraInputAttributes} from './camera-capture-core.js?v=1';
 import {capturePosition,optimizePhoto} from './geolocation.js?v=3';
 

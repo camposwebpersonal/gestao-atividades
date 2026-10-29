@@ -1,5 +1,5 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
-import {supabase} from '../supabase_compat.js?v=8';
+import {supabase} from '../supabase_compat.js?v=9';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=7';
 import './perfuracao-pocos.js?v=102';

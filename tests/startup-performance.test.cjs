@@ -17,13 +17,13 @@ test('logomarca visível usa ativo leve, prioritário e dimensionalmente estáve
 test('recursos secundários não bloqueiam a primeira pintura',()=>{
   assert.match(html,/script defer src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jspdf/);
   assert.match(html,/leaflet\.css[^>]*media="print"[^>]*onload="this\.media='all'"/);
-  assert.match(html,/rel="modulepreload" href="supabase_compat\.js\?v=8"/);
+  assert.match(html,/rel="modulepreload" href="supabase_compat\.js\?v=9"/);
   assert.match(html,/const cacheDataPromise=loadData\(\{cacheOnly:true\}\);[\s\S]*const cacheReady=await cacheDataPromise/);
 });
 
 test('manifesto usa ícones realmente dimensionados e cache renovado',()=>{
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
   assert.deepEqual(manifest.icons.map(icon=>icon.sizes),['192x192','512x512']);
-  assert.match(sw,/gestao-pms-v158/);
+  assert.match(sw,/gestao-pms-v159/);
   assert.doesNotMatch(sw,/^\s*'img\/logo_sertania\.png',/m);
 });
