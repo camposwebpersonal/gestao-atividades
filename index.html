@@ -431,6 +431,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/geolocation.css?v=3">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=2">
+<link rel="stylesheet" href="css/global-search-premium.css?v=1">
+<link rel="stylesheet" href="css/water-points.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -461,6 +463,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
   <div id="navmenu">
     <button class="nav-btn active sidebar-home" id="nav-mod" onclick="setView('mod')">⌂ Visão geral</button>
     <button class="nav-btn sidebar-map" id="nav-map" onclick="setView('map')">⌖ Mapa geral</button>
+    <button class="sidebar-search-launch" type="button" onclick="abrirBuscaGlobalMobile()"><span>⌕</span><span><b>Buscar no sistema</b><small>Pessoas, grupos, lançamentos…</small></span><kbd>Ctrl K</kbd></button>
     <div class="sidebar-heading"><span>Áreas operacionais</span><div class="sidebar-heading-actions"><button id="sidebar-organize" type="button" hidden onclick="openMenuOrganizer()" title="Renomear, reordenar ou remover itens do menu">⚙ Organizar</button><button id="sidebar-close" type="button" aria-label="Fechar menu" onclick="closeSidebar()">×</button></div></div>
     <div id="sidebar-modules" aria-label="Áreas operacionais"></div>
     <details class="sidebar-secondary" id="sidebar-secondary">
@@ -473,6 +476,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
         <button class="nav-btn" id="nav-trash" style="display:none" onclick="setView('trash')">♻ Lixeira</button>
         <button class="nav-btn" id="nav-supabase-status" style="display:none" onclick="setView('supabase-status')">◉ Status do Supabase</button>
         <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
+        <div class="sidebar-mobile-session"><button type="button" onclick="window.location.href='exames.html'">▦ Sistema</button><button type="button" onclick="doLogout()">↪ Sair com segurança</button></div>
       </div>
     </details>
     <div class="sidebar-footnote"><span class="system-live-dot"></span><span>Sistema conectado</span></div>
@@ -506,6 +510,7 @@ import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFro
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=2';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import './js/modulos.js?v=102';
+import './js/water-points.js?v=1';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -552,7 +557,7 @@ function releaseSaveButton(button){
 }
 function releaseSaveButtons(){for(const button of [..._savingButtons])releaseSaveButton(button);}
 window.releaseSaveButtons=releaseSaveButtons;
-const _stateTableMap={atividades:'secs',items:'items',subitems:'subitems',field_templates:'fieldTemplates',secretarias:'secretarias',responsaveis:'responsaveis',users:'users',supabase_status_access:'statusAccess',contatos:'contatos',contas:'contas',estoque:'estoque',requisicoes:'requisicoes',trash_items:'trashItems',app_settings:'appSettings'};
+const _stateTableMap={atividades:'secs',items:'items',subitems:'subitems',field_templates:'fieldTemplates',secretarias:'secretarias',responsaveis:'responsaveis',users:'users',supabase_status_access:'statusAccess',contatos:'contatos',contas:'contas',estoque:'estoque',requisicoes:'requisicoes',trash_items:'trashItems',app_settings:'appSettings',water_collection_points:'waterPoints'};
 let _liveRenderTimer=0;
 function applyLiveRecordChange({table,eventType,record,oldRecord,source}={}){
   if(source==='local')_lastLocalMutationAt=Date.now();
@@ -606,17 +611,18 @@ function _globalSearchEntries(){
  for(const contact of S.contatos||[])entries.push({type:'contact',icon:'☏',title:contact.nome||'Contato',context:[contact.cargo,contact.setor,contact.telefone].filter(Boolean).join(' · ')||'Contato',data:contact,search:contact});
  for(const responsible of S.responsaveis||[])entries.push({type:'responsible',icon:'♙',title:responsible.name||responsible.nome||'Responsável',context:[responsible.cargo,responsible.setor,responsible.telefone].filter(Boolean).join(' · ')||'Responsável',data:responsible,search:responsible});
  for(const secretary of S.secretarias||[])entries.push({type:'secretary',icon:'▦',title:secretary.name||secretary.nome||'Secretaria',context:'Secretaria municipal',data:secretary,search:secretary});
+ for(const point of window.waterCollectionPoints||[])entries.push({type:'water',icon:'💧',title:point.name||'Local de captação',context:[point.locality,point.reference].filter(Boolean).join(' · ')||'Local de captação de água',data:point,search:point});
  if(S.isAdmin)for(const user of S.users||[])entries.push({type:'user',icon:'♙',title:user.displayName||user.display_name||user.name||user.email||'Usuário',context:'Usuário do sistema',data:user,search:user});
  return entries;
 }
-const _globalTypeLabel={module:'Área',group:'Grupo',item:'Item',subitem:'Lançamento',contact:'Contato',responsible:'Responsável',secretary:'Secretaria',user:'Usuário'};
+const _globalTypeLabel={module:'Área',group:'Grupo',item:'Item',subitem:'Lançamento',contact:'Contato',responsible:'Responsável',secretary:'Secretaria',user:'Usuário',water:'Captação'};
 function _renderGlobalSearch(query){
  const panel=document.getElementById('global-search-panel'),input=document.getElementById('global-search');if(!panel||!input)return;
  const q=String(query||'').trim(),clear=document.querySelector('.global-search-clear');if(clear)clear.hidden=!q;
  if(!q){panel.hidden=true;input.setAttribute('aria-expanded','false');_globalSearchResults=[];return;}
- _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,30).map(entry=>({...entry.record,score:entry.match.score}));_globalSearchActive=_globalSearchResults.length?0:-1;
+ _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,250).map(entry=>({...entry.record,score:entry.match.score}));_globalSearchActive=_globalSearchResults.length?0:-1;
  const summary=_globalSearchResults.length?`${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} mais relevante${_globalSearchResults.length===1?'':'s'}`:'Nenhum resultado';
- panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>↑↓ navegar · Enter abrir · Esc fechar</span></div>${_globalSearchResults.map((entry,index)=>`<button type="button" class="global-search-result${index===_globalSearchActive?' active':''}" role="option" aria-selected="${index===_globalSearchActive}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span class="global-search-result-copy"><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><span class="global-search-result-type">${_globalTypeLabel[entry.type]}</span><span class="global-search-open">↗</span></button>`).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}`;
+ panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>Enter mostra todos · Esc fecha</span></div>${_globalSearchResults.slice(0,12).map((entry,index)=>`<button type="button" class="global-search-result${index===_globalSearchActive?' active':''}" role="option" aria-selected="${index===_globalSearchActive}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span class="global-search-result-copy"><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><span class="global-search-result-type">${_globalTypeLabel[entry.type]}</span><span class="global-search-open">↗</span></button>`).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}${_globalSearchResults.length?`<button class="global-search-all" type="button" onclick="abrirPaginaBuscaGlobal()">Ver todos os resultados organizados <span>→</span></button>`:''}`;
  panel.hidden=false;input.setAttribute('aria-expanded','true');
 }
 window.pesquisarGlobal=function(value){clearTimeout(_globalSearchTimer);_globalSearchTimer=setTimeout(()=>_renderGlobalSearch(value),70);};
@@ -631,13 +637,22 @@ window.ativarResultadoBuscaGlobal=function(index){
  else if(entry.type==='responsible'){window.setView('resp');_focusSearchTarget(entry.data.id);}
  else if(entry.type==='secretary'){window.setView('secr');_focusSearchTarget(entry.data.id);}
  else if(entry.type==='user'){window.setView('adm');_focusSearchTarget(entry.data.id);}
+ else if(entry.type==='water'){window.renderWaterCollectionPoints?.(entry.data.id);}
 };
+window.abrirPaginaBuscaGlobal=function(value){
+ const input=document.getElementById('global-search'),q=String(value??input?.value??'').trim();if(!q)return;
+ if(input)input.value=q;_renderGlobalSearch(q);window.fecharBuscaGlobal();window.__currentView='search';
+ const groups=new Map();for(const entry of _globalSearchResults){const label=_globalTypeLabel[entry.type]||'Outros';if(!groups.has(label))groups.set(label,[]);groups.get(label).push(entry);}
+ const sections=[...groups].map(([label,rows])=>`<section class="search-page-group"><header><h2>${_gsEsc(label)}</h2><span>${rows.length}</span></header><div>${rows.map(entry=>`<button type="button" onclick="ativarResultadoBuscaPorId('${_gsEsc(entry.type)}','${_gsEsc(entry.data?.id||'')}')"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><b>${_gsEsc(label)}</b><i>→</i></button>`).join('')}</div></section>`).join('');
+ document.getElementById('content').innerHTML=`<section class="search-results-page"><header><span class="workspace-kicker">BUSCA INTELIGENTE</span><h1>Resultados para “${_gsEsc(q)}”</h1><p>${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} encontrado${_globalSearchResults.length===1?'':'s'} em todo o sistema.</p><form onsubmit="event.preventDefault();abrirPaginaBuscaGlobal(document.getElementById('search-page-input').value)"><span>⌕</span><input id="search-page-input" type="search" value="${_gsEsc(q)}" autofocus><button>Buscar</button></form></header>${sections||`<div class="search-page-empty"><b>Nenhum resultado encontrado</b><span>Revise o termo ou faça uma busca mais ampla.</span></div>`}</section>`;
+};
+window.ativarResultadoBuscaPorId=function(type,id){const index=_globalSearchResults.findIndex(entry=>entry.type===type&&String(entry.data?.id||'')===String(id));if(index>=0)window.ativarResultadoBuscaGlobal(index);};
 window.navegarBuscaGlobal=function(event){
  if(event.key==='Escape'){event.preventDefault();window.fecharBuscaGlobal();return;}
  if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(!_globalSearchResults.length)return;_globalSearchActive=(_globalSearchActive+(event.key==='ArrowDown'?1:-1)+_globalSearchResults.length)%_globalSearchResults.length;window.selecionarResultadoBuscaGlobal(_globalSearchActive);document.querySelector(`[data-search-index="${_globalSearchActive}"]`)?.scrollIntoView({block:'nearest'});return;}
- if(event.key==='Enter'){event.preventDefault();if(_globalSearchActive>=0)window.ativarResultadoBuscaGlobal(_globalSearchActive);else _renderGlobalSearch(event.currentTarget.value);}
+ if(event.key==='Enter'){event.preventDefault();window.abrirPaginaBuscaGlobal(event.currentTarget.value);}
 };
-window.executarBuscaGlobal=function(value){_renderGlobalSearch(value);if(_globalSearchResults.length)window.ativarResultadoBuscaGlobal(0);};
+window.executarBuscaGlobal=function(value){window.abrirPaginaBuscaGlobal(value);};
 window.abrirBuscaGlobalMobile=function(){document.body.classList.add('global-search-open');const input=document.getElementById('global-search');setTimeout(()=>{input?.focus();_renderGlobalSearch(input?.value);},30);};
 window.fecharBuscaGlobal=function(){document.body.classList.remove('global-search-open');const panel=document.getElementById('global-search-panel');if(panel)panel.hidden=true;document.getElementById('global-search')?.setAttribute('aria-expanded','false');};
 window.limparBuscaGlobal=function(){const input=document.getElementById('global-search');if(input){input.value='';input.focus();}_renderGlobalSearch('');};
@@ -676,7 +691,7 @@ function updateUndoUI(){const ub=document.getElementById('undo-btn'),rb=document
 document.addEventListener('keydown',e=>{if(e.ctrlKey&&(e.key==='z'||e.key==='Z')){e.preventDefault();undoLast();}if((e.ctrlKey&&(e.key==='y'||e.key==='Y'))||(e.ctrlKey&&e.shiftKey&&(e.key==='z'||e.key==='Z'))){e.preventDefault();redoLast();}});
 
 // ── STATE ──
-let S={user:null,isAdmin:false,canViewTrash:false,canViewSupabaseStatus:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],statusAccess:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[],appSettings:[]};window.S=S;
+let S={user:null,isAdmin:false,canViewTrash:false,canViewSupabaseStatus:false,userRole:null,userSetor:null,secs:[],items:[],subitems:[],fieldTemplates:[],secretarias:[],responsaveis:[],users:[],statusAccess:[],chamados:[],galeria:[],contatos:[],estoque:[],requisicoes:[],trashItems:[],appSettings:[],waterPoints:[]};window.S=S;
 let _importando=false;
 let curSecId=null,_pRT={};
 const EMPREGOS_DATA_VERSION='2026-06-v1';
@@ -1020,7 +1035,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   };
   const recentLocalMutation=!forceRemote&&Date.now()-_lastLocalMutationAt<2500;
   const read=(cacheOnly||recentLocalMutation)?getDocsFromCache:getDocs;
-  const[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings]=await Promise.all([
+  const[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings,waterPoints]=await Promise.all([
     safeGet('secretariats',()=>read(query(collection(db,'secretariats'),orderBy('order_num','asc')))),
     safeGet('items',()=>read(query(collection(db,'items'),orderBy('order_num','asc')))),
     safeGet('subitems',()=>read(query(collection(db,'subitems'),orderBy('order_num','asc')))),
@@ -1034,9 +1049,10 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
     safeGet('estoque',()=>read(query(collection(db,'estoque'),orderBy('created_at','desc')))),
     safeGet('requisicoes',()=>read(query(collection(db,'requisicoes'),orderBy('numero','asc')))),
     safeGet('trashItems',()=>read(query(collection(db,'trashItems'),orderBy('deleted_at','desc')))),
-    safeGet('appSettings',()=>read(collection(db,'appSettings')))
+    safeGet('appSettings',()=>read(collection(db,'appSettings'))),
+    safeGet('waterCollectionPoints',()=>read(query(collection(db,'waterCollectionPoints'),orderBy('name','asc'))))
   ]);
-  const hasData=[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings].some(snapshot=>snapshot.docs.length);
+  const hasData=[a,b,c,ft,se,resp,usr,statusAccess,cont,contas,estq,req,trash,settings,waterPoints].some(snapshot=>snapshot.docs.length);
   if(cacheOnly&&!hasData)return false;
   S.secs=a.docs.map(d=>({id:d.id,...d.data()}));
   S.items=b.docs.map(d=>({id:d.id,...d.data()}));
@@ -1059,6 +1075,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   S.requisicoes=req.docs.map(d=>({id:d.id,...d.data()}));
   S.trashItems=trash.docs.map(d=>({id:d.id,...d.data()}));
   S.appSettings=settings.docs.map(d=>({id:d.id,...d.data()}));
+  S.waterPoints=waterPoints.docs.map(d=>({id:d.id,...d.data()}));window.waterCollectionPoints=S.waterPoints;
   const menuButton=document.getElementById('sidebar-organize');if(menuButton)menuButton.hidden=!S.isAdmin;
   if(failed.length&&!cacheOnly)toast('Falha ao carregar: '+failed.join('; ')+'. Dados podem estar incompletos.','error',9000);
   if(!cacheOnly&&S.isAdmin && !S.secs.some(s=>s.controle_estoque_modelo || (s.name||'').toUpperCase()==='CONTROLE DE ESTOQUE DE ITENS DA SECRETARIA DE SAÚDE')){

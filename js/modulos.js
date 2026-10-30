@@ -12,7 +12,7 @@ const MODULOS = [
   {id:'projetos', label:'Controle de Projetos', desc:'Projetos que a Prefeitura está trabalhando atualmente.', icon:'🚀', color:'#f59e0b', modulo:'projetos'},
   {id:'obras', label:'Obras e Infraestrutura', desc:'Cisternas, barragens, barreiros e demandas de infraestrutura.', icon:'🏗️', color:'#a16207', modulo:'obras'},
   {id:'frota', label:'Frota e Veículos', desc:'IPVA, seguros e aluguéis dos veículos municipais.', icon:'🚗', color:'#6366f1', modulo:'frota'},
-  {id:'atendimentos', label:'Demandas por Secretarias', desc:'Grupos e demandas organizados por secretaria responsável.', icon:'🏛️', color:'#ef4444', modulo:'atendimentos'},
+  {id:'atendimentos', label:'Secretarias', desc:'Áreas municipais, grupos e lançamentos organizados por secretaria.', icon:'🏛️', color:'#ef4444', modulo:'atendimentos'},
   {id:'rh', label:'RH e Empregos', desc:'BCCS, comissionados, contratos e gestão de pessoas.', icon:'👥', color:'#8b5cf6', modulo:'rh'},
   {id:'cadastros', label:'Cadastros', desc:'Associações, lideranças e listas diversas.', icon:'📋', color:'#06b6d4', modulo:'cadastros'},
   {id:'contas', label:'Controle de Contas', desc:'Água, luz, telefone, internet, seguros e contas.', icon:'💰', color:'#10b981', modulo:'contas', flag:'controle_contas'},
@@ -462,14 +462,17 @@ function _moduleNumbers(mod){
 function _renderSidebarModules(activeId=''){
   const host=document.getElementById('sidebar-modules');
   if(!host)return;
-  host.innerHTML=_visibleModules().map(mod=>{
-    const numbers=_moduleNumbers(mod);
-    return `<button type="button" class="sidebar-module-btn ${activeId===mod.id?'active':''}" onclick="${mod.id==='atendimentos'?"window.openDemandSecretaria()":`window.renderModulo('${mod.id}')`}" title="${_md.esc(mod.label)}" style="--module-soft:${mod.color}28;--module-color:${mod.color}">
-      <span class="sidebar-module-icon">${mod.icon}</span>
-      <span class="sidebar-module-label">${_md.esc(mod.label)}</span>
-      <span class="sidebar-module-count">${numbers.grupos.length}</span>
-    </button>${mod.id==='atendimentos'?demandSidebar(activeId===mod.id):''}`;
+  const visible=_visibleModules(),allowedDemand=visible.find(mod=>mod.id==='atendimentos'),demand=allowedDemand||{id:'atendimentos',icon:'🏛️',color:'#ef4444'},specials=visible.filter(mod=>mod.id!=='atendimentos');
+  const demandNumbers=allowedDemand?_moduleNumbers(allowedDemand):{grupos:[],total:0},norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  const secretaries=(window.S?.secretarias||[]).filter(item=>item.demandas_ativa!==false).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
+  const assigned=id=>specials.filter(mod=>id==='DEFESA CIVIL'?mod.id==='extintores':id==='TRANSPORTES'?mod.id==='frota':id==='ADMINISTRACAO'?!['extintores','frota'].includes(mod.id):false);
+  const secretaryRows=secretaries.map(secretary=>{
+    const sid=norm(secretary.name),mods=assigned(sid),isAgriculture=sid.includes('AGRICULTURA');
+    const own=demandNumbers.grupos.filter(group=>group.demanda_secretaria_id===secretary.id);
+    if(!allowedDemand&&!mods.length)return'';
+    return `<details class="sidebar-secretary" ${activeId==='water_points'&&isAgriculture?'open':''}><summary><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><b>${own.length}</b></summary><div>${allowedDemand?`<button type="button" onclick="openDemandSecretaria(${_md.arg(secretary.id)})">▤ Grupos e lançamentos</button>`:''}${isAgriculture&&allowedDemand?`<button type="button" class="${activeId==='water_points'?'active':''}" onclick="renderWaterCollectionPoints()">💧 Locais de Captação de Água</button>`:''}${mods.map(mod=>`<button type="button" class="${activeId===mod.id?'active':''}" onclick="renderModulo('${mod.id}')">${mod.icon} ${_md.esc(mod.label)}</button>`).join('')}</div></details>`;
   }).join('');
+  host.innerHTML=`<button type="button" class="sidebar-module-btn ${activeId==='atendimentos'?'active':''}" onclick="${allowedDemand?'window.openDemandSecretaria()':'void 0'}" title="Secretarias" style="--module-soft:${demand.color}28;--module-color:${demand.color}"><span class="sidebar-module-icon">${demand.icon}</span><span class="sidebar-module-label">Secretarias</span><span class="sidebar-module-count">${secretaries.length}</span></button><div class="sidebar-secretary-tree">${secretaryRows}</div>`;
 }
 window.refreshSidebarModules=_renderSidebarModules;
 

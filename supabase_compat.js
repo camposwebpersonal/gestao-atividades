@@ -147,13 +147,14 @@ const TABLE_MAP = {
   'contas': 'contas',
   'trashItems': 'trash_items',
   'trash_items': 'trash_items',
-  'appSettings': 'app_settings'
+  'appSettings': 'app_settings',
+  'waterCollectionPoints': 'water_collection_points'
 };
 
 const REALTIME_TABLES = [
   'atividades','items','subitems','field_templates','secretarias','responsaveis',
   'users','supabase_status_access','contatos','contas','estoque','requisicoes','trash_items','entity_images',
-  'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts','app_settings'
+  'galeria','chamados','distribuicao','extintores','extintor_abas','bulk_entry_drafts','app_settings','water_collection_points'
 ];
 
 function toSnake(str) {

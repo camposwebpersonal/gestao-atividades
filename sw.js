@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v160';
+const CACHE_NAME = 'gestao-pms-v161';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -30,6 +30,7 @@ const STATIC_ASSETS = [
   'js/camera-capture-core.js',
   'js/smart-camera.js',
   'js/geolocation.js',
+  'js/water-points.js',
   'js/demandas-secretarias.js',
   'js/demandas-model.js',
   'css/demandas-secretarias.css',
@@ -38,6 +39,8 @@ const STATIC_ASSETS = [
   'css/module-groups.css',
   'css/access-permissions.css',
   'css/supabase-status.css',
+  'css/global-search-premium.css',
+  'css/water-points.css',
   'css/bulk-archive.css',
   'css/trash.css',
   'css/custom-fields.css',
