@@ -1,0 +1,32 @@
+/* Regras permanentes de legibilidade, fluxo e prevenção de sobreposição. */
+#navmenu :is(button,summary){font-size:12px;line-height:1.35}
+#navmenu :is(small,b){font-size:11px;line-height:1.3}
+#content :is(small,th,.badge,[class*="-meta"],[class*="-status"],[class*="-audit"],[class*="-kicker"]){font-size:max(11px,.6875rem)!important;line-height:1.3!important}
+#content :is(button,.btn-action,.card-btn){font-size:max(11px,.72rem)}
+#content :is(article,li,td,th,[class*="card"],[class*="row"],[class*="head"],[class*="copy"],[class*="actions"]){min-width:0;max-width:100%}
+#content :is([class*="actions"],[class*="badges"],[class*="toolbar"]){flex-wrap:wrap}
+#content :is([class*="meta"],[class*="status"],[class*="audit"]){overflow-wrap:anywhere}
+
+.sidebar-secretary-tree{display:grid;gap:3px;margin:3px 0 9px 15px;padding-left:8px}
+.sidebar-secretary-link{display:grid;grid-template-columns:8px minmax(0,1fr) auto 12px;align-items:center;gap:8px;width:100%;min-height:42px;padding:8px 8px;border:0;border-left:1px solid rgba(103,195,175,.32);border-radius:0 9px 9px 0;background:transparent;color:#a6beca;text-align:left;cursor:pointer}
+.sidebar-secretary-link>span:nth-child(2){min-width:0;overflow-wrap:anywhere;font-size:12px;font-weight:650;line-height:1.35}.sidebar-secretary-link b{white-space:nowrap;color:#7795a4;font-weight:650}.sidebar-secretary-link i{color:#61cdb4;font-size:18px;font-style:normal}.sidebar-secretary-link:hover,.sidebar-secretary-link.active{border-left-color:#6fddc3;background:rgba(39,139,119,.23);color:#fff}
+
+.secretary-workspace{max-width:1220px;margin:0 auto;padding:clamp(18px,4vw,48px)}.secretary-workspace>header{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:18px;margin-bottom:24px}.secretary-workspace>header>button{min-height:42px;padding:8px 13px;border:1px solid #cbdde3;border-radius:10px;background:#fff;color:#31556b;font-weight:750}.secretary-workspace h1{margin:5px 0;color:#16354d;font-size:clamp(1.8rem,5vw,3rem);line-height:1.1}.secretary-workspace p{margin:0;color:#667f91;font-size:14px}.secretary-workspace-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.secretary-workspace-grid>button{display:grid;grid-template-columns:58px minmax(0,1fr) 24px;align-items:center;gap:16px;min-height:132px;padding:22px;border:1px solid #cfe1dc;border-radius:19px;background:radial-gradient(circle at 95% 0,rgba(102,204,178,.16),transparent 38%),linear-gradient(145deg,#fff,#f2faf7);color:#173a4e;text-align:left;cursor:pointer;box-shadow:0 12px 32px rgba(21,74,66,.09);transition:transform .16s ease,box-shadow .16s ease}.secretary-workspace-grid>button:hover{transform:translateY(-3px);box-shadow:0 18px 40px rgba(21,74,66,.15)}.secretary-workspace-grid>button>span:first-child{display:grid;place-items:center;width:58px;height:58px;border:1px solid #b9dfd4;border-radius:15px;background:#e4f7f1;font-size:29px}.secretary-workspace-grid strong,.secretary-workspace-grid small{display:block;overflow-wrap:anywhere}.secretary-workspace-grid strong{font-size:17px;line-height:1.25}.secretary-workspace-grid small{margin-top:7px;color:#668092;font-size:12px!important}.secretary-workspace-grid i{color:#0b8a72;font-size:24px;font-style:normal}
+
+/* Grupos: cards limpos; lista conserva apenas a quantidade. */
+.demand-row{cursor:pointer;min-width:0}.demand-row>*{min-width:0}.demand-open{border:0;background:transparent;text-align:left;cursor:pointer}
+.demand-card{grid-template-rows:auto 1fr auto!important;min-height:190px!important}.demand-card .demand-open{grid-row:1/3!important;min-height:82px!important}.demand-card .demand-actions{grid-row:3!important}.demand-card .demand-total,.demand-card .demand-progress,.demand-open-cta{display:none!important}
+.demand-list-head,.demand-list>.demand-row{grid-template-columns:62px 48px minmax(250px,1fr) 120px minmax(210px,auto)!important}.demand-list .demand-actions{grid-column:5!important}.demand-list .demand-progress{display:none!important}
+
+/* Badges e metadados sempre participam do fluxo e quebram com segurança. */
+:is(.item-header,.sub-row,.completed-row-main,.attendance-inline-meta,.attendance-record-meta,.attendance-badges,.pw-badges){min-width:0;max-width:100%;overflow:visible}
+:is(.item-header,.sub-row,.attendance-inline-meta,.attendance-badges,.pw-badges){flex-wrap:wrap!important}
+:is(.attendance-urgency,.attendance-priority-badge,.attendance-requester,.pw-badge,.status-badge){position:static!important;min-width:0;max-width:100%;font-size:11px!important;line-height:1.25!important;white-space:normal!important;overflow-wrap:anywhere;word-break:normal}
+.item-info,.attendance-inline-meta>.record-audit,.completed-row-main>*{min-width:0!important;overflow-wrap:anywhere}
+
+@media(max-width:1180px){.demand-list-head{display:none}.demand-list>.demand-row{grid-template-columns:58px 48px minmax(180px,1fr) 88px minmax(140px,auto)!important}.demand-list .demand-actions{grid-column:5!important}}
+@media(max-width:680px){
+ .sidebar-secretary-link{min-height:46px;padding-block:9px}.sidebar-secretary-link>span:nth-child(2){font-size:12.5px}
+ .secretary-workspace{padding:18px 12px 30px}.secretary-workspace>header{grid-template-columns:1fr;gap:12px}.secretary-workspace>header>button{justify-self:start}.secretary-workspace-grid{grid-template-columns:1fr;gap:11px}.secretary-workspace-grid>button{grid-template-columns:50px minmax(0,1fr) 20px;min-height:108px;padding:16px;gap:12px}.secretary-workspace-grid>button>span:first-child{width:50px;height:50px;font-size:25px}.secretary-workspace-grid strong{font-size:15px}
+ .demand-card{min-height:180px!important}.demand-list>.demand-row{grid-template-columns:38px 46px minmax(0,1fr)!important;grid-template-rows:auto auto auto!important}.demand-list .demand-total{grid-column:2!important;grid-row:2!important}.demand-list .demand-actions{grid-column:2/4!important;grid-row:3!important;position:static!important}.demand-list .demand-open{grid-column:3!important;grid-row:1!important}
+}

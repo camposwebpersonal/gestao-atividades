@@ -29,7 +29,7 @@ test('câmera oferece escolha explícita, arquivo leve e fallback nativo',()=>{
 test('service worker prioriza versão publicada e mantém fallback offline',()=>{
   const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  assert.match(sw,/gestao-pms-v161/);
+  assert.match(sw,/gestao-pms-v162/);
   assert.match(sw,/fetch\(request,\{cache:'no-store'\}\)/);
   assert.match(sw,/setTimeout\(\(\)=>cached\(\)\.then\(resolve\),1400\)/);
   assert.match(sw,/offlineCached/);

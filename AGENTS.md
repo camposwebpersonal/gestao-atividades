@@ -46,3 +46,22 @@
 - Ao criar recursos hierárquicos, oferecer permissões no mesmo nível de detalhe
   da navegação (módulo, submenu/secretaria e grupo), incluindo uma opção explícita
   para abranger automaticamente registros futuros daquele escopo.
+
+## Regras permanentes de legibilidade e navegação
+
+- Nunca usar texto operacional minúsculo: menus, submenus, status, metadados,
+  botões e informações de cards/listas devem permanecer legíveis em notebook,
+  tablet, celular e com zoom. O piso visual é 11px para metadados e 12px para
+  navegação; não reduzir fontes para conseguir compactação.
+- Nunca aceitar elementos sobrepostos, cortados ou vazando do contêiner. Cards,
+  listas, badges e barras de ações devem usar `min-width: 0`, quebra controlada e
+  reorganização responsiva. Compactar por espaçamento e hierarquia, não esmagando
+  texto ou posicionando informações concorrentes na mesma área.
+- Status como “Pode aguardar”, urgência e prioridade devem quebrar ou ocupar uma
+  nova linha quando faltar espaço, sem cobrir título, responsável ou ações.
+- No menu lateral, uma secretaria com apenas Controle de Demandas abre diretamente
+  suas demandas. Quando possuir dois ou mais tipos de lançamento, o clique abre
+  uma tela de escolha ampla e legível; não listar esses tipos como submenus pequenos.
+- Cards de grupos de demandas não exibem quantidade, percentual, barra de progresso
+  nem o texto redundante “Abrir grupo”. No modo lista, manter apenas a quantidade e
+  remover percentual e barra. O card inteiro deve abrir o grupo, preservando ações.

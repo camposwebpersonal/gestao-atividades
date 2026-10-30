@@ -42,7 +42,8 @@ test('lista de grupos usa uma linha fina no notebook e preserva a quebra respons
 test('cards e listas premium preservam hierarquia e responsividade',()=>{
  assert.match(interfaceSource,/function visualFor/);
  assert.match(interfaceSource,/demand-symbol tone-/);
- assert.match(interfaceSource,/demand-open-cta/);
+ assert.doesNotMatch(interfaceSource,/demand-open-cta/);
+ assert.match(interfaceSource,/role="button" tabindex="0" onclick="openActivity/);
  assert.match(interfaceSource,/demand-list-head/);
  assert.match(premiumCss,/\.demand-card\{display:grid/);
  assert.match(premiumCss,/\.demand-list-head,\.demand-list>\.demand-row\{display:grid/);

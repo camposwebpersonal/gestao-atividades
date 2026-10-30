@@ -459,18 +459,39 @@ function _moduleNumbers(mod){
   };
 }
 
+function _normalizedSecretaryName(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();}
+function _specialModulesForSecretary(secretary,visible=_visibleModules()){
+  const name=_normalizedSecretaryName(secretary?.name);
+  return visible.filter(mod=>mod.id!=='atendimentos').filter(mod=>name==='DEFESA CIVIL'?mod.id==='extintores':name==='TRANSPORTES'?mod.id==='frota':name==='ADMINISTRACAO'?!['extintores','frota'].includes(mod.id):false);
+}
+function _secretaryDestinations(secretary){
+  const visible=_visibleModules(),demand=visible.find(mod=>mod.id==='atendimentos'),name=_normalizedSecretaryName(secretary?.name),destinations=[];
+  if(demand)destinations.push({id:'demands',icon:'▤',title:'Controle de Demandas',description:'Grupos, itens, subitens e demandas desta secretaria.',open:()=>window.openDemandSecretaria(secretary.id)});
+  if(demand&&name.includes('AGRICULTURA'))destinations.push({id:'water_points',icon:'💧',title:'Locais de Captação de Água',description:'Pontos para caminhões-pipa, fotos, referências, mapa e rotas.',open:()=>window.renderWaterCollectionPoints()});
+  for(const mod of _specialModulesForSecretary(secretary,visible))destinations.push({id:mod.id,icon:mod.icon,title:mod.label,description:mod.desc,open:()=>window.renderModulo(mod.id)});
+  return destinations;
+}
+window.openSecretaryWorkspace=function(secretaryId){
+  const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));if(!secretary)return;
+  const destinations=_secretaryDestinations(secretary);if(destinations.length===1){destinations[0].open();return;}if(!destinations.length){window.toast?.('Nenhuma área está liberada para esta secretaria.','info');return;}
+  window.__currentView='secretary-workspace';_renderSidebarModules('secretary:'+secretary.id);
+  _md.setC(`<section class="secretary-workspace"><header><button type="button" onclick="renderModulos()">← Visão geral</button><div><span class="workspace-kicker">SECRETARIA MUNICIPAL</span><h1>${_md.esc(secretary.name)}</h1><p>Escolha a área de trabalho que deseja acessar.</p></div></header><div class="secretary-workspace-grid">${destinations.map(destination=>`<button type="button" onclick="openSecretaryDestination(${_md.arg(secretary.id)},${_md.arg(destination.id)})"><span>${destination.icon}</span><span><strong>${_md.esc(destination.title)}</strong><small>${_md.esc(destination.description)}</small></span><i>→</i></button>`).join('')}</div></section>`);
+};
+window.openSecretaryDestination=function(secretaryId,destinationId){const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));_secretaryDestinations(secretary).find(item=>item.id===destinationId)?.open();};
+
 function _renderSidebarModules(activeId=''){
   const host=document.getElementById('sidebar-modules');
   if(!host)return;
-  const visible=_visibleModules(),allowedDemand=visible.find(mod=>mod.id==='atendimentos'),demand=allowedDemand||{id:'atendimentos',icon:'🏛️',color:'#ef4444'},specials=visible.filter(mod=>mod.id!=='atendimentos');
-  const demandNumbers=allowedDemand?_moduleNumbers(allowedDemand):{grupos:[],total:0},norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+  const visible=_visibleModules(),allowedDemand=visible.find(mod=>mod.id==='atendimentos'),demand=allowedDemand||{id:'atendimentos',icon:'🏛️',color:'#ef4444'};
+  const demandNumbers=allowedDemand?_moduleNumbers(allowedDemand):{grupos:[],total:0};
   const secretaries=(window.S?.secretarias||[]).filter(item=>item.demandas_ativa!==false).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
-  const assigned=id=>specials.filter(mod=>id==='DEFESA CIVIL'?mod.id==='extintores':id==='TRANSPORTES'?mod.id==='frota':id==='ADMINISTRACAO'?!['extintores','frota'].includes(mod.id):false);
+  const assigned=secretary=>_specialModulesForSecretary(secretary,visible);
   const secretaryRows=secretaries.map(secretary=>{
-    const sid=norm(secretary.name),mods=assigned(sid),isAgriculture=sid.includes('AGRICULTURA');
+    const sid=_normalizedSecretaryName(secretary.name),mods=assigned(secretary),isAgriculture=sid.includes('AGRICULTURA');
     const own=demandNumbers.grupos.filter(group=>group.demanda_secretaria_id===secretary.id);
     if(!allowedDemand&&!mods.length)return'';
-    return `<details class="sidebar-secretary" ${activeId==='water_points'&&isAgriculture?'open':''}><summary><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><b>${own.length}</b></summary><div>${allowedDemand?`<button type="button" onclick="openDemandSecretaria(${_md.arg(secretary.id)})">▤ Grupos e lançamentos</button>`:''}${isAgriculture&&allowedDemand?`<button type="button" class="${activeId==='water_points'?'active':''}" onclick="renderWaterCollectionPoints()">💧 Locais de Captação de Água</button>`:''}${mods.map(mod=>`<button type="button" class="${activeId===mod.id?'active':''}" onclick="renderModulo('${mod.id}')">${mod.icon} ${_md.esc(mod.label)}</button>`).join('')}</div></details>`;
+    const count=Number(Boolean(allowedDemand))+Number(Boolean(isAgriculture&&allowedDemand))+mods.length;
+    return `<button type="button" class="sidebar-secretary-link ${activeId===`secretary:${secretary.id}`?'active':''}" onclick="openSecretaryWorkspace(${_md.arg(secretary.id)})"><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><b>${count>1?count+' áreas':own.length+' grupos'}</b><i>›</i></button>`;
   }).join('');
   host.innerHTML=`<button type="button" class="sidebar-module-btn ${activeId==='atendimentos'?'active':''}" onclick="${allowedDemand?'window.openDemandSecretaria()':'void 0'}" title="Secretarias" style="--module-soft:${demand.color}28;--module-color:${demand.color}"><span class="sidebar-module-icon">${demand.icon}</span><span class="sidebar-module-label">Secretarias</span><span class="sidebar-module-count">${secretaries.length}</span></button><div class="sidebar-secretary-tree">${secretaryRows}</div>`;
 }
