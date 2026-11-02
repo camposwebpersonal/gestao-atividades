@@ -164,7 +164,11 @@ async function readFunctionError(error){
 
 async function loadEgressUsage(force=false){
   if(egressPromise)return egressPromise;
-  if(!force&&egressLoadedAt&&Date.now()-egressLoadedAt<50*60*1000)return readEgressCache();
+  if(!force&&egressLoadedAt&&Date.now()-egressLoadedAt<50*60*1000){
+    // A atualização automática redesenha o painel; reaproveita a leitura salva sem consultar de novo.
+    const saved=readEgressCache();
+    if(saved){renderEgress(saved);return saved;}
+  }
   egressPromise=(async()=>{
     if(!navigator.onLine){const saved=readEgressCache();if(saved){renderEgress(saved,{cached:true});return saved;}throw new Error('Sem internet para consultar o tráfego.');}
     const {data,error}=await supabase.functions.invoke('supabase-usage',{body:{action:'usage',force}});

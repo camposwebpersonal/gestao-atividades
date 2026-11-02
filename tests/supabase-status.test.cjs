@@ -58,3 +58,8 @@ test('camada de compatibilidade conhece a tabela de autorização',()=>{
   assert.match(compat,/'supabaseStatusAccess': 'supabase_status_access'/);
   assert.match(compat,/'supabase_status_access'/);
 });
+
+test('atualização automática redesenha o gráfico salvo sem deixar o painel em "Consultando"',()=>{
+  const block=status.slice(status.indexOf('async function loadEgressUsage'),status.indexOf('export async function configureSupabaseUsage'));
+  assert.match(block,/egressLoadedAt<50\*60\*1000\)\{[\s\S]*?renderEgress\(saved\)/);
+});
