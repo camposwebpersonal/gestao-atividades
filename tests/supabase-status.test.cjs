@@ -13,7 +13,7 @@ const usageFunction=fs.readFileSync(path.join(root,'supabase/functions/supabase-
 
 test('painel fica em Cadastros e sistema e possui atualização ao vivo',()=>{
   assert.match(html,/id="nav-supabase-status"[^>]+setView\('supabase-status'\)/);
-  assert.match(html,/css\/supabase-status\.css\?v=2/);
+  assert.match(html,/css\/supabase-status\.css\?v=3/);
   assert.match(status,/setInterval\([\s\S]*30000\)/);
   assert.match(status,/supabase\.rpc\('get_supabase_status'\)/);
   assert.match(status,/Última leitura salva no aparelho/);

@@ -124,9 +124,32 @@ function renderEgressSetup(){
   panel.innerHTML=`<div class="supa-token-setup"><div class="supa-token-icon">↗</div><div class="supa-token-copy"><small>ATIVAÇÃO ÚNICA E PROTEGIDA</small><h2>Conectar o relatório oficial de tráfego</h2><p>Crie uma credencial pessoal no Supabase, cole abaixo e confirme. Ela será validada e guardada criptografada no Vault; nunca ficará no navegador ou no código do site.</p><a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener noreferrer">1. Criar credencial oficial no Supabase ↗</a></div><form onsubmit="event.preventDefault();configureSupabaseUsage().catch(()=>{})"><label for="supabase-management-token">2. Cole a credencial iniciada por <b>sbp_</b></label><div><input id="supabase-management-token" type="password" inputmode="text" autocomplete="off" spellcheck="false" placeholder="sbp_••••••••••••••••••••"><button id="supabase-token-save" type="submit">Conectar e mostrar gráfico</button></div><small>Somente RCAMPOS pode realizar ou substituir esta configuração.</small></form></div>`;
 }
 
+const fmtCount=value=>(Number(value)||0).toLocaleString('pt-BR');
+const REQUEST_SERVICES=[['rest','Banco (API)','#0b9b7b'],['auth','Autenticação','#387fcb'],['storage','Arquivos','#c9821f'],['realtime','Tempo real','#8a5cc7']];
+
+function requestsChart(days){
+  if(!days.length)return '<div class="supa-chart-empty">O Supabase ainda não liberou pontos diários de requisições.</div>';
+  const max=Math.max(1,...days.map(day=>REQUEST_SERVICES.reduce((sum,[key])=>sum+(Number(day[key])||0),0)));
+  const bars=days.map(day=>{
+    const total=REQUEST_SERVICES.reduce((sum,[key])=>sum+(Number(day[key])||0),0);
+    const parts=REQUEST_SERVICES.map(([key,label,color])=>{const value=Number(day[key])||0;return value?`<i style="height:${(value/max*100).toFixed(2)}%;background:${color}" title="${esc(label)}: ${fmtCount(value)}"></i>`:'';}).join('');
+    return `<div class="supa-req-bar" title="${formatDay(day.date)}: ${fmtCount(total)} requisições"><div class="supa-req-stack">${parts}</div><span>${formatDay(day.date)}</span></div>`;
+  }).join('');
+  return `<div class="supa-req-chart" role="img" aria-label="Requisições diárias por serviço">${bars}</div>`;
+}
+
+function renderRequests(panel,payload,{cached=false}={}){
+  const totals=payload?.summary?.totals||{},days=payload?.daily?.days||[];
+  const total=REQUEST_SERVICES.reduce((sum,[key])=>sum+(Number(totals[key])||0),0);
+  const cards=REQUEST_SERVICES.filter(([key])=>Number(totals[key])>0).map(([key,label,color])=>`<div class="supa-req-total"><i style="background:${color}"></i><span>${esc(label)}</span><b>${fmtCount(totals[key])}</b></div>`).join('');
+  const note=payload?.summary?.note;
+  panel.innerHTML=`<header><div><small>REQUISIÇÕES OFICIAIS · ÚLTIMOS ${days.length||7} DIAS</small><h2>Uso diário do projeto</h2><p>Total de chamadas feitas ao Supabase pelo sistema, separadas por serviço.</p></div><a href="https://supabase.com/dashboard/org/${'zeufhaflczahhgcfeylu'}/usage" target="_blank" rel="noopener noreferrer">Ver tráfego em GB no painel ↗</a></header>${payload.warning?`<div class="supa-egress-warning">◷ ${esc(payload.warning)} Exibindo a última leitura válida.</div>`:''}${note?`<div class="supa-egress-warning">ⓘ ${esc(note)}</div>`:''}<div class="supa-req-summary"><div class="supa-req-total main"><span>Total no período</span><b>${fmtCount(total)}</b></div>${cards}</div><div class="supa-chart-card"><header><div><small>EVOLUÇÃO DIÁRIA</small><h3>Requisições por dia</h3></div><div class="supa-chart-legend">${REQUEST_SERVICES.map(([,label,color])=>`<span style="--legend:${color}">${esc(label)}</span>`).join('')}</div></header>${requestsChart(days)}</div><footer><span>${cached||payload.stale?'Última leitura salva':'Leitura oficial'}: <b>${formatDate(payload.fetched_at)}</b></span><span>O plano gratuito não limita requisições; o limite mensal é de tráfego (5 GB direto + 5 GB em cache).</span></footer>`;
+}
+
 function renderEgress(payload,{cached=false}={}){
   const panel=document.getElementById('supabase-egress-panel');if(!panel)return;
   if(!payload?.configured){renderEgressSetup();return;}
+  if(payload.mode==='requests'){renderRequests(panel,payload,{cached});return;}
   const direct=metricValue(payload,'EGRESS'),cdn=metricValue(payload,'CACHED_EGRESS');
   const directLimit=direct.limit||5000000000,cdnLimit=cdn.limit||5000000000;
   const start=payload.period_start?new Date(payload.period_start).toLocaleDateString('pt-BR'):'—';

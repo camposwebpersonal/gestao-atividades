@@ -15,27 +15,47 @@ const normalizeCache=row=>row?{
   configured:true,
   period_start:row.period_start,
   period_end:row.period_end,
+  mode:row.summary?.mode||(row.daily?.days?'requests':'egress'),
   summary:row.summary||{},
   daily:row.daily||{},
   fetched_at:row.fetched_at,
   source:'official-cache'
 }:null;
 
-async function platformGet(fetchImpl,path,managementToken){
+const PROJECT_REF='xwlmpxypjheuhbxyfplo';
+const REJECTED_TOKEN='A credencial foi recusada pelo Supabase. Confira se ela foi copiada inteira, se não foi revogada e se pertence à conta dona do projeto.';
+
+async function apiGet(fetchImpl,path,managementToken){
   const response=await fetchImpl(PLATFORM_BASE+path,{headers:{Authorization:`Bearer ${managementToken}`,Accept:'application/json'}});
   let payload=null;
   try{payload=await response.json();}catch{payload=null;}
   if(!response.ok){
     const detail=payload?.message||payload?.error||`HTTP ${response.status}`;
-    const error=new Error(response.status===401||response.status===403?'A credencial administrativa foi recusada pelo Supabase. Gere uma nova credencial oficial.':`O Supabase não entregou as métricas de tráfego: ${detail}`);
+    const error=new Error(`O Supabase não entregou as métricas: ${detail}`);
     error.status=response.status;
     throw error;
   }
   return payload;
 }
 
-async function fetchOfficialUsage(fetchImpl,managementToken){
-  const subscription=await platformGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/billing/subscription`,managementToken);
+// Valida a credencial na API pública oficial (/v1), que aceita tokens sbp_.
+async function validateToken(fetchImpl,managementToken){
+  try{
+    await apiGet(fetchImpl,`/v1/projects/${PROJECT_REF}`,managementToken);
+  }catch(error){
+    if(error.status===401||error.status===403){
+      const rejected=new Error(REJECTED_TOKEN);
+      rejected.status=401;
+      throw rejected;
+    }
+    throw error;
+  }
+}
+
+// Tráfego em GB por organização: endpoint interno do painel. Nem sempre aceita
+// tokens pessoais; quando recusar, usamos as requisições oficiais do /v1.
+async function fetchEgress(fetchImpl,managementToken){
+  const subscription=await apiGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/billing/subscription`,managementToken);
   const now=new Date();
   const periodStart=new Date(Number(subscription.current_period_start||0)*1000);
   const periodEnd=new Date(Number(subscription.current_period_end||0)*1000);
@@ -43,19 +63,56 @@ async function fetchOfficialUsage(fetchImpl,managementToken){
   const sampleEnd=periodEnd>now?now:periodEnd;
   const query=new URLSearchParams({start:periodStart.toISOString(),end:sampleEnd.toISOString()});
   const [summary,daily]=await Promise.all([
-    platformGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/usage?${query}`,managementToken),
-    platformGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/usage/daily?${query}`,managementToken)
+    apiGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/usage?${query}`,managementToken),
+    apiGet(fetchImpl,`/platform/organizations/${ORGANIZATION_SLUG}/usage/daily?${query}`,managementToken)
   ]);
-  const fetchedAt=new Date().toISOString();
-  return {
-    configured:true,
-    period_start:periodStart.toISOString(),
-    period_end:periodEnd.toISOString(),
-    summary:summary||{},
-    daily:daily||{},
-    fetched_at:fetchedAt,
-    source:'official-live'
-  };
+  return {mode:'egress',period_start:periodStart.toISOString(),period_end:periodEnd.toISOString(),summary:summary||{},daily:daily||{}};
+}
+
+const toDay=value=>{
+  if(value===null||value===undefined||value==='')return null;
+  let date;
+  if(typeof value==='number'){
+    const ms=value>1e14?value/1000:value>1e11?value:value*1000;
+    date=new Date(ms);
+  }else date=new Date(value);
+  return Number.isFinite(date.getTime())?date.toISOString().slice(0,10):null;
+};
+
+async function fetchRequests(fetchImpl,managementToken){
+  const payload=await apiGet(fetchImpl,`/v1/projects/${PROJECT_REF}/analytics/endpoints/usage.api-counts?interval=7day`,managementToken);
+  const rows=Array.isArray(payload?.result)?payload.result:Array.isArray(payload)?payload:[];
+  const byDay=new Map();
+  for(const row of rows){
+    const day=toDay(row?.timestamp);
+    if(!day)continue;
+    const current=byDay.get(day)||{date:day,rest:0,auth:0,storage:0,realtime:0};
+    current.rest+=Number(row.total_rest_requests)||0;
+    current.auth+=Number(row.total_auth_requests)||0;
+    current.storage+=Number(row.total_storage_requests)||0;
+    current.realtime+=Number(row.total_realtime_requests)||0;
+    byDay.set(day,current);
+  }
+  const days=[...byDay.values()].sort((a,b)=>a.date.localeCompare(b.date));
+  const totals=days.reduce((acc,day)=>{for(const key of ['rest','auth','storage','realtime'])acc[key]+=day[key];return acc;},{rest:0,auth:0,storage:0,realtime:0});
+  const sorted=days.map(day=>day.date);
+  return {mode:'requests',period_start:sorted[0]?`${sorted[0]}T00:00:00.000Z`:null,period_end:sorted.length?`${sorted[sorted.length-1]}T23:59:59.000Z`:null,summary:{totals},daily:{days}};
+}
+
+async function fetchOfficialUsage(fetchImpl,managementToken){
+  await validateToken(fetchImpl,managementToken);
+  let result;
+  let egressNote=null;
+  try{
+    result=await fetchEgress(fetchImpl,managementToken);
+  }catch(error){
+    egressNote=error.status===401||error.status===403
+      ?'O Supabase não libera o tráfego em GB para credenciais pessoais; exibindo as requisições oficiais do projeto.'
+      :`Tráfego em GB indisponível agora (${error.message}); exibindo as requisições oficiais do projeto.`;
+    result=await fetchRequests(fetchImpl,managementToken);
+  }
+  if(egressNote)result.summary={...result.summary,note:egressNote};
+  return {configured:true,...result,fetched_at:new Date().toISOString(),source:'official-live'};
 }
 
 export function supabaseUsageHandler(client,{fetchImpl=fetch}={}){
@@ -94,7 +151,7 @@ export function supabaseUsageHandler(client,{fetchImpl=fetch}={}){
         if(tokenError)throw new Error('Não foi possível guardar a credencial no cofre criptografado.');
         const {error:saveError}=await client.rpc('save_supabase_egress_cache_for_runtime',{
           new_period_start:fresh.period_start,new_period_end:fresh.period_end,
-          new_summary:fresh.summary,new_daily:fresh.daily,new_fetched_at:fresh.fetched_at
+          new_summary:{...fresh.summary,mode:fresh.mode},new_daily:fresh.daily,new_fetched_at:fresh.fetched_at
         });
         if(saveError)throw new Error('As métricas foram lidas, mas não foi possível salvar o cache protegido.');
         return reply(200,fresh);
@@ -112,7 +169,7 @@ export function supabaseUsageHandler(client,{fetchImpl=fetch}={}){
         const fresh=await fetchOfficialUsage(fetchImpl,managementToken);
         const {error:saveError}=await client.rpc('save_supabase_egress_cache_for_runtime',{
           new_period_start:fresh.period_start,new_period_end:fresh.period_end,
-          new_summary:fresh.summary,new_daily:fresh.daily,new_fetched_at:fresh.fetched_at
+          new_summary:{...fresh.summary,mode:fresh.mode},new_daily:fresh.daily,new_fetched_at:fresh.fetched_at
         });
         if(saveError)throw new Error('Falha ao atualizar o cache protegido.');
         return reply(200,fresh);
