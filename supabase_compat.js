@@ -7,8 +7,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0?bundle
 import {
   setOfflineUser, cacheRows, getCachedRows, getCachedRow, putCachedRow,
   deleteCachedRow, enqueueMutation, listMutations, removeMutation, pendingCount,
-  applyLocalConstraints, isOfflineFailure
-} from './js/offline-store.js?v=3';
+  applyLocalConstraints, isOfflineFailure, currentOfflineUser
+} from './js/offline-store.js?v=4';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';
@@ -179,7 +179,7 @@ const SCHEMA_FIELDS = {
 };
 
 function cleanPayload(payload) {
-  for (const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at']) delete payload[key];
+  for (const key of ['created_by','created_by_name','updated_by','updated_by_name','audit_created_at','audit_updated_at','sync_at']) delete payload[key];
   for (const k in payload) {
     const v = payload[k];
     if (k.endsWith('_id') && (v === '' || v === undefined)) {
@@ -194,7 +194,7 @@ function cleanPayload(payload) {
 }
 
 function mergeExtraFields(row) {
-  if (row) row = {...row, ...(row.display_name != null ? {displayName:row.display_name} : {}), ...(row.is_admin != null ? {isAdmin:row.is_admin} : {})};
+  if (row) { row = {...row, ...(row.display_name != null ? {displayName:row.display_name} : {}), ...(row.is_admin != null ? {isAdmin:row.is_admin} : {})}; delete row.sync_at; }
   if (!row || !row.extra_fields) return row;
   try {
     const extra = typeof row.extra_fields === 'string' ? JSON.parse(row.extra_fields) : row.extra_fields;
@@ -482,6 +482,120 @@ function buildQuery(collectionRef, constraints) {
   return q;
 }
 
+// ===== SINCRONIZAÇÃO INCREMENTAL =====
+// Antes, cada abertura do sistema baixava todas as tabelas inteiras (~6 MB).
+// Agora a cópia local (IndexedDB) é reaproveitada e só vêm do servidor:
+//   1) as linhas criadas/alteradas desde a última sincronização (coluna sync_at,
+//      marcada pelo próprio banco em todo INSERT/UPDATE — gatilho pms_sync_at);
+//   2) uma contagem (sem dados) para detectar exclusões; só se a contagem não bater,
+//      a lista de ids é conferida para remover o que foi apagado.
+// Uma carga completa ainda acontece na primeira vez, ao trocar de usuário ou a cada 7 dias.
+export const INCREMENTAL_TABLES = new Set([
+  'atividades','items','subitems','field_templates','secretarias','responsaveis','users',
+  'supabase_status_access','contatos','contas','estoque','requisicoes','trash_items',
+  'app_settings','water_collection_points','entity_images','galeria','chamados',
+  'distribuicao','extintores','extintor_abas','bulk_entry_drafts'
+]);
+// Tabelas cujo updated_at é marcado pelo próprio banco em todo UPDATE (gatilho
+// update_updated_at_column / touch). Enquanto a coluna sync_at não existir, a
+// sincronização incremental usa updated_at só nessas tabelas.
+const SERVER_UPDATED_AT_TABLES = new Set([
+  'atividades','items','subitems','users','contatos','contas','estoque','requisicoes',
+  'water_collection_points','galeria','chamados','extintores','extintor_abas'
+]);
+const SYNC_META_PREFIX = 'gestao-sync:v1:';
+const SYNC_MODES = {
+  sync_at: {overlap: 2 * 60 * 1000, fullEvery: 7 * 24 * 3600 * 1000},
+  updated_at: {overlap: 15 * 60 * 1000, fullEvery: 24 * 3600 * 1000}
+};
+function syncColumnFor(table, rows) {
+  const sample = rows.find(row => row && typeof row === 'object');
+  if (sample && 'sync_at' in sample) return 'sync_at';
+  if (SERVER_UPDATED_AT_TABLES.has(table) && (!sample || 'updated_at' in sample)) return 'updated_at';
+  return null;
+}
+const syncStats = {full: 0, incremental: 0, rowsFetched: 0, idChecks: 0};
+globalThis.__gestaoSyncStats = syncStats;
+
+function syncMetaKey(table) { return `${SYNC_META_PREFIX}${currentOfflineUser() || 'anon'}:${table}`; }
+function readSyncMeta(table) {
+  try { return JSON.parse(localStorage.getItem(syncMetaKey(table)) || 'null'); } catch (_) { return null; }
+}
+function writeSyncMeta(table, meta) {
+  try { localStorage.setItem(syncMetaKey(table), JSON.stringify(meta)); } catch (_) {}
+}
+export function clearSyncMeta() {
+  try { Object.keys(localStorage).filter(key => key.startsWith(SYNC_META_PREFIX)).forEach(key => localStorage.removeItem(key)); } catch (_) {}
+}
+function maxSyncAt(rows, current = '', column = 'sync_at') {
+  // Ignora datas no futuro (registros com data histórica adiantada): usá-las como
+  // referência faria as próximas alterações passarem despercebidas.
+  const limit = Date.now() + 10 * 60 * 1000;
+  let max = current || '', maxTime = max ? Date.parse(max) : 0;
+  for (const row of rows) {
+    const value = row?.[column];
+    const time = value ? Date.parse(value) : NaN;
+    if (Number.isFinite(time) && time <= limit && time > maxTime) { max = new Date(time).toISOString(); maxTime = time; }
+  }
+  return max;
+}
+async function fetchPaged(build, pageSize = 1000) {
+  let rows = [], offset = 0;
+  while (true) {
+    const { data, error } = await build().range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    rows = rows.concat(data || []);
+    if (!data || data.length < pageSize) return rows;
+    offset += pageSize;
+  }
+}
+async function fullTableLoad(table, constraints) {
+  const rows = await fetchPaged(() => buildQuery({_path: table}, constraints));
+  await cacheRows(table, rows, { replace: true });
+  const column = INCREMENTAL_TABLES.has(table) ? syncColumnFor(table, rows) : null;
+  if (column) writeSyncMeta(table, {column, maxSyncAt: maxSyncAt(rows, '', column), fullAt: Date.now(), count: rows.length});
+  syncStats.full += 1; syncStats.rowsFetched += rows.length;
+  return rows;
+}
+/** Retorna as linhas atualizadas da tabela usando o cache + diferenças, ou null se precisar de carga completa. */
+async function incrementalTableLoad(table, constraints) {
+  if (!INCREMENTAL_TABLES.has(table) || !currentOfflineUser()) return null;
+  const meta = readSyncMeta(table);
+  const mode = SYNC_MODES[meta?.column];
+  if (!mode || !meta.maxSyncAt || !meta.fullAt || Date.now() - meta.fullAt > mode.fullEvery) return null;
+  const cached = await getCachedRows(table);
+  if (!cached.length && meta.count > 0) return null;
+  // Se a coluna sync_at passou a existir no banco, migra para ela na próxima carga completa.
+  if (meta.column !== 'sync_at' && cached.some(row => row && 'sync_at' in row)) return null;
+  const since = new Date(Date.parse(meta.maxSyncAt) - mode.overlap).toISOString();
+  const [delta, countResult] = await Promise.all([
+    fetchPaged(() => supabase.from(table).select('*').gt(meta.column, since).order(meta.column, { ascending: true })),
+    supabase.from(table).select('id', { count: 'exact', head: true })
+  ]);
+  if (countResult.error) throw countResult.error;
+  const byId = new Map(cached.map(row => [String(row.id), row]));
+  for (const row of delta) byId.set(String(row.id), row);
+  let removed = [], missing = [];
+  if (typeof countResult.count === 'number' && countResult.count !== byId.size) {
+    // Algo foi apagado (ou ficou visível/oculto por permissão): confere só os ids.
+    syncStats.idChecks += 1;
+    const ids = new Set((await fetchPaged(() => supabase.from(table).select('id').order('id', { ascending: true }))).map(row => String(row.id)));
+    removed = [...byId.keys()].filter(id => !ids.has(id));
+    removed.forEach(id => byId.delete(id));
+    missing = [...ids].filter(id => !byId.has(id));
+    for (let i = 0; i < missing.length; i += 200) {
+      const { data, error } = await supabase.from(table).select('*').in('id', missing.slice(i, i + 200));
+      if (error) throw error;
+      for (const row of data || []) { byId.set(String(row.id), row); delta.push(row); }
+    }
+  }
+  if (delta.length) await cacheRows(table, delta);
+  for (const id of removed) await deleteCachedRow(table, id);
+  writeSyncMeta(table, {...meta, maxSyncAt: maxSyncAt(delta, meta.maxSyncAt, meta.column), count: byId.size});
+  syncStats.incremental += 1; syncStats.rowsFetched += delta.length;
+  return applyLocalConstraints([...byId.values()], constraints, toSnake);
+}
+
 export async function getDocs(queryRef) {
   let collectionRef, constraints;
   if (queryRef._type === 'collection') {
@@ -499,11 +613,21 @@ export async function getDocs(queryRef) {
     // Enquanto há alterações locais, a cópia local é a fonte de verdade para não
     // apagar inclusões/edições otimistas antes da sincronização terminar.
     if (await hasPendingMutations()) throw Object.assign(new Error('Alterações locais pendentes'), { offlineCache: true });
+    const onlyOrdering = constraints.every(c => c._type === 'orderBy');
     if (hasLimit) {
       const q = buildQuery(collectionRef, constraints);
       const { data, error } = await q;
       if (error) throw error;
       allRows = data || [];
+      await cacheRows(table, allRows);
+    } else if (onlyOrdering) {
+      // Tabela inteira: tenta trazer só as diferenças; se não der, carga completa.
+      const incremental = await incrementalTableLoad(table, constraints).catch(error => {
+        if (isOfflineError(error)) throw error;
+        console.warn('Sincronização incremental indisponível; usando carga completa:', table, error?.message || error);
+        return null;
+      });
+      allRows = incremental || (await fullTableLoad(table, constraints));
     } else {
       let offset = 0;
       while (true) {
@@ -514,9 +638,8 @@ export async function getDocs(queryRef) {
         if (!data || data.length < PAGE) break;
         offset += PAGE;
       }
+      await cacheRows(table, allRows);
     }
-    const onlyOrdering = constraints.every(c => c._type === 'orderBy');
-    await cacheRows(table, allRows, { replace: onlyOrdering });
   } catch (error) {
     if (!error?.offlineCache && !isOfflineError(error)) throw error;
     allRows = applyLocalConstraints(await getCachedRows(table), constraints, toSnake);

@@ -85,6 +85,9 @@ export function setOfflineUser(id) {
   } catch (_) {}
 }
 
+/** Usuário dono do cache local (o mesmo usado nas chaves do IndexedDB). */
+export function currentOfflineUser() { return userId(); }
+
 function requireUser() {
   const id = userId();
   if (!id) throw new Error('Entre no sistema uma vez com internet antes de usar o modo offline.');

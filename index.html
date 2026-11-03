@@ -15,7 +15,7 @@
 <link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
-<link rel="modulepreload" href="supabase_compat.js?v=9">
+<link rel="modulepreload" href="supabase_compat.js?v=10">
 <link rel="modulepreload" href="js/modulos.js?v=102">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -507,8 +507,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=9";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=9";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=10";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=10";
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=1';
@@ -946,8 +946,12 @@ onAuthStateChanged(auth,async u=>{
   startLiveSync();
   await loadData();
   if(navigator.onLine){
-    const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts','trashItems'];
-    Promise.allSettled(offlineTables.map(name=>getDocs(collection(db,name))));
+    // Pré-carga para o modo offline: no máximo a cada 6 horas por aparelho (antes, em toda abertura).
+    const offlineKey='gestao-offline-prefetch:'+(S.user?.uid||'');let lastPrefetch=0;try{lastPrefetch=Number(localStorage.getItem(offlineKey))||0;}catch(_){}
+    if(Date.now()-lastPrefetch>6*3600*1000){
+      const offlineTables=['entity_images','galeria','chamados','extintores','extintor_abas','bulk_entry_drafts','trashItems'];
+      Promise.allSettled(offlineTables.map(name=>getDocs(collection(db,name)))).then(()=>{try{localStorage.setItem(offlineKey,String(Date.now()));}catch(_){}});
+    }
   }
   if(!window.restoreWorkspace())setView('mod');
   const _sp=new URLSearchParams(location.search).get('setup');
@@ -1053,7 +1057,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
     safeGet('contas',()=>read(query(collection(db,'contas'),orderBy('created_at','desc')))),
     safeGet('estoque',()=>read(query(collection(db,'estoque'),orderBy('created_at','desc')))),
     safeGet('requisicoes',()=>read(query(collection(db,'requisicoes'),orderBy('numero','asc')))),
-    safeGet('trashItems',()=>read(query(collection(db,'trashItems'),orderBy('deleted_at','desc')))),
+    safeGet('trashItems',()=>getDocsFromCache(query(collection(db,'trashItems'),orderBy('deleted_at','desc')))), // atualizada do servidor só ao abrir a lixeira
     safeGet('appSettings',()=>read(collection(db,'appSettings'))),
     safeGet('waterCollectionPoints',()=>read(query(collection(db,'waterCollectionPoints'),orderBy('name','asc'))))
   ]);
@@ -1171,6 +1175,7 @@ window.renderTrash=function(){
   setC(`<section class="trash-page"><div class="trash-hero"><div class="trash-hero-icon">♻</div><div><div class="workspace-kicker">Proteção contra perda de dados</div><h1>Lixeira do sistema</h1><p>Tudo que é excluído permanece organizado por setor e grupo até uma decisão definitiva.</p></div><div class="trash-total"><strong>${rows.length}</strong><span>registro${rows.length===1?'':'s'}</span></div></div><div class="trash-toolbar"><label><span>⌕</span><input type="search" placeholder="Buscar na lixeira por nome, setor ou grupo..." oninput="filterTrashView(this.value)"></label><span>Somente a exclusão feita aqui é permanente.</span></div><div id="trash-results">${sections||'<div class="trash-empty"><span>✓</span><strong>A lixeira está vazia</strong><p>Nenhum registro aguarda restauração ou exclusão definitiva.</p></div>'}</div></section>`);
 };
 window.filterTrashView=function(value){const q=String(value||'').trim().toLocaleLowerCase('pt-BR');document.querySelectorAll('[data-trash-card]').forEach(card=>card.hidden=q&&!card.dataset.search.includes(q));document.querySelectorAll('.trash-group').forEach(group=>group.hidden=![...group.querySelectorAll('[data-trash-card]')].some(card=>!card.hidden));document.querySelectorAll('.trash-sector').forEach(sector=>sector.hidden=![...sector.querySelectorAll('.trash-group')].some(group=>!group.hidden));};
+{const _renderTrashBase=window.renderTrash;let _trashFetchedAt=0;window.renderTrash=function(...args){_renderTrashBase.apply(this,args);if(!S.canViewTrash||!navigator.onLine||Date.now()-_trashFetchedAt<60000)return;_trashFetchedAt=Date.now();getDocs(query(collection(db,'trashItems'),orderBy('deleted_at','desc'))).then(snapshot=>{S.trashItems=snapshot.docs.map(d=>({id:d.id,...d.data()}));if(window.__currentView==='trash')_renderTrashBase();}).catch(error=>console.warn('Lixeira: usando cópia local',error));};}
 window.restoreTrashRecord=async function(id){if(!S.isAdmin){toast('Somente administradores autorizados podem restaurar registros.','error');return;}const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`Restaurar "${row.source_label||'este registro'}" para o local de origem?`))return;try{await restoreTrashItem(id);await loadData();toast('Registro restaurado com sucesso!');renderTrash();}catch(error){toast('Não foi possível restaurar: '+(error.message||error),'error',8000);}};
 window.restoreTrashBatch=async function(batchId){if(!S.isAdmin){toast('Somente administradores autorizados podem restaurar registros.','error');return;}const rows=S.trashItems.filter(item=>item.batch_id===batchId);if(!rows.length||!confirm(`Restaurar o conjunto completo com ${rows.length} registros para seus locais de origem?`))return;const rank={secretarias:0,atividades:1,items:2,subitems:3};rows.sort((a,b)=>(rank[a.source_table]??4)-(rank[b.source_table]??4));try{for(const row of rows)await restoreTrashItem(row.id);await loadData();toast(`${rows.length} registros restaurados com sucesso!`);renderTrash();}catch(error){await loadData();toast('A restauração foi interrompida: '+(error.message||error),'error',9000);renderTrash();}};
 window.permanentlyDeleteTrash=async function(id){if(!S.isAdmin){toast('Somente administradores autorizados podem excluir definitivamente.','error');return;}const row=S.trashItems.find(item=>item.id===id);if(!row||!confirm(`ATENÇÃO: excluir permanentemente "${row.source_label||'este registro'}"? Esta ação não poderá ser desfeita.`))return;try{await permanentDeleteDoc(doc(db,'trashItems',id));await loadData();toast('Registro excluído permanentemente.');renderTrash();}catch(error){toast('Não foi possível excluir definitivamente: '+(error.message||error),'error',8000);}};

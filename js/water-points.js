@@ -1,4 +1,4 @@
-import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=9';
+import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=10';
 import {locationEditorHtml,readLocationEditor,optimizePhoto,shareLocation} from './geolocation.js?v=3';
 import {uploadDurableImage} from './image-storage.js?v=1';
 
