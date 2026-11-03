@@ -1,0 +1,73 @@
+/* Controle de reabastecimento de água de pipa (js/pipa-refill.js) */
+:root {
+    --refill-red: #dc2626; --refill-red-soft: #fee2e2; --refill-red-ink: #991b1b;
+    --refill-yellow: #eab308; --refill-yellow-soft: #fef9c3; --refill-yellow-ink: #854d0e;
+    --refill-green: #16a34a; --refill-green-soft: #dcfce7; --refill-green-ink: #166534;
+    --refill-gray: #64748b; --refill-gray-soft: #f1f5f9; --refill-gray-ink: #334155;
+}
+
+/* Formulário do lançamento */
+.pipa-refill-editor { margin: 14px 0; padding: 14px; border: 1px solid #bae6fd; border-radius: 14px; background: #f0f9ff; color: #0c4a6e; min-width: 0; }
+.pipa-refill-head { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
+.pipa-refill-head > span { font-size: 22px; line-height: 1; }
+.pipa-refill-head strong { display: block; font-size: 14px; color: #0c4a6e; }
+.pipa-refill-head small { display: block; margin-top: 3px; font-size: 12px; line-height: 1.4; color: #0369a1; }
+.pipa-refill-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pipa-refill-fields label { display: grid; gap: 6px; min-width: 0; font-size: 12px; font-weight: 700; color: #075985; }
+.pipa-refill-fields input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid #7dd3fc; border-radius: 10px; background: #fff; color: #0f172a; font-size: 15px; }
+.pipa-refill-date { display: flex; gap: 6px; min-width: 0; }
+.pipa-refill-date input { flex: 1; }
+.pipa-refill-date button { flex: 0 0 auto; min-height: 42px; padding: 0 12px; border: 1px solid #0284c7; border-radius: 10px; background: #0284c7; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+.pipa-refill-preview { margin: 12px 0 0; padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; line-height: 1.35; }
+@media (max-width: 520px) { .pipa-refill-fields { grid-template-columns: 1fr; } }
+
+/* Cores por situação (prévia, selo do card e lista do mapa) */
+.is-vencido.pipa-refill-preview, .pipa-refill-badge.is-vencido, .geo-list-refill.is-vencido, .geo-popup-refill.is-vencido { background: var(--refill-red-soft); color: var(--refill-red-ink); border-color: var(--refill-red); }
+.is-alerta.pipa-refill-preview, .pipa-refill-badge.is-alerta, .geo-list-refill.is-alerta, .geo-popup-refill.is-alerta { background: var(--refill-yellow-soft); color: var(--refill-yellow-ink); border-color: var(--refill-yellow); }
+.is-em-dia.pipa-refill-preview, .pipa-refill-badge.is-em-dia, .geo-list-refill.is-em-dia, .geo-popup-refill.is-em-dia { background: var(--refill-green-soft); color: var(--refill-green-ink); border-color: var(--refill-green); }
+.is-sem-dados.pipa-refill-preview, .pipa-refill-badge.is-sem-dados, .geo-list-refill.is-sem-dados, .geo-popup-refill.is-sem-dados { background: var(--refill-gray-soft); color: var(--refill-gray-ink); border-color: #cbd5e1; }
+
+/* Selo no card do lançamento */
+.pipa-refill-badge { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; margin-top: 8px; padding: 5px 10px; border: 1px solid; border-left-width: 4px; border-radius: 8px; font-size: 12px; font-weight: 700; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+
+/* Barra de resumo na página do grupo */
+.pipa-group-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 0 0 16px; padding: 14px 16px; border: 1px solid #bae6fd; border-radius: 16px; background: linear-gradient(135deg, #f0f9ff, #ecfeff); color: #0c4a6e; min-width: 0; }
+.pipa-group-title { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1 1 220px; }
+.pipa-group-title > span { font-size: 26px; line-height: 1; }
+.pipa-group-title strong { display: block; font-size: 15px; }
+.pipa-group-title small { display: block; margin-top: 2px; font-size: 12px; color: #0369a1; }
+.pipa-group-chips { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.pipa-group-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 6px 12px; border: 1px solid; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; }
+.pipa-group-chip b { font-size: 16px; }
+.pipa-group-chip.is-vencido { background: var(--refill-red-soft); border-color: var(--refill-red); color: var(--refill-red-ink); }
+.pipa-group-chip.is-alerta { background: var(--refill-yellow-soft); border-color: var(--refill-yellow); color: var(--refill-yellow-ink); }
+.pipa-group-chip.is-em-dia { background: var(--refill-green-soft); border-color: var(--refill-green); color: var(--refill-green-ink); }
+.pipa-group-chip.is-sem-dados { background: var(--refill-gray-soft); border-color: #cbd5e1; color: var(--refill-gray-ink); }
+.pipa-group-map { min-height: 42px; padding: 0 16px; border: 0; border-radius: 12px; background: #0369a1; color: #fff; font-size: 14px; font-weight: 800; cursor: pointer; }
+@media (max-width: 640px) { .pipa-group-map { width: 100%; } .pipa-group-chip { flex: 1 1 calc(50% - 8px); justify-content: center; } }
+
+/* Marcador colorido no mapa */
+.pipa-pin-wrap { background: none; border: 0; }
+.pipa-pin { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border: 3px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--pin); box-shadow: 0 6px 14px rgba(15, 23, 42, .35); }
+.pipa-pin i { transform: rotate(45deg); font-style: normal; font-size: 15px; line-height: 1; }
+.pipa-pin.is-vencido { animation: pipa-pulse 1.6s ease-out infinite; }
+@keyframes pipa-pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, .55), 0 6px 14px rgba(15, 23, 42, .35); } 100% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0), 0 6px 14px rgba(15, 23, 42, .35); } }
+@media (prefers-reduced-motion: reduce) { .pipa-pin.is-vencido { animation: none; } }
+
+/* Filtro do mapa */
+.geo-refill-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.geo-refill-filter { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 999px; background: #fff; color: #1e293b; font-size: 13px; font-weight: 700; cursor: pointer; }
+.geo-refill-filter i { width: 12px; height: 12px; border-radius: 50%; background: #94a3b8; }
+.geo-refill-filter.is-vencido i { background: var(--refill-red); }
+.geo-refill-filter.is-alerta i { background: var(--refill-yellow); }
+.geo-refill-filter.is-em-dia i { background: var(--refill-green); }
+.geo-refill-filter.is-todos i { background: conic-gradient(var(--refill-red) 0 33%, var(--refill-yellow) 0 66%, var(--refill-green) 0); }
+.geo-refill-filter b { padding: 1px 8px; border-radius: 999px; background: #f1f5f9; font-size: 12px; }
+.geo-refill-filter.active { border-color: #0f766e; background: #0f766e; color: #fff; }
+.geo-refill-filter.active b { background: rgba(255, 255, 255, .22); }
+.geo-list-refill, .geo-popup-refill { display: block; margin-top: 6px; padding: 4px 8px; border: 1px solid; border-left-width: 4px; border-radius: 7px; font-style: normal; font-size: 12px; font-weight: 700; line-height: 1.3; }
+.geo-map-list article.has-refill { border-left: 4px solid var(--refill-gray); }
+.geo-map-list article.is-vencido { border-left-color: var(--refill-red); }
+.geo-map-list article.is-alerta { border-left-color: var(--refill-yellow); }
+.geo-map-list article.is-em-dia { border-left-color: var(--refill-green); }
+.geo-refill-empty { margin: 8px 0; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 12px; text-align: center; color: #475569; font-size: 13px; }

@@ -428,10 +428,11 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/camera-capture.css?v=4">
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
-<link rel="stylesheet" href="css/geolocation.css?v=3">
+<link rel="stylesheet" href="css/geolocation.css?v=4">
+<link rel="stylesheet" href="css/pipa-refill.css?v=1">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=3">
-<link rel="stylesheet" href="css/global-search-premium.css?v=1">
+<link rel="stylesheet" href="css/global-search-premium.css?v=2">
 <link rel="stylesheet" href="css/water-points.css?v=1">
 <link rel="stylesheet" href="css/layout-safety.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -510,19 +511,21 @@ import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,c
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=9";
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
+import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=1';
 import './js/modulos.js?v=102';
 import './js/water-points.js?v=1';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
-import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=11';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=12';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=7';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=3';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=1';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=4';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
@@ -605,10 +608,12 @@ let _globalSearchResults=[],_globalSearchActive=-1,_globalSearchTimer=0;
 function _globalSearchEntries(){
  const entries=[],groups=new Map((S.secs||[]).filter(group=>window.userCanGroup?.(group,'acesso')!==false).map(group=>[group.id,group]));
  for(const module of window.visibleSystemModules?.()||window.MODULOS||[]){if(window.userCan?.(module.id,'acesso')!==false)entries.push({type:'module',icon:module.icon||'▦',title:module.label,context:'Área do sistema',data:module,search:[module.label,module.id,module.desc]});}
- for(const group of groups.values())entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:'Grupo de atividades',data:group,search:[group,group.name,group.observacoes,group.assunto]});
- for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(group)entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',data:item,group,search:[item,group.name]});}
+ const secretaryById=new Map((S.secretarias||[]).map(secretary=>[String(secretary.id),secretary]));
+ const secretaryOf=(group,record)=>secretaryById.get(String(group?.demanda_secretaria_id||''))||secretaryById.get(String(record?.secretaria_id||''))||null;
+ for(const group of groups.values()){const secretary=secretaryOf(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
+ for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(!group)continue;const secretary=secretaryOf(group,item);entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(item),data:item,group,search:[item,group.name,secretary?.name]});}
  const itemById=new Map((S.items||[]).map(item=>[item.id,item]));
- for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(group)entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),data:subitem,group,search:[subitem,parent?.description,group.name]});}
+ for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(!group)continue;const secretary=secretaryOf(group,subitem);entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo',parent?.description].filter(Boolean),parentTitle:parent?.description||'',secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(subitem,{parent}),data:subitem,group,search:[subitem,parent?.description,group.name,secretary?.name]});}
  for(const contact of S.contatos||[])entries.push({type:'contact',icon:'☏',title:contact.nome||'Contato',context:[contact.cargo,contact.setor,contact.telefone].filter(Boolean).join(' · ')||'Contato',data:contact,search:contact});
  for(const responsible of S.responsaveis||[])entries.push({type:'responsible',icon:'♙',title:responsible.name||responsible.nome||'Responsável',context:[responsible.cargo,responsible.setor,responsible.telefone].filter(Boolean).join(' · ')||'Responsável',data:responsible,search:responsible});
  for(const secretary of S.secretarias||[])entries.push({type:'secretary',icon:'▦',title:secretary.name||secretary.nome||'Secretaria',context:'Secretaria municipal',data:secretary,search:secretary});
@@ -621,9 +626,9 @@ function _renderGlobalSearch(query){
  const panel=document.getElementById('global-search-panel'),input=document.getElementById('global-search');if(!panel||!input)return;
  const q=String(query||'').trim(),clear=document.querySelector('.global-search-clear');if(clear)clear.hidden=!q;
  if(!q){panel.hidden=true;input.setAttribute('aria-expanded','false');_globalSearchResults=[];return;}
- _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,250).map(entry=>({...entry.record,score:entry.match.score}));_globalSearchActive=_globalSearchResults.length?0:-1;
+ _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,400).map(entry=>({...entry.record,score:entry.match.score,foundIn:entry.record.fields?foundIn(entry.record.fields,q,{exclude:['Nome']}):[]}));_globalSearchActive=_globalSearchResults.length?0:-1;
  const summary=_globalSearchResults.length?`${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} mais relevante${_globalSearchResults.length===1?'':'s'}`:'Nenhum resultado';
- panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>Enter mostra todos · Esc fecha</span></div>${_globalSearchResults.slice(0,12).map((entry,index)=>`<button type="button" class="global-search-result${index===_globalSearchActive?' active':''}" role="option" aria-selected="${index===_globalSearchActive}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span class="global-search-result-copy"><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><span class="global-search-result-type">${_globalTypeLabel[entry.type]}</span><span class="global-search-open">↗</span></button>`).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}${_globalSearchResults.length?`<button class="global-search-all" type="button" onclick="abrirPaginaBuscaGlobal()">Ver todos os resultados organizados <span>→</span></button>`:''}`;
+ panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>Enter mostra todos · Esc fecha</span></div>${_globalSearchResults.slice(0,12).map((entry,index)=>dropdownRowHtml(entry,q,index,index===_globalSearchActive)).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}${_globalSearchResults.length?`<button class="global-search-all" type="button" onclick="abrirPaginaBuscaGlobal()">Ver todos os resultados organizados <span>→</span></button>`:''}`;
  panel.hidden=false;input.setAttribute('aria-expanded','true');
 }
 window.pesquisarGlobal=function(value){clearTimeout(_globalSearchTimer);_globalSearchTimer=setTimeout(()=>_renderGlobalSearch(value),70);};
@@ -643,11 +648,10 @@ window.ativarResultadoBuscaGlobal=function(index){
 window.abrirPaginaBuscaGlobal=function(value){
  const input=document.getElementById('global-search'),q=String(value??input?.value??'').trim();if(!q)return;
  if(input)input.value=q;_renderGlobalSearch(q);window.fecharBuscaGlobal();window.__currentView='search';
- const groups=new Map();for(const entry of _globalSearchResults){const label=_globalTypeLabel[entry.type]||'Outros';if(!groups.has(label))groups.set(label,[]);groups.get(label).push(entry);}
- const sections=[...groups].map(([label,rows])=>`<section class="search-page-group"><header><h2>${_gsEsc(label)}</h2><span>${rows.length}</span></header><div>${rows.map(entry=>`<button type="button" onclick="ativarResultadoBuscaPorId('${_gsEsc(entry.type)}','${_gsEsc(entry.data?.id||'')}')"><span class="global-search-result-icon">${_gsEsc(entry.icon)}</span><span><strong>${highlightSearchText(entry.title,q)}</strong><small>${highlightSearchText(entry.context,q)}</small></span><b>${_gsEsc(label)}</b><i>→</i></button>`).join('')}</div></section>`).join('');
- document.getElementById('content').innerHTML=`<section class="search-results-page"><header><span class="workspace-kicker">BUSCA INTELIGENTE</span><h1>Resultados para “${_gsEsc(q)}”</h1><p>${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} encontrado${_globalSearchResults.length===1?'':'s'} em todo o sistema.</p><form onsubmit="event.preventDefault();abrirPaginaBuscaGlobal(document.getElementById('search-page-input').value)"><span>⌕</span><input id="search-page-input" type="search" value="${_gsEsc(q)}" autofocus><button>Buscar</button></form></header>${sections||`<div class="search-page-empty"><b>Nenhum resultado encontrado</b><span>Revise o termo ou faça uma busca mais ampla.</span></div>`}</section>`;
+ const page=resultsPageHtml(_globalSearchResults,q);const sections=page.html;
+ document.getElementById('content').innerHTML=`<section class="search-results-page"><header><span class="workspace-kicker">BUSCA INTELIGENTE</span><h1>Resultados para “${_gsEsc(q)}”</h1><p>${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} em todo o sistema${page.launchCount?` · ${page.launchCount} lançamento${page.launchCount===1?'':'s'} em ${page.secretaryCount} secretaria${page.secretaryCount===1?'':'s'}`:''}.</p><form onsubmit="event.preventDefault();abrirPaginaBuscaGlobal(document.getElementById('search-page-input').value)"><span>⌕</span><input id="search-page-input" type="search" value="${_gsEsc(q)}" autofocus><button>Buscar</button></form></header>${sections||`<div class="search-page-empty"><b>Nenhum resultado encontrado</b><span>Revise o termo ou faça uma busca mais ampla.</span></div>`}</section>`;
 };
-window.ativarResultadoBuscaPorId=function(type,id){const index=_globalSearchResults.findIndex(entry=>entry.type===type&&String(entry.data?.id||'')===String(id));if(index>=0)window.ativarResultadoBuscaGlobal(index);};
+window.ativarResultadoBuscaPorId=function(type,id){if(type==='group'&&!_globalSearchResults.some(entry=>entry.type==='group'&&String(entry.data?.id)===String(id))){window.openActivity(id);return;}const index=_globalSearchResults.findIndex(entry=>entry.type===type&&String(entry.data?.id||'')===String(id));if(index>=0)window.ativarResultadoBuscaGlobal(index);};
 window.navegarBuscaGlobal=function(event){
  if(event.key==='Escape'){event.preventDefault();window.fecharBuscaGlobal();return;}
  if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(!_globalSearchResults.length)return;_globalSearchActive=(_globalSearchActive+(event.key==='ArrowDown'?1:-1)+_globalSearchResults.length)%_globalSearchResults.length;window.selecionarResultadoBuscaGlobal(_globalSearchActive);document.querySelector(`[data-search-index="${_globalSearchActive}"]`)?.scrollIntoView({block:'nearest'});return;}
@@ -1802,6 +1806,7 @@ window.openActivity=function(secId){
   window._refreshAtivTable=()=>openActivity(secId);
   if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
 };
+{const _openActivityBase=window.openActivity;window.openActivity=function(...args){const result=_openActivityBase.apply(this,args);try{window.decoratePipaGroup?.(args[0]);}catch(error){console.error('[pipa]',error);}return result;};}
 
 window.alternarControleConclusao=async function(secId,ativar){
   try{
@@ -2349,6 +2354,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão ${isSub?'neste sub-item':'neste item'}</label></div>
   </div>
   ${locationEditorHtml(it,'it-geo')}
+  ${isRefillGroup(sec)?refillEditorHtml(it,'it-pipa'):''}
   <label class="geo-external-option"><input type="checkbox" id="it-show-external-geo" ${externalGeolocationEnabled(it||{atividade_id:secId||curSecId},isSub?'subitems':'items')?'checked':''}><span><strong>Mostrar geolocalização externamente</strong><small>Exibe o atalho no card ou na lista sem precisar abrir este ${isSub?'subitem':'item'}. Por padrão, ele fica visível apenas aqui dentro.</small></span></label>
   ${id&&S.isAdmin?adminAuditFields(it,S.users,'it-audit'):''}
   ${(()=>{
@@ -2440,6 +2446,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   const existingRecord=original;
   const ef=collectCustomFieldValues(document,{...recordExtra(existingRecord)});
   const geoLocation=readLocationEditor('it-geo');if(geoLocation)ef.geo_location=geoLocation;else delete ef.geo_location;
+  if(isRefillGroup(group)){try{applyRefillToExtra(ef,readRefillEditor('it-pipa'));}catch(error){toast(error.message,'error',6000);return;}}
   ef.show_external_geolocation=document.getElementById('it-show-external-geo')?.checked===true;
   data.extra_fields=ef;
   const effSec=S.secs.find(s=>s.id===secId);

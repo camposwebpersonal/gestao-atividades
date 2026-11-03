@@ -100,6 +100,10 @@ export function initAuditUI(){
    let geo=target.querySelector(':scope > .geo-quick-actions');
    if(geoMarkup){if(!geo){const holder=document.createElement('div');holder.innerHTML=geoMarkup;geo=holder.firstElementChild;target.append(geo);}else if(geo.outerHTML!==geoMarkup)geo.outerHTML=geoMarkup;}
    else geo?.remove();
+   const refillMarkup=window.recordRefillBadge?.(record,table)||'';
+   let refill=target.querySelector(':scope > .pipa-refill-badge');
+   if(refillMarkup){if(!refill){const holder=document.createElement('div');holder.innerHTML=refillMarkup;refill=holder.firstElementChild;target.append(refill);}else if(refill.outerHTML!==refillMarkup)refill.outerHTML=refillMarkup;}
+   else refill?.remove();
    if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');
     if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.prepend(meta);}
@@ -130,7 +134,7 @@ export function initAuditUI(){
   panel.innerHTML=`<summary><span aria-hidden="true">ⓘ</span><strong>Informações do registro</strong><small>Criação e última edição</small></summary><div class="editor-audit-content record-audit">${auditLabel(entry.record)}</div>`;
   const actions=root.querySelector('.modal-actions');if(actions)actions.before(panel);else root.append(panel);
  };
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.geo-quick-actions,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
