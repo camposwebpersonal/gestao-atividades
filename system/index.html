@@ -246,7 +246,7 @@
     .nav-item {
       display: flex; flex-direction: column; align-items: center;
       gap: 3px; font-size: 10px; font-weight: 600;
-      color: var(--nu-muted); cursor: pointer;
+      color: var(--nu-muted); cursor: pointer; text-decoration: none;
     }
     .nav-item.active { color: var(--nu-purple); }
     .nav-item .nav-icon { font-size: 22px; }
@@ -607,24 +607,25 @@
   </div><!-- /content -->
 
   <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
-    <div class="nav-item">
+  <nav class="bottom-nav" aria-label="Navegação principal">
+    <a class="nav-item active" href="index.html" aria-current="page">
       <span class="nav-icon">🏠</span>
       Início
-    </div>
-    <div class="nav-item active">
+    </a>
+    <a class="nav-item" href="cartao.html">
       <span class="nav-icon">💳</span>
       Cartão
-    </div>
-    <div class="nav-item">
+    </a>
+    <a class="nav-item" href="pagar.html">
       <span class="nav-icon">💰</span>
       Pagar
-    </div>
-    <div class="nav-item">
+    </a>
+    <a class="nav-item" href="mais.html">
       <span class="nav-icon">⚙️</span>
       Mais
-    </div>
-  </div>
+    </a>
+  </nav>
 
+  <script src="app.js"></script>
 </body>
 </html>
