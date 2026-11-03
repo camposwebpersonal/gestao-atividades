@@ -5,6 +5,11 @@ const fs=require('node:fs');
 const read=name=>fs.readFileSync(`system/${name}`,'utf8');
 const home=read('index.html'),card=read('cartao.html'),payment=read('pagar.html'),more=read('mais.html'),script=read('app.js'),sw=fs.readFileSync('sw.js','utf8');
 
+test('a titular aparece com o nome completo',()=>{
+  assert.match(home,/Adriana Amorim/);
+  assert.match(home,/ADRIANA AMORIM/);
+});
+
 test('navegação inferior abre páginas reais e destaca a guia atual',()=>{
   for(const page of [home,card,payment,more])for(const href of ['index.html','cartao.html','pagar.html','mais.html'])assert.match(page,new RegExp(`href="${href}"`));
   assert.match(card,/nav-item active[^>]+href="cartao\.html"/);
@@ -29,5 +34,5 @@ test('configurações são funcionais, persistentes e disponíveis offline',()=>
   for(const setting of ['showValues','invoiceNotifications','securityAlerts','biometrics','darkTheme'])assert.match(more,new RegExp(`data-setting="${setting}"`));
   assert.match(script,/localStorage\.setItem\(SETTINGS_KEY/);
   for(const asset of ['system/cartao.html','system/pagar.html','system/mais.html','system/app.css','system/app.js'])assert.match(sw,new RegExp(asset.replace('.','\\.')));
-  assert.match(sw,/gestao-pms-v169/);
+  assert.match(sw,/gestao-pms-v170/);
 });
