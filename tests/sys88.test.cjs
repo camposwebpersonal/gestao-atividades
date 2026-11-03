@@ -15,7 +15,21 @@ test('subsite é responsivo e fica disponível no cache offline',()=>{
   assert.match(page,/name="viewport"/);
   assert.match(css,/@media\(max-width:370px\)/);
   assert.match(sw,/sys88\/index\.html/);
-  assert.match(sw,/gestao-pms-v168/);
+  assert.match(sw,/gestao-pms-v169/);
+});
+
+test('o score 877 aparece em um gráfico acessível e responsivo',()=>{
+  for(const html of [page,cpf]){
+    assert.match(html,/Seu Score/);
+    assert.match(html,/>877</);
+    assert.match(html,/de 1000/);
+    assert.match(html,/aria-label="Score 877 de 1000"/);
+  }
+  const scoreCss=fs.readFileSync('sys88/score.css','utf8');
+  assert.match(scoreCss,/\.score-gauge/);
+  assert.match(scoreCss,/87\.7%/);
+  assert.match(scoreCss,/grid-template-columns: 1fr/);
+  assert.match(sw,/sys88\/score\.css/);
 });
 
 test('as quatro abas são links acessíveis e abrem páginas próprias',()=>{
