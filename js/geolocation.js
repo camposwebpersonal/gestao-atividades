@@ -50,6 +50,38 @@ export function capturePosition(){
  });
 }
 
+// Lê as coordenadas GPS gravadas pela câmera dentro da foto (EXIF de arquivos JPEG).
+// Retorna null quando a foto não tem localização (muitos aparelhos removem esse dado ao compartilhar).
+export async function readPhotoLocation(file){
+ try{
+  if(!file||!/jpe?g$/i.test(String(file.type||file.name||'')))return null;
+  const view=new DataView(await file.slice(0,262144).arrayBuffer());
+  if(view.byteLength<4||view.getUint16(0)!==0xFFD8)return null;
+  let offset=2;
+  while(offset+4<=view.byteLength){
+   const marker=view.getUint16(offset),size=view.getUint16(offset+2);
+   if(marker===0xFFE1&&view.getUint32(offset+4)===0x45786966)return parseExifGps(view,offset+10);
+   if((marker&0xFF00)!==0xFF00||size<2)return null;
+   offset+=2+size;
+  }
+ }catch(_){}
+ return null;
+}
+function parseExifGps(view,tiff){
+ const little=view.getUint16(tiff)===0x4949,u16=o=>view.getUint16(o,little),u32=o=>view.getUint32(o,little);
+ const entries=dir=>{const list=[];const count=u16(dir);for(let i=0;i<count;i+=1){const e=dir+2+i*12;list.push({tag:u16(e),type:u16(e+2),count:u32(e+4),value:e+8});}return list;};
+ const gpsEntry=entries(tiff+u32(tiff+4)).find(entry=>entry.tag===0x8825);if(!gpsEntry)return null;
+ const gps=new Map(entries(tiff+u32(gpsEntry.value)).map(entry=>[entry.tag,entry]));
+ const ref=tag=>{const e=gps.get(tag);return e?String.fromCharCode(view.getUint8(e.value)):'';};
+ const coord=tag=>{const e=gps.get(tag);if(!e||e.type!==5||e.count<3)return NaN;const at=tiff+u32(e.value);const part=i=>{const d=u32(at+i*8+4);return d?u32(at+i*8)/d:0;};return part(0)+part(1)/60+part(2)/3600;};
+ let latitude=coord(2),longitude=coord(4);
+ if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||(latitude===0&&longitude===0))return null;
+ if(ref(1)==='S')latitude=-latitude;if(ref(3)==='W')longitude=-longitude;
+ latitude=Number(latitude.toFixed(7));longitude=Number(longitude.toFixed(7));
+ if(Math.abs(latitude)>90||Math.abs(longitude)>180)return null;
+ return {latitude,longitude,accuracy:0,captured_at:new Date().toISOString(),maps_url:mapsUrl(latitude,longitude),source:'exif'};
+}
+
 const DEFAULT_MAP_POINT=[-8.073,-37.264];
 let locationPickerState=null,lastPlaceSearch=0;
 

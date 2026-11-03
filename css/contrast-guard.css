@@ -1,0 +1,88 @@
+/* Garantia de legibilidade (carregado por último).
+   Regra do projeto: fundo escuro → texto claro e vivo; fundo claro → texto escuro.
+   Contraste mínimo WCAG AA: 4,5:1 para texto normal e 3:1 para texto grande.
+   Verificado automaticamente por tests/contrast.browser.cjs em todas as telas e modais. */
+
+:root{--muted:#4f6074;--dim:#5f6f82}
+
+/* 1) Fundos escuros herdados do tema antigo, escritos direto no HTML (style="background:#0…"),
+      viram superfícies claras com texto escuro dentro das áreas claras do sistema. */
+:is(#content,.modal-box) :is(div,label,tr,td,section,p,span,li,form,details,summary,article):is(
+  [style*="background:#0a1222"],[style*="background:#0e1729"],[style*="background:#0f172a"],[style*="background:#060c18"],
+  [style*="background:#0a0f1a"],[style*="background:#020810"],[style*="background:#1e2d47"],[style*="background:#0b1628"],
+  [style*="background:#0e1a2e"],[style*="background:#060e1c"],[style*="background:#060e1a"],[style*="background:#142132"],
+  [style*="background:#0c1a3a"],[style*="background:#061522"],[style*="background:#1e293b"]):not(.card-btn),
+:is(#content,.modal-box) :is(table,thead,tbody,tfoot):is([style*="background:#0a1222"],[style*="background:#0e1729"],[style*="background:#0f172a"],[style*="background:#060c18"],[style*="background:#0a0f1a"]),
+:is(#content,.modal-box) :is(div,label,tr,td,section,p,span,li,small,em,b,strong)[style*="background:#1e3a5f"]{
+  background:#f8fafc!important;color:#172e45!important;border-color:#d5e1ea!important;text-shadow:none!important}
+:is(#content,.modal-box) :is(div,label,span,p,section):is([style*="background:#1a1205"],[style*="background:#1e1a00"],[style*="background:#422006"]){
+  background:#fff8e6!important;color:#6b4300!important;border-color:#f3d48a!important}
+:is(#content,.modal-box) :is(div,label,span,p,section)[style*="background:#0f2a1a"]{background:#ecfdf5!important;color:#065f46!important;border-color:#a7e3c9!important}
+
+/* 2) Cores de texto claras do tema antigo (feitas para fundo escuro) ganham versões escuras. */
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#e2e8f0"],[style*="color:#cbd5e1"],[style*="color:#f8fafc"],[style*="color:#f1f5f9"]){color:#172e45!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#94a3b8"],[style*="color:#64748b"]){color:#4f6074!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#38bdf8"],[style*="color:#60a5fa"]){color:#0b5f93!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#34d399"],[style*="color:#6ee7b7"],[style*="color:#10b981"]){color:#047857!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#fbbf24"],[style*="color:#fcd34d"],[style*="color:#f59e0b"]){color:#8a5300!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#a78bfa"],[style*="color:#c4b5fd"]){color:#6d28d9!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#818cf8"],[style*="color:#a5b4fc"]){color:#4338ca!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#f87171"],[style*="color:#fca5a5"]){color:#b42318!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#f472b6"],[style*="color:#ec4899"]){color:#a3195b!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#3b82f6"],[style*="color:#2563eb"]){color:#1d4ed8!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#22c55e"],[style*="color:#16a34a"]){color:#15803d!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#ef4444"],[style*="color:#dc2626"]){color:#b91c1c!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#8b5cf6"],[style*="color:#7c3aed"]){color:#6d28d9!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#0ea5e9"],[style*="color:#06b6d4"]){color:#0369a1!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#14b8a6"],[style*="color:#2dd4bf"]){color:#0f766e!important}
+:is(#content,.modal-box) :not(button):not([style*="background:#"]):is([style*="color:#eab308"],[style*="color:#f97316"]){color:#9a3412!important}
+
+/* 3) Botões coloridos: texto branco somente com fundo escuro o bastante (≥ 4,5:1). */
+:is(#content,.modal-box) .card-btn[style*="#1e3a5f"]{background:#173b61!important;color:#fff!important;border-color:#173b61!important}
+:is(#content,.modal-box) .card-btn[style*="background:#10b981"]{background:#047857!important;color:#fff!important}
+:is(#content,.modal-box) .card-btn[style*="background:#f59e0b"]{background:#b45309!important;color:#fff!important}
+.ce-btn.ce-btn-pri,.ce-tab.active{background:#0369a1!important;border-color:#0369a1!important;color:#fff!important}
+.ce-btn.ce-btn-ok{background:#047857!important;border-color:#047857!important;color:#fff!important}
+/* Botões principais usam a cor da área (laranja, rosa, azul…) escurecida até garantir texto branco legível. */
+:is(.btn-action.primary,.btn-save,.demand-create .btn-action,.demand-view .btn-action.selected):not([style*="background"]){background:linear-gradient(135deg,color-mix(in srgb,var(--workspace-accent) 74%,#000),color-mix(in srgb,var(--workspace-accent) 62%,#000))!important;border-color:transparent!important;color:#fff!important}
+.btn-action:not(.primary):hover,.btn-cancel:hover,.card-btn:not([style*="background"]):hover{color:color-mix(in srgb,var(--workspace-accent) 62%,#000)!important}
+.users-button.users-button-primary{background:#0f766e!important;border-color:#0f766e!important;color:#fff!important}
+
+/* 4) Rótulos (label) que funcionam como botões não herdam a cor escura dos rótulos de formulário. */
+.modal-box label.field-camera-button,.modal-box label.water-file:not(.secondary){color:#fff!important}
+.modal-box label.water-file.secondary{color:#176b5b!important}
+.modal-box label.field-gallery-button{color:#0f4f49!important}
+.modal-box label.field-stamp-option{color:#134e48!important}
+
+/* 5) Textos secundários das telas claras com contraste insuficiente. */
+.workspace-kicker,.users-eyebrow,.user-general-permissions-heading span{color:#0b6b62!important}
+.user-full-access{color:#116530!important}
+:is(.productivity-heading,.secretary-launch-section header,.geo-map-page>header,.registry-heading,.trash-hero,.demand-heading,.users-page-header,.user-general-permissions-heading) p,
+.page-sub,.registry-count span,.trash-total span,.trash-card-main>span,#dashboard-secretary-count,.secretary-launch-grid .empty,
+.users-login-note,.users-advanced>summary,.user-muted,.user-sector,.user-login,#users-visible-count,.users-overview span,
+:is(.permission-details,.user-form-disclosure)>summary>span,.permission-groups>p,.permission-scope-row small,.user-form .form-group>small,
+.activity-lanes small,.geo-map-list article>b,.geo-map-list article>div>span,
+.geo-picker-credit,.geo-picker-dialog header p,#geo-picker-status small,.geo-empty,.geo-editor-head small,.geo-external-option small,
+.record-audit span,.record-audit time,.audit-record>small,.module-transfer-choice small,.stat-lbl,.ce-empty,.bulk-drafts-empty span,
+.demand-number,.demand-copy small,.demand-context small,.demand-total>span,.module-group-number,.module-group-total,.module-group-progress>span,.module-group-list>.empty,.module-group-list>.empty strong,.cc-mobile-card>.empty,.demand-summary small,.demand-bulk>label,.pw-value-config .empty,.pw-custom-title small,.item-name>span{color:#4a5d70!important}
+.pw-custom-title b{color:#92400e!important}
+.ce-header h2{color:#172033!important}
+.registry-heading-icon{color:#0b6b62}
+.activity-stat>div[style*="color:#38bdf8"],.activity-stat>div{text-shadow:none}
+
+/* 6) Seções do formulário de grupo/item que ainda usavam o tema escuro. */
+.resp-section h5{color:#4338ca}
+.img-section h5{color:#6d28d9}
+.resp-circle{background:#eef2ff;border-color:#6366f1}
+.activity-default-layout-settings{background:#f8fafc;border-color:#d5e1ea}
+.activity-default-layout-settings>strong{color:#0b5f93}
+.modal-box .activity-default-layout-settings>label{color:#334155!important}
+.activity-default-layout-settings select{background:#fff;color:#172e45}
+.activity-default-layout-settings>small{color:#4a5d70;font-size:11px}
+
+/* 7) Faixa "Atalho de campo": fundo um pouco mais escuro para o texto claro ficar vivo. */
+.field-capture-banner{background:linear-gradient(120deg,#073b3a 0%,#0c544c 55%,#0b6159 100%)}
+.field-capture-banner span{color:#f0fdfa}
+.field-capture-banner p{color:#effffb}
+/* Percentual da barra de progresso: mesma cor da barra, escurecida para leitura. */
+.module-group-progress span b{color:color-mix(in srgb,var(--progress,#3b82f6) 62%,#000)!important}

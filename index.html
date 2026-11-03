@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=10">
-<link rel="modulepreload" href="js/modulos.js?v=102">
+<link rel="modulepreload" href="js/modulos.js?v=103">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -24,7 +24,7 @@
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=86"></script>
 <script src="js/controle-contas.js?v=64"></script>
-<script src="js/controle-distribuicao.js?v=63"></script>
+<script src="js/controle-distribuicao.js?v=64"></script>
 <script src="js/controle-estoque.js?v=63"></script>
 <style>
 :root{--bg:#080f1e;--card:#0e1729;--border:#1e3a5f;--text:#e2e8f0;--muted:#64748b;--dim:#374151;--accent:#3b82f6;--h:58px}
@@ -425,16 +425,17 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
 <link rel="stylesheet" href="css/record-density.css?v=7">
 <link rel="stylesheet" href="css/header-density.css?v=6">
-<link rel="stylesheet" href="css/camera-capture.css?v=4">
+<link rel="stylesheet" href="css/camera-capture.css?v=5">
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
-<link rel="stylesheet" href="css/geolocation.css?v=4">
+<link rel="stylesheet" href="css/geolocation.css?v=5">
 <link rel="stylesheet" href="css/pipa-refill.css?v=1">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=3">
 <link rel="stylesheet" href="css/global-search-premium.css?v=2">
 <link rel="stylesheet" href="css/water-points.css?v=1">
 <link rel="stylesheet" href="css/layout-safety.css?v=1">
+<link rel="stylesheet" href="css/contrast-guard.css?v=1">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
 </head>
@@ -512,8 +513,8 @@ import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFro
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=1';
-import './js/modulos.js?v=102';
-import './js/water-points.js?v=1';
+import './js/modulos.js?v=103';
+import './js/water-points.js?v=2';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
@@ -525,7 +526,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=4';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=5';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
@@ -1119,7 +1120,7 @@ window.addEventListener('resize',()=>window.refreshStickyTableScroll?.(),{passiv
 document.querySelector('main')?.addEventListener('scroll',()=>window.refreshStickyTableScroll?.(),{passive:true});
 const pColor=p=>p===100?'#10b981':p>0?'#3b82f6':'#334155';
 function pRing(p,sz=36){const r=sz/2-4,c=2*Math.PI*r,f=c-(p/100)*c,col=pColor(p);
-  return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:${col}">${p}%</span></div>`;}
+  return`<div class="pring" style="width:${sz}px;height:${sz}px"><svg width="${sz}" height="${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="#1e3a5f" stroke-width="3.5"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="3.5" stroke-dasharray="${c}" stroke-dashoffset="${f}" stroke-linecap="round"/></svg><span class="pring-txt" style="color:color-mix(in srgb,${col} 62%,#000)">${p}%</span></div>`;}
 function iProg(item){const subs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));if(!subs.length)return{hasSubs:false,pct:recordIsCompleted(item)?100:0,total:0,subs:[]};const done=subs.filter(recordIsCompleted).length;return{hasSubs:true,total:subs.length,concluded:done,pct:Math.round((done/subs.length)*100),subs:subs};}
 
 // ── HIERARQUIA DE SUBITENS ──
@@ -1267,7 +1268,7 @@ window.renderChamados=function(){
   setC(`<div class="page-title">🎫 Chamados</div><div class="page-sub">Solicitações entre setores</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
       <button class="btn-action primary" onclick="openChamadoModal()">+ Novo Chamado</button>
-      <select id="cham-filtro" onchange="renderChamados()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text)"><option value="todos">Todos</option><option value="aberto">⏳ Abertos</option><option value="em_andamento">🔵 Em andamento</option><option value="concluido">✅ Concluídos</option><option value="cancelado">❌ Cancelados</option></select>
+      <select id="cham-filtro" onchange="renderChamados()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text)"><option value="todos">Todos</option><option value="aberto">⏳ Abertos</option><option value="em_andamento">🔵 Em andamento</option><option value="concluido">✅ Concluídos</option><option value="cancelado">❌ Cancelados</option></select>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer"><input type="checkbox" id="cham-meus" onchange="renderChamados()" ${document.getElementById('cham-meus')?.checked?'checked':''}> 📍 Meus setores</label>
     </div>
     <div class="table-wrap"><table><thead><tr><th>Status</th><th>Título</th><th>Descrição</th><th>Solicitante</th><th>Destinatário</th><th style="text-align:right">Ações</th></tr></thead><tbody>${rows}</tbody></table></div>`);
@@ -1278,7 +1279,7 @@ window.openChamadoModal=function(id){
   const statusOpts=['aberto','em_andamento','concluido','cancelado'].map(v=>`<option value="${v}" ${c?.status===v?'selected':''}>${{aberto:'⏳ Aberto',em_andamento:'🔵 Em andamento',concluido:'✅ Concluído',cancelado:'❌ Cancelado'}[v]}</option>`).join('');
   const respOpts=S.responsaveis.map(r=>`<option value="${esc(r.id)}" ${c?.responsavel_id===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
   openModal(id?'✏️ Editar Chamado':'➕ Novo Chamado','',
-    `<div class="form-grid"><div class="form-group full"><label>Título *</label><input id="cham-titulo" value="${esc(c?.titulo||'')}"></div><div class="form-group full"><label>Descrição</label><textarea id="cham-desc" rows="3" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%">${esc(c?.descricao||'')}</textarea></div><div class="form-group"><label>Destinatário (Setor) *</label><select id="cham-dest">${secOpts}</select></div><div class="form-group"><label>Status</label><select id="cham-status">${statusOpts}</select></div><div class="form-group"><label>Responsável</label><select id="cham-resp"><option value="">— Nenhum —</option>${respOpts}</select></div><div class="form-group"><label>Prioridade</label><select id="cham-prio"><option value="normal" ${c?.prioridade==='normal'?'selected':''}>⚪ Normal</option><option value="alta" ${c?.prioridade==='alta'?'selected':''}>🔴 Alta</option><option value="urgente" ${c?.prioridade==='urgente'?'selected':''}>🚨 Urgente</option></select></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Título *</label><input id="cham-titulo" value="${esc(c?.titulo||'')}"></div><div class="form-group full"><label>Descrição</label><textarea id="cham-desc" rows="3" style="background:#ffffff;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%">${esc(c?.descricao||'')}</textarea></div><div class="form-group"><label>Destinatário (Setor) *</label><select id="cham-dest">${secOpts}</select></div><div class="form-group"><label>Status</label><select id="cham-status">${statusOpts}</select></div><div class="form-group"><label>Responsável</label><select id="cham-resp"><option value="">— Nenhum —</option>${respOpts}</select></div><div class="form-group"><label>Prioridade</label><select id="cham-prio"><option value="normal" ${c?.prioridade==='normal'?'selected':''}>⚪ Normal</option><option value="alta" ${c?.prioridade==='alta'?'selected':''}>🔴 Alta</option><option value="urgente" ${c?.prioridade==='urgente'?'selected':''}>🚨 Urgente</option></select></div></div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="deleteChamado('${id}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="saveChamado('${id||''}')">💾 Salvar</button></div>`);
 };
 window.saveChamado=async function(id){
@@ -1400,7 +1401,7 @@ window.renderGaleria=function(){
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center">
       <button class="btn-action primary" onclick="openFotoUploadModal()">+ Adicionar Foto</button>
       <button class="btn-action" onclick="gerarPDFGaleria()">📄 PDF Fotográfico</button>
-      <select id="gal-filtro-ativ" onchange="renderGaleria()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text)"><option value="">Todas as atividades</option>${ativOpts}</select>
+      <select id="gal-filtro-ativ" onchange="renderGaleria()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text)"><option value="">Todas as atividades</option>${ativOpts}</select>
     </div>
     <div class="gal-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">${grid}</div>`);
 };
@@ -1422,7 +1423,7 @@ window.openFotoUploadModal=function(){
   _clearGalFiles();
   const ativOpts=S.secs.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('');
   openModal('📷 Novas Fotos','Fotografe quantas vezes precisar ou escolha várias imagens da galeria.',
-    `<div class="form-grid"><div class="form-group full"><label>Imagens *</label><div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input type="file" id="gal-camera" accept="image/*" capture="environment" onchange="galAddFiles(this,'camera')"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input type="file" id="gal-file" accept="image/*" multiple onchange="galAddFiles(this,'gallery')"></label><b id="gal-upload-count">0/20 fotos</b></div><label class="field-stamp-option"><input id="gal-stamp-location" type="checkbox"> Gravar coordenadas e data visíveis na foto</label><div id="gal-upload-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título comum das fotos"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#0f172a;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
+    `<div class="form-grid"><div class="form-group full"><label>Imagens *</label><div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input type="file" id="gal-camera" accept="image/*" capture="environment" onchange="galAddFiles(this,'camera')"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input type="file" id="gal-file" accept="image/*" multiple onchange="galAddFiles(this,'gallery')"></label><b id="gal-upload-count">0/20 fotos</b></div><label class="field-stamp-option"><input id="gal-stamp-location" type="checkbox" checked> Gravar coordenadas e data visíveis na foto</label><div id="gal-upload-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div></div><div class="form-group full"><label>Título</label><input id="gal-titulo" placeholder="Título comum das fotos"></div><div class="form-group"><label>Atividade</label><select id="gal-atividade"><option value="">— Nenhuma —</option>${ativOpts}</select></div><div class="form-group"><label>Data</label><input id="gal-data" type="date" value="${new Date().toISOString().split('T')[0]}"></div><div class="form-group full"><label>Local</label><input id="gal-local" placeholder="Ex: UBSF Nova Sertânia"></div><div class="form-group full"><label>Notas / Observações</label><textarea id="gal-notas" rows="2" style="background:#ffffff;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px;width:100%"></textarea></div></div>
     <div class="modal-actions"><button class="btn-cancel" onclick="closeModal()">Cancelar</button><button id="gal-save" class="btn-save" onclick="salvarFoto()">💾 Salvar fotos</button></div>`);
 };
 window.salvarFoto=async function(){
@@ -2263,8 +2264,8 @@ window.openSecModal=function(id){
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_estoque?'#0ea5e9':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-est" ${s?.controle_estoque?'checked':''} style="width:14px;height:14px;accent-color:#0ea5e9;cursor:pointer"> 📦 Controle de Estoque <span style="font-size:11px;color:var(--muted);margin-left:4px">(entradas, saídas, estoque crítico)</span></label>
       <div style="display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px;padding:12px;background:#0a1222;border:1px solid #1e3a5f;border-radius:8px">
-        <div class="form-group" style="margin:0;flex:1;min-width:200px"><label style="font-size:11px;color:#94a3b8">Nome da Secretaria / Órgão</label><input type="text" id="s-ce-nome-secretaria" value="${esc(s?.ce_nome_secretaria||'')}" placeholder="Ex: Secretaria de Saúde" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:13px;box-sizing:border-box"></div>
-        <div class="form-group" style="margin:0;flex:2;min-width:260px"><label style="font-size:11px;color:#94a3b8">Título do Controle</label><input type="text" id="s-ce-titulo" value="${esc(s?.ce_titulo_controle||'')}" placeholder="Ex: Controle de Estoque de Itens da Secretaria de Saúde" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:13px;box-sizing:border-box"></div>
+        <div class="form-group" style="margin:0;flex:1;min-width:200px"><label style="font-size:11px;color:#94a3b8">Nome da Secretaria / Órgão</label><input type="text" id="s-ce-nome-secretaria" value="${esc(s?.ce_nome_secretaria||'')}" placeholder="Ex: Secretaria de Saúde" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px;box-sizing:border-box"></div>
+        <div class="form-group" style="margin:0;flex:2;min-width:260px"><label style="font-size:11px;color:#94a3b8">Título do Controle</label><input type="text" id="s-ce-titulo" value="${esc(s?.ce_titulo_controle||'')}" placeholder="Ex: Controle de Estoque de Itens da Secretaria de Saúde" style="width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px;box-sizing:border-box"></div>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-stats" ${s?.show_stats!==0?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar estatísticas (concluídos / pendentes / atrasados)</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-table" ${s?.show_table?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 🗂️ Sempre exibir lançamentos em tabela</label>
@@ -2275,7 +2276,7 @@ window.openSecModal=function(id){
         <small>Essa preferência fica salva somente neste grupo e pode ser alterada temporariamente na própria tela.</small>
       </div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="checkbox" id="s-show-quant" ${s?.show_quantitativo==1 || (s?.name||'').toUpperCase().includes('BCC')?'checked':''} style="width:14px;height:14px;accent-color:#38bdf8;cursor:pointer"> 📊 Mostrar quantitativo com soma</label>
-      <div style="display:flex;align-items:center;gap:8px;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="text" id="s-qt-campo" placeholder="Nome do campo de valor (ex: Remuneração)" value="${esc(s?.quantitativo_campo || ((s?.name||'').toUpperCase().includes('BCC')?'Remuneração':''))}" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:13px"></div>
+      <div style="display:flex;align-items:center;gap:8px;background:#0e1729;border-radius:8px;padding:9px 12px"><input type="text" id="s-qt-campo" placeholder="Nome do campo de valor (ex: Remuneração)" value="${esc(s?.quantitativo_campo || ((s?.name||'').toUpperCase().includes('BCC')?'Remuneração':''))}" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px"></div>
       ${[['verba','💰 Campo Verba'],['origem_verba','📍 Origem da Verba'],['documentacao','📁 Documentação'],['licitacao','⚖️ Licitação']].map(([field,lbl])=>{
         const fid=field.replace(/_/g,'-');const show=s&&s['show_'+field];
         const extraHtml=field==='verba'?`<label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer"><input type="checkbox" id="s-verba-sum" ${s?.verba_sum_subitems?'checked':''} style="width:12px;height:12px;accent-color:#38bdf8"> Somar verbas dos sub-itens no total do item</label>`:''
@@ -2290,12 +2291,12 @@ window.openSecModal=function(id){
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#60a5fa;margin-bottom:8px">📋 Campos dos Itens</div>
         <div id="ftpl-item-list-${id}">${renderFieldTplList(id,'item')}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="toggleFieldTemplateOptions('${id}','item',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-item-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:12px"><select id="ftpl-item-type-${id}" onchange="toggleFieldTemplateOptions('${id}','item',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','item','ftpl-item-name-${id}','ftpl-item-type-${id}')" style="padding:5px 10px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-item" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
       <div style="background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">
         <div style="font-size:12px;font-weight:700;color:#a78bfa;margin-bottom:8px">📌 Campos dos Subitens</div>
         <div id="ftpl-sub-list-${id}">${renderFieldTplList(id,'subitem')}</div>
-        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="toggleFieldTemplateOptions('${id}','subitem',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#0e1729;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
+        <div style="display:flex;gap:5px;margin-top:8px"><input type="text" id="ftpl-sub-name-${id}" placeholder="Nome do campo…" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:12px"><select id="ftpl-sub-type-${id}" onchange="toggleFieldTemplateOptions('${id}','subitem',this.value)" style="padding:5px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px"><option value="text">Texto</option><option value="number">Número</option><option value="date">Data</option><option value="textarea">Texto longo</option><option value="combobox">Combobox (lista)</option><option value="checkboxes">Múltipla escolha (checkboxes)</option><option value="radio">Escolha única (radio)</option></select><button onclick="saveFieldTpl('${id}','subitem','ftpl-sub-name-${id}','ftpl-sub-type-${id}')" style="padding:5px 10px;background:#8b5cf6;color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap">+</button></div><textarea id="ftpl-opts-${id}-subitem" placeholder="Uma opção por linha…" rows="3" style="display:none;margin-top:4px;width:100%;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px;resize:vertical;font-family:inherit;box-sizing:border-box"></textarea>
       </div>
     </div>
   </div>`:'<!-- sem id -->'}
@@ -2344,7 +2345,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   const effectiveSecretaryName=S.secretarias.find(s=>s.id===effectiveSecretary)?.name||'Secretaria vinculada ao grupo';
   const secretaryField=secretaryIsFixed(sec)
     ?`<div class="form-group full"><label>Secretaria</label><input type="hidden" id="it-secretaria" value="${esc(effectiveSecretary)}"><div class="context-locked-field"><span>🏛️</span><div><strong>${esc(effectiveSecretaryName)}</strong><small>Definida automaticamente pelo grupo ${esc(sec?.name||'')}</small></div><b>Automático</b></div></div>`
-    :`<div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${effectiveSecretary===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`;
+    :`<div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${effectiveSecretary===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`;
   openModal(id?`✏️ Editar ${isSub?'Sub-item':'Item'}`:`➕ Novo ${isSub?'Sub-item':'Item'}`,sec?'📅 '+sec.name:'',
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button></div>
   <div class="form-grid">
@@ -2355,7 +2356,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     ${secretaryField}
     <div class="form-group"><label>Data Início</label><input type="date" id="it-start" value="${esc(it?.start_date||'')}"></div>
     <div class="form-group"><label>Prazo</label><input type="date" id="it-deadline" value="${esc(it?.deadline_date||'')}"></div>
-    ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#0f172a;cursor:pointer"></div>`:''}
+    ${!isSub?`<div class="form-group"><label>Ícone (emoji)</label><input id="it-icon" value="${esc(it?.item_icon||'📋')}" style="max-width:80px;font-size:18px;text-align:center"></div><div class="form-group"><label>Cor do Item</label><input type="color" id="it-color" value="${esc(it?.item_color||'#3B82F6')}" style="width:60px;height:38px;padding:2px;border:1px solid var(--border);border-radius:8px;background:#ffffff;cursor:pointer"></div>`:''}
     <div class="form-group full"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="it-show-conc" ${it?.show_conclusion_date?'checked':''} style="width:14px;height:14px;accent-color:#10b981"> Exibir data de conclusão ${isSub?'neste sub-item':'neste item'}</label></div>
   </div>
   ${locationEditorHtml(it,'it-geo')}
@@ -2369,11 +2370,11 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     if(!noV&&!noD&&!noL)return '';
     let p='';
     if(noV){const vc=it?.item_show_verba?'checked':'',vs=it?.item_show_verba?'block':'none';
-      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sv" ${vc} onchange="document.getElementById('pit-vr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 💰 Habilitar Verba neste ${isSub?'sub-item':'item'}</label><div id="pit-vr" style="display:${vs};margin-top:6px;padding-left:22px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="number" id="pit-verba" step="0.01" placeholder="Valor R$" value="${esc(String(it?.verba??''))}" style="width:120px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" id="pit-vorig" placeholder="Origem da verba" value="${esc(it?.origem_verba||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"></div></div></div>`;}
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sv" ${vc} onchange="document.getElementById('pit-vr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 💰 Habilitar Verba neste ${isSub?'sub-item':'item'}</label><div id="pit-vr" style="display:${vs};margin-top:6px;padding-left:22px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="number" id="pit-verba" step="0.01" placeholder="Valor R$" value="${esc(String(it?.verba??''))}" style="width:120px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><input type="text" id="pit-vorig" placeholder="Origem da verba" value="${esc(it?.origem_verba||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"></div></div></div>`;}
     if(noD){const dc=it?.item_show_documentacao?'checked':'',ds=it?.item_show_documentacao?'block':'none',dv=it?.documentacao;
-      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sd" ${dc} onchange="document.getElementById('pit-dr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 📁 Habilitar Documentação</label><div id="pit-dr" style="display:${ds};margin-top:6px;padding-left:22px"><select id="pit-doc" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${dv===0||dv==='0'?'selected':''}>Pendente</option><option value="1" ${dv===1||dv==='1'?'selected':''}>Concluída</option></select></div></div>`;}
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sd" ${dc} onchange="document.getElementById('pit-dr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> 📁 Habilitar Documentação</label><div id="pit-dr" style="display:${ds};margin-top:6px;padding-left:22px"><select id="pit-doc" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${dv===0||dv==='0'?'selected':''}>Pendente</option><option value="1" ${dv===1||dv==='1'?'selected':''}>Concluída</option></select></div></div>`;}
     if(noL){const lc=it?.item_show_licitacao?'checked':'',ls=it?.item_show_licitacao?'block':'none',lv2=it?.licitacao;
-      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sl" ${lc} onchange="document.getElementById('pit-lr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> ⚖️ Habilitar Licitação</label><div id="pit-lr" style="display:${ls};margin-top:6px;padding-left:22px"><select id="pit-lic" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${lv2===0||lv2==='0'?'selected':''}>Pendente</option><option value="1" ${lv2===1||lv2==='1'?'selected':''}>Concluída</option></select></div></div>`;}
+      p+=`<div style="margin-bottom:8px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px"><input type="checkbox" id="pit-sl" ${lc} onchange="document.getElementById('pit-lr').style.display=this.checked?'block':'none'" style="width:14px;height:14px;accent-color:#34d399"> ⚖️ Habilitar Licitação</label><div id="pit-lr" style="display:${ls};margin-top:6px;padding-left:22px"><select id="pit-lic" style="padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${lv2===0||lv2==='0'?'selected':''}>Pendente</option><option value="1" ${lv2===1||lv2==='1'?'selected':''}>Concluída</option></select></div></div>`;}
     return p?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px"><div style="font-size:12px;font-weight:700;color:#34d399;margin-bottom:8px">✅ Campos deste ${isSub?'Sub-item':'Item'}</div>${p}</div>`:'';
   })()}
   ${(()=>{
@@ -2384,17 +2385,17 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     if(chk('verba')){
       let verbas=[];try{verbas=Array.isArray(it?.verbas_list)?it.verbas_list:(it?.verbas_list?JSON.parse(it.verbas_list):[]);}catch(e){if(it?.verba!=null)verbas=[{v:it.verba,ov:it.origem_verba||'',obs:it.verba_obs||''}];}
       if(!verbas.length&&it?.verba!=null)verbas=[{v:it.verba,ov:it.origem_verba||'',obs:it.verba_obs||''}];
-      out2+=`<div class="form-group full"><label>💰 Verbas (R$)</label><div id="vb-list" style="margin-bottom:6px">${verbas.map(vb=>`<div class="vb-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><input type="number" class="vb-val" step="0.01" value="${esc(String(vb.v||''))}" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" value="${esc(vb.ov||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" value="${esc(vb.obs||'')}" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button></div>`).join('')}</div><button type="button" onclick="vbAdd()" style="padding:4px 12px;background:#065f46;color:#6ee7b7;border:1px solid #10b981;border-radius:6px;font-size:12px;cursor:pointer">➕ Adicionar Verba</button></div>`;
+      out2+=`<div class="form-group full"><label>💰 Verbas (R$)</label><div id="vb-list" style="margin-bottom:6px">${verbas.map(vb=>`<div class="vb-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><input type="number" class="vb-val" step="0.01" value="${esc(String(vb.v||''))}" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" value="${esc(vb.ov||'')}" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" value="${esc(vb.obs||'')}" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button></div>`).join('')}</div><button type="button" onclick="vbAdd()" style="padding:4px 12px;background:#065f46;color:#6ee7b7;border:1px solid #10b981;border-radius:6px;font-size:12px;cursor:pointer">➕ Adicionar Verba</button></div>`;
     }
     if(chk('origem_verba'))out2+=`<div class="form-group full"><label>📍 Origem da Verba</label><input id="it-origem-verba" value="${esc(it?.origem_verba||'')}"></div>`;
     if(chk('documentacao')){
       const d=it?.documentacao;
-      out2+=`<div class="form-group full"><label>📁 Documentação</label><select id="it-documentacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${d===0||d==='0'?'selected':''}>Pendente</option><option value="1" ${d===1||d==='1'?'selected':''}>Concluída</option></select></div>`;
+      out2+=`<div class="form-group full"><label>📁 Documentação</label><select id="it-documentacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${d===0||d==='0'?'selected':''}>Pendente</option><option value="1" ${d===1||d==='1'?'selected':''}>Concluída</option></select></div>`;
       if(effSec2.documentacao_has_obs)out2+=`<div class="form-group full"><label>Obs. Documentação</label><input id="it-doc-obs" value="${esc(it?.documentacao_obs||'')}"></div>`;
     }
     if(chk('licitacao')){
       const l=it?.licitacao;
-      out2+=`<div class="form-group full"><label>⚖️ Licitação</label><select id="it-licitacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${l===0||l==='0'?'selected':''}>Pendente</option><option value="1" ${l===1||l==='1'?'selected':''}>Concluída</option></select></div>`;
+      out2+=`<div class="form-group full"><label>⚖️ Licitação</label><select id="it-licitacao" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option><option value="0" ${l===0||l==='0'?'selected':''}>Pendente</option><option value="1" ${l===1||l==='1'?'selected':''}>Concluída</option></select></div>`;
       if(effSec2.licitacao_has_obs)out2+=`<div class="form-group full"><label>Obs. Licitação</label><input id="it-lic-obs" value="${esc(it?.licitacao_obs||'')}"></div>`;
     }
     if(!out2)return '';
@@ -2410,7 +2411,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
       let raw=ef[t.field_name]; if(raw===null||raw===undefined) raw=it?.[t.field_name];
       const val=raw===null||raw===undefined?'':String(raw);
       const choice=customFieldControl({...t,options:_tplOpts(t)},raw,esc);
-      const inp=choice|| (t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">`);
+      const inp=choice|| (t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px">`);
       return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
@@ -2523,8 +2524,8 @@ function renderImgs(cont,type,id,imgs){
     <div style="background:#0e1729;border-radius:8px;padding:10px;margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">📌 Imagem Representativa</div>
       ${rep?`<img class="img-rep-preview" src="${esc(rep.imgbb_url)}" alt="">
-        <input type="text" placeholder="Título..." value="${esc(rep.title||'')}" onchange="setImgProp('${rep.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:5px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
-        <input type="text" placeholder="Observação..." value="${esc(rep.obs||'')}" onchange="setImgProp('${rep.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#0a1222;color:var(--text);font-size:11px">
+        <input type="text" placeholder="Título..." value="${esc(rep.title||'')}" onchange="setImgProp('${rep.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:5px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px">
+        <input type="text" placeholder="Observação..." value="${esc(rep.obs||'')}" onchange="setImgProp('${rep.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:4px;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:11px">
         ${rep.maps_url?`<div class="image-geo-links"><a href="${esc(rep.maps_url)}" target="_blank" rel="noopener">📍 Local da foto</a><button type="button" onclick="shareGeoLocation('${esc(rep.maps_url)}','Localização da foto')">Compartilhar</button></div>`:''}<div style="display:flex;gap:6px;margin-top:6px">
           <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','camera')">📸 Nova foto</button>
           <button class="btn-action" style="font-size:11px;padding:4px 10px" onclick="addImg('${type}','${id}',true,'${rep.id}','gallery')">🖼️ Galeria</button>
@@ -2535,12 +2536,12 @@ function renderImgs(cont,type,id,imgs){
     <div class="gal-grid">
       ${gal.map(g=>`<div style="display:inline-block;vertical-align:top;width:90px;margin:0 4px 8px 0">
         <img class="gal-thumb" src="${esc(g.imgbb_url)}" loading="lazy" onclick="openLb('${esc(g.imgbb_url)}')" oncontextmenu="event.preventDefault();if(confirm('Remover?'))delImg('${g.id}','${type}','${id}',false)" style="width:90px;height:60px;object-fit:cover">
-        <input type="text" placeholder="Título..." value="${esc(g.title||'')}" onchange="setImgProp('${g.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:3px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">
-        <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#0a1222;color:var(--text);font-size:10px">${g.maps_url?`<div class="image-geo-links"><a href="${esc(g.maps_url)}" target="_blank" rel="noopener">📍 Mapa</a><button type="button" onclick="shareGeoLocation('${esc(g.maps_url)}','Localização da foto')">↗</button></div>`:''}
+        <input type="text" placeholder="Título..." value="${esc(g.title||'')}" onchange="setImgProp('${g.id}','title',this.value,'${type}','${id}')" style="width:100%;margin-top:3px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#ffffff;color:var(--text);font-size:10px">
+        <input type="text" placeholder="Obs..." value="${esc(g.obs||'')}" onchange="setImgProp('${g.id}','obs',this.value,'${type}','${id}')" style="width:100%;margin-top:2px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;background:#ffffff;color:var(--text);font-size:10px">${g.maps_url?`<div class="image-geo-links"><a href="${esc(g.maps_url)}" target="_blank" rel="noopener">📍 Mapa</a><button type="button" onclick="shareGeoLocation('${esc(g.maps_url)}','Localização da foto')">↗</button></div>`:''}
       </div>`).join('')}
       <div class="image-source-actions gallery-add-actions"><button type="button" onclick="addImg('${type}','${id}',false,'','camera')">📸 Tirar foto</button><button type="button" onclick="addImgMulti('${type}','${id}')">🖼️ Adicionar várias</button></div>
     </div>
-    <label class="photo-geo-option"><input type="checkbox" id="photo-stamp-${type}-${id}"> Gravar coordenadas e data visíveis nas fotos tiradas pela câmera</label>
+    <label class="photo-geo-option"><input type="checkbox" id="photo-stamp-${type}-${id}" checked> Gravar coordenadas e data visíveis nas fotos tiradas pela câmera</label>
     <input type="file" id="iup-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',false,'camera')">
     <input type="file" id="iup-${type}-${id}" accept="image/*" multiple style="display:none" onchange="handleUpload(this,'${type}','${id}')">
     <input type="file" id="iup-rep-camera-${type}-${id}" accept="image/*" capture="environment" style="display:none" onchange="handleUpload(this,'${type}','${id}',true,'camera')">
@@ -3944,7 +3945,7 @@ window.cancelEditFieldTpl=function(tplId,actId){const tpl=S.fieldTemplates.find(
 window.vbAdd=function(){
   const list=document.getElementById('vb-list');if(!list)return;
   const row=document.createElement('div');row.className='vb-row';row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap';
-  row.innerHTML=`<input type="number" class="vb-val" step="0.01" placeholder="R$ 0,00" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
+  row.innerHTML=`<input type="number" class="vb-val" step="0.01" placeholder="R$ 0,00" style="width:110px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><input type="text" class="vb-orig" placeholder="Origem…" style="flex:1;min-width:100px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><input type="text" class="vb-obs" placeholder="Obs.…" style="flex:1;min-width:80px;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><button onclick="this.closest('.vb-row').remove()" style="background:none;border:none;color:#f87171;cursor:pointer;font-size:16px;padding:0 4px">✕</button>`;
   list.appendChild(row);
 };
 window.vbCollect=function(){
@@ -3952,7 +3953,7 @@ window.vbCollect=function(){
 };
 // ── MARCAR ATIVIDADE CONCLUÍDA ──
 // ── STATUS MENU ──
-const _ST=[{v:'pendente',l:'Pendente',bg:'#33415522',c:'#94A3B8'},{v:'solicitado',l:'Solicitado',bg:'#2563EB22',c:'#60A5FA'},{v:'recebido',l:'Recebido',bg:'#0D948822',c:'#2DD4BF'},{v:'analisando',l:'Analisando',bg:'#8B5CF622',c:'#C4B5FD'},{v:'aprovado',l:'Aprovado',bg:'#10B98122',c:'#34D399'},{v:'ressalva',l:'Ressalva',bg:'#F59E0B22',c:'#FBBF24'},{v:'reprovado',l:'Reprovado',bg:'#EF444422',c:'#F87171'},{v:'concluido',l:'Concluído',bg:'#059669aa',c:'#ffffff'}];
+const _ST=[{v:'pendente',l:'Pendente',bg:'#E2E8F0',c:'#334155'},{v:'solicitado',l:'Solicitado',bg:'#DBEAFE',c:'#1D4ED8'},{v:'recebido',l:'Recebido',bg:'#CCFBF1',c:'#0F766E'},{v:'analisando',l:'Analisando',bg:'#EDE9FE',c:'#6D28D9'},{v:'aprovado',l:'Aprovado',bg:'#D1FAE5',c:'#047857'},{v:'ressalva',l:'Ressalva',bg:'#FEF3C7',c:'#92400E'},{v:'reprovado',l:'Reprovado',bg:'#FEE2E2',c:'#B91C1C'},{v:'concluido',l:'Concluído',bg:'#047857',c:'#ffffff'}]; // cores legíveis no tema claro (contraste ≥ 4,5:1)
 window._effectiveItemStatus=function(item){ if(!item) return 'pendente'; if(item.status!=='concluido') return item.status||'pendente'; const p=iProg(item); return p.pct===100?'concluido':'pendente'; };
 window.statusBadge=function(status,id,col,ev){
   let finalStatus=status||'pendente';
@@ -3970,8 +3971,8 @@ window.openStatusMenu=function(id,col,ev){
   const cur=(col==='item'&&obj)?_effectiveItemStatus(obj):obj?.status||'pendente';
   const pop=document.createElement('div');
   pop.className='st-popup';
-  pop.style.cssText='position:fixed;z-index:9999;background:#1e2d47;border:1px solid #334155;border-radius:12px;padding:6px;box-shadow:0 8px 32px #0008;min-width:155px';
-  pop.innerHTML=_ST.map(o=>`<div onclick="setItemStatus('${id}','${col}','${o.v}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;background:${o.v===cur?'#ffffff11':'transparent'}" onmouseover="this.style.background='#ffffff18'" onmouseout="this.style.background='${o.v===cur?'#ffffff11':'transparent'}'">
+  pop.style.cssText='position:fixed;z-index:9999;background:#ffffff;border:1px solid #d5e1ea;border-radius:12px;padding:6px;box-shadow:0 12px 32px rgba(15,23,42,.18);min-width:155px';
+  pop.innerHTML=_ST.map(o=>`<div onclick="setItemStatus('${id}','${col}','${o.v}')" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;background:${o.v===cur?'#e6f4f1':'transparent'}" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='${o.v===cur?'#e6f4f1':'transparent'}'">
     <span style="padding:2px 8px;border-radius:999px;background:${o.bg};color:${o.c};font-size:11px;font-weight:700">${o.l}</span></div>`).join('');
   document.body.appendChild(pop);
   const rect=el.getBoundingClientRect(),pw=165;
@@ -4250,7 +4251,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;cursor:pointer" onclick="listaToggleEdit('${statId}')">
         <span id="${statId}-view">${_stBadge(it.status)}</span>
-        <span id="${statId}-edit" style="display:none"><select onchange="listaSaveStatus('${it.id}',false,'${secId}',this.value)" style="padding:3px 6px;font-size:10px;border-radius:6px;background:#0f172a;color:var(--text);border:1px solid var(--border)">${_statusOptions(it.status)}</select></span>
+        <span id="${statId}-edit" style="display:none"><select onchange="listaSaveStatus('${it.id}',false,'${secId}',this.value)" style="padding:3px 6px;font-size:10px;border-radius:6px;background:#ffffff;color:var(--text);border:1px solid var(--border)">${_statusOptions(it.status)}</select></span>
       </td>
       <td style="padding:10px 8px;font-size:12px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${it.responsaveis?'👤 '+esc(it.responsaveis):''}</span>
@@ -4258,7 +4259,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:10px 8px;font-size:11px;color:${iL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${it.deadline_date?'📅 '+fmtD(it.deadline_date):''}</span>
-        <span id="${prazoId}-edit" style="display:none"><input type="date" value="${esc(it.deadline_date||'')}" onchange="listaSavePrazo('${it.id}',false,'${secId}',this.value)" style="padding:3px 6px;font-size:11px;border-radius:6px;background:#0f172a;color:var(--text);border:1px solid var(--border)"></span>
+        <span id="${prazoId}-edit" style="display:none"><input type="date" value="${esc(it.deadline_date||'')}" onchange="listaSavePrazo('${it.id}',false,'${secId}',this.value)" style="padding:3px 6px;font-size:11px;border-radius:6px;background:#ffffff;color:var(--text);border:1px solid var(--border)"></span>
       </td>
       <td style="padding:10px 8px;font-size:12px">${_sitBadge(iD,iL)}</td>
       <td style="padding:10px 8px;white-space:nowrap">${_itemActions(it,num)}</td>
@@ -4278,7 +4279,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;cursor:pointer" onclick="listaToggleEdit('${statId}')">
         <span id="${statId}-view">${_stBadge(sb.status)}</span>
-        <span id="${statId}-edit" style="display:none"><select onchange="listaSaveStatus('${sb.id}',true,'${secId}',this.value)" style="padding:3px 6px;font-size:10px;border-radius:6px;background:#0f172a;color:var(--text);border:1px solid var(--border)">${_statusOptions(sb.status)}</select></span>
+        <span id="${statId}-edit" style="display:none"><select onchange="listaSaveStatus('${sb.id}',true,'${secId}',this.value)" style="padding:3px 6px;font-size:10px;border-radius:6px;background:#ffffff;color:var(--text);border:1px solid var(--border)">${_statusOptions(sb.status)}</select></span>
       </td>
       <td style="padding:6px 8px;font-size:11px;color:var(--muted);cursor:pointer" onclick="listaToggleEdit('${respId}')">
         <span id="${respId}-view">${sb.responsaveis?'👤 '+esc(sb.responsaveis):''}</span>
@@ -4286,7 +4287,7 @@ window.renderCadastros=function(secId){
       </td>
       <td style="padding:6px 8px;font-size:11px;color:${sL?'#f87171':'var(--muted)'};cursor:pointer" onclick="listaToggleEdit('${prazoId}')">
         <span id="${prazoId}-view">${sb.deadline_date?'📅 '+fmtD(sb.deadline_date):''}</span>
-        <span id="${prazoId}-edit" style="display:none"><input type="date" value="${esc(sb.deadline_date||'')}" onchange="listaSavePrazo('${sb.id}',true,'${secId}',this.value)" style="padding:3px 6px;font-size:11px;border-radius:6px;background:#0f172a;color:var(--text);border:1px solid var(--border)"></span>
+        <span id="${prazoId}-edit" style="display:none"><input type="date" value="${esc(sb.deadline_date||'')}" onchange="listaSavePrazo('${sb.id}',true,'${secId}',this.value)" style="padding:3px 6px;font-size:11px;border-radius:6px;background:#ffffff;color:var(--text);border:1px solid var(--border)"></span>
       </td>
       <td style="padding:6px 8px;font-size:11px">${_sitBadge(sD,sL)}</td>
       <td style="padding:6px 8px;white-space:nowrap">${_subActions(sb,item,prefix,isNested)}</td>
@@ -4707,10 +4708,10 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🔀 Separar no PDF</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Separe sub-itens com determinado valor de campo no final do PDF (ex: Status = SAIU).</div>
-      <select id="popt-sep-field" onchange="atualizarSepValues()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
+      <select id="popt-sep-field" onchange="atualizarSepValues()" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px">
         <option value="">— Sem separação —</option>
       </select>
-      <select id="popt-sep-val" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px;margin-top:4px;display:none">
+      <select id="popt-sep-val" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px;margin-top:4px;display:none">
         <option value="">— Qualquer valor —</option>
       </select>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-only-sep" style="accent-color:#f59e0b;width:15px;height:15px"> 📄 Apenas seção separada (sem tabela principal)</label>
@@ -4718,7 +4719,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📊 Relatório por Campo</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Gere um relatório agrupado por um campo personalizado existente.</div>
-      <select id="popt-field" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#0f172a;color:var(--text);font-size:13px">
+      <select id="popt-field" style="padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:#ffffff;color:var(--text);font-size:13px">
         <option value="">— Selecione um campo —</option>
       </select>
     </div>
@@ -4739,7 +4740,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
     <div style="display:flex;flex-direction:column;gap:12px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div>
         <label style="font-size:12px;font-weight:700;color:#6ee7b7">Ano</label>
-        <select id="cc-pdf-ano" style="width:100%;margin-top:6px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px"></select>
+        <select id="cc-pdf-ano" style="width:100%;margin-top:6px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px"></select>
       </div>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="cc-pdf-todos" style="accent-color:#f59e0b;width:15px;height:15px"> Todos os anos</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="cc-pdf-pagas" style="accent-color:#10b981;width:15px;height:15px"> Apenas contas pagas</label>
@@ -5066,8 +5067,8 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId,after
     <button onclick="fecharBusca()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#64748b;font-size:22px;cursor:pointer">✕</button>
     <div style="font-size:16px;font-weight:800;margin-bottom:14px">🔍 Buscar na Atividade</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <input id="busca-input" type="text" placeholder="Digite o texto a buscar..." onkeydown="if(event.key==='Enter')executarBusca()" style="flex:1;min-width:200px;padding:10px 14px;background:#020810;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;font-size:14px">
-      <select id="busca-campo" style="padding:10px 14px;background:#020810;border:1px solid #1e3a5f;border-radius:8px;color:#e2e8f0;font-size:13px">
+      <input id="busca-input" type="text" placeholder="Digite o texto a buscar..." onkeydown="if(event.key==='Enter')executarBusca()" style="flex:1;min-width:200px;padding:10px 14px;background:#ffffff;border:1px solid #1e3a5f;border-radius:8px;color:var(--text);font-size:14px">
+      <select id="busca-campo" style="padding:10px 14px;background:#ffffff;border:1px solid #1e3a5f;border-radius:8px;color:var(--text);font-size:13px">
         <option value="todos">Todos os campos</option>
         <option value="nome">Nome / Descrição</option>
         <option value="resp">Responsáveis</option>
@@ -5101,8 +5102,8 @@ window.converterSubitemEmItemLista=async function(subId,targetItemId,secId,after
     </div>
     <div id="busca-filters" style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:#0a1222;border-radius:8px;border:1px solid #1e3a5f">
       <div style="font-size:11px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px">🔎 Filtros por Campo:</div>
-      <select id="bchk-filter-field" style="padding:6px 10px;background:#020810;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-size:12px;min-width:140px"><option value="">— Sem filtro —</option></select>
-      <select id="bchk-filter-value" style="padding:6px 10px;background:#020810;border:1px solid #1e3a5f;border-radius:6px;color:#e2e8f0;font-size:12px;min-width:140px"><option value="">— Qualquer —</option></select>
+      <select id="bchk-filter-field" style="padding:6px 10px;background:#ffffff;border:1px solid #1e3a5f;border-radius:6px;color:var(--text);font-size:12px;min-width:140px"><option value="">— Sem filtro —</option></select>
+      <select id="bchk-filter-value" style="padding:6px 10px;background:#ffffff;border:1px solid #1e3a5f;border-radius:6px;color:var(--text);font-size:12px;min-width:140px"><option value="">— Qualquer —</option></select>
       <button onclick="aplicarFiltroBusca()" style="padding:6px 12px;background:#0e7490;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer">Aplicar</button>
       <button onclick="limparFiltroBusca()" style="padding:6px 12px;background:#334155;color:#e2e8f0;border:none;border-radius:6px;font-size:12px;cursor:pointer">Limpar</button>
     </div>

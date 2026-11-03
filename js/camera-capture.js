@@ -1,11 +1,12 @@
 import {supabase} from '../supabase_compat.js?v=10';
 import {FIELD_GROUP_KEY,isFieldDemandGroup,fieldDemandTitle,cameraInputAttributes} from './camera-capture-core.js?v=1';
-import {capturePosition,optimizePhoto} from './geolocation.js?v=3';
+import {capturePosition,optimizePhoto,readPhotoLocation} from './geolocation.js?v=5';
 
 export {FIELD_GROUP_KEY,isFieldDemandGroup,cameraInputAttributes};
 const MAX_FIELD_PHOTOS=20;
 let selectedPhotos=[];
 let fieldLocation=null;
+let fieldLocationManual=false; // escolhida no mapa ou pelo botão GPS: não é trocada automaticamente
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
@@ -23,6 +24,7 @@ function releasePreviews(){
   selectedPhotos.forEach(entry=>URL.revokeObjectURL(entry.preview));
   selectedPhotos=[];
   fieldLocation=null;
+  fieldLocationManual=false;
 }
 
 function renderFieldPhotos(){
@@ -33,24 +35,47 @@ function renderFieldPhotos(){
   host.innerHTML=selectedPhotos.map((entry,index)=>`<figure class="field-photo-card"><img src="${esc(entry.preview)}" alt="Foto ${index+1} selecionada"><button type="button" onclick="removeFieldPhoto(${index})" aria-label="Remover foto ${index+1}">×</button><figcaption>${esc(entry.file.name||`Foto ${index+1}`)}${entry.location?'<span>📍 Localizada</span>':''}</figcaption></figure>`).join('')||'<p>Nenhuma foto adicionada ainda.</p>';
 }
 
+const SOURCE_LABEL={gps:'✓ Localização capturada pelo GPS',photo:'✓ Localização lida da própria foto',map:'✓ Localização escolhida no mapa'};
+function showFieldLocation(location,source){
+  const status=document.getElementById('field-location-status');
+  if(status)status.innerHTML=`<strong>${SOURCE_LABEL[source]||SOURCE_LABEL.gps}</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · ${location.accuracy} m`:''}</small>`;
+  window.setLocationEditorValue?.('field-geo',location);
+}
+
+// Ao adicionar fotos, a localização da demanda é registrada automaticamente:
+// câmera → GPS do aparelho; galeria → coordenadas gravadas na foto ou, se não houver, o GPS atual.
 async function addFiles(input,source='gallery'){
   const files=Array.from(input?.files||[]).filter(file=>String(file.type||'').startsWith('image/'));
   input.value='';
   if(!files.length){window.toast('Escolha uma imagem válida.','error');return;}
   const free=MAX_FIELD_PHOTOS-selectedPhotos.length;
   if(free<=0){window.toast(`Limite de ${MAX_FIELD_PHOTOS} fotos por registro.`, 'info');return;}
-  let location=null;
+  const accepted=files.slice(0,free);
+  const status=document.getElementById('field-location-status');
+  if(!fieldLocation&&status)status.innerHTML='<strong>📍 Localizando a demanda…</strong><small>Aguarde a precisão do aparelho.</small>';
+  let cameraLocation=null;
+  const photoLocations=source==='gallery'?await Promise.all(accepted.map(file=>readPhotoLocation(file))):accepted.map(()=>null);
   if(source==='camera'){
-   try{location=await capturePosition();fieldLocation=location;window.toast('Foto localizada com sucesso!','success',3500);}catch(error){window.toast(error.message+' A foto ainda será adicionada.','info',6500);}
+    try{cameraLocation=await capturePosition();}catch(error){if(!fieldLocation)window.toast(error.message+' A foto ainda será adicionada; escolha o local no mapa.','info',7000);}
   }
-  files.slice(0,free).forEach(file=>selectedPhotos.push({file,preview:URL.createObjectURL(file),location}));
+  if(!fieldLocationManual){
+    const automatic=cameraLocation||photoLocations.find(Boolean)||null;
+    if(automatic){fieldLocation=automatic;showFieldLocation(automatic,cameraLocation?'gps':'photo');}
+    else if(!fieldLocation){
+      try{fieldLocation=await capturePosition();showFieldLocation(fieldLocation,'gps');}
+      catch(error){if(status)status.innerHTML=`<strong>Localização não capturada</strong><small>${esc(error.message)} Use “Escolher no mapa”.</small>`;window.toast(error.message+' Escolha o local no mapa.','info',7000);}
+    }
+  }
+  accepted.forEach((file,index)=>selectedPhotos.push({file,preview:URL.createObjectURL(file),location:cameraLocation||photoLocations[index]||fieldLocation}));
+  selectedPhotos.forEach(photo=>{if(!photo.location&&fieldLocation)photo.location=fieldLocation;});
+  if(fieldLocation&&source==='camera')window.toast('Foto e localização registradas!','success',3000);
   if(files.length>free)window.toast(`Foram mantidas as primeiras ${MAX_FIELD_PHOTOS} fotos.`, 'info',6000);
   renderFieldPhotos();
 }
 
 export function initFieldCapture(){
   window.isFieldDemandGroup=isFieldDemandGroup;
-  if(!window.__fieldLocationEventBound){document.addEventListener('geo:changed',event=>{if(event.detail?.prefix!=='field-geo')return;fieldLocation=event.detail.location;selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});const status=document.getElementById('field-location-status');if(status)status.innerHTML=`<strong>✓ Localização escolhida no mapa</strong><small>${fieldLocation.latitude.toFixed(6)}, ${fieldLocation.longitude.toFixed(6)}</small>`;renderFieldPhotos();});window.__fieldLocationEventBound=true;}
+  if(!window.__fieldLocationEventBound){document.addEventListener('geo:changed',event=>{if(event.detail?.prefix!=='field-geo')return;fieldLocation=event.detail.location;fieldLocationManual=true;selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});const status=document.getElementById('field-location-status');if(status)status.innerHTML=`<strong>${SOURCE_LABEL.map}</strong><small>${fieldLocation.latitude.toFixed(6)}, ${fieldLocation.longitude.toFixed(6)}</small>`;renderFieldPhotos();});window.__fieldLocationEventBound=true;}
   window.openFieldCapture=function(){
     const secretarias=allowedSecretarias();
     if(!secretarias.length){window.toast('Seu usuário não possui secretaria liberada para registrar demandas de campo.','error',7000);return;}
@@ -58,8 +83,8 @@ export function initFieldCapture(){
     window.openModal('📷 Registro de Campo','Fotografe, localize e encaminhe sem sair da Visão Geral.',`<form onsubmit="event.preventDefault();saveFieldCapture()">
       <div class="field-capture-intro"><span>1</span><div><strong>Adicione quantas fotos precisar</strong><small>As fotos são reduzidas automaticamente para carregarem rápido.</small></div></div>
       <div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input id="field-camera" type="file" ${cameraInputAttributes()} onchange="addFieldCapturePhotos(this,'camera')"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input id="field-gallery" type="file" accept="image/*" multiple onchange="addFieldCapturePhotos(this,'gallery')"></label><b id="field-photo-count">0/${MAX_FIELD_PHOTOS} fotos</b></div>
-      <label class="field-stamp-option"><input id="field-stamp-location" type="checkbox"> Gravar coordenadas e data visíveis na foto</label>
-      <div class="field-location-bar"><div id="field-location-status"><strong>📍 Geolocalização</strong><small>Use o GPS ou escolha manualmente no mapa.</small></div><div class="field-location-actions"><button type="button" onclick="captureFieldLocation()">⌖ Usar GPS</button><button type="button" class="manual" onclick="openManualLocationPicker('field-geo')">🗺 Escolher no mapa</button></div></div>
+      <label class="field-stamp-option"><input id="field-stamp-location" type="checkbox" checked> Gravar coordenadas e data visíveis na foto</label>
+      <div class="field-location-bar"><div id="field-location-status"><strong>📍 Geolocalização</strong><small>Registrada automaticamente ao adicionar a foto. Ajuste pelo GPS ou no mapa.</small></div><div class="field-location-actions"><button type="button" onclick="captureFieldLocation()">⌖ Usar GPS</button><button type="button" class="manual" onclick="openManualLocationPicker('field-geo')">🗺 Escolher no mapa</button></div></div>
       <input type="hidden" id="field-geo-lat"><input type="hidden" id="field-geo-lng"><input type="hidden" id="field-geo-accuracy"><input type="hidden" id="field-geo-captured"><div id="field-geo-panel"></div>
       <div id="field-photo-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div>
       <div class="form-grid field-capture-fields"><div class="form-group full"><label for="field-observation">Observação da demanda *</label><textarea id="field-observation" maxlength="4000" rows="5" required placeholder="Descreva o local, o problema, a referência e o que precisa ser feito."></textarea><small>Essa observação acompanhará todas as fotos e ajudará no redirecionamento.</small></div><div class="form-group full"><label for="field-secretaria">Enviar para qual secretaria? *</label><select id="field-secretaria" required onchange="updateFieldCaptureGroups()"><option value="">Selecione a secretaria…</option>${secretarias.map(secretaria=>`<option value="${esc(secretaria.id)}">${esc(secretaria.name)}</option>`).join('')}</select></div><div class="form-group full field-group-target"><label for="field-group">Enviar diretamente para um grupo? <span>Opcional</span></label><select id="field-group" disabled><option value="">Primeiro escolha a secretaria…</option></select><small id="field-group-help">Se não escolher um grupo, a demanda seguirá para “Demandas Gerais de Campo”.</small></div></div>
@@ -69,7 +94,7 @@ export function initFieldCapture(){
   window.addFieldCapturePhotos=addFiles;
   window.updateFieldCaptureGroups=function(){const secretaria=document.getElementById('field-secretaria')?.value||'',select=document.getElementById('field-group'),help=document.getElementById('field-group-help');if(!select)return;const groups=allowedGroups(secretaria);select.disabled=!secretaria;select.innerHTML=!secretaria?'<option value="">Primeiro escolha a secretaria…</option>':`<option value="">Demandas Gerais de Campo (triagem automática)</option>${groups.map(group=>`<option value="${esc(group.id)}">${esc(group.name||'Grupo sem nome')}</option>`).join('')}`;if(help)help.textContent=groups.length?'Escolha um grupo específico ou deixe na triagem automática.':'Esta secretaria ainda não possui outros grupos; será usada a triagem automática.';};
   window.captureFieldLocation=async function(){
-   const status=document.getElementById('field-location-status');try{if(status)status.innerHTML='<strong>📍 Localizando…</strong><small>Aguarde a precisão do aparelho.</small>';fieldLocation=await capturePosition();selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});window.setLocationEditorValue?.('field-geo',fieldLocation);if(status)status.innerHTML=`<strong>✓ Localização capturada pelo GPS</strong><small>${fieldLocation.latitude.toFixed(6)}, ${fieldLocation.longitude.toFixed(6)} · ${fieldLocation.accuracy||0} m</small>`;renderFieldPhotos();}catch(error){if(status)status.innerHTML=`<strong>Localização não capturada</strong><small>${esc(error.message)}</small>`;window.toast(error.message,'error',7000);}
+   const status=document.getElementById('field-location-status');try{if(status)status.innerHTML='<strong>📍 Localizando…</strong><small>Aguarde a precisão do aparelho.</small>';fieldLocation=await capturePosition();fieldLocationManual=true;selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});showFieldLocation(fieldLocation,'gps');renderFieldPhotos();}catch(error){if(status)status.innerHTML=`<strong>Localização não capturada</strong><small>${esc(error.message)}</small>`;window.toast(error.message,'error',7000);}
   };
   window.removeFieldPhoto=function(index){
     const [removed]=selectedPhotos.splice(index,1);if(removed)URL.revokeObjectURL(removed.preview);renderFieldPhotos();
@@ -100,7 +125,7 @@ export function initFieldCapture(){
       if(offline||deferredUpload){
         const group=selectedGroup||(window.S?.secs||[]).find(entry=>isFieldDemandGroup(entry)&&entry.demanda_secretaria_id===secretaria);
         if(!group)throw new Error('Abra esta secretaria uma vez com internet para preparar o grupo de entrada no aparelho.');
-        const primary=locations.find(Boolean)||fieldLocation;
+        const primary=fieldLocation||locations.find(Boolean)||null;
         const previousForce=globalThis.__forceOfflinePersistence;globalThis.__forceOfflinePersistence=true;
         try{const item=await window.addDoc(window.collection(window.db,'items'),{atividade_id:group.id,description:fieldDemandTitle(observation)||'Demanda de campo',observacao:observation,secretaria_id:secretaria,item_icon:'📷',item_color:'#0f8a73',concluded:0,status:'pendente',order_num:(window.S?.items||[]).filter(entry=>entry.atividade_id===group.id).length,extra_fields:{registro_tipo:'demanda_campo',origem:'captura_rapida',captured_at:new Date().toISOString(),geo_location:primary||null},created_at:window.serverTimestamp(),updated_at:window.serverTimestamp()});
           for(let index=0;index<urls.length;index+=1){const location=locations[index]||primary;await window.addDoc(window.collection(window.db,'entity_images'),{entity_type:'item',entity_id:item.id,is_representative:index===0,imgbb_url:urls[index],title:'',obs:observation,order_num:index,latitude:location?.latitude??null,longitude:location?.longitude??null,accuracy_meters:location?.accuracy||null,maps_url:location?.maps_url||null,captured_at:location?.captured_at||new Date().toISOString(),created_at:window.serverTimestamp()});}
@@ -109,7 +134,7 @@ export function initFieldCapture(){
       }
       const {data,error}=await supabase.rpc('create_field_demand',{target_secretaria:secretaria,observation,photo_urls:urls});
       if(error)throw error;
-      const primary=locations.find(Boolean)||fieldLocation;
+      const primary=fieldLocation||locations.find(Boolean)||null;
       const itemUpdate={updated_at:window.serverTimestamp()};if(selectedGroup)itemUpdate.atividade_id=selectedGroup.id;if(primary)itemUpdate.extra_fields={registro_tipo:'demanda_campo',origem:'captura_rapida',captured_at:new Date().toISOString(),geo_location:primary};if(selectedGroup||primary)await window.updateDoc(window.doc(window.db,'items',data.item_id),itemUpdate);
       const images=await window.getDocs(window.query(window.collection(window.db,'entity_images'),window.where('entity_type','==','item'),window.where('entity_id','==',data.item_id)));
       for(const image of images.docs){const row=image.data(),location=locations[Number(row.order_num)||0]||primary;if(location)await window.updateDoc(window.doc(window.db,'entity_images',image.id),{latitude:location.latitude,longitude:location.longitude,accuracy_meters:location.accuracy||0,maps_url:location.maps_url,captured_at:location.captured_at});}

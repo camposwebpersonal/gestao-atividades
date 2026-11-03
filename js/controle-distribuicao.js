@@ -149,7 +149,7 @@ window.renderControleDistribuicao = function(secId){
       <button class="btn-action" onclick="distExportarPDF('${secId}')">📄 PDF${busca ? ' (filtrado)' : ''}</button>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <input type="text" id="dist-busca" placeholder="🔍 Buscar por nome, CPF, responsável, fórmula, processo ou telefone..." value="${busca ? _distEsc(busca) : ''}" oninput="distBusca('${secId}')" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#0f172a;color:var(--text);font-size:13px">
+      <input type="text" id="dist-busca" placeholder="🔍 Buscar por nome, CPF, responsável, fórmula, processo ou telefone..." value="${busca ? _distEsc(busca) : ''}" oninput="distBusca('${secId}')" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px">
       <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('dist-busca').value='';distBusca('${secId}')">Limpar</button>
     </div>
   </div>`;
@@ -206,7 +206,7 @@ window.distOpenModal = function(id, secId){
       if (currentName && !matched) {
         options += `<option value="legacy" data-name="${_distEsc(currentName)}" data-cpf="${_distEsc(currentCPF)}" selected>${_distEsc(currentName)}${currentCPF ? ` (${_distFmtCPF(currentCPF)})` : ''}</option>`;
       }
-      input = `<select id="dist-${c.key.replace(/\s+/g, '-')}" onchange="distSelectResponsavel(this)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#0f172a;color:var(--text);font-size:13px">${options}</select>`;
+      input = `<select id="dist-${c.key.replace(/\s+/g, '-')}" onchange="distSelectResponsavel(this)" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px">${options}</select>`;
     } else if (c.type === 'cpf') {
       input = `<input type="text" id="dist-${c.key.replace(/\s+/g, '-')}" value="${_distEsc(val)}" oninput="distFormatCPF(this)" placeholder="000.000.000-00" maxlength="14">`;
     } else if (c.type === 'tel') {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v164';
+const CACHE_NAME = 'gestao-pms-v165';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -44,6 +44,7 @@ const STATIC_ASSETS = [
   'css/global-search-premium.css',
   'css/water-points.css',
   'css/layout-safety.css',
+  'css/contrast-guard.css',
   'css/bulk-archive.css',
   'css/trash.css',
   'css/custom-fields.css',

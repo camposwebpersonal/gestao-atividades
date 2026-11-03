@@ -65,3 +65,17 @@
 - Cards de grupos de demandas não exibem quantidade, percentual, barra de progresso
   nem o texto redundante “Abrir grupo”. No modo lista, manter apenas a quantidade e
   remover percentual e barra. O card inteiro deve abrir o grupo, preservando ações.
+- Legibilidade obrigatória (regra permanente): fundo escuro exige texto claro e vivo;
+  fundo claro exige texto escuro. Contraste mínimo WCAG AA de 4,5:1 (3:1 só para
+  texto grande ou botão desativado), inclusive em botões, rótulos, checkboxes,
+  campos de digitação, placeholders, avisos vazios e badges de status. O tema do
+  sistema é claro: não usar fundos escuros herdados (#0a1222, #0e1729, #0f172a…)
+  em telas ou modais, nem embutir fundo escuro em `<input>`, `<select>` ou
+  `<textarea>`. `<label>` que funciona como botão precisa de cor própria, porque
+  os rótulos de formulário são escuros. Toda alteração visual deve passar em
+  `node tests/contrast-source.test.cjs` e na auditoria
+  `NODE_PATH=$(npm root -g) node tests/contrast/run.cjs` (390px e `W=1366`),
+  com o servidor local `python3 -m http.server 8090` aberto na raiz.
+- Registro de Campo: “Gravar coordenadas e data visíveis na foto” vem marcado por
+  padrão, e a localização da demanda é registrada automaticamente ao adicionar a
+  foto (câmera → GPS; galeria → GPS gravado na foto ou, sem ele, o GPS atual).
