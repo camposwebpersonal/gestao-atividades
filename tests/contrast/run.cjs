@@ -11,8 +11,8 @@ const OUT = process.env.OUT || require('os').tmpdir() + '/contrast-audit';
 fs.mkdirSync(OUT, {recursive: true});
 const width = Number(process.env.W || 390);
 
-async function boot(browser) {
-  const ctx = await browser.newContext({viewport: {width, height: width < 900 ? 844 : 900}, isMobile: width < 900, hasTouch: width < 900, permissions: ['geolocation'], geolocation: {latitude: -8.073, longitude: -37.264, accuracy: 6}});
+async function boot(browser, {width: w = width} = {}) {
+  const ctx = await browser.newContext({viewport: {width: w, height: w < 900 ? 844 : 900}, isMobile: w < 900, hasTouch: w < 900, permissions: ['geolocation'], geolocation: {latitude: -8.073, longitude: -37.264, accuracy: 6}});
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   page.on('dialog', d => d.dismiss().catch(() => {}));

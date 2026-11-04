@@ -97,3 +97,5 @@
 .pipa-group-impact span { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid #bae6fd; border-radius: 12px; background: #fff; color: #0c4a6e; font-size: 12px; font-weight: 700; }
 .pipa-group-impact b { font-size: 18px; color: #075985; }
 @media (max-width: 620px) { .pipa-supply { grid-template-columns: 1fr; } .pipa-apply-options { grid-template-columns: 1fr; } }
+/* Selo do pipa dentro das linhas de concluídos: ocupa a largura do conteúdo, nunca a coluna do ✓ */
+.completed-row > .pipa-refill-badge { grid-column: 2 / -1; justify-self: start; min-width: 0; white-space: normal; overflow-wrap: anywhere; margin: 2px 0 4px; }

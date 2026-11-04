@@ -56,4 +56,4 @@
  .registry-table td,.activity-data-table td,.cc-table td,.ce-table td{padding:0 3px!important}
  .bulk-grid tbody th{height:30px!important}.bulk-grid :is(input,select){height:30px!important;min-height:30px!important;padding:3px 5px!important;font-size:16px!important}.bulk-grid input[type=checkbox]{width:16px!important;height:16px!important;margin:7px auto!important}
 }
-@media(max-width:420px){.pw-card-body{grid-template-columns:repeat(2,minmax(0,1fr))!important}.item-header>.pring{display:none}.item-header>span[id^="chev-"]{font-size:8px!important}.sub-row img{max-height:20px!important;max-width:28px!important}}
+@media(max-width:420px){.pw-card-body{grid-template-columns:repeat(2,minmax(0,1fr))!important}.item-header>span[id^="chev-"]{font-size:8px!important}.sub-row img{max-height:20px!important;max-width:28px!important}}

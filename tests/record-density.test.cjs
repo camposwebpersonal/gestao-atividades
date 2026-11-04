@@ -12,7 +12,7 @@ test('modo de alta densidade cobre lançamentos, poços, tabelas e celular',()=>
   for(const selector of ['.item-header','.sub-row','.pw-card-body','.cc-mobile-card','.registry-table td','.lic-grid td'])assert.match(css,new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
   assert.match(css,/@media\(max-width:760px\)/);
   assert.match(css,/min-height:0!important/);
-  assert.match(page,/css\/record-density\.css\?v=7/);
+  assert.match(page,/css\/record-density\.css\?v=8/);
   assert.match(worker,/css\/record-density\.css/);
 });
 

@@ -9,7 +9,7 @@ const css = fs.readFileSync(path.join(root, 'css/header-density.css'), 'utf8');
 const sw = fs.readFileSync(path.join(root, 'sw.js'), 'utf8');
 
 test('carrega a densidade de cabeçalhos depois da densidade de lançamentos', () => {
-  const records = html.indexOf('css/record-density.css?v=7');
+  const records = html.indexOf('css/record-density.css?v=8');
   const headers = html.indexOf('css/header-density.css?v=6');
   assert.ok(records >= 0);
   assert.ok(headers > records);
@@ -41,7 +41,7 @@ test('mantém reorganização responsiva dos cabeçalhos sem esmagar conteúdo',
 });
 
 test('inclui a nova camada no cache offline com versão renovada', () => {
-  assert.match(sw, /gestao-pms-v174/);
+  assert.match(sw, /gestao-pms-v175/);
   assert.match(sw, /'css\/header-density\.css'/);
   assert.match(sw, /'css\/productivity-redesign\.css'/);
 });

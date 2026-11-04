@@ -7,7 +7,7 @@ const T = globalThis.__fakeDb = {
   secretarias: [{id: 'sec1', name: 'SECRETARIA DE SAÚDE', updated_at: iso(now)}, {id: 'sec2', name: 'SECRETARIA DE AGRICULTURA', updated_at: iso(now)}, {id: 'gab', name: 'GABINETE', updated_at: iso(now)}, ...['AÇÃO SOCIAL','ADMINISTRAÇÃO','CEDOCA','COMUNICAÇÃO','CULTURA','DEFESA CIVIL','EDUCAÇÃO','FINANÇAS','INFRAESTRUTURA','MEIO AMBIENTE','NEMIP'].map((name, i) => ({id: 'sx' + i, name, updated_at: iso(now)}))],
   atividades: [
     {id: 'a1', name: 'MANUTENÇÃO DE UBS', description: 'Reformas e reparos', demanda_secretaria_id: 'sec1', order_num: 0, icon: '🏥', color: '#16803d', show_stats: 1, show_verba: 1, show_documentacao: 1, show_licitacao: 1, controle_pendencias: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
-    {id: 'a2', name: 'SOLICITAÇÃO DE ÁGUA DE PIPA', description: 'Abastecimento', demanda_secretaria_id: 'gab', order_num: 1, icon: '💧', color: '#0ea5e9', extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
+    {id: 'a2', name: 'SOLICITAÇÃO DE ÁGUA DE PIPA', description: 'Abastecimento', demanda_secretaria_id: 'gab', order_num: 1, icon: '💧', color: '#0ea5e9', controle_pendencias: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
     {id: 'a3', name: 'CONTROLE DE CONTAS', description: 'Contas de energia', demanda_secretaria_id: 'sec2', order_num: 2, icon: '💡', color: '#f59e0b', controle_contas: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
     {id: 'a5', name: 'DISTRIBUIÇÃO DE LEITE', demanda_secretaria_id: 'sec2', order_num: 4, icon: '🥛', controle_distribuicao: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
     {id: 'a4', name: 'ESTOQUE DE MEDICAMENTOS', demanda_secretaria_id: 'sec1', order_num: 3, icon: '📦', controle_estoque: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)}
@@ -21,6 +21,7 @@ const T = globalThis.__fakeDb = {
     {id: 'i7', atividade_id: 'a1', description: 'LUCIA', status: 'pendente', concluded: 0, order_num: 3, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i8', atividade_id: 'a1', description: 'MARIA DAS GRAÇAS', status: 'pendente', concluded: 0, order_num: 4, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i9', atividade_id: 'a1', description: 'CARLOS', status: 'pendente', concluded: 0, order_num: 5, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
+    {id: 'i10', atividade_id: 'a2', description: 'MARISA', status: 'concluido', concluded: 1, conclusion_date: iso(now - 2e8), start_date: iso(now - 3e8).slice(0, 10), responsaveis: 'JOÃO', order_num: 3, extra_fields: {solicitante: 'Marisa', urgencia: 'vermelho', pipa_last_refill: iso(now - 7 * 864e5).slice(0, 10), pipa_refill_days: 30, pipa_application: 'completo', pipa_families: 3}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i5', atividade_id: 'a3', description: 'ESCOLA MUNICIPAL JOSÉ — CONTA 123', status: 'pendente', concluded: 0, order_num: 0, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)}
   ],
   subitems: [
