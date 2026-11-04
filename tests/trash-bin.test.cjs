@@ -10,7 +10,7 @@ const migration=fs.readFileSync(path.join(root,'supabase/migrations/202610240900
 const accessMigration=fs.readFileSync(path.join(root,'supabase/migrations/20261025123035_restrict_trash_visibility.sql'),'utf8');
 
 test('exclusão funcional preserva o registro antes de removê-lo da origem',()=>{
-  const saveAt=compat.indexOf("await saveRawRow('trash_items', trash)");
+  const saveAt=compat.indexOf("await saveRawRow('trash_items', trash");
   const deleteAt=compat.indexOf('await physicalDelete(docRef)',saveAt);
   assert.ok(saveAt>0&&deleteAt>saveAt);
   assert.match(compat,/record_data:\s*\{\.\.\.row, id:docRef\._id\}/);

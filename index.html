@@ -15,7 +15,7 @@
 <link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
-<link rel="modulepreload" href="supabase_compat.js?v=10">
+<link rel="modulepreload" href="supabase_compat.js?v=11">
 <link rel="modulepreload" href="js/modulos.js?v=103">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
@@ -508,8 +508,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=10";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=10";
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=11";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=11";
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=1';
@@ -676,7 +676,7 @@ console.log('=== VERSAO APP: v2.7-moverSubAntesDe-fix ===');
 function reportGlobalError(err,origin){
   const msg=(err&&(err.message||err.error?.message))||String(err||'Erro desconhecido');
   console.error('[erro não tratado]',origin,err);
-  if(typeof toast==='function')toast('Erro inesperado: '+msg,'error',7000);
+  if(typeof toast==='function')toast(err?.friendly?msg:'Erro inesperado: '+msg,'error',err?.friendly?9000:7000);
 }
 window.addEventListener('unhandledrejection',e=>reportGlobalError(e.reason,'promise'));
 window.addEventListener('error',e=>{if(e.error||e.message)reportGlobalError(e.error||e.message,'error');});

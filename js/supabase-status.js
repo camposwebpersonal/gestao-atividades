@@ -1,4 +1,4 @@
-import {supabase} from '../supabase_compat.js?v=10';
+import {supabase} from '../supabase_compat.js?v=11';
 
 const OWNER_EMAIL='camposweb.personal@gmail.com';
 const CACHE_PREFIX='gestao-supabase-status-v1:';

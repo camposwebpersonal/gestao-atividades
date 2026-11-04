@@ -79,3 +79,8 @@
 - Registro de Campo: “Gravar coordenadas e data visíveis na foto” vem marcado por
   padrão, e a localização da demanda é registrada automaticamente ao adicionar a
   foto (câmera → GPS; galeria → GPS gravado na foto ou, sem ele, o GPS atual).
+- Gravações em tabelas com RLS onde o usuário pode inserir mas não ler (ex.:
+  `trash_items`, visível só para quem tem permissão de lixeira) não podem pedir a
+  linha de volta (`.select()`): usar `writeRow` em `supabase_compat.js`. Erros do
+  banco mostrados ao usuário passam por `friendlyDbError` (português claro, sem
+  mensagem técnica). Teste: `NODE_PATH=$(npm root -g) node tests/trash-rls.browser.cjs`.

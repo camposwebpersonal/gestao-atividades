@@ -82,11 +82,47 @@ async function replaceOfflineImages(value) {
   return value;
 }
 
+// Tabelas em que o usuário pode GRAVAR mas nem sempre pode LER de volta (ex.: lixeira,
+// visível só para quem tem permissão). Nelas a gravação não pede a linha de volta.
+const WRITE_ONLY_TABLES = new Set(['trash_items']);
+const isRlsError = error => error?.code === '42501' || /row-level security|permission denied/i.test(error?.message || '');
+const isDuplicate = error => error?.code === '23505' || /duplicate key/i.test(error?.message || '');
+
+// Grava uma linha com segurança: se a política do banco permitir gravar mas não reler,
+// repete a gravação sem pedir retorno em vez de falhar.
+async function writeRow(table, payload) {
+  if (WRITE_ONLY_TABLES.has(table)) {
+    const {error} = await supabase.from(table).insert(payload);
+    if (error && !isDuplicate(error)) throw error; // duplicada = já gravada antes (reenvio offline)
+    return null;
+  }
+  const {data, error} = await supabase.from(table).upsert(payload).select().maybeSingle();
+  if (!error) return data;
+  if (!isRlsError(error)) throw error;
+  const retry = await supabase.from(table).upsert(payload);
+  if (retry.error) throw retry.error;
+  return null;
+}
+
+// Mensagens do banco em português claro para o usuário (o técnico continua no console).
+export function friendlyDbError(error, action = 'concluir esta ação') {
+  if (!error || error.friendly) return error;
+  const raw = error.message || String(error);
+  let message = null;
+  if (isRlsError(error)) message = `Seu usuário não tem permissão para ${action}. Nada foi alterado. Se precisar, peça ao administrador para revisar suas permissões.`;
+  else if (isDuplicate(error)) message = 'Este registro já existe. Atualize a página e tente novamente.';
+  else if (error.code === '23503') message = 'Este registro está ligado a outro que não existe mais. Atualize a página e tente novamente.';
+  else if (error.code === '23502') message = 'Falta preencher uma informação obrigatória. Revise o formulário e tente novamente.';
+  if (!message) return error;
+  console.warn('Erro do banco:', raw, error);
+  return Object.assign(new Error(message), {code: error.code, details: raw, friendly: true});
+}
+
 async function executeMutation(mutation) {
   const payload = mutation.payload ? await replaceOfflineImages(mutation.payload) : null;
   let data, error;
   if (mutation.type === 'upsert') {
-    ({ data, error } = await supabase.from(mutation.table).upsert(payload).select().maybeSingle());
+    try { data = await writeRow(mutation.table, payload); } catch (writeError) { error = writeError; }
   } else if (mutation.type === 'update') {
     ({ data, error } = await supabase.from(mutation.table).update(payload).eq('id', mutation.id).select().maybeSingle());
   } else if (mutation.type === 'delete') {
@@ -707,6 +743,7 @@ export async function addDoc(collectionRef, data) {
   moveUnknownToExtra(table, payload);
   try {
     if (await hasPendingMutations() || globalThis.navigator?.onLine === false || globalThis.__forceOfflinePersistence === true || hasLocalImage(payload)) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
+    if (WRITE_ONLY_TABLES.has(table)) { await writeRow(table, payload); await putCachedRow(table, payload); return { id: payload.id, path: `${collectionRef._path}/${payload.id}` }; }
     const { data: inserted, error } = await supabase.from(table).insert(payload).select().single();
     if (error) throw error;
     rememberRecords(table,[inserted]);
@@ -714,7 +751,7 @@ export async function addDoc(collectionRef, data) {
     emitRecordChange(table, 'INSERT', inserted);
     return { id: inserted.id, path: `${collectionRef._path}/${inserted.id}` };
   } catch (error) {
-    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    if (!error?.offlineCache && !isOfflineError(error)) throw friendlyDbError(error, 'salvar este registro');
     await putCachedRow(table, payload);
     await queueMutation({ type: 'upsert', table, id: payload.id, payload });
     rememberRecords(table,[payload]);
@@ -749,7 +786,7 @@ export async function setDoc(docRef, data, options) {
     if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved);}
     return {pending:false};
   } catch (error) {
-    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    if (!error?.offlineCache && !isOfflineError(error)) throw friendlyDbError(error, 'salvar este registro');
     await putCachedRow(table,payload);
     await queueMutation({type:'upsert',table,id:docRef._id,payload});
     emitRecordChange(table,'UPDATE',payload);
@@ -781,7 +818,7 @@ export async function updateDoc(docRef, data) {
     if(saved){rememberRecords(table,[saved]);await putCachedRow(table,saved);emitRecordChange(table,'UPDATE',saved,cachedExisting);}
     return {pending:false};
   } catch (error) {
-    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    if (!error?.offlineCache && !isOfflineError(error)) throw friendlyDbError(error, 'alterar este registro');
     cachedExisting = cachedExisting || {id:docRef._id};
     const local = {...cachedExisting,...payload,id:docRef._id};
     await putCachedRow(table,local);
@@ -834,15 +871,14 @@ async function rowForDeletion(table, id) {
   return row;
 }
 
-async function saveRawRow(table, payload) {
+async function saveRawRow(table, payload, action = 'gravar este registro') {
   try {
     if (await hasPendingMutations() || globalThis.navigator?.onLine === false) throw Object.assign(new Error('Modo offline'), { offlineCache: true });
-    const {data, error} = await supabase.from(table).upsert(payload).select().maybeSingle();
-    if (error) throw error;
-    if (data) await putCachedRow(table, data);
-    return {pending:false, data};
+    const data = await writeRow(table, payload);
+    await putCachedRow(table, data || payload);
+    return {pending:false, data: data || payload};
   } catch (error) {
-    if (!error?.offlineCache && !isOfflineError(error)) throw error;
+    if (!error?.offlineCache && !isOfflineError(error)) throw friendlyDbError(error, action);
     await putCachedRow(table, payload);
     await queueMutation({type:'upsert', table, id:payload.id, payload});
     return {pending:true, data:payload};
@@ -879,8 +915,10 @@ export async function deleteDoc(docRef, options = {}) {
     deleted_by_name: options.deletedByName || globalThis.S?.me?.displayName || globalThis.S?.user?.displayName || user.email?.split('@')[0] || 'Usuário',
     deleted_at: new Date().toISOString()
   };
-  const saved = await saveRawRow('trash_items', trash);
-  await physicalDelete(docRef);
+  let saved;
+  saved = await saveRawRow('trash_items', trash, 'excluir este registro');
+  try { await physicalDelete(docRef); }
+  catch (error) { throw friendlyDbError(error, 'excluir este registro'); }
   return {trashId, pending:saved.pending};
 }
 
