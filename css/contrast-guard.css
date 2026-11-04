@@ -58,7 +58,7 @@
 .workspace-kicker,.users-eyebrow,.user-general-permissions-heading span{color:#0b6b62!important}
 .user-full-access{color:#116530!important}
 :is(.productivity-heading,.secretary-launch-section header,.geo-map-page>header,.registry-heading,.trash-hero,.demand-heading,.users-page-header,.user-general-permissions-heading) p,
-.page-sub,.registry-count span,.trash-total span,.trash-card-main>span,#dashboard-secretary-count,.secretary-launch-grid .empty,
+.page-sub,.registry-count span,.registry-count strong,.trash-total span,.trash-card-main>span,#dashboard-secretary-count,.secretary-launch-grid .empty,
 .users-login-note,.users-advanced>summary,.user-muted,.user-sector,.user-login,#users-visible-count,.users-overview span,
 :is(.permission-details,.user-form-disclosure)>summary>span,.permission-groups>p,.permission-scope-row small,.user-form .form-group>small,
 .activity-lanes small,.geo-map-list article>b,.geo-map-list article>div>span,

@@ -491,9 +491,9 @@ function _renderSidebarModules(activeId=''){
     const own=demandNumbers.grupos.filter(group=>group.demanda_secretaria_id===secretary.id);
     if(!allowedDemand&&!mods.length)return'';
     const count=Number(Boolean(allowedDemand))+Number(Boolean(isAgriculture&&allowedDemand))+mods.length;
-    return `<button type="button" class="sidebar-secretary-link ${activeId===`secretary:${secretary.id}`?'active':''}" onclick="openSecretaryWorkspace(${_md.arg(secretary.id)})"><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><b>${count>1?count+' áreas':own.length+' grupos'}</b><i>›</i></button>`;
+    return `<button type="button" class="sidebar-secretary-link ${activeId===`secretary:${secretary.id}`?'active':''}" onclick="openSecretaryWorkspace(${_md.arg(secretary.id)})"><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><i>›</i></button>`;
   }).join('');
-  host.innerHTML=`<button type="button" class="sidebar-module-btn ${activeId==='atendimentos'?'active':''}" onclick="${allowedDemand?'window.openDemandSecretaria()':'void 0'}" title="Secretarias" style="--module-soft:${demand.color}28;--module-color:${demand.color}"><span class="sidebar-module-icon">${demand.icon}</span><span class="sidebar-module-label">Secretarias</span><span class="sidebar-module-count">${secretaries.length}</span></button><div class="sidebar-secretary-tree">${secretaryRows}</div>`;
+  host.innerHTML=`<button type="button" class="sidebar-module-btn ${activeId==='atendimentos'?'active':''}" onclick="${allowedDemand?'window.openDemandSecretaria()':'void 0'}" title="Secretarias" style="--module-soft:${demand.color}28;--module-color:${demand.color}"><span class="sidebar-module-icon">${demand.icon}</span><span class="sidebar-module-label">Secretarias</span></button><div class="sidebar-secretary-tree">${secretaryRows}</div>`;
 }
 window.refreshSidebarModules=_renderSidebarModules;
 

@@ -4,7 +4,7 @@ const geo = (lat, lng) => ({latitude: lat, longitude: lng, accuracy: 8, maps_url
 const T = globalThis.__fakeDb = {
   users: [{id: 'u1', uid: 'u1', email: 'ricardo@pms.gov.br', displayName: 'Ricardo Campos', role: 'admin', isAdmin: true, permissoes: {pode_ver_lixeira: true}, updated_at: iso(now)},
     {id: 'u2', uid: 'u2', email: 'ana@pms.gov.br', displayName: 'Ana Souza', role: 'usuario', permissoes: {}, updated_at: iso(now)}],
-  secretarias: [{id: 'sec1', name: 'SECRETARIA DE SAÚDE', updated_at: iso(now)}, {id: 'sec2', name: 'SECRETARIA DE AGRICULTURA', updated_at: iso(now)}, {id: 'gab', name: 'GABINETE', updated_at: iso(now)}],
+  secretarias: [{id: 'sec1', name: 'SECRETARIA DE SAÚDE', updated_at: iso(now)}, {id: 'sec2', name: 'SECRETARIA DE AGRICULTURA', updated_at: iso(now)}, {id: 'gab', name: 'GABINETE', updated_at: iso(now)}, ...['AÇÃO SOCIAL','ADMINISTRAÇÃO','CEDOCA','COMUNICAÇÃO','CULTURA','DEFESA CIVIL','EDUCAÇÃO','FINANÇAS','INFRAESTRUTURA','MEIO AMBIENTE','NEMIP'].map((name, i) => ({id: 'sx' + i, name, updated_at: iso(now)}))],
   atividades: [
     {id: 'a1', name: 'MANUTENÇÃO DE UBS', description: 'Reformas e reparos', demanda_secretaria_id: 'sec1', order_num: 0, icon: '🏥', color: '#16803d', show_stats: 1, show_verba: 1, show_documentacao: 1, show_licitacao: 1, controle_pendencias: 1, extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
     {id: 'a2', name: 'SOLICITAÇÃO DE ÁGUA DE PIPA', description: 'Abastecimento', demanda_secretaria_id: 'gab', order_num: 1, icon: '💧', color: '#0ea5e9', extra_fields: {}, created_at: iso(now - 9e8), updated_at: iso(now)},
