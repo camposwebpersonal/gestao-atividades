@@ -84,3 +84,8 @@
   linha de volta (`.select()`): usar `writeRow` em `supabase_compat.js`. Erros do
   banco mostrados ao usuário passam por `friendlyDbError` (português claro, sem
   mensagem técnica). Teste: `NODE_PATH=$(npm root -g) node tests/trash-rls.browser.cjs`.
+- Paridade celular × computador: todo card/linha de lançamento (em andamento e
+  concluídos) mostra no celular exatamente as mesmas opções do computador
+  (Editar, Reabrir, Mover, +Item, +Sub, percentual…). Reorganizar e quebrar
+  linha é permitido; esconder não. Verificar com
+  `NODE_PATH=$(npm root -g) node tests/mobile-parity.browser.cjs`.
