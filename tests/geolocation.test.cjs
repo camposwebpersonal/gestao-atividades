@@ -28,7 +28,8 @@ test('geolocalização também permite busca e seleção manual no mapa',()=>{
  assert.match(geo,/map\.on\('click'/);
  assert.match(geo,/draggable:true/);
  assert.match(geo,/Usar GPS deste aparelho/);
- assert.match(geo,/Escolher no mapa/);
+ assert.match(geo,/Mapa rápido/);
+ assert.match(geo,/Marcar no Google Maps/);
  assert.match(geo,/A busca acontece somente ao apertar/);
 });
 
@@ -68,7 +69,7 @@ test('banco guarda geolocalização das fotos com limites válidos',()=>{
 });
 
 test('recursos de mapas e geolocalização ficam disponíveis offline',()=>{
- assert.match(sw,/gestao-pms-v171/);
+ assert.match(sw,/gestao-pms-v172/);
  assert.match(sw,/'js\/geolocation\.js'/);
  assert.match(sw,/'css\/geolocation\.css'/);
  assert.match(sw,/leaflet@1\.9\.4/);

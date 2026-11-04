@@ -82,6 +82,12 @@ if (require.main === module) (async () => {
       if (ok) { await audit('modal-' + fn + (a.length ? '-' + a.join('_') : '')); break; }
     }
   }
+  // registros já existentes (mostram campos extras: autoria, localização salva, abastecimento…)
+  for (const [fn, args] of [['openItemModal', ['i1']], ['openItemModal', ['i3']], ['openSecModal', ['a1']], ['openSecModal', ['a2']]]) {
+    await page.evaluate(() => { window.closeModal?.(); document.querySelectorAll('.geo-picker-overlay,.st-popup').forEach(n => n.remove()); });
+    await page.evaluate(([fn, args]) => window[fn](...args), [fn, args]).catch(() => {});
+    await audit('existente-' + fn + '-' + args.join('_'));
+  }
   report.__errors = errors;
   fs.writeFileSync(`${OUT}/report-${width}.json`, JSON.stringify(report, null, 1));
   const flat = Object.entries(report).filter(([k]) => !k.startsWith('__')).flatMap(([k, v]) => (Array.isArray(v) ? v : []).map(i => ({screen: k, ...i})));

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v171';
+const CACHE_NAME = 'gestao-pms-v172';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -42,6 +42,7 @@ const STATIC_ASSETS = [
   'js/camera-capture-core.js',
   'js/smart-camera.js',
   'js/geolocation.js',
+  'js/google-location.js',
   'js/pipa-refill.js',
   'js/search-results.js',
   'js/water-points.js',

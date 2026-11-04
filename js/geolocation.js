@@ -1,4 +1,5 @@
 import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=1';
+import {parseGoogleLocation,shortLinkIn,googleMapsPickUrl} from './google-location.js?v=1';
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const supportedTables=new Set(['atividades','items','subitems']);
 const collectionFor={atividades:'secretariats',items:'items',subitems:'subitems'};
@@ -32,8 +33,8 @@ export function groupExternalGeolocationDefault(group){
 export function locationOf(record){
  const value=extraOf(record).geo_location||record?.geo_location||(record?.latitude!=null&&record?.longitude!=null?{latitude:record.latitude,longitude:record.longitude,accuracy:record.accuracy_meters,captured_at:record.captured_at,maps_url:record.maps_url}:null);
  const latitude=Number(value?.latitude),longitude=Number(value?.longitude);
- if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return null;
- return {...value,latitude,longitude,maps_url:value.maps_url||mapsUrl(latitude,longitude)};
+ if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||(latitude===0&&longitude===0))return null; // 0,0 = sem localização (registro antigo vazio)
+ return {...value,latitude,longitude,maps_url:mapsUrl(latitude,longitude)};
 }
 
 export function mapsUrl(latitude,longitude){
@@ -122,36 +123,109 @@ async function initLocationPickerMap(){
 function openLocationPicker({prefix='',initial=null,onConfirm=null}={}){
  window.closeLocationPicker?.();
  const overlay=document.createElement('div');overlay.id='geo-picker-overlay';overlay.className='geo-picker-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','geo-picker-title');
- overlay.innerHTML=`<div class="geo-picker-dialog"><header><div><span>LOCALIZAÇÃO DO LANÇAMENTO</span><h2 id="geo-picker-title">Escolha o ponto exato</h2><p>Use o GPS, pesquise um lugar ou toque diretamente no mapa.</p></div><button type="button" class="geo-picker-close" onclick="closeLocationPicker()" aria-label="Fechar">×</button></header><div class="geo-picker-methods"><button type="button" onclick="useGpsInLocationPicker()">⌖ Usar GPS deste aparelho</button><form onsubmit="event.preventDefault();searchLocationPicker()"><label for="geo-picker-query">Buscar lugar ou endereço</label><div><input id="geo-picker-query" autocomplete="off" placeholder="Ex.: Praça João Pereira, Sertânia"><button type="submit">Buscar</button></div></form></div><div id="geo-picker-results" class="geo-picker-results" aria-live="polite"></div><div id="geo-picker-map" class="geo-picker-map"></div><div class="geo-picker-foot"><div id="geo-picker-status"><strong>Nenhum ponto selecionado</strong><small>Toque no mapa, arraste o marcador, use o GPS ou faça uma busca.</small></div><div><button type="button" class="geo-picker-cancel" onclick="closeLocationPicker()">Cancelar</button><button type="button" id="geo-picker-confirm" onclick="confirmLocationPicker()" disabled>Usar esta localização</button></div></div><small class="geo-picker-credit">Busca e mapa por OpenStreetMap. A busca acontece somente ao apertar “Buscar”. Não informe dados pessoais sensíveis.</small></div>`;
+ overlay.innerHTML=`<div class="geo-picker-dialog"><header><div><span>LOCALIZAÇÃO DO LANÇAMENTO</span><h2 id="geo-picker-title">Escolha o ponto exato</h2><p>Use o GPS, pesquise, toque no mapa — ou marque no Google Maps e cole aqui.</p></div><button type="button" class="geo-picker-close" onclick="closeLocationPicker()" aria-label="Fechar">×</button></header><div class="geo-picker-methods"><button type="button" onclick="useGpsInLocationPicker()">⌖ Usar GPS deste aparelho</button><form onsubmit="event.preventDefault();searchLocationPicker()"><label for="geo-picker-query">Buscar lugar, endereço ou colar do Google Maps</label><div><input id="geo-picker-query" autocomplete="off" placeholder="Ex.: Praça João Pereira, Sertânia" onpaste="setTimeout(()=>searchLocationPicker(),30)"><button type="submit">Buscar</button><button type="button" class="geo-picker-google" onclick="openGoogleMapsPicker('picker',document.getElementById('geo-picker-query').value.trim())" title="Pesquisar no Google Maps"><span class="g-mark" aria-hidden="true">G</span> Google</button></div></form></div><div id="geo-picker-results" class="geo-picker-results" aria-live="polite"></div><div id="geo-picker-map" class="geo-picker-map"></div><div class="geo-picker-foot"><div id="geo-picker-status"><strong>Nenhum ponto selecionado</strong><small>Toque no mapa, arraste o marcador, use o GPS ou faça uma busca.</small></div><div><button type="button" class="geo-picker-cancel" onclick="closeLocationPicker()">Cancelar</button><button type="button" id="geo-picker-confirm" onclick="confirmLocationPicker()" disabled>Usar esta localização</button></div></div><small class="geo-picker-credit">Mapa rápido e busca por OpenStreetMap. Para a busca do Google, toque em “Google”, marque o ponto, copie as coordenadas e volte: o ponto entra sozinho. A busca acontece somente ao apertar “Buscar”. Não informe dados pessoais sensíveis.</small></div>`;
  document.body.append(overlay);locationPickerState={prefix,onConfirm,selected:initial,map:null,marker:null,results:[]};overlay.addEventListener('click',event=>{if(event.target===overlay)window.closeLocationPicker();});initLocationPickerMap();setTimeout(()=>document.getElementById('geo-picker-query')?.focus(),80);
 }
 
 window.openManualLocationPicker=prefix=>openLocationPicker({prefix,initial:readLocationEditor(prefix)});
 window.closeLocationPicker=()=>{locationPickerState?.map?.remove();locationPickerState=null;document.getElementById('geo-picker-overlay')?.remove();};
 window.useGpsInLocationPicker=async()=>{const button=document.querySelector('.geo-picker-methods>button');if(button){button.disabled=true;button.textContent='Localizando…';}try{setPickerPoint(await capturePosition());}catch(error){window.toast?.(error.message,'error',7000);}finally{if(button?.isConnected){button.disabled=false;button.textContent='⌖ Usar GPS deste aparelho';}}};
-window.searchLocationPicker=async()=>{const input=document.getElementById('geo-picker-query'),host=document.getElementById('geo-picker-results'),button=input?.parentElement?.querySelector('button');if(!input||!host)return;if(button)button.disabled=true;host.innerHTML='<p>Buscando…</p>';try{const rows=await searchPlaces(input.value);if(!locationPickerState)return;locationPickerState.results=rows;host.innerHTML=rows.length?rows.map((row,index)=>`<button type="button" onclick="chooseLocationSearchResult(${index})"><strong>${esc(row.label.split(',')[0])}</strong><small>${esc(row.label)}</small></button>`).join(''):'<p>Nenhum lugar encontrado. Tente incluir cidade e estado.</p>';}catch(error){host.innerHTML=`<p>${esc(error.message)}</p>`;}finally{if(button?.isConnected)button.disabled=false;}};
+window.searchLocationPicker=async()=>{const input=document.getElementById('geo-picker-query'),host=document.getElementById('geo-picker-results'),button=input?.parentElement?.querySelector('button');if(!input||!host)return;if(parseGoogleLocation(input.value)||shortLinkIn(input.value)){host.innerHTML='';if(await applyGoogleText('picker',input.value))input.value='';return;}if(button)button.disabled=true;host.innerHTML='<p>Buscando…</p>';try{const rows=await searchPlaces(input.value);if(!locationPickerState)return;locationPickerState.results=rows;host.innerHTML=rows.length?rows.map((row,index)=>`<button type="button" onclick="chooseLocationSearchResult(${index})"><strong>${esc(row.label.split(',')[0])}</strong><small>${esc(row.label)}</small></button>`).join(''):'<p>Nenhum lugar encontrado. Tente incluir cidade e estado.</p>';}catch(error){host.innerHTML=`<p>${esc(error.message)}</p>`;}finally{if(button?.isConnected)button.disabled=false;}};
 window.chooseLocationSearchResult=index=>{const result=locationPickerState?.results?.[index];if(!result)return;setPickerPoint(manualLocation(result.latitude,result.longitude,result.label));document.getElementById('geo-picker-results').innerHTML='';};
 window.confirmLocationPicker=async()=>{const state=locationPickerState,location=state?.selected,button=document.getElementById('geo-picker-confirm');if(!state||!location)return;if(button){button.disabled=true;button.textContent='Salvando…';}try{if(state.onConfirm)await state.onConfirm(location);else renderEditor(state.prefix,location);document.dispatchEvent(new CustomEvent('geo:changed',{detail:{prefix:state.prefix,location}}));window.closeLocationPicker();window.toast?.('Localização selecionada!','success');}catch(error){window.toast?.(error.message||error,'error',7500);if(button?.isConnected){button.disabled=false;button.textContent='Usar esta localização';}}};
 
+const SOURCE_TITLES={manual:'Localização escolhida no mapa','google-link':'Localização marcada no Google Maps','google-coords':'Localização marcada no Google Maps','google-dms':'Localização marcada no Google Maps','google-pluscode':'Localização marcada no Google Maps',exif:'Localização lida da foto'};
+function savedPanelHtml(location,title='Localização salva'){
+ if(!location)return '<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>';
+ const url=mapsUrl(location.latitude,location.longitude),coords=`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+ return `<div class="geo-saved"><span>✓</span><div><strong>${esc(title)}</strong><small><b class="geo-coords">${coords}</b>${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(url)}" target="_blank" rel="noopener" title="Abrir este ponto no Google Maps">Google Maps</a><button type="button" onclick="copyGeoCoordinates('${coords}')" title="Copiar coordenadas">Copiar</button><button type="button" onclick="shareGeoLocation('${esc(url)}','Localização do lançamento')">Compartilhar</button></div>`;
+}
 function renderEditor(prefix,location){
- const lat=document.getElementById(prefix+'-lat'),lng=document.getElementById(prefix+'-lng'),accuracy=document.getElementById(prefix+'-accuracy'),captured=document.getElementById(prefix+'-captured');
- if(lat)lat.value=location?.latitude??'';if(lng)lng.value=location?.longitude??'';if(accuracy)accuracy.value=location?.accuracy??'';if(captured)captured.value=location?.captured_at??'';
+ const lat=document.getElementById(prefix+'-lat'),lng=document.getElementById(prefix+'-lng'),accuracy=document.getElementById(prefix+'-accuracy'),captured=document.getElementById(prefix+'-captured'),source=document.getElementById(prefix+'-source');
+ if(lat)lat.value=location?.latitude??'';if(lng)lng.value=location?.longitude??'';if(accuracy)accuracy.value=location?.accuracy??'';if(captured)captured.value=location?.captured_at??'';if(source)source.value=location?.source||'';
  const host=document.getElementById(prefix+'-panel');if(!host)return;
- host.innerHTML=location?`<div class="geo-saved"><span>✓</span><div><strong>${location.source==='manual'?'Localização escolhida':'Localização capturada'}</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>';
+ host.innerHTML=savedPanelHtml(location,location?(SOURCE_TITLES[location.source]||'Localização capturada pelo GPS'):undefined);
+ host.querySelector('.geo-saved')?.classList.add('geo-saved-fresh');
+}
+// Aplica uma nova localização no editor e avisa quem estiver ouvindo (ex.: Registro de Campo).
+function applyEditorLocation(prefix,location){
+ renderEditor(prefix,location);
+ document.dispatchEvent(new CustomEvent('geo:changed',{detail:{prefix,location}}));
+}
+
+// ── Google Maps: marcar o ponto lá e trazer de volta sozinho ──
+// Sem chave paga do Google não é possível embutir o mapa do Google com clique; por isso o
+// sistema abre o Google Maps (site ou aplicativo), e o ponto volta por cópia/compartilhamento:
+// coordenadas, link (inclusive maps.app.goo.gl), graus/minutos/segundos ou Plus Code.
+let googlePick=null,lastAppliedGoogleText='';
+async function resolveGoogleText(text,reference){
+ const direct=parseGoogleLocation(text,reference);if(direct)return direct;
+ const short=shortLinkIn(text);if(!short)return null;
+ if(navigator.onLine===false)throw new Error('Sem internet para abrir o link curto do Google Maps. Copie as coordenadas do ponto.');
+ const {supabase}=await import('../supabase_compat.js?v=11');
+ const {data,error}=await supabase.functions.invoke('resolve-maps-link',{body:{url:short}});
+ if(error){let message='';try{message=(await error.context?.json?.())?.error||'';}catch(_){}throw new Error(message||'Não foi possível ler esse link do Google Maps. Copie as coordenadas do ponto.');}
+ return data&&Number.isFinite(Number(data.latitude))?{latitude:Number(data.latitude),longitude:Number(data.longitude),source:'google-link'}:null;
+}
+function googleLocation(found){return {...manualLocation(found.latitude,found.longitude,'Marcado no Google Maps'),source:found.source||'google-link'};}
+function googleTarget(target){return target==='picker'?{picker:true}:{prefix:target};}
+async function applyGoogleText(target,text,{silent=false}={}){
+ const clean=String(text||'').trim();if(!clean)return false;
+ const reference=target==='picker'?(locationPickerState?.selected||null):readLocationEditor(target);
+ const status=document.getElementById(target==='picker'?'geo-picker-status':target+'-gguide');
+ try{
+  if(shortLinkIn(clean)&&status)status.innerHTML='<strong>Lendo o link do Google Maps…</strong><small>Um instante.</small>';
+  const found=await resolveGoogleText(clean,reference?[reference.latitude,reference.longitude]:undefined);
+  if(!found){if(!silent)window.toast?.('Não encontrei coordenadas. No Google Maps, toque e segure o ponto e copie as coordenadas (ou use Compartilhar → Copiar link).','error',9000);return false;}
+  const location=googleLocation(found);lastAppliedGoogleText=clean;googlePick=null;
+  if(googleTarget(target).picker)setPickerPoint(location);
+  else{applyEditorLocation(target,location);const input=document.getElementById(target+'-gpaste');if(input)input.value='';hideGoogleGuide(target);}
+  window.toast?.('📍 Localização do Google Maps salva: '+location.latitude.toFixed(6)+', '+location.longitude.toFixed(6),'success',5000);
+  return true;
+ }catch(error){if(!silent)window.toast?.(error.message||String(error),'error',9000);return false;}
+}
+function showGoogleGuide(prefix){
+ const host=document.getElementById(prefix+'-gguide');if(!host)return;host.hidden=false;
+ host.innerHTML='<strong>No Google Maps, marque o ponto:</strong><ol><li>Pesquise o lugar ou <b>toque e segure</b> no ponto exato (aparece um alfinete vermelho).</li><li>Toque nas <b>coordenadas</b> para copiar — ou em <b>Compartilhar → Copiar link</b>.</li><li>Volte para esta tela: a localização é salva sozinha. Se não for, toque em <b>Colar</b>.</li></ol>';
+}
+function hideGoogleGuide(prefix){const host=document.getElementById(prefix+'-gguide');if(host){host.hidden=true;host.innerHTML='';}}
+async function readClipboardInto(target,{silent=true}={}){
+ if(!navigator.clipboard?.readText){if(!silent)window.toast?.('Cole o link ou as coordenadas no campo (segure o dedo no campo → Colar).','info',7000);return false;}
+ try{const text=await navigator.clipboard.readText();if(!text||text.trim()===lastAppliedGoogleText)return false;return await applyGoogleText(target,text,{silent});}
+ catch(_){if(!silent)window.toast?.('O navegador não liberou a área de transferência. Cole no campo (segure o dedo → Colar).','info',7000);return false;}
+}
+function onReturnFromGoogle(){
+ if(!googlePick||document.visibilityState==='hidden')return;
+ if(Date.now()-googlePick.at>30*60*1000){googlePick=null;return;}
+ const target=googlePick.target;setTimeout(()=>readClipboardInto(target,{silent:true}).then(ok=>{if(!ok&&target!=='picker')document.getElementById(target+'-gpaste')?.focus();}),350);
+}
+if(!globalThis.__googlePickBound&&typeof document.addEventListener==='function'&&typeof window.addEventListener==='function'){globalThis.__googlePickBound=true;document.addEventListener('visibilitychange',onReturnFromGoogle);window.addEventListener('focus',onReturnFromGoogle);}
+window.openGoogleMapsPicker=(target,query='')=>{
+ const current=target==='picker'?locationPickerState?.selected:readLocationEditor(target);
+ const url=query?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`:googleMapsPickUrl(current);
+ googlePick={target,at:Date.now()};if(target!=='picker')showGoogleGuide(target);
+ window.open(url,'_blank','noopener');
+};
+window.pasteGoogleLocation=async target=>{const input=document.getElementById(target+'-gpaste');if(input?.value.trim())return applyGoogleText(target,input.value);const ok=await readClipboardInto(target,{silent:false});if(!ok)input?.focus();return ok;};
+window.googlePasteChanged=(target,input)=>{clearTimeout(input.__gt);input.__gt=setTimeout(()=>{if(input.value.trim())applyGoogleText(target,input.value,{silent:!/https?:|[°+]|-?\d+\.\d+\s*,/.test(input.value)});},450);};
+window.copyGeoCoordinates=async coords=>{try{await navigator.clipboard.writeText(coords);window.toast?.('Coordenadas copiadas: '+coords,'success');}catch(_){window.prompt?.('Copie as coordenadas:',coords);}};
+export function googlePasteHtml(prefix){
+ return `<div class="geo-google-paste"><label for="${prefix}-gpaste">Marcou no Google Maps? Cole aqui o link ou as coordenadas</label><div><input id="${prefix}-gpaste" type="text" autocomplete="off" placeholder="Ex.: -8.071234, -37.263456 ou link maps.app.goo.gl" onpaste="setTimeout(()=>pasteGoogleLocation('${prefix}'),30)" oninput="googlePasteChanged('${prefix}',this)"><button type="button" onclick="pasteGoogleLocation('${prefix}')">Colar</button></div></div><div class="geo-google-guide" id="${prefix}-gguide" hidden></div>`;
 }
 window.setLocationEditorValue=renderEditor;
 
 export function locationEditorHtml(record,prefix='it-geo'){
  const location=locationOf(record);
- return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Use o GPS ou escolha manualmente pesquisando e tocando no mapa.</small></div><div class="geo-editor-actions"><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Usar GPS</button><button type="button" class="manual" onclick="openManualLocationPicker('${prefix}')">🗺 Escolher no mapa</button></div></div><input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><div id="${prefix}-panel">${location?`<div class="geo-saved"><span>✓</span><div><strong>Localização salva</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','Localização do lançamento')">Compartilhar</button></div>`:'<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>'}</div></section>`;
+ return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Use o GPS, marque o ponto no Google Maps ou escolha no mapa rápido.</small></div><div class="geo-editor-actions"><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Usar GPS</button><button type="button" class="google" onclick="openGoogleMapsPicker('${prefix}')"><span class="g-mark" aria-hidden="true">G</span> Marcar no Google Maps</button><button type="button" class="manual" onclick="openManualLocationPicker('${prefix}')">🗺 Mapa rápido</button></div></div>${googlePasteHtml(prefix)}<input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><input type="hidden" id="${prefix}-source" value="${esc(location?.source||'')}"><div id="${prefix}-panel">${savedPanelHtml(location)}</div></section>`;
 }
 
 export function readLocationEditor(prefix='it-geo'){
  const latitudeValue=document.getElementById(prefix+'-lat')?.value,longitudeValue=document.getElementById(prefix+'-lng')?.value;
  if(latitudeValue==null||longitudeValue==null||latitudeValue===''||longitudeValue==='')return null;
  const latitude=Number(latitudeValue),longitude=Number(longitudeValue);
- if(!Number.isFinite(latitude)||!Number.isFinite(longitude))return null;
- return {latitude,longitude,accuracy:Number(document.getElementById(prefix+'-accuracy')?.value)||0,captured_at:document.getElementById(prefix+'-captured')?.value||new Date().toISOString(),maps_url:mapsUrl(latitude,longitude)};
+ if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||(latitude===0&&longitude===0))return null;
+ const source=document.getElementById(prefix+'-source')?.value||undefined;
+ return {latitude,longitude,...(source?{source}:{}),accuracy:Number(document.getElementById(prefix+'-accuracy')?.value)||0,captured_at:document.getElementById(prefix+'-captured')?.value||new Date().toISOString(),maps_url:mapsUrl(latitude,longitude)};
 }
 
 export async function shareLocation(url,title='Localização'){ 
@@ -236,7 +310,7 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
  if(window.L)setTimeout(create,0);else setTimeout(create,900);
 }
 
-window.captureLocationInto=async prefix=>{const button=document.querySelector(`button[onclick="captureLocationInto('${prefix}')"]`);if(button){button.disabled=true;button.textContent='Localizando…';}try{const location=await capturePosition();renderEditor(prefix,location);window.toast?.('Localização capturada!','success');}catch(error){window.toast?.(error.message,'error',7500);}finally{if(button?.isConnected){button.disabled=false;button.textContent='⌖ Atualizar localização';}}};
+window.captureLocationInto=async prefix=>{const button=document.querySelector(`button[onclick="captureLocationInto('${prefix}')"]`);if(button){button.disabled=true;button.textContent='Localizando…';}try{const location=await capturePosition();applyEditorLocation(prefix,location);window.toast?.('Localização capturada!','success');}catch(error){window.toast?.(error.message,'error',7500);}finally{if(button?.isConnected){button.disabled=false;button.textContent='⌖ Atualizar localização';}}};
 window.shareGeoLocation=shareLocation;
 window.recordLocation=locationOf;
 window.recordLocationActions=(record,table)=>{

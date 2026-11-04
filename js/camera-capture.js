@@ -1,6 +1,6 @@
 import {supabase} from '../supabase_compat.js?v=11';
 import {FIELD_GROUP_KEY,isFieldDemandGroup,fieldDemandTitle,cameraInputAttributes} from './camera-capture-core.js?v=1';
-import {capturePosition,optimizePhoto,readPhotoLocation} from './geolocation.js?v=5';
+import {capturePosition,optimizePhoto,readPhotoLocation,googlePasteHtml} from './geolocation.js?v=6';
 
 export {FIELD_GROUP_KEY,isFieldDemandGroup,cameraInputAttributes};
 const MAX_FIELD_PHOTOS=20;
@@ -35,7 +35,7 @@ function renderFieldPhotos(){
   host.innerHTML=selectedPhotos.map((entry,index)=>`<figure class="field-photo-card"><img src="${esc(entry.preview)}" alt="Foto ${index+1} selecionada"><button type="button" onclick="removeFieldPhoto(${index})" aria-label="Remover foto ${index+1}">×</button><figcaption>${esc(entry.file.name||`Foto ${index+1}`)}${entry.location?'<span>📍 Localizada</span>':''}</figcaption></figure>`).join('')||'<p>Nenhuma foto adicionada ainda.</p>';
 }
 
-const SOURCE_LABEL={gps:'✓ Localização capturada pelo GPS',photo:'✓ Localização lida da própria foto',map:'✓ Localização escolhida no mapa'};
+const SOURCE_LABEL={gps:'✓ Localização capturada pelo GPS',photo:'✓ Localização lida da própria foto',map:'✓ Localização escolhida no mapa',google:'✓ Localização marcada no Google Maps'};
 function showFieldLocation(location,source){
   const status=document.getElementById('field-location-status');
   if(status)status.innerHTML=`<strong>${SOURCE_LABEL[source]||SOURCE_LABEL.gps}</strong><small>${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}${location.accuracy?` · ${location.accuracy} m`:''}</small>`;
@@ -75,7 +75,7 @@ async function addFiles(input,source='gallery'){
 
 export function initFieldCapture(){
   window.isFieldDemandGroup=isFieldDemandGroup;
-  if(!window.__fieldLocationEventBound){document.addEventListener('geo:changed',event=>{if(event.detail?.prefix!=='field-geo')return;fieldLocation=event.detail.location;fieldLocationManual=true;selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});const status=document.getElementById('field-location-status');if(status)status.innerHTML=`<strong>${SOURCE_LABEL.map}</strong><small>${fieldLocation.latitude.toFixed(6)}, ${fieldLocation.longitude.toFixed(6)}</small>`;renderFieldPhotos();});window.__fieldLocationEventBound=true;}
+  if(!window.__fieldLocationEventBound){document.addEventListener('geo:changed',event=>{if(event.detail?.prefix!=='field-geo')return;fieldLocation=event.detail.location;fieldLocationManual=true;selectedPhotos.forEach(photo=>{photo.location=fieldLocation;});const status=document.getElementById('field-location-status');if(status)status.innerHTML=`<strong>${String(fieldLocation.source||'').startsWith('google')?SOURCE_LABEL.google:fieldLocation.source==='manual'?SOURCE_LABEL.map:SOURCE_LABEL.gps}</strong><small>${fieldLocation.latitude.toFixed(6)}, ${fieldLocation.longitude.toFixed(6)}</small>`;renderFieldPhotos();});window.__fieldLocationEventBound=true;}
   window.openFieldCapture=function(){
     const secretarias=allowedSecretarias();
     if(!secretarias.length){window.toast('Seu usuário não possui secretaria liberada para registrar demandas de campo.','error',7000);return;}
@@ -84,8 +84,8 @@ export function initFieldCapture(){
       <div class="field-capture-intro"><span>1</span><div><strong>Adicione quantas fotos precisar</strong><small>As fotos são reduzidas automaticamente para carregarem rápido.</small></div></div>
       <div class="field-photo-actions"><label class="field-camera-button">📸 Tirar foto<input id="field-camera" type="file" ${cameraInputAttributes()} onchange="addFieldCapturePhotos(this,'camera')"></label><label class="field-gallery-button">🖼️ Escolher da galeria<input id="field-gallery" type="file" accept="image/*" multiple onchange="addFieldCapturePhotos(this,'gallery')"></label><b id="field-photo-count">0/${MAX_FIELD_PHOTOS} fotos</b></div>
       <label class="field-stamp-option"><input id="field-stamp-location" type="checkbox" checked> Gravar coordenadas e data visíveis na foto</label>
-      <div class="field-location-bar"><div id="field-location-status"><strong>📍 Geolocalização</strong><small>Registrada automaticamente ao adicionar a foto. Ajuste pelo GPS ou no mapa.</small></div><div class="field-location-actions"><button type="button" onclick="captureFieldLocation()">⌖ Usar GPS</button><button type="button" class="manual" onclick="openManualLocationPicker('field-geo')">🗺 Escolher no mapa</button></div></div>
-      <input type="hidden" id="field-geo-lat"><input type="hidden" id="field-geo-lng"><input type="hidden" id="field-geo-accuracy"><input type="hidden" id="field-geo-captured"><div id="field-geo-panel"></div>
+      <div class="field-location-bar"><div id="field-location-status"><strong>📍 Geolocalização</strong><small>Registrada automaticamente ao adicionar a foto. Ajuste pelo GPS ou no mapa.</small></div><div class="field-location-actions"><button type="button" onclick="captureFieldLocation()">⌖ Usar GPS</button><button type="button" class="google" onclick="openGoogleMapsPicker('field-geo')"><span class="g-mark" aria-hidden="true">G</span> Google Maps</button><button type="button" class="manual" onclick="openManualLocationPicker('field-geo')">🗺 Mapa rápido</button></div></div>${googlePasteHtml('field-geo')}
+      <input type="hidden" id="field-geo-lat"><input type="hidden" id="field-geo-lng"><input type="hidden" id="field-geo-accuracy"><input type="hidden" id="field-geo-captured"><input type="hidden" id="field-geo-source"><div id="field-geo-panel"></div>
       <div id="field-photo-preview" class="field-photo-preview"><p>Nenhuma foto adicionada ainda.</p></div>
       <div class="form-grid field-capture-fields"><div class="form-group full"><label for="field-observation">Observação da demanda *</label><textarea id="field-observation" maxlength="4000" rows="5" required placeholder="Descreva o local, o problema, a referência e o que precisa ser feito."></textarea><small>Essa observação acompanhará todas as fotos e ajudará no redirecionamento.</small></div><div class="form-group full"><label for="field-secretaria">Enviar para qual secretaria? *</label><select id="field-secretaria" required onchange="updateFieldCaptureGroups()"><option value="">Selecione a secretaria…</option>${secretarias.map(secretaria=>`<option value="${esc(secretaria.id)}">${esc(secretaria.name)}</option>`).join('')}</select></div><div class="form-group full field-group-target"><label for="field-group">Enviar diretamente para um grupo? <span>Opcional</span></label><select id="field-group" disabled><option value="">Primeiro escolha a secretaria…</option></select><small id="field-group-help">Se não escolher um grupo, a demanda seguirá para “Demandas Gerais de Campo”.</small></div></div>
       <div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button id="field-save" type="submit" class="btn-save">Enviar demanda de campo</button></div></form>`);

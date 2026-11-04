@@ -86,3 +86,4 @@
 .field-capture-banner p{color:#effffb}
 /* Percentual da barra de progresso: mesma cor da barra, escurecida para leitura. */
 .module-group-progress span b{color:color-mix(in srgb,var(--progress,#3b82f6) 62%,#000)!important}
+.audit-admin-fields>summary>span,.audit-admin-fields>p{color:#4a5d70!important}

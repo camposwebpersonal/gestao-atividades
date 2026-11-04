@@ -24,3 +24,24 @@
  .geo-map-list article>div{flex-basis:calc(100% - 40px)}
  .geo-map-list article a,.geo-map-list article button{flex:1 1 40%}
 }
+/* Google Maps: marcar o ponto lá e trazer de volta */
+.geo-editor-actions{flex-wrap:wrap}
+.geo-editor-actions button.google,.field-location-bar button.google{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid #c6d4e6;background:#fff;color:#1f3b63}
+.geo-editor-actions button.google:hover,.field-location-bar button.google:hover{border-color:#1a73e8;background:#f3f8ff}
+.g-mark{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0);color:#fff;font:900 12px/1 system-ui,sans-serif;text-shadow:0 1px 1px rgba(0,0,0,.35);flex:none}
+.geo-google-paste{margin-top:11px}
+.geo-google-paste>label{display:block;margin-bottom:5px;color:#334155!important;font-size:12px!important;font-weight:750}
+.geo-google-paste>div{display:flex;gap:7px}
+.geo-google-paste input{flex:1;min-width:0;min-height:40px;padding:8px 11px;border:1px solid #b9cfe0;border-radius:9px;background:#fff;color:#172e45;font-size:13px}
+.geo-google-paste input:focus{outline:0;border-color:#1a73e8;box-shadow:0 0 0 3px rgba(26,115,232,.16)}
+.geo-google-paste button{min-height:40px;padding:0 14px;border:0;border-radius:9px;background:#1a5fb4;color:#fff;font-weight:850;cursor:pointer}
+.geo-google-guide{margin-top:9px;padding:10px 12px;border:1px solid #b8d3f2;border-radius:10px;background:#f2f7ff;color:#173a63;font-size:12px;line-height:1.45}
+.geo-google-guide strong{display:block;margin-bottom:3px;color:#123257}
+.geo-google-guide ol{margin:0;padding-left:18px}
+.geo-saved .geo-coords{color:#123f36;font-weight:850;letter-spacing:.01em}
+.geo-saved-fresh{animation:geoSavedFlash 1.4s ease}
+@keyframes geoSavedFlash{0%{box-shadow:0 0 0 0 rgba(17,130,105,.55);background:#c9f2e4}100%{box-shadow:0 0 0 12px rgba(17,130,105,0);background:#e5f7f1}}
+.geo-picker-methods form>div{flex-wrap:wrap}
+.geo-picker-methods .geo-picker-google{display:inline-flex;align-items:center;gap:6px;border:1px solid #c6d4e6!important;background:#fff!important;color:#1f3b63!important}
+@media(max-width:720px){.geo-editor-actions{grid-template-columns:1fr 1fr}.geo-editor-actions button.google{grid-column:1/-1;order:-1}.field-location-actions{grid-template-columns:1fr 1fr}.field-location-actions button.google{grid-column:1/-1;order:-1}}
+@media(prefers-reduced-motion:reduce){.geo-saved-fresh{animation:none}}
