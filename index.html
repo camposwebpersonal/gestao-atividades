@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=11">
-<link rel="modulepreload" href="js/modulos.js?v=105">
+<link rel="modulepreload" href="js/modulos.js?v=106">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -429,12 +429,13 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
 <link rel="stylesheet" href="css/geolocation.css?v=6">
-<link rel="stylesheet" href="css/pipa-refill.css?v=1">
+<link rel="stylesheet" href="css/pipa-refill.css?v=3">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=3">
 <link rel="stylesheet" href="css/global-search-premium.css?v=2">
 <link rel="stylesheet" href="css/water-points.css?v=1">
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
+<link rel="stylesheet" href="css/multi-nest.css?v=2">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -512,21 +513,22 @@ import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,c
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=11";
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
-import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=1';
-import './js/modulos.js?v=105';
-import './js/water-points.js?v=3';
+import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=2';
+import './js/multi-nest.js?v=1';
+import './js/modulos.js?v=106';
+import './js/water-points.js?v=4';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=12';
 import {buildDemandReportRows} from './js/demand-report.js';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=7';
+import './js/bulk-entry.js?v=8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=6';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=7';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
@@ -1772,7 +1774,7 @@ window.openActivity=function(secId){
     ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
     ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
     ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
-    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button>`:''}
+    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button><button class="btn-action nest-selected-btn" onclick="openNestPicker('${secId}')" title="Transforma os lançamentos marcados em subitens de um item (também dá para arrastar a seleção sobre o item)">↳ Tornar subitens</button>`:''}
     ${_cp&&lane==='active'?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
     <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
     <button class="btn-action" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
@@ -4817,9 +4819,9 @@ let _dragNestEnterTime=0,_dragNestTarget=null;
 function clearDragNest(){_dragNestEnterTime=0;_dragNestTarget=null;if(_draggedEl){_draggedEl.classList.remove('drag-nesting');_draggedEl=null;}document.querySelectorAll('.drag-nest').forEach(el=>el.classList.remove('drag-nest'));}
 function isNestHold(targetId){return _dragNestTarget===targetId&&(Date.now()-_dragNestEnterTime)>=800;}
 function isSubAncestor(ancestorId,descendantId){let current=S.subitems.find(s=>s.id===descendantId);while(current&&current.parent_type==='subitem'){if(current.parent_id===ancestorId)return true;current=S.subitems.find(s=>s.id===current.parent_id);}return false;}
-function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;_draggedEl=ev.target.closest('.item-row');clearDragNest();ev.dataTransfer.effectAllowed='move';}
+function onDrItemStart(ev,id){_dragItemId=id;_dragSubId=null;_dragSubParent=null;_draggedEl=ev.target.closest('.item-row');clearDragNest();ev.dataTransfer.effectAllowed='move';window.multiNest?.startMultiDrag(ev,id);}
 function onDrSubStart(ev,id,parentId){_dragSubId=id;_dragSubParent=parentId;_dragItemId=null;_draggedEl=ev.target.closest('.sub-row');clearDragNest();ev.dataTransfer.effectAllowed='move';ev.stopPropagation();}
-function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();setTimeout(()=>{if(_dragNestTarget===targetId&&_draggedEl)_draggedEl.classList.add('drag-nesting');},800);}
+function onDrItemOver(ev,targetId){if(!_dragItemId&&!_dragSubId)return;ev.preventDefault();ev.stopPropagation();if(window.multiNest?.multiDragActive()){document.querySelectorAll('.multi-drop-target').forEach(r=>r!==ev.currentTarget&&r.classList.remove('multi-drop-target'));ev.currentTarget.classList.add('multi-drop-target');return;}ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();setTimeout(()=>{if(_dragNestTarget===targetId&&_draggedEl)_draggedEl.classList.add('drag-nesting');},800);}
 function onDrSubOver(ev,targetId,parentId,secId){
   if(!_dragSubId)return;ev.preventDefault();ev.stopPropagation();ev.currentTarget.classList.add('drag-over');if(_dragNestTarget===targetId)return;_dragNestTarget=targetId;_dragNestEnterTime=Date.now();
   setTimeout(()=>{if(_dragNestTarget===targetId&&ev.currentTarget)ev.currentTarget.classList.add('drag-nest');},800);
@@ -4827,12 +4829,13 @@ function onDrSubOver(ev,targetId,parentId,secId){
 }
 function onDrLeave(ev){
   if(ev.currentTarget.contains(ev.relatedTarget))return;
-  ev.currentTarget.classList.remove('drag-over','drag-nest');
+  ev.currentTarget.classList.remove('drag-over','drag-nest','multi-drop-target');
   clearDragNest();
 }
 function onDrItemDrop(ev,targetId,secId){
   console.log('>>> onDrItemDrop chamado! targetId=',targetId,'_dragSubId=',_dragSubId,'_dragItemId=',_dragItemId);
-  ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest');
+  ev.preventDefault();ev.currentTarget.classList.remove('drag-over','drag-nest','multi-drop-target');
+  if(window.multiNest?.multiDragActive()){clearDragNest();_dragItemId=null;window.multiNest.dropMultiOn(targetId,secId).catch(error=>toast(error.message||error,'error',8000));return;}
   const isNest=isNestHold(targetId);
   console.log('isNest=',isNest);
   clearDragNest();
@@ -4945,42 +4948,9 @@ window.moverSubParaItem=async function(fromId,toItemId,secId){
   await wUpdateDoc(doc(db,'subitems',fromId),newData,oldData,'Desaninhar sub-item');
   await loadData();openActivity(secId);toast('Movido para item!');
 };
+// Converte um item em subitem preservando campos, fotos e subitens (mesma rotina da seleção múltipla).
 window.converterItemEmSubitem=async function(itemId,targetItemId,secId){
-  const item=S.items.find(i=>i.id===itemId);if(!item)return;
-  const targetItem=S.items.find(i=>i.id===targetItemId);if(!targetItem)return;
-  if(item.atividade_id!==targetItem.atividade_id){toast('Itens devem ser da mesma atividade','error');return;}
-  const sib=[...S.subitems.filter(s=>s.item_id===targetItemId&&s.parent_type!=='subitem')].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const newOrder=sib.length?Math.max(...sib.map(x=>x.order_num||0))+1:0;
-  const subData={
-    item_id:targetItemId,atividade_id:secId,
-    description:item.description||'Sem nome',observacao:item.observacao||'',responsaveis:item.responsaveis||'',
-    secretaria_id:item.secretaria_id||null,start_date:item.start_date||null,deadline_date:item.deadline_date||null,
-    concluded:item.concluded||0,status:item.status||'pendente',conclusion_date:item.conclusion_date||null,
-    parent_id:targetItemId,parent_type:'item',order_num:newOrder,created_at:serverTimestamp()
-  };
-  const subRef=await addDoc(collection(db,'subitems'),subData);
-  const childSubs=S.subitems.filter(s=>s.item_id===itemId);
-  for(const c of childSubs){
-    await updateDoc(doc(db,'subitems',c.id),{parent_id:subRef.id,parent_type:'subitem',item_id:targetItemId});
-  }
-  await permanentDeleteDoc(doc(db,'items',itemId));
-  pushUndo('Converter item em sub-item',
-    async()=>{
-      // Recriar o item
-      const newItemRef=await addDoc(collection(db,'items'),{...item,atividade_id:secId,created_at:serverTimestamp()});
-      // Restaurar subitens como filhos do item recriado
-      for(const c of childSubs){
-        await updateDoc(doc(db,'subitems',c.id),{parent_id:newItemRef.id,parent_type:'item',item_id:newItemRef.id});
-      }
-      // Deletar o subitem criado
-      await permanentDeleteDoc(doc(db,'subitems',subRef.id));
-      await loadData();openActivity(secId);
-    },
-    async()=>{
-      await window.converterItemEmSubitem(itemId,targetItemId,secId);
-    }
-  );
-  await loadData();openActivity(secId);toast('Item aninhado como sub-item!');
+  try{await window.nestIntoItem({items:[itemId],subs:[]},targetItemId,secId);}catch(error){toast(error.message||error,'error',8000);}
 };
 window.converterSubitemEmItem=async function(subId,targetItemId,secId,after=false){
   const sub=S.subitems.find(s=>s.id===subId);if(!sub)return;

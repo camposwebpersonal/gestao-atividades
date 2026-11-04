@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 globalThis.window = globalThis.window || {};
 globalThis.document = globalThis.document || {addEventListener() {}, getElementById: () => null, querySelectorAll: () => []};
-const {readPhotoLocation} = await import('../js/geolocation.js?v=6');
+const {readPhotoLocation} = await import('../js/geolocation.js?v=7');
 
 const photo = new Blob([fs.readFileSync(new URL('./fixtures-gps.jpg', import.meta.url))], {type: 'image/jpeg'});
 const location = await readPhotoLocation(photo);

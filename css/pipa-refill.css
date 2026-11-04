@@ -17,7 +17,7 @@
 .pipa-refill-fields input { width: 100%; min-width: 0; min-height: 42px; padding: 8px 10px; border: 1px solid #7dd3fc; border-radius: 10px; background: #fff; color: #0f172a; font-size: 15px; }
 .pipa-refill-date { display: flex; gap: 6px; min-width: 0; }
 .pipa-refill-date input { flex: 1; }
-.pipa-refill-date button { flex: 0 0 auto; min-height: 42px; padding: 0 12px; border: 1px solid #0284c7; border-radius: 10px; background: #0284c7; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
+.pipa-refill-date button { flex: 0 0 auto; min-height: 42px; padding: 0 12px; border: 1px solid #0369a1; border-radius: 10px; background: #0369a1; color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; }
 .pipa-refill-preview { margin: 12px 0 0; padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; line-height: 1.35; }
 @media (max-width: 520px) { .pipa-refill-fields { grid-template-columns: 1fr; } }
 
@@ -71,3 +71,29 @@
 .geo-map-list article.is-alerta { border-left-color: var(--refill-yellow); }
 .geo-map-list article.is-em-dia { border-left-color: var(--refill-green); }
 .geo-refill-empty { margin: 8px 0; padding: 16px; border: 1px dashed #cbd5e1; border-radius: 12px; text-align: center; color: #475569; font-size: 13px; }
+
+/* Aplicação do pipa (completo/parcial) e famílias beneficiadas */
+.pipa-supply { display: grid; grid-template-columns: minmax(0, 2fr) minmax(150px, 1fr); gap: 12px; margin-top: 12px; align-items: start; }
+.pipa-apply { min-width: 0; margin: 0; padding: 0; border: 0; }
+.pipa-apply legend { margin-bottom: 6px; padding: 0; color: #075985; font-size: 12px; font-weight: 800; }
+.pipa-apply-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.modal-box label.pipa-choice { display: flex; align-items: flex-start; gap: 8px; min-width: 0; padding: 9px 10px; border: 1px solid #7dd3fc; border-radius: 10px; background: #fff; color: #0c4a6e !important; cursor: pointer; }
+.pipa-choice input { width: 18px; height: 18px; margin-top: 1px; flex: none; accent-color: #0369a1; }
+.pipa-choice span { display: grid; gap: 2px; min-width: 0; }
+.pipa-choice b { font-size: 13px; color: #0c4a6e; }
+.pipa-choice small { font-size: 11px; line-height: 1.3; color: #3b6178; }
+.pipa-choice:has(input:checked) { border-color: #0369a1; background: #e0f2fe; box-shadow: inset 0 0 0 1px #0369a1; }
+.pipa-partial { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 9px 10px; border: 1px dashed #7dd3fc; border-radius: 10px; background: #f8fcff; color: #0c4a6e; font-size: 12px; font-weight: 700; }
+.pipa-partial[hidden] { display: none; }
+.pipa-fraction-quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pipa-fraction-quick button { min-height: 34px; padding: 0 11px; border: 1px solid #7dd3fc; border-radius: 999px; background: #fff; color: #075985; font-size: 13px; font-weight: 800; cursor: pointer; }
+.pipa-fraction-quick button.is-on { border-color: #0369a1; background: #0369a1; color: #fff; }
+.modal-box label.pipa-percent { display: inline-flex; align-items: center; gap: 6px; color: #0c4a6e !important; font-size: 12px; }
+.pipa-percent input { width: 76px; min-height: 34px; padding: 4px 8px; border: 1px solid #7dd3fc; border-radius: 8px; background: #fff; color: #0f172a; font-size: 14px; }
+.modal-box label.pipa-families { display: grid; gap: 6px; min-width: 0; color: #075985 !important; font-size: 12px; font-weight: 800; }
+.pipa-families input { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid #7dd3fc; border-radius: 10px; background: #fff; color: #0f172a; font-size: 15px; }
+.pipa-supply-tag { padding-left: 8px; margin-left: 2px; border-left: 1px solid currentColor; font-weight: 800; }
+.pipa-group-impact { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.pipa-group-impact span { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid #bae6fd; border-radius: 12px; background: #fff; color: #0c4a6e; font-size: 12px; font-weight: 700; }
+.pipa-group-impact b { font-size: 18px; color: #075985; }
+@media (max-width: 620px) { .pipa-supply { grid-template-columns: 1fr; } .pipa-apply-options { grid-template-columns: 1fr; } }

@@ -17,9 +17,14 @@ const T = globalThis.__fakeDb = {
     {id: 'i2', atividade_id: 'a1', description: 'UBS CENTRO — PINTURA', status: 'concluido', concluded: 1, conclusion_date: iso(now - 1e8), order_num: 1, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i3', atividade_id: 'a2', description: 'SÍTIO CAITITU — FAMÍLIA SILVA', status: 'pendente', concluded: 0, order_num: 0, extra_fields: {geo_location: geo(-8.06, -37.25), pipa_last_refill: iso(now - 40 * 864e5).slice(0, 10), pipa_refill_days: 30}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i4', atividade_id: 'a2', description: 'POVOADO RIACHO DO MEL', status: 'andamento', concluded: 0, order_num: 1, extra_fields: {geo_location: geo(-8.04, -37.22), pipa_last_refill: iso(now - 2 * 864e5).slice(0, 10), pipa_refill_days: 30}, created_at: iso(now - 5e8), updated_at: iso(now)},
+    {id: 'i6', atividade_id: 'a1', description: 'JANDSON', status: 'pendente', concluded: 0, order_num: 2, extra_fields: {geo_location: geo(-8.05, -37.24), Telefone: '(87) 98888-0000'}, created_at: iso(now - 5e8), updated_at: iso(now)},
+    {id: 'i7', atividade_id: 'a1', description: 'LUCIA', status: 'pendente', concluded: 0, order_num: 3, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
+    {id: 'i8', atividade_id: 'a1', description: 'MARIA DAS GRAÇAS', status: 'pendente', concluded: 0, order_num: 4, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
+    {id: 'i9', atividade_id: 'a1', description: 'CARLOS', status: 'pendente', concluded: 0, order_num: 5, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)},
     {id: 'i5', atividade_id: 'a3', description: 'ESCOLA MUNICIPAL JOSÉ — CONTA 123', status: 'pendente', concluded: 0, order_num: 0, extra_fields: {}, created_at: iso(now - 5e8), updated_at: iso(now)}
   ],
   subitems: [
+    {id: 's6', item_id: 'i6', atividade_id: 'a1', parent_id: 'i6', parent_type: 'item', description: 'Filho de Jandson', status: 'pendente', concluded: 0, order_num: 0, extra_fields: {}, created_at: iso(now - 4e8), updated_at: iso(now)},
     {id: 's1', item_id: 'i1', description: 'Comprar telhas', status: 'pendente', concluded: 0, order_num: 0, extra_fields: {}, created_at: iso(now - 4e8), updated_at: iso(now)},
     {id: 's2', item_id: 'i1', description: 'Contratar mão de obra', status: 'concluido', concluded: 1, order_num: 1, extra_fields: {}, created_at: iso(now - 4e8), updated_at: iso(now)}
   ],
@@ -28,7 +33,7 @@ const T = globalThis.__fakeDb = {
   contas: [], estoque: [], requisicoes: [], app_settings: [], supabase_status_access: [],
   water_collection_points: [{id: 'w1', name: 'POÇO DO CENTRO', latitude: -8.07, longitude: -37.27, updated_at: iso(now)}],
   trash_items: [{id: 't1', source_table: 'items', source_label: 'ITEM REMOVIDO', source_secretaria_name: 'SAÚDE', source_activity_name: 'MANUTENÇÃO', deleted_at: iso(now - 1e7), deleted_by_name: 'Ricardo', payload: {}}],
-  entity_images: [], galeria: [], chamados: [], extintores: [], extintor_abas: [], bulk_entry_drafts: [], distribuicao: []
+  entity_images: [{id: 'img6', entity_type: 'item', entity_id: 'i6', imgbb_url: 'data:,', order_num: 0}], galeria: [], chamados: [], extintores: [], extintor_abas: [], bulk_entry_drafts: [], distribuicao: []
 };
 const val = (r, c) => r?.[c];
 function builder(table) {

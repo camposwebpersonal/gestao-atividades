@@ -11,7 +11,7 @@ function templateOptions(template){
  return [];
 }
 
-export function bulkColumns(group,templates=[]){
+export function bulkColumns(group,templates=[],{scope='item'}={}){
  const columns=[
   {key:'description',label:'Nome / descrição *',type:'text',width:250,required:true},
   {key:'start_date',label:'Data da solicitação',type:'date',width:145},
@@ -26,7 +26,7 @@ export function bulkColumns(group,templates=[]){
   {key:'deadline_date',label:'Prazo',type:'date',width:145},
   {key:'observacao',label:'Observação',type:'text',width:260}
  );
- templates.filter(template=>template.scope==='item').sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>{
+ templates.filter(template=>template.scope===(scope==='subitem'?'subitem':'item')).sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>{
   const type=template.field_type==='combobox'?'select':template.field_type||'text',choices=['checkboxes','radio'].includes(type);
   columns.push({key:'ef:'+template.field_name,label:template.field_name,type,width:choices?Math.max(260,templateOptions(template).length*95):template.field_type==='textarea'?260:170,extra:true,options:templateOptions(template).map(value=>[String(value),String(value)])});
  });
@@ -57,6 +57,21 @@ export function bulkPayloads(rows,group,startOrder=0,now=new Date().toISOString(
   if(row.prioritario)extra.prioritario=true;
   return {id:crypto.randomUUID(),atividade_id:group.id,description:row.description.trim(),observacao:row.observacao||'',responsaveis:row.responsaveis||'',secretaria_id:fixedSecretary,start_date:normalizeBulkDate(row.start_date),deadline_date:normalizeBulkDate(row.deadline_date),item_icon:'📋',item_color:'#3B82F6',concluded:0,status:'pendente',order_num:startOrder+index,extra_fields:extra,created_at:now,updated_at:now};
  });
+}
+
+// Subitens em lote: as mesmas linhas da planilha viram subitens diretamente dentro de um item.
+export function bulkSubPayloads(rows,group,parentItem,startOrder=0,now=new Date().toISOString()){
+ if(!parentItem?.id)throw new Error('Escolha o item que vai receber os subitens.');
+ return bulkPayloads(rows,group,startOrder,now).map(({item_icon,item_color,...payload})=>({...payload,item_id:parentItem.id,parent_id:parentItem.id,parent_type:'item',secretaria_id:payload.secretaria_id||parentItem.secretaria_id||null}));
+}
+
+export async function persistBulkSubPayloads(client,payloads){
+ if(!client?.from)throw new Error('Conexão com o banco indisponível.');
+ if(!Array.isArray(payloads)||!payloads.length)throw new Error('Nenhum subitem para salvar.');
+ const {data,error}=await client.from('subitems').insert(payloads).select('*');
+ if(error)throw error;
+ if(!Array.isArray(data)||data.length!==payloads.length)throw new Error(`O banco confirmou ${Array.isArray(data)?data.length:0} de ${payloads.length} subitens. Nada foi considerado concluído.`);
+ return data;
 }
 
 export async function persistBulkPayloads(client,payloads){

@@ -1,0 +1,30 @@
+/* Arrastar vários lançamentos para virarem subitens (js/multi-nest.js) */
+.multi-drag-ghost{position:fixed;top:-200px;left:-200px;display:grid;gap:2px;padding:10px 14px;border:2px solid #0f766e;border-radius:12px;background:#fff;color:#0f4f49;font:700 13px/1.2 system-ui,sans-serif;box-shadow:0 10px 30px rgba(15,23,42,.25)}
+.multi-drag-ghost b{font-size:20px;color:#0f766e}
+.multi-drag-ghost small{font-size:11px;font-weight:600;color:#3f6f67}
+body.multi-dragging .item-row.multi-drag-source,body.multi-dragging .sub-row.multi-drag-source{opacity:.45;outline:2px dashed #0f766e;outline-offset:-2px}
+body.multi-dragging .item-row:not(.multi-drag-source){transition:box-shadow .12s ease,background .12s ease}
+.item-row.multi-drop-target{background:#ecfdf8!important;box-shadow:0 0 0 3px #0f766e,0 8px 22px rgba(15,118,110,.22)!important;position:relative}
+.item-row.multi-drop-target::after{content:"Soltar aqui: viram subitens deste item";position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:4px 10px;border-radius:999px;background:#0f766e;color:#fff;font-size:12px;font-weight:800;pointer-events:none;white-space:nowrap}
+.nest-selected-btn{border-color:#99d6c8!important;background:#f0fdfa!important;color:#0f4f49!important}
+.nest-picker{display:grid;gap:10px}
+.nest-picker input{width:100%;min-height:42px;padding:8px 12px;border:1px solid #b9cfe0;border-radius:10px;background:#fff;color:#172e45;font-size:14px}
+.nest-picker-list{display:grid;gap:6px;max-height:min(52vh,460px);overflow:auto;padding-right:2px}
+.nest-picker-list>button{display:grid;grid-template-columns:34px minmax(0,1fr) auto 14px;align-items:center;gap:8px;min-height:44px;padding:8px 12px;border:1px solid #d5e1ea;border-radius:10px;background:#fff;color:#172e45;text-align:left;cursor:pointer}
+.nest-picker-list>button:hover{border-color:#0f766e;background:#f0fdfa}
+.nest-picker-list>button[hidden]{display:none}
+.nest-picker-list span{color:#4a5d70;font-size:12px;font-weight:800}
+.nest-picker-list strong{min-width:0;overflow-wrap:anywhere;font-size:13px}
+.nest-picker-list small{color:#4a5d70;font-size:11px;white-space:nowrap}
+.nest-picker-list i{color:#0f766e;font-style:normal;font-size:18px}
+.nest-picker-note{margin:0;color:#3f6f67;font-size:12px}
+@media(max-width:620px){.item-row.multi-drop-target::after{content:"Soltar: viram subitens";font-size:11px}}
+
+/* Lançar em lote: destino itens ou subitens de um item */
+.bulk-target{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 10px;padding:9px 12px;border:1px solid #cfe0ea;border-radius:11px;background:#f8fbfd;color:#172e45}
+.bulk-target.is-sub{border-color:#99d6c8;background:#ecfdf8}
+.modal-box .bulk-target label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:#172e45!important;font-size:12px;font-weight:800}
+.bulk-target select,.bulk-new-target select{min-height:38px;max-width:min(520px,100%);padding:6px 10px;border:1px solid #b9cfe0;border-radius:9px;background:#fff;color:#172e45;font-size:13px}
+.bulk-target p{margin:0;color:#3f5a6e;font-size:12px}
+.bulk-target.is-sub p b{color:#0f5f58}
+.modal-box label.bulk-new-target{display:grid;gap:5px;margin-top:10px;color:#172e45!important;font-size:12px;font-weight:800}

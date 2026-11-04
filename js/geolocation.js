@@ -1,4 +1,4 @@
-import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=1';
+import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=2';
 import {parseGoogleLocation,shortLinkIn,googleMapsPickUrl} from './google-location.js?v=1';
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const supportedTables=new Set(['atividades','items','subitems']);
@@ -273,7 +273,7 @@ function mapRecords(secretariaId='',groupId=''){
 
 const REFILL_FILTERS=[['todos','Todos'],['vencido','Vencidos'],['alerta','Vencem em até 5 dias'],['em-dia','Em dia'],['sem-dados','Sem data']];
 function refillFilterMatch(point,filter){return filter==='todos'||(point.refill&&point.refill.state===filter);}
-function refillPopupLine(point){return point.refill?`<em class="geo-popup-refill is-${point.refill.state}">💧 ${esc(point.refill.text)}</em>`:'';}
+function refillPopupLine(point){return point.refill?`<em class="geo-popup-refill is-${point.refill.state}">💧 ${esc(point.refill.detail||point.refill.text)}</em>`:'';}
 
 function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas',back='',filter='todos'}={}){
  const points=mapRecords(secretariaId,groupId),id='geo-map-'+Date.now();
@@ -281,7 +281,7 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
  const counts=Object.fromEntries(REFILL_FILTERS.map(([key])=>[key,key==='todos'?points.length:refillPoints.filter(point=>point.refill.state===key).length]));
  let current=REFILL_FILTERS.some(([key])=>key===filter)?filter:'todos';
  const filters=refillPoints.length?`<div class="geo-refill-filters" role="group" aria-label="Filtrar pela situação do abastecimento de pipa">${REFILL_FILTERS.map(([key,label])=>`<button type="button" class="geo-refill-filter is-${key}${key===current?' active':''}" data-refill-filter="${key}" aria-pressed="${key===current}"><i aria-hidden="true"></i>${esc(label)}<b>${counts[key]}</b></button>`).join('')}</div>`:'';
- const listHtml=list=>list.map(({record,group,secretary,location,refill},index)=>`<article class="${refill?'has-refill is-'+refill.state:''}"><b>${String(index+1).padStart(2,'0')}</b><div><strong>${esc(record.description||record.name||'Lançamento')}</strong><span>${esc(group.name||'Grupo')}${secretary?' · '+esc(secretary.name):''}</span>${refill?`<em class="geo-list-refill is-${refill.state}">💧 ${esc(refill.text)}</em>`:''}</div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir mapa</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${esc(record.description||'Localização da demanda')}')">Compartilhar</button></article>`).join('');
+ const listHtml=list=>list.map(({record,group,secretary,location,refill},index)=>`<article class="${refill?'has-refill is-'+refill.state:''}"><b>${String(index+1).padStart(2,'0')}</b><div><strong>${esc(record.description||record.name||'Lançamento')}</strong><span>${esc(group.name||'Grupo')}${secretary?' · '+esc(secretary.name):''}</span>${refill?`<em class="geo-list-refill is-${refill.state}">💧 ${esc(refill.detail||refill.text)}</em>`:''}</div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir mapa</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${esc(record.description||'Localização da demanda')}')">Compartilhar</button></article>`).join('');
  const visible=()=>points.filter(point=>refillFilterMatch(point,current));
  document.getElementById('content').innerHTML=`<section class="geo-map-page"><header><div><span class="workspace-kicker">INTELIGÊNCIA DE CAMPO</span><h1>${esc(title)}</h1><p>${points.length} ponto${points.length===1?'':'s'} com localização cadastrada.${refillPoints.length?` ${counts.vencido} vencido${counts.vencido===1?'':'s'} · ${counts.alerta} vence${counts.alerta===1?'':'m'} em até 5 dias.`:''}</p></div>${back?`<button type="button" onclick="${back}">← Voltar</button>`:''}</header>${filters}<div class="geo-map-toolbar"><span><i></i> ${refillPoints.length?'Cores: vermelho vencido · amarelo até 5 dias · verde em dia':'Clique em um ponto para ver e compartilhar'}</span><button type="button" onclick="fitGeoMap()">Enquadrar pontos</button></div><div id="${id}" class="geo-map-canvas"></div>${points.length?'':`<div class="geo-map-empty"><span>⌖</span><strong>Nenhuma localização cadastrada aqui ainda</strong><p>Use “Capturar geolocalização” ao criar ou editar um lançamento.</p></div>`}<div class="geo-map-list" id="${id}-list">${listHtml(visible())}</div></section>`;
  let map=null,layer=null,bounds=[];

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import * as mod from '../js/pipa-refill.js';
 import {isRefillGroup, refillStatus, recordRefillStatus, applyRefillToExtra, pipaGroupSummary, parseLocalDate, PIPA_ALERT_DAYS} from '../js/pipa-refill.js';
 
 const day = (y, m, d) => new Date(y, m - 1, d);
@@ -84,4 +85,21 @@ test('formulário, mapa e cards usam o controle de reabastecimento', () => {
     assert.match(autoria, /recordRefillBadge/);
     const css = fs.readFileSync('css/pipa-refill.css', 'utf8');
     for (const color of ['#dc2626', '#eab308', '#16a34a']) assert.ok(css.includes(color), color);
+});
+
+test('aplicação do pipa (completo/parcial) e famílias beneficiadas', () => {
+    const {applicationText, recordSupply, applyRefillToExtra, pipaGroupSummary} = mod;
+    assert.equal(applicationText('completo'), 'Pipa completo');
+    assert.equal(applicationText('parcial', 50), 'Parcial · meio pipa (½)');
+    assert.equal(applicationText('parcial', 40), 'Parcial · 40% do pipa');
+    const extra = applyRefillToExtra({}, {last: '2026-11-01', days: 30, application: 'parcial', percent: 50, families: 4});
+    assert.deepEqual(extra, {pipa_last_refill: '2026-11-01', pipa_refill_days: 30, pipa_application: 'parcial', pipa_percent: 50, pipa_families: 4});
+    assert.equal(recordSupply({extra_fields: extra}).text, 'Parcial · meio pipa (½) · 4 famílias');
+    const full = applyRefillToExtra({...extra}, {last: '2026-11-01', days: 30, application: 'completo', percent: null, families: 1});
+    assert.equal(full.pipa_percent, undefined, 'completo não guarda porcentagem');
+    assert.equal(recordSupply({extra_fields: full}).text, 'Pipa completo · 1 família');
+    const summary = pipaGroupSummary([{extra_fields: extra}, {extra_fields: full}, {extra_fields: {}}]);
+    assert.equal(summary.families, 5); assert.equal(summary.pipas, 1.5); assert.equal(summary.applied, 2);
+    assert.match(mod.refillEditorHtml({extra_fields: extra}, 'it-pipa'), /name="it-pipa-apply" value="parcial" checked/);
+    assert.match(mod.refillBadgeHtml({extra_fields: extra}), /4 famílias/);
 });
