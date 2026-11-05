@@ -1,0 +1,85 @@
+/* Questionários de Proteção e Defesa Civil (ICM / TCE-PE) */
+.dcq-page{max-width:1080px;margin:0 auto;padding:clamp(12px,2.6vw,30px) clamp(10px,2vw,22px) 40px;color:#172e45}
+.dcq-loading{padding:40px;text-align:center;color:#4a5d70}
+.dcq-hero{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px;margin-bottom:14px}
+.dcq-hero h1{margin:4px 0;font-size:clamp(1.25rem,3vw,1.9rem);line-height:1.15;color:#12304a}
+.dcq-hero p{margin:0;color:#4a5d70;font-size:13px}
+.dcq-back,.dcq-print{min-height:40px;padding:8px 13px;border:1px solid #c9d8e3;border-radius:10px;background:#fff;color:#1f3b56;font-weight:800;cursor:pointer}
+.dcq-warning{margin:0 0 12px;padding:11px 14px;border:1px solid #f3d48a;border-radius:11px;background:#fff8e6;color:#6b4300;font-size:13px}
+.dcq-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.dcq-tab{display:grid;grid-template-columns:44px minmax(0,1fr) 62px;align-items:center;gap:10px;min-height:76px;padding:10px 12px;border:1px solid #cfdde6;border-radius:14px;background:#fff;color:#172e45;text-align:left;cursor:pointer}
+.dcq-tab.active{border-color:#b45309;background:linear-gradient(135deg,#fff7ed,#fff);box-shadow:inset 0 0 0 1px #b45309}
+.dcq-tab-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#fff1e0;font-size:22px}
+.dcq-tab-copy strong{display:block;font-size:14px;line-height:1.2}
+.dcq-tab-copy small{display:block;margin-top:3px;color:#4a5d70;font-size:11px;line-height:1.3}
+.dcq-tab-copy em{color:#9a3412;font-style:normal;font-weight:800}
+.dcq-ring{--p:0;display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:conic-gradient(#047857 calc(var(--p)*1%),#e2e8f0 0)}
+.dcq-ring b{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;color:#12304a;font-size:12px}
+.dcq-savebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:9px 12px;border:1px solid #cfdde6;border-radius:13px;background:rgba(255,255,255,.97);box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.dcq-savebar.is-top{position:sticky;top:0;z-index:30;margin-bottom:12px;backdrop-filter:blur(6px)}
+.dcq-savebar.is-bottom{margin-top:14px}
+.dcq-savebar-progress{display:grid;gap:4px;flex:1 1 180px;min-width:150px;font-size:12px;color:#334155}
+.dcq-savebar-progress i{display:block;height:7px;border-radius:999px;background:#e2e8f0;overflow:hidden}
+.dcq-savebar-progress em{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#047857,#16a34a)}
+.dcq-next{min-height:36px;padding:6px 11px;border:1px solid #c9d8e3;border-radius:9px;background:#fff;color:#1f3b56;font-weight:800;font-size:12px;cursor:pointer}
+.dcq-done{color:#047857;font-weight:800;font-size:12px}
+.dcq-state{font-size:12px;font-weight:800;color:#047857}
+.dcq-state.is-dirty{color:#9a3412}
+.dcq-save{min-height:42px;padding:8px 18px;border:0;border-radius:10px;background:#b45309;color:#fff;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 4px 12px rgba(180,83,9,.28)}
+.dcq-save:disabled{opacity:.7;cursor:progress}
+.dcq-form{border:1px solid #d5e1ea;border-radius:16px;background:#fff;overflow:hidden}
+.dcq-form-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e3eaf1;background:#f8fbfd}
+.dcq-form-head small{color:#4a5d70;font-size:11px;font-weight:800;letter-spacing:.06em}
+.dcq-form-head h2{margin:3px 0;font-size:17px;color:#12304a}
+.dcq-form-head p{margin:0;color:#4a5d70;font-size:12px}
+.dcq-sign{display:flex;align-items:center;gap:9px;padding:8px 12px;border:1px solid #a7e3c9;border-radius:11px;background:#ecfdf5;color:#065f46}
+.dcq-sign>span{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#047857;color:#fff;font-weight:900}
+.dcq-sign strong{display:block;font-size:13px}.dcq-sign small{display:block;font-size:12px;color:#065f46}
+.dcq-sign.is-empty{border-color:#d5e1ea;background:#f8fafc;color:#4a5d70;font-size:12px;font-weight:700}
+.dcq-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 16px 0}
+.dcq-import{min-height:36px;padding:6px 12px;border:1px dashed #b45309;border-radius:9px;background:#fff7ed;color:#7c3a06;font-weight:800;font-size:12px;cursor:pointer}
+.dcq-history{font-size:12px;color:#334155}.dcq-history summary{cursor:pointer;font-weight:800;color:#1f3b56}.dcq-history ol{margin:6px 0 0;padding-left:18px}
+.dcq-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 16px 0;padding:9px 12px;border-radius:11px;background:#f8fafc;border:1px solid #e2e8f0;font-size:12px}
+.dcq-summary span{padding:4px 10px;border-radius:999px;font-weight:800}.dcq-summary .is-yes{background:#dcfce7;color:#166534}.dcq-summary .is-no{background:#fee2e2;color:#991b1b}.dcq-summary b{font-size:15px}.dcq-summary small{color:#4a5d70;font-size:11px}
+.dcq-questions{display:grid;gap:10px;padding:14px 16px 16px}
+.dcq-dim-title{margin:8px 0 0;padding:6px 10px;border-left:4px solid #b45309;background:#fff7ed;color:#7c3a06;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.dcq-q{border:1px solid #d5e1ea;border-radius:12px;background:#fff;overflow:hidden;transition:box-shadow .2s}
+.dcq-q.is-sub{margin-left:clamp(10px,3vw,34px)}
+.dcq-q>header{display:grid;grid-template-columns:auto minmax(0,1fr) 24px;align-items:start;gap:9px;padding:9px 12px;background:#eef2f6;border-bottom:1px solid #e2e8f0}
+.dcq-q>header b{min-width:26px;padding:2px 6px;border-radius:7px;background:#12304a;color:#fff;font-size:12px;text-align:center}
+.dcq-q>header h3{margin:0;font-size:13.5px;line-height:1.4;font-weight:700;color:#172e45}
+.dcq-q>header h3 span{color:#7c3a06;font-weight:800}
+.dcq-q>header i{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-style:normal;font-size:12px;font-weight:900}
+.dcq-q.is-answered>header i{background:#047857;color:#fff}
+.dcq-q.is-pending>header i{border:2px dashed #cbd5e1}
+.dcq-q.is-flash{box-shadow:0 0 0 3px #b45309}
+.dcq-hint{display:block;padding:6px 14px 0;color:#4a5d70;font-size:11px}
+.dcq-opts{display:grid;gap:4px;padding:8px 10px 10px}
+.modal-box .dcq-opt,.dcq-opt{display:flex;align-items:flex-start;gap:10px;min-height:38px;padding:8px 10px;border:1px solid transparent;border-radius:9px;color:#172e45;font-size:13.5px;cursor:pointer}
+.dcq-opt:hover{background:#f8fafc;border-color:#e2e8f0}
+.dcq-opt input{width:20px;height:20px;margin:0;flex:none;accent-color:#12304a}
+.dcq-opt:has(input:checked){background:#eff6ff;border-color:#bfdbfe;font-weight:700}
+.dcq-decl{margin:10px;border-color:#e2e8f0}
+.dcq-files{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px 0}
+.dcq-file{position:relative;display:grid;gap:4px;width:118px;padding:6px;border:1px solid #d5e1ea;border-radius:10px;background:#fff;color:#172e45;font-size:11px;text-decoration:none}
+.dcq-file img{width:100%;height:76px;object-fit:cover;border-radius:7px}.dcq-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dcq-file button{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:#991b1b;color:#fff;font-size:15px;cursor:pointer}
+.dcq-upload{display:inline-flex;align-items:center;gap:6px;margin:10px 12px 0;min-height:38px;padding:6px 12px;border:1px solid #0f766e;border-radius:9px;background:#f0fdfa;color:#0f4f49;font-weight:800;font-size:13px;cursor:pointer}
+.dcq-upload input{position:absolute;width:1px;height:1px;opacity:0}
+.dcq-note{display:grid;gap:5px;padding:10px 12px 12px;color:#334155;font-size:12px;font-weight:700}
+.dcq-note textarea,.dcq-note input{width:100%;min-height:40px;padding:8px 10px;border:1px solid #c9d8e3;border-radius:9px;background:#fff;color:#172e45;font-size:13px;font-family:inherit}
+.dcq-form-foot{padding:0 16px 16px;display:flex;justify-content:flex-end}
+@media(max-width:720px){.dcq-hero{grid-template-columns:1fr}.dcq-hero .dcq-print{justify-self:start}.dcq-tabs{grid-template-columns:1fr}.dcq-savebar{gap:6px 8px;padding:8px}.dcq-savebar .dcq-save{flex:1 1 100%}.dcq-state{flex:1}.dcq-questions{padding:10px}}
+@media print{
+ #navbar,#navmenu,#app-footer,.sidebar-toggle,.dcq-savebar,.dcq-tabs,.dcq-back,.dcq-print,.dcq-tools,.dcq-upload,.dcq-file button,.toast,#toast-container{display:none!important}
+ #app{display:block!important;height:auto!important}#content{overflow:visible!important}
+ .dcq-page{max-width:none;padding:0}.dcq-q{break-inside:avoid}.dcq-opt{min-height:0;padding:3px 8px}
+}
+.dcq-savebar.is-top{position:relative}
+.dcq-savebar.is-float{position:fixed;left:50%;top:calc(var(--header-height,76px) + 8px);z-index:900;width:min(1040px,calc(100% - 20px));transform:translate(-50%,-140%);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .2s ease}
+.dcq-page.has-floating-bar .dcq-savebar.is-float{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+@media(min-width:961px){.dcq-savebar.is-float{left:calc(var(--sidebar-width,272px) + (100% - var(--sidebar-width,272px))/2);width:min(1040px,calc(100% - var(--sidebar-width,272px) - 30px))}}
+@media(max-width:960px){.dcq-savebar.is-float{top:calc(var(--mobile-header-height,58px) + 6px)}}
+@media print{.dcq-savebar.is-float{display:none!important}}
+.dcq-state,.dcq-done{white-space:nowrap}
+@media(max-width:720px){.dcq-savebar.is-float .dcq-done{display:none}.dcq-savebar.is-float .dcq-savebar-progress{flex:1 1 55%}.dcq-savebar.is-float .dcq-state{flex:0 0 auto}}

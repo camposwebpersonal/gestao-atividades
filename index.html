@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=11">
-<link rel="modulepreload" href="js/modulos.js?v=106">
+<link rel="modulepreload" href="js/modulos.js?v=107">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -435,6 +435,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/global-search-premium.css?v=2">
 <link rel="stylesheet" href="css/water-points.css?v=1">
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
+<link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -515,7 +516,8 @@ import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,r
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=2';
 import './js/multi-nest.js?v=1';
-import './js/modulos.js?v=106';
+import './js/defesa-civil-questionarios.js?v=1';
+import './js/modulos.js?v=107';
 import './js/water-points.js?v=4';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -821,7 +823,7 @@ const WORKSPACE_ROUTE_KEY='gestao-pms-workspace-v1';
 let _restoringWorkspace=false;
 function workspaceFromHash(){
   const p=location.hash.replace(/^#/,'').split('/').map(x=>decodeURIComponent(x));
-  if(['view','module','activity'].includes(p[0])&&p[1])return{kind:p[0],id:p[1],...(p[0]==='module'&&p[1]==='atendimentos'&&p[2]?{secretaria:p[2]}:{})};
+  if(['view','module','activity','page'].includes(p[0])&&p[1])return{kind:p[0],id:p[1],...(p[0]==='module'&&p[1]==='atendimentos'&&p[2]?{secretaria:p[2]}:{})};
   return null;
 }
 function workspaceHash(r){return r?.kind&&r?.id?'#'+r.kind+'/'+encodeURIComponent(r.id)+(r.secretaria?'/'+encodeURIComponent(r.secretaria):''):'';}
@@ -861,6 +863,7 @@ window.restoreWorkspace=function(){
   try{
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
     else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok){if(r.id==='atendimentos')window.currentDemandSecretaria=r.secretaria||'';window.renderModulo(r.id);}}
+    else if(r.kind==='page'){ok=typeof window.workspacePages?.[r.id]==='function';if(ok)window.workspacePages[r.id]();}
     else if(r.kind==='view'){ok=['mod','map','adm','secr','resp','cont','trash','supabase-status'].includes(r.id);if(r.id==='supabase-status'&&!canViewSupabaseStatus())ok=false;if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}

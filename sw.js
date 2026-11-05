@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v175';
+const CACHE_NAME = 'gestao-pms-v176';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -44,6 +44,7 @@ const STATIC_ASSETS = [
   'js/geolocation.js',
   'js/google-location.js',
   'js/multi-nest.js',
+  'js/defesa-civil-questionarios.js',
   'js/pipa-refill.js',
   'js/search-results.js',
   'js/water-points.js',
@@ -58,6 +59,7 @@ const STATIC_ASSETS = [
   'css/global-search-premium.css',
   'css/water-points.css',
   'css/layout-safety.css',
+  'css/defesa-civil-questionarios.css',
   'css/multi-nest.css',
   'css/contrast-guard.css',
   'css/bulk-archive.css',
