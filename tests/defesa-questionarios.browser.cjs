@@ -59,7 +59,7 @@ const {boot} = require('./contrast/run.cjs');
   out.erros = errors.filter(e => !/_leaflet_pos/.test(e));
   await browser.close();
   console.log(JSON.stringify(out, null, 1));
-  assert.ok(out.destinos.some(t => /Questionários TCE-PE/.test(t)));
+  assert.ok(out.destinos.some(t => /AUDITORIAQuestionários/.test(t)));
   assert.equal(out.perguntasDiag, 21);
   assert.deepEqual(out.dimensoes, ['Dimensão I', 'Dimensão II', 'Dimensão III']);
   assert.match(out.progresso1, /1 de 21/); assert.match(out.naoSalvo, /não salvas/);

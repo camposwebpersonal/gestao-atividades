@@ -467,7 +467,7 @@ function _specialModulesForSecretary(secretary,visible=_visibleModules()){
 function _secretaryDestinations(secretary){
   const visible=_visibleModules(),demand=visible.find(mod=>mod.id==='atendimentos'),name=_normalizedSecretaryName(secretary?.name),destinations=[];
   if(demand)destinations.push({id:'demands',icon:'▤',title:'Controle de Demandas',description:'Grupos, itens, subitens e demandas desta secretaria.',open:()=>window.openDemandSecretaria(secretary.id)});
-  if(name==='DEFESA CIVIL')destinations.push({id:'questionarios_icm',icon:'📋',title:'Questionários TCE-PE · ICM 2026',description:'Levantamento de Proteção e Defesa Civil: diagnóstico de riscos e estrutura operacional.',open:()=>window.openDefesaQuestionarios?.()});
+  if(name==='DEFESA CIVIL')destinations.push({id:'questionarios_icm',icon:'📋',title:'AUDITORIA',description:'Questionários TCE-PE · ICM 2026 — levantamento de Proteção e Defesa Civil: diagnóstico de riscos e estrutura operacional.',open:()=>window.openDefesaQuestionarios?.()});
   if(demand&&name.includes('AGRICULTURA'))destinations.push({id:'water_points',icon:'💧',title:'Locais de Captação de Água',description:'Pontos para caminhões-pipa, fotos, referências, mapa e rotas.',open:()=>window.renderWaterCollectionPoints()});
   for(const mod of _specialModulesForSecretary(secretary,visible))destinations.push({id:mod.id,icon:mod.icon,title:mod.label,description:mod.desc,open:()=>window.renderModulo(mod.id)});
   return destinations;
