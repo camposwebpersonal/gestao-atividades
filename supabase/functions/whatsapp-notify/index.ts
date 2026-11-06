@@ -127,8 +127,12 @@ async function sendCallMeBot(phone: string, apikey: string, text: string) {
   const url = `https://api.callmebot.com/whatsapp.php?phone=%2B${phone}&apikey=${encodeURIComponent(apikey)}&text=${encodeURIComponent(text)}`;
   const res = await fetch(url);
   const body = (await res.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  const ok = res.ok && !/error|invalid|not (been )?activated|apikey is not/i.test(body);
-  return {ok, detail: `${res.status} ${body.slice(0, 220)}`};
+  // A CallMeBot responde 200/203 repetindo o texto e uma linha de situação. Só é falha quando a
+  // resposta diz explicitamente que a chave é inválida, o número não foi ativado ou está bloqueado.
+  const failed = /apikey is invalid|invalid apikey|wrong apikey|not (been )?activated|is banned|blocked|limit reached|too many/i.test(body);
+  const ok = res.ok && !failed;
+  const tail = body.length > 260 ? body.slice(0, 50) + ' … ' + body.slice(-200) : body;
+  return {ok, detail: `${res.status} ${tail}`};
 }
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
