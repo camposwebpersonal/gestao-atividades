@@ -437,7 +437,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
-<link rel="stylesheet" href="css/record-fields.css?v=1">
+<link rel="stylesheet" href="css/record-fields.css?v=2">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -528,6 +528,7 @@ import {generateDemandPdf} from './js/demand-pdf.js?v=1';
 import {reportDateTime} from './js/demand-report.js?v=2';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=1';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=1';
+import './js/modal-context.js?v=1';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
@@ -2145,14 +2146,17 @@ window.excluirSelecionados=async function(secId){
 };
 
 // ── MODAL ──
-window.openModal=function(title,sub,html){
+window.openModal=function(title,sub,html,ctx){
   releaseSaveButtons();
   document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
+  document.getElementById('modal-sub').hidden=!sub;
   document.getElementById('modal-body').innerHTML=html;
   window.attachAuditToEditor?.(title,document.getElementById('modal-body'));
+  window.applyModalContext?.(title,ctx);
   document.getElementById('modal-ov').style.display='flex';
+  const box=document.querySelector('#modal-ov .modal-box');if(box)box.scrollTop=0;
 }
 window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');_pRT={};};
 
@@ -2320,7 +2324,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
   const secretaryField=secretaryIsFixed(sec)
     ?`<div class="form-group full"><label>Secretaria</label><input type="hidden" id="it-secretaria" value="${esc(effectiveSecretary)}"><div class="context-locked-field"><span>🏛️</span><div><strong>${esc(effectiveSecretaryName)}</strong><small>Definida automaticamente pelo grupo ${esc(sec?.name||'')}</small></div><b>Automático</b></div></div>`
     :`<div class="form-group full"><label>Secretaria</label><select id="it-secretaria" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${S.secretarias.map(s=>`<option value="${esc(s.id)}"${effectiveSecretary===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`;
-  openModal(id?`✏️ Editar ${isSub?'Sub-item':'Item'}`:`➕ Novo ${isSub?'Sub-item':'Item'}`,sec?'📅 '+sec.name:'',
+  openModal(id?`✏️ Editar ${isSub?'Sub-item':'Item'}`:`➕ Novo ${isSub?'Sub-item':'Item'}`,'',
   `<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-save" style="font-size:12px;padding:6px 16px" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button></div>
   <div class="form-grid">
     <div class="form-group full"><label>Nome *</label><input id="it-name" value="${esc(it?.description||'')}"></div>
@@ -2397,6 +2401,11 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     <button class="btn-save" onclick="saveItem('${id||''}','${secId||curSecId}',${isSub},'${parentId||''}')">💾 Salvar</button>
   </div>`);
   // (moved loadImgs call after)
+  // Topo fixo da janela: nome do lançamento + Secretaria › Grupo › Item pai.
+  {const parentItem=isSub?(S.items.find(x=>x.id===(it?.item_id||parent?.item_id||parentId))||null):null;
+   const parentChain=[];if(isSub){let p=parent;while(p){parentChain.unshift(p);p=p.parent_type==='subitem'?S.subitems.find(x=>x.id===p.parent_id):null;}if(parentItem&&!parentChain.includes(parentItem))parentChain.unshift(parentItem);}
+   const secName=S.secretarias.find(x=>x.id===effectiveSecretary)?.name;
+   window.setModalContext?.({name:it?.description||'',nameInput:'it-name',placeholder:isSub?'Novo sub-item':'Novo item',crumbs:[secName&&{icon:'🏛️',label:secName,kind:'sec'},sec&&{icon:'📁',label:sec.name,kind:'group'},...parentChain.filter(p=>p.id!==it?.id).map(p=>({icon:'↳',label:p.description,kind:'parent'}))]});}
   if(id)loadImgs(col,id);
   if(focusField){
     setTimeout(()=>{

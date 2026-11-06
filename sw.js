@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v179';
+const CACHE_NAME = 'gestao-pms-v180';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -35,6 +35,7 @@ const STATIC_ASSETS = [
   'js/pdf-records.js',
   'js/record-fields.js',
   'js/report-options.js',
+  'js/modal-context.js',
   'css/record-fields.css',
   'exames.html',
   'manifest.json',
