@@ -267,15 +267,17 @@ function mapRecords(secretariaId='',groupId=''){
  const groupById=new Map(groups.map(group=>[group.id,group]));
  const itemById=new Map((window.S?.items||[]).map(item=>[item.id,item]));
  const points=[];
+ const subIds=new Set((window.S?.subitems||[]).map(sub=>sub.id));
  for(const record of [...(window.S?.items||[]),...(window.S?.subitems||[])]){
   const group=groupById.get(record.atividade_id||itemById.get(record.item_id)?.atividade_id);if(!group)continue;
   const location=locationOf(record);if(!location)continue;
   const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id);
-  points.push({record,group,secretary,location,refill:isRefillGroup(group)?recordRefillStatus(record):null});
+  const table=subIds.has(record.id)&&!itemById.has(record.id)?'subitems':'items';
+  points.push({record,group,secretary,location,table,parent:table==='subitems'?itemById.get(record.item_id):null,refill:isRefillGroup(group)?recordRefillStatus(record):null});
  }
  for(const record of window.S?.galeria||[]){
   const group=groupById.get(record.atividade_id);if(!group)continue;const location=locationOf(record);if(!location)continue;
-  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id);points.push({record:{...record,description:record.titulo||'Foto de campo'},group,secretary,location});
+  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id);points.push({record:{...record,description:record.titulo||'Foto de campo'},group,secretary,location,table:'galeria'});
  }
  return points;
 }
@@ -284,26 +286,49 @@ const REFILL_FILTERS=[['todos','Todos'],['vencido','Vencidos'],['alerta','Vencem
 function refillFilterMatch(point,filter){return filter==='todos'||(point.refill&&point.refill.state===filter);}
 function refillPopupLine(point){return point.refill?`<em class="geo-popup-refill is-${point.refill.state}">💧 ${esc(point.refill.detail||point.refill.text)}</em>`:'';}
 
-function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas',back='',filter='todos'}={}){
+// Ações de um ponto: nome clicável (abre o lançamento), ver no grupo, como chegar, centralizar.
+const keyOf=point=>point.table+':'+point.record.id;
+const jsArg=value=>esc(String(value).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+const directionsUrl=location=>`https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
+function pointTitleHtml(point,tag='strong'){
+ const name=esc(point.record.description||point.record.name||'Lançamento');
+ if(point.table==='galeria')return `<${tag}>${name}</${tag}>`;
+ return `<button type="button" class="geo-record-link" onclick="geoOpenRecord('${point.table}','${jsArg(point.record.id)}')" title="Abrir este lançamento">${name}<i aria-hidden="true">↗</i></button>`;
+}
+function pointContextHtml(point){
+ const parent=point.parent?`<span class="geo-parent">↳ dentro de <b>${esc(point.parent.description||'item')}</b></span>`:'';
+ return `<span>${esc(point.group.name||'Grupo')}${point.secretary?' · '+esc(point.secretary.name):''}</span>${parent}`;
+}
+const focusButton=point=>`<button type="button" class="geo-goto" onclick="geoFocusRecord('${point.table}','${jsArg(point.record.id)}')" title="Abrir o grupo com todos os lançamentos, já neste">📋 Ver no grupo</button>`;
+let mapReturn=null;
+function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas',back='',filter='todos',focus=''}={}){
+ mapReturn={secretariaId,groupId,title,back,filter};
+ document.getElementById('geo-back-pill')?.remove();
  const points=mapRecords(secretariaId,groupId),id='geo-map-'+Date.now();
  const refillPoints=points.filter(point=>point.refill);
  const counts=Object.fromEntries(REFILL_FILTERS.map(([key])=>[key,key==='todos'?points.length:refillPoints.filter(point=>point.refill.state===key).length]));
  let current=REFILL_FILTERS.some(([key])=>key===filter)?filter:'todos';
  const filters=refillPoints.length?`<div class="geo-refill-filters" role="group" aria-label="Filtrar pela situação do abastecimento de pipa">${REFILL_FILTERS.map(([key,label])=>`<button type="button" class="geo-refill-filter is-${key}${key===current?' active':''}" data-refill-filter="${key}" aria-pressed="${key===current}"><i aria-hidden="true"></i>${esc(label)}<b>${counts[key]}</b></button>`).join('')}</div>`:'';
- const listHtml=list=>list.map(({record,group,secretary,location,refill},index)=>`<article class="${refill?'has-refill is-'+refill.state:''}"><b>${String(index+1).padStart(2,'0')}</b><div><strong>${esc(record.description||record.name||'Lançamento')}</strong><span>${esc(group.name||'Grupo')}${secretary?' · '+esc(secretary.name):''}</span>${refill?`<em class="geo-list-refill is-${refill.state}">💧 ${esc(refill.detail||refill.text)}</em>`:''}</div><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir mapa</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${esc(record.description||'Localização da demanda')}')">Compartilhar</button></article>`).join('');
+ const listHtml=list=>list.map((point,index)=>{const {record,location,refill}=point;return `<article class="${refill?'has-refill is-'+refill.state:''}" data-geo-key="${esc(keyOf(point))}"><button type="button" class="geo-num" onclick="geoFlyTo('${jsArg(keyOf(point))}')" title="Mostrar no mapa">${String(index+1).padStart(2,'0')}</button><div>${pointTitleHtml(point)}${pointContextHtml(point)}${refill?`<em class="geo-list-refill is-${refill.state}">💧 ${esc(refill.detail||refill.text)}</em>`:''}</div><div class="geo-list-actions">${point.table==='galeria'?'':focusButton(point)}<button type="button" onclick="geoFlyTo('${jsArg(keyOf(point))}')">📍 No mapa</button><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir mapa</a><a href="${esc(directionsUrl(location))}" target="_blank" rel="noopener" title="Rota até o local no Google Maps">🧭 Como chegar</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${jsArg(record.description||'Localização da demanda')}')">Compartilhar</button></div></article>`;}).join('');
  const visible=()=>points.filter(point=>refillFilterMatch(point,current));
  document.getElementById('content').innerHTML=`<section class="geo-map-page"><header><div><span class="workspace-kicker">INTELIGÊNCIA DE CAMPO</span><h1>${esc(title)}</h1><p>${points.length} ponto${points.length===1?'':'s'} com localização cadastrada.${refillPoints.length?` ${counts.vencido} vencido${counts.vencido===1?'':'s'} · ${counts.alerta} vence${counts.alerta===1?'':'m'} em até 5 dias.`:''}</p></div>${back?`<button type="button" onclick="${back}">← Voltar</button>`:''}</header>${filters}<div class="geo-map-toolbar"><span><i></i> ${refillPoints.length?'Cores: vermelho vencido · amarelo até 5 dias · verde em dia':'Clique em um ponto para ver e compartilhar'}</span><button type="button" onclick="fitGeoMap()">Enquadrar pontos</button></div><div id="${id}" class="geo-map-canvas"></div>${points.length?'':`<div class="geo-map-empty"><span>⌖</span><strong>Nenhuma localização cadastrada aqui ainda</strong><p>Use “Capturar geolocalização” ao criar ou editar um lançamento.</p></div>`}<div class="geo-map-list" id="${id}-list">${listHtml(visible())}</div></section>`;
- let map=null,layer=null,bounds=[];
+ let map=null,layer=null,bounds=[];const markers=new Map();
  const draw=()=>{
-  if(!map)return;layer.clearLayers();bounds=[];
+  if(!map)return;layer.clearLayers();bounds=[];markers.clear();
+  const popupWidth=Math.max(200,Math.min(290,(document.getElementById(id)?.clientWidth||400)-70));
   visible().forEach(point=>{
    const {record,group,secretary,location,refill}=point;const latlng=[location.latitude,location.longitude];bounds.push(latlng);
    const options=refill?{icon:window.L.divIcon({className:'pipa-pin-wrap',html:refillMarkerHtml(refill.state),iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-38]}),zIndexOffset:refill.state==='vencido'?900:refill.state==='alerta'?600:0,title:`${record.description||'Lançamento'} · ${(REFILL_STATES[refill.state]||{}).label||''}`}:{};
-   window.L.marker(latlng,options).addTo(layer).bindPopup(`<div class="geo-popup"><strong>${esc(record.description||'Lançamento')}</strong><span>${esc(group.name||'')}${secretary?' · '+esc(secretary.name):''}</span>${refillPopupLine(point)}<a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir no Google Maps</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${esc(record.description||'Localização da demanda')}')">Compartilhar</button></div>`);
+   const marker=window.L.marker(latlng,options).addTo(layer).bindPopup(`<div class="geo-popup">${pointTitleHtml(point)}${pointContextHtml(point)}${refillPopupLine(point)}<div class="geo-popup-actions">${point.table==='galeria'?'':focusButton(point)}<a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir no Google Maps</a><a class="geo-route" href="${esc(directionsUrl(location))}" target="_blank" rel="noopener">🧭 Como chegar</a><button type="button" class="geo-share" onclick="shareGeoLocation('${esc(location.maps_url)}','${jsArg(record.description||'Localização da demanda')}')">Compartilhar</button></div></div>`,{maxWidth:popupWidth,minWidth:Math.min(220,popupWidth),autoPanPaddingTopLeft:[12,72],autoPanPaddingBottomRight:[12,24]});
+   marker.on('popupopen',()=>markListCard(keyOf(point)));
+   markers.set(keyOf(point),marker);
   });
   window.fitGeoMap();
  };
  window.fitGeoMap=()=>{if(!map)return;if(bounds.length)map.fitBounds(bounds,{padding:[35,35],maxZoom:16});else map.setView(DEFAULT_MAP_POINT,12);};
+ // Card da lista ↔ ponto do mapa: um destaca o outro.
+ const markListCard=key=>{document.querySelectorAll('.geo-map-list article.is-current').forEach(card=>card.classList.remove('is-current'));document.querySelector(`.geo-map-list article[data-geo-key="${CSS.escape(key)}"]`)?.classList.add('is-current');};
+ window.geoFlyTo=key=>{const marker=markers.get(key);if(!map||!marker)return;document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'center'});map.flyTo(marker.getLatLng(),Math.max(map.getZoom(),17),{duration:.6});setTimeout(()=>marker.openPopup(),650);markListCard(key);};
  document.querySelectorAll('[data-refill-filter]').forEach(button=>button.addEventListener('click',()=>{
   current=button.dataset.refillFilter;
   document.querySelectorAll('[data-refill-filter]').forEach(other=>{const on=other===button;other.classList.toggle('active',on);other.setAttribute('aria-pressed',String(on));});
@@ -315,9 +340,56 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
   map=window.L.map(host,{zoomControl:true});window.__geoMap=map;layer=window.L.layerGroup().addTo(map);
   window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   draw();
+  if(focus&&markers.has(focus)){const marker=markers.get(focus);map.setView(marker.getLatLng(),17);setTimeout(()=>{marker.openPopup();document.querySelector(`.geo-map-list article[data-geo-key="${CSS.escape(focus)}"]`)?.scrollIntoView({block:'nearest'});},120);}
  };
  if(window.L)setTimeout(create,0);else setTimeout(create,900);
 }
+
+// ── Do mapa para o lançamento ──
+function findPointRecord(table,id){
+ const list=table==='subitems'?window.S?.subitems:table==='items'?window.S?.items:window.S?.galeria;
+ const record=(list||[]).find(item=>String(item.id)===String(id));if(!record)return null;
+ const item=table==='subitems'?(window.S?.items||[]).find(entry=>entry.id===record.item_id):record;
+ const group=(window.S?.secs||[]).find(entry=>entry.id===(record.atividade_id||item?.atividade_id));
+ return {record,item,group};
+}
+const frame=()=>new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,30)));
+const recordElement=id=>{const value=CSS.escape(String(id));return document.querySelector(`#content [data-sort-id="${value}"],#content [data-audit-id="${value}"],#content [data-lista-id="${value}"],#content #ir-${value}`);};
+function showBackToMap(focus){
+ if(!mapReturn)return;
+ const state={...mapReturn,focus};
+ document.getElementById('geo-back-pill')?.remove();
+ const pill=document.createElement('div');pill.id='geo-back-pill';pill.className='geo-back-pill';pill.setAttribute('role','status');
+ pill.innerHTML='<button type="button" class="geo-back-go">🗺 Voltar ao mapa</button><button type="button" class="geo-back-x" aria-label="Fechar">✕</button>';
+ pill.querySelector('.geo-back-go').onclick=()=>{pill.remove();renderMapPage(state);};
+ pill.querySelector('.geo-back-x').onclick=()=>pill.remove();
+ document.body.appendChild(pill);
+}
+// Nome do ponto → abre o próprio lançamento (quem não pode editar vai direto para ele no grupo).
+window.geoOpenRecord=(table,id)=>{
+ const found=findPointRecord(table,id);if(!found?.group){window.toast?.('Lançamento não encontrado. Ele pode ter sido excluído.','error');return;}
+ const {record,group}=found;
+ const canEdit=window.S?.isAdmin||window.userCanGroup?.(group,'editar');
+ if(!canEdit||typeof window.openItemModal!=='function'){window.geoFocusRecord(table,id);return;}
+ window.__geoMap?.closePopup();
+ if(table==='subitems')window.openItemModal(record.id,group.id,true,record.parent_id||record.item_id);
+ else window.openItemModal(record.id,group.id,false,null);
+};
+// "Ver no grupo" → abre o grupo com todos os lançamentos, rola até este e o destaca.
+window.geoFocusRecord=async(table,id)=>{
+ const found=findPointRecord(table,id);if(!found?.group){window.toast?.('Lançamento não encontrado. Ele pode ter sido excluído.','error');return;}
+ const {record,item,group}=found,focusKey=table+':'+id;
+ window.openActivity(group.id);await frame();
+ let element=recordElement(record.id);
+ if(!element&&item&&(Number(item.concluded)===1||String(item.status||'').toLowerCase()==='concluido')&&window.setActivityLane){window.setActivityLane(group.id,'completed');await frame();element=recordElement(record.id);}
+ if(table==='subitems'&&item){const body=document.getElementById('ib-'+item.id);if(body&&body.style.display==='none'){window.togItem?.(item.id);await frame();}element=recordElement(record.id);}
+ if(!element){window.toast?.('O lançamento está neste grupo, mas não aparece na visão atual (filtro ou histórico). Abrindo o cadastro.','info',6000);showBackToMap(focusKey);window.geoOpenRecord(table,id);return;}
+ document.querySelectorAll('.geo-spotlight').forEach(el=>el.classList.remove('geo-spotlight'));
+ element.classList.add('geo-spotlight');element.setAttribute('data-from-map','📍 Você veio do mapa');
+ element.scrollIntoView({behavior:'smooth',block:'center'});
+ setTimeout(()=>{element.classList.remove('geo-spotlight');element.removeAttribute('data-from-map');},6500);
+ showBackToMap(focusKey);
+};
 
 window.captureLocationInto=async prefix=>{const button=document.querySelector(`button[onclick="captureLocationInto('${prefix}')"]`);if(button){button.disabled=true;button.textContent='Localizando…';}try{const location=await capturePosition();applyEditorLocation(prefix,location);window.toast?.('Localização capturada!','success');}catch(error){window.toast?.(error.message,'error',7500);}finally{if(button?.isConnected){button.disabled=false;button.textContent='⌖ Atualizar localização';}}};
 window.shareGeoLocation=shareLocation;
