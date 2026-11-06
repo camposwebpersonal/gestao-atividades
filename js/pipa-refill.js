@@ -71,7 +71,7 @@ export function refillStatus(last, days, today = new Date()) {
     return {state, ...REFILL_STATES[state], last: lastDate, interval, due, daysLeft, text};
 }
 
-const FRACTIONS = {25: '¼ de pipa', 50: 'meio pipa (½)', 75: '¾ de pipa'};
+const FRACTIONS = {25: '¼ de pipa', 33: '⅓ de pipa', 50: 'meio pipa (½)', 67: '⅔ de pipa', 75: '¾ de pipa'};
 /** Texto da quantidade aplicada: "Pipa completo", "meio pipa (½)", "30% do pipa". */
 export function applicationText(application, percent) {
     if (application === 'completo') return 'Pipa completo';
@@ -121,7 +121,7 @@ export function refillEditorHtml(record, prefix = 'it-pipa') {
       </div>
       <div class="pipa-partial" id="${prefix}-partial" ${supply.application === 'parcial' ? '' : 'hidden'}>
         <span>Quanto do pipa foi aplicado?</span>
-        <div class="pipa-fraction-quick">${[[25, '¼'], [50, '½ meio pipa'], [75, '¾']].map(([v, l]) => `<button type="button" data-pct="${v}" class="${supply.percent === v ? 'is-on' : ''}" onclick="setPipaPercent('${prefix}',${v})">${l}</button>`).join('')}</div>
+        <div class="pipa-fraction-quick">${[[25, '¼'], [33, '⅓'], [50, '½ meio pipa'], [67, '⅔'], [75, '¾']].map(([v, l]) => `<button type="button" data-pct="${v}" class="${supply.percent === v ? 'is-on' : ''}" onclick="setPipaPercent('${prefix}',${v})">${l}</button>`).join('')}</div>
         <label for="${prefix}-percent" class="pipa-percent">ou informe: <input type="number" id="${prefix}-percent" min="1" max="99" step="1" inputmode="numeric" placeholder="Ex.: 40" value="${esc(supply.percent ?? '')}" oninput="previewPipaRefill('${prefix}')"> % do pipa</label>
       </div>
     </fieldset>
@@ -145,7 +145,7 @@ export function readRefillEditor(prefix = 'it-pipa', root = document) {
     const application = scope.querySelector?.(`input[name="${prefix}-apply"]:checked`)?.value || '';
     const rawPercent = String(pick(`${prefix}-percent`)?.value || '').trim();
     const rawFamilies = String(pick(`${prefix}-families`)?.value || '').trim();
-    if (application === 'parcial' && (!/^\d+$/.test(rawPercent) || Number(rawPercent) < 1 || Number(rawPercent) > 99)) throw new Error('Pipa parcial: escolha ¼, ½, ¾ ou informe a porcentagem de 1 a 99.');
+    if (application === 'parcial' && (!/^\d+$/.test(rawPercent) || Number(rawPercent) < 1 || Number(rawPercent) > 99)) throw new Error('Pipa parcial: escolha ¼, ⅓, ½, ⅔, ¾ ou informe a porcentagem de 1 a 99.');
     if (rawFamilies && (!/^\d+$/.test(rawFamilies) || Number(rawFamilies) < 1 || Number(rawFamilies) > 9999)) throw new Error('Famílias beneficiadas: use um número inteiro (ex.: 4).');
     return {last, days: rawDays ? Number(rawDays) : null, application, percent: application === 'parcial' ? Number(rawPercent) : null, families: rawFamilies ? Number(rawFamilies) : null};
 }

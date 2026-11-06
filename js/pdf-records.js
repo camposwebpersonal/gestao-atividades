@@ -20,6 +20,7 @@ export const TONES = {
 // As fontes padrão do PDF (Helvetica/WinAnsi) não têm alguns símbolos: troca por equivalentes seguros.
 export function pdfSafe(text) {
   return String(text ?? '')
+    .replace(/\u2153/g, '1/3').replace(/\u2154/g, '2/3').replace(/\u215b/g, '1/8')
     .replace(/[\u2211\u03a3]\s*(?=(sub)?total)/gi, '')
     .replace(/[\u2211\u03a3]/g, 'Soma')
     .replace(/[✓✔✅]/g, '')

@@ -32,7 +32,7 @@ const {boot} = require('./contrast/run.cjs');
   await page.click('#it-geo-panel button:has-text("Copiar")');
   out.copiado = await page.evaluate(() => navigator.clipboard.readText());
   // 5) Ao salvar o item, a localização vai junto (lida do editor)
-  out.lido = await page.evaluate(async () => (await import('/js/geolocation.js?v=9')).readLocationEditor('it-geo'));
+  out.lido = await page.evaluate(async () => (await import('/js/geolocation.js?v=10')).readLocationEditor('it-geo'));
   // 6) Mapa rápido aceita colar do Google
   await page.evaluate(() => window.openManualLocationPicker('it-geo'));
   await page.fill('#geo-picker-query', 'WPCM+VG Sertânia');

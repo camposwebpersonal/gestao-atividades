@@ -34,5 +34,5 @@ test('configurações são funcionais, persistentes e disponíveis offline',()=>
   for(const setting of ['showValues','invoiceNotifications','securityAlerts','biometrics','darkTheme'])assert.match(more,new RegExp(`data-setting="${setting}"`));
   assert.match(script,/localStorage\.setItem\(SETTINGS_KEY/);
   for(const asset of ['system/cartao.html','system/pagar.html','system/mais.html','system/app.css','system/app.js'])assert.match(sw,new RegExp(asset.replace('.','\\.')));
-  assert.match(sw,/gestao-pms-v180/);
+  assert.match(sw,/gestao-pms-v181/);
 });

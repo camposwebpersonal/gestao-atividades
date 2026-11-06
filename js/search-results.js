@@ -1,4 +1,4 @@
-import {isSystemKey, isBlankValue} from './record-fields.js?v=1';
+import {isSystemKey, isBlankValue} from './record-fields.js?v=2';
 // Organização e exibição dos resultados da busca global.
 // Lançamentos aparecem agrupados por Secretaria → Grupo, com o termo destacado e a
 // indicação do campo onde ele foi encontrado (ex.: "Assunto: PIPA D'ÁGUA").

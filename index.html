@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=11">
-<link rel="modulepreload" href="js/modulos.js?v=110">
+<link rel="modulepreload" href="js/modulos.js?v=111">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -438,6 +438,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
 <link rel="stylesheet" href="css/record-fields.css?v=2">
+<link rel="stylesheet" href="css/whatsapp-avisos.css?v=1">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -482,6 +483,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
         <button class="nav-btn" id="nav-trash" style="display:none" onclick="setView('trash')">♻ Lixeira</button>
         <button class="nav-btn" id="nav-supabase-status" style="display:none" onclick="setView('supabase-status')">◉ Status do Supabase</button>
         <button class="nav-btn" id="nav-adm" style="display:none" onclick="setView('adm')">⚙ Administração</button>
+        <button class="nav-btn" id="nav-whatsapp" style="display:none" onclick="openWhatsappAvisos()">🔔 Avisos WhatsApp</button>
         <div class="sidebar-mobile-session"><button type="button" onclick="window.location.href='exames.html'">▦ Sistema</button><button type="button" onclick="doLogout()">↪ Sair com segurança</button></div>
       </div>
     </details>
@@ -515,27 +517,28 @@ import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,c
 import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=11";
 import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=4';
 import {uploadDurableImage} from './js/image-storage.js?v=1';
-import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=2';
+import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=3';
 import './js/multi-nest.js?v=1';
-import './js/defesa-civil-questionarios.js?v=3';
-import './js/modulos.js?v=110';
-import './js/water-points.js?v=6';
+import './js/defesa-civil-questionarios.js?v=4';
+import './js/modulos.js?v=111';
+import './js/water-points.js?v=7';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=12';
-import {generateDemandPdf} from './js/demand-pdf.js?v=1';
-import {reportDateTime} from './js/demand-report.js?v=2';
-import {customFields,controlFields,commonValues} from './js/record-fields.js?v=1';
-import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=1';
+import {generateDemandPdf} from './js/demand-pdf.js?v=2';
+import {reportDateTime} from './js/demand-report.js?v=3';
+import {customFields,controlFields,commonValues} from './js/record-fields.js?v=2';
+import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
 import './js/modal-context.js?v=1';
+import './js/whatsapp-avisos.js?v=1';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=2';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=9';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=3';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=10';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
@@ -828,6 +831,8 @@ const WORKSPACE_ROUTE_KEY='gestao-pms-workspace-v1';
 let _restoringWorkspace=false;
 function workspaceFromHash(){
   const p=location.hash.replace(/^#/,'').split('/').map(x=>decodeURIComponent(x));
+  // Links dos avisos (WhatsApp): #foco/<tabela>/<id> abre o lançamento no grupo; #mapa/<tabela>/<id> abre o ponto no mapa.
+  if(['foco','mapa'].includes(p[0])&&['items','subitems'].includes(p[1])&&p[2])return{kind:p[0],table:p[1],id:p[2]};
   if(['view','module','activity','page'].includes(p[0])&&p[1])return{kind:p[0],id:p[1],...(p[0]==='module'&&p[1]==='atendimentos'&&p[2]?{secretaria:p[2]}:{})};
   return null;
 }
@@ -869,6 +874,13 @@ window.restoreWorkspace=function(){
     if(r.kind==='activity'){ok=S.secs.some(x=>x.id===r.id);if(ok)window.openActivity(r.id);}
     else if(r.kind==='module'){ok=window.MODULOS?.some(x=>x.id===r.id)&&window.userCan(r.id,'acesso');if(ok){if(r.id==='atendimentos')window.currentDemandSecretaria=r.secretaria||'';window.renderModulo(r.id);}}
     else if(r.kind==='page'){ok=typeof window.workspacePages?.[r.id]==='function';if(ok)window.workspacePages[r.id]();}
+    else if(r.kind==='foco'||r.kind==='mapa'){
+      const rec=(r.table==='subitems'?S.subitems:S.items).find(x=>String(x.id)===String(r.id));
+      const groupId=rec?.atividade_id||S.items.find(x=>x.id===rec?.item_id)?.atividade_id;
+      ok=!!rec&&S.secs.some(x=>x.id===groupId);
+      if(!ok)toast('Este lançamento não existe mais ou você não tem acesso a ele.','error',7000);
+      else{_restoringWorkspace=false;if(r.kind==='foco')window.geoFocusRecord(r.table,r.id);else window.openGeoMapFocus(r.table,r.id);return true;}
+    }
     else if(r.kind==='view'){ok=['mod','map','adm','secr','resp','cont','trash','supabase-status'].includes(r.id);if(r.id==='supabase-status'&&!canViewSupabaseStatus())ok=false;if(ok)window.setView(r.id);}
     else ok=false;
   }finally{_restoringWorkspace=false;}
@@ -949,7 +961,7 @@ onAuthStateChanged(auth,async u=>{
     S.isAdmin=false;S.canViewTrash=false;S.userRole='usuario';S.userSetor=null;
     toast('Não foi possível carregar suas permissões ('+(e.message||e)+'). Acesso limitado; recarregue a página.','error',8000);
   }
-  if(S.isAdmin)document.getElementById('nav-adm').style.display='';
+  if(S.isAdmin){document.getElementById('nav-adm').style.display='';const wa=document.getElementById('nav-whatsapp');if(wa)wa.style.display='';}
   document.getElementById('nav-trash').style.display=S.canViewTrash?'':'none';
   updateSupabaseStatusAccessUI();
   const cacheReady=await cacheDataPromise;

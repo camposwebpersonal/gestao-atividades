@@ -89,3 +89,8 @@
   (Editar, Reabrir, Mover, +Item, +Sub, percentual…). Reorganizar e quebrar
   linha é permitido; esconder não. Verificar com
   `NODE_PATH=$(npm root -g) node tests/mobile-parity.browser.cjs`.
+- Avisos por WhatsApp: gatilho em `items`/`subitems` → fila `whatsapp_outbox` → `pg_cron`
+  (30 s) → função `whatsapp-notify` (CallMeBot), que junta gravações seguidas e manda resumo
+  quando vários lançamentos chegam juntos. Manutenções em massa direto no banco devem rodar com
+  `set local pms.whatsapp_off = 'on'` para não disparar avisos. Chaves de envio ficam só no
+  banco (coluna sem leitura pelo navegador); nunca versionar ou imprimir.

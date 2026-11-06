@@ -1,0 +1,35 @@
+/* Avisos por WhatsApp — tema claro, texto escuro. */
+.wa-page{max-width:1180px;margin:0 auto;padding:4px 2px 40px;color:#0f172a}
+.wa-hero{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#ecfdf5,#f0f9ff);border:1px solid #bfe6d4;border-radius:18px;padding:18px;margin-bottom:14px}
+.wa-hero h1{margin:4px 0 6px;font-size:26px;color:#0c2a3e}.wa-hero p{margin:0;max-width:760px;color:#334155;line-height:1.5}
+.wa-stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.wa-stats span{background:#fff;border:1px solid #d5e5dd;border-radius:999px;padding:5px 12px;font-size:13px;color:#1e293b}.wa-stats b{color:#065f46}
+.wa-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}@media(max-width:900px){.wa-grid{grid-template-columns:1fr}}
+.wa-card{background:#fff;border:1px solid #dde6ee;border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(15,23,42,.05);margin-bottom:14px;min-width:0}
+.wa-card h2{margin:0 0 12px;font-size:18px;color:#0c2a3e;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.wa-card h2 small{font-size:12px;color:#475569;font-weight:600}
+.wa-list{display:flex;flex-direction:column;gap:10px}
+.wa-rec{border:1px solid #dde6ee;border-left:5px solid #16a34a;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.wa-rec.is-off{border-left-color:#94a3b8;background:#f8fafc}
+.wa-rec-main{display:flex;flex-direction:column;gap:3px;min-width:0}.wa-rec-main strong{font-size:16px;color:#0f172a}
+.wa-phone{font-weight:700;color:#065f46}.wa-scope{font-size:13px;color:#334155;overflow-wrap:anywhere}
+.wa-rec-actions{display:flex;flex-wrap:wrap;gap:6px}
+.wa-btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:38px;padding:7px 12px;border-radius:10px;border:1px solid #b9cbd8;background:#fff;color:#0f3d5c;font-weight:800;font-size:13px;cursor:pointer;text-decoration:none}
+.wa-btn.primary{background:#15803d;border-color:#15803d;color:#fff}.wa-btn.danger{border-color:#f0b4ae;color:#a3221a}.wa-btn.small{min-height:32px;padding:4px 10px;font-size:12px}
+.wa-btn.whatsapp{background:#0f7a40;border-color:#0f7a40;color:#fff;width:100%;min-height:46px;font-size:15px}
+.wa-btn:disabled{opacity:.6;cursor:not-allowed}
+.wa-add{margin-top:12px;width:100%}
+.wa-chip{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:800;margin-top:4px}
+.wa-chip.is-ok{background:#dcfce7;color:#14532d}.wa-chip.is-wait{background:#fff4e5;color:#7a4500}.wa-chip.is-paused{background:#e2e8f0;color:#334155}.wa-chip.is-err{background:#fde8e6;color:#9b1c13}
+.wa-how ol{margin:0 0 12px;padding-left:20px;line-height:1.55;color:#1e293b}.wa-how li{margin-bottom:6px}
+.wa-note{font-size:12.5px;color:#475569;line-height:1.5}.wa-note a{color:#0b4f8a;font-weight:700}
+.wa-alert{background:#fde8e6;color:#9b1c13;border-radius:10px;padding:10px 12px;font-weight:700}
+.wa-empty{color:#475569;font-size:14px}
+.wa-phone-frame{background:#efe7dd;background-image:radial-gradient(#e2d7c8 1px,transparent 1px);background-size:14px 14px;border-radius:14px;padding:16px;display:flex}
+.wa-bubble{position:relative;max-width:520px;background:#dcf8c6;color:#111b21;border-radius:10px 10px 10px 2px;padding:9px 11px 20px;font:14px/1.45 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;box-shadow:0 1px 1px rgba(0,0,0,.12);overflow-wrap:anywhere}
+.wa-bubble a{color:#0b5aa6;text-decoration:underline}.wa-bubble.small{font-size:13px;margin-top:8px;padding-bottom:9px;max-width:none}
+.wa-time{position:absolute;right:9px;bottom:4px;font-size:11px;color:#3b4a54}
+.wa-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wa-log details{border:1px solid #e2e8f0;border-radius:10px;padding:8px 10px}.wa-log summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer}
+.wa-log-title{font-weight:700;color:#0f172a;flex:1;min-width:150px;overflow-wrap:anywhere}.wa-log small{color:#475569}
+.wa-form{display:flex;flex-direction:column;gap:12px}.wa-form label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:13px;color:#0f172a}
+.wa-form input,.wa-form select{min-height:44px;padding:8px 12px;border:1px solid #b9cbd8;border-radius:10px;background:#fff;color:#0f172a;font-size:15px}
+.wa-form [hidden]{display:none}.wa-form-msg{color:#9b1c13;font-weight:700;margin:0;min-height:1em}.wa-form-actions{display:flex;justify-content:flex-end;gap:8px}

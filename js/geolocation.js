@@ -1,4 +1,4 @@
-import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=2';
+import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=3';
 import {parseGoogleLocation,shortLinkIn,googleMapsPickUrl} from './google-location.js?v=1';
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const supportedTables=new Set(['atividades','items','subitems']);
@@ -405,5 +405,7 @@ window.captureRecordLocation=async(table,id)=>{
  openLocationPicker({initial:locationOf(entry.record),onConfirm:async location=>{const extra={...extraOf(entry.record),geo_location:location};await window.updateDoc(window.doc(window.db,collectionFor[table],id),{extra_fields:extra,updated_at:window.serverTimestamp()});await window.loadData();window.refreshAuditUI?.();}});
 };
 window.renderGeneralGeoMap=()=>renderMapPage();
+// Link #mapa/<tabela>/<id>: mapa geral já no ponto, com o quadro aberto.
+window.openGeoMapFocus=(table,id)=>{window.rememberWorkspace?.({kind:'view',id:'map'},true);renderMapPage({focus:table+':'+id});};
 window.openGroupGeoMap=(groupId,filter='todos')=>{const group=window.S?.secs?.find(item=>String(item.id)===String(groupId));renderMapPage({groupId,filter,title:`Mapa · ${group?.name||'Grupo'}`,back:`openActivity('${String(groupId).replace(/'/g,"\\'")}')`});};
 window.openSecretaryGeoMap=secretariaId=>{const secretary=window.S?.secretarias?.find(item=>item.id===secretariaId);renderMapPage({secretariaId,title:`Mapa · ${secretary?.name||'Secretaria'}`,back:`openDemandSecretaria('${String(secretariaId).replace(/'/g,"\\'")}')`});};

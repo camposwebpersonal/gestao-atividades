@@ -93,7 +93,7 @@ export function createClient() {
     from: builder,
     rpc: async () => ({data: {}, error: null}),
     channel, removeChannel: () => {}, removeAllChannels: () => {},
-    functions: {invoke: async () => ({data: {}, error: null})},
+    functions: {invoke: async (name, opts) => globalThis.__fakeInvoke ? globalThis.__fakeInvoke(name, opts) : ({data: {}, error: null})},
     storage: {from: () => ({upload: async () => ({data: {path: 'x'}, error: null}), getPublicUrl: () => ({data: {publicUrl: 'data:,'}}), remove: async () => ({error: null})})},
     auth: {
       getSession: async () => ({data: {session}, error: null}), getUser: async () => ({data: {user}, error: null}),

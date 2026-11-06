@@ -68,6 +68,7 @@ export function customFields(record, templates = [], scope = null) {
   const seen = new Set();
   for (const [key, value] of Object.entries(extra)) {
     if (isSystemKey(key) || isBlankValue(value)) continue;
+    if (key === 'origem' && /^[a-z]+(_[a-z]+)+$/.test(String(value))) continue; // marca técnica (ex.: captura_rapida)
     const norm = key.trim().toLocaleLowerCase('pt-BR');
     if (seen.has(norm)) continue; // mesmo campo gravado com maiúsculas diferentes
     seen.add(norm);
