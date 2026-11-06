@@ -2,7 +2,7 @@
 // Destinatários por Secretaria/Grupo, ativação da CallMeBot, teste, prévia da mensagem e histórico.
 import {supabase} from '../supabase_compat.js?v=11';
 
-const BOT_PHONE = '34621371153'; // número do bot na página oficial da CallMeBot (pode mudar)
+const BOT_PHONE = '34684728023'; // número do bot na página oficial da CallMeBot (pode mudar)
 const BOT_PAGE = 'https://www.callmebot.com/blog/free-api-whatsapp-messages/';
 const COLS = 'id,nome,telefone,escopo,escopo_id,eventos,ativo,apikey_ok,created_at,updated_at';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -82,7 +82,7 @@ function render() {
         <button type="button" class="wa-btn primary wa-add" onclick="waEdit()">＋ Adicionar destinatário</button>
       </section>
       <section class="wa-card wa-how"><h2>Ativar um número (uma vez por número)</h2>
-        <ol><li>No celular que vai receber, toque em <b>Abrir conversa com o robô</b>. A mensagem de autorização já vai escrita: só envie.</li>
+        <ol><li><b>Salve o número +34 684 728 023 nos contatos</b> (obrigatório). Depois, no celular que vai receber, toque em <b>Abrir conversa com o robô</b>. A mensagem de autorização já vai escrita: só envie.</li>
           <li>Em até 2 minutos o robô responde com <b>“Your APIKEY is …”</b>. Copie esse número.</li>
           <li>Aqui, toque em <b>🔑 Informar chave</b> do destinatário, cole e salve. Depois use <b>🧪 Enviar teste</b>.</li></ol>
         <a class="wa-btn whatsapp" href="https://wa.me/${BOT_PHONE}?text=${encodeURIComponent('I allow callmebot to send me messages')}" target="_blank" rel="noopener">💬 Abrir conversa com o robô</a>
