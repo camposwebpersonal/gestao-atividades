@@ -31,7 +31,7 @@ const seed = {
   assert.match(await page.textContent('.wa-log'), /Sem chave/);
 
   // Funções puras: telefone e formatação do WhatsApp.
-  const pure = await page.evaluate(async () => { const m = await import('/js/whatsapp-avisos.js?v=2'); return {a: m.normalizePhone('(87) 97400-5690'), b: m.normalizePhone('5587974005690'), c: m.normalizePhone('123'), d: m.whatsappHtml('*Oi* _tudo_ https://x.y/z')}; });
+  const pure = await page.evaluate(async () => { const m = await import('/js/whatsapp-avisos.js?v=3'); return {a: m.normalizePhone('(87) 97400-5690'), b: m.normalizePhone('5587974005690'), c: m.normalizePhone('123'), d: m.whatsappHtml('*Oi* _tudo_ https://x.y/z')}; });
   assert.deepEqual([pure.a, pure.b, pure.c], ['5587974005690', '5587974005690', null]);
   assert.equal(pure.d, '<b>Oi</b> <i>tudo</i> <a href="https://x.y/z" target="_blank" rel="noopener">https://x.y/z</a>');
 

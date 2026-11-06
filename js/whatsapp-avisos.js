@@ -84,6 +84,7 @@ function render() {
       <section class="wa-card wa-how"><h2>Ativar um número (uma vez por número)</h2>
         <ol><li><b>Salve o número +34 684 728 023 nos contatos</b> (obrigatório). Depois, no celular que vai receber, toque em <b>Abrir conversa com o robô</b>. A mensagem de autorização já vai escrita: só envie.</li>
           <li>Em até 2 minutos o robô responde com <b>“Your APIKEY is …”</b>. Copie esse número.</li>
+          <li>Confira o número na resposta do robô (“Activated for 55…”): muitos números de WhatsApp daqui aparecem <b>sem o 9</b> (ex.: 55 87 7400-5690). O destinatário precisa estar com o número <b>exatamente igual</b>; se for diferente, use ✏️ Editar.</li>
           <li>Aqui, toque em <b>🔑 Informar chave</b> do destinatário, cole e salve. Depois use <b>🧪 Enviar teste</b>.</li></ol>
         <a class="wa-btn whatsapp" href="https://wa.me/${BOT_PHONE}?text=${encodeURIComponent('I allow callmebot to send me messages')}" target="_blank" rel="noopener">💬 Abrir conversa com o robô</a>
         <p class="wa-note">Serviço gratuito CallMeBot, para uso pessoal. Se o robô não responder, confira o número atual na <a href="${BOT_PAGE}" target="_blank" rel="noopener">página oficial</a>. A chave fica guardada no servidor e nunca aparece de novo na tela.</p>
