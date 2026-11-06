@@ -11,7 +11,7 @@ const OUT = process.env.OUT || require('os').tmpdir() + '/contrast-audit';
 fs.mkdirSync(OUT, {recursive: true});
 const width = Number(process.env.W || 390);
 
-async function boot(browser, {width: w = width} = {}) {
+async function boot(browser, {width: w = width, seed = null} = {}) {
   const ctx = await browser.newContext({viewport: {width: w, height: w < 900 ? 844 : 900}, isMobile: w < 900, hasTouch: w < 900, permissions: ['geolocation'], geolocation: {latitude: -8.073, longitude: -37.264, accuracy: 6}});
   const page = await ctx.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));
@@ -21,11 +21,13 @@ async function boot(browser, {width: w = width} = {}) {
     if (url.includes('esm.sh/@supabase')) return route.fulfill({contentType: 'application/javascript', path: DIR + '/fake-supabase.js'});
     if (LIBS && url.includes('leaflet') && url.includes('/dist/')) return route.fulfill({path: LIBS + 'leaflet/dist/' + url.split('/dist/')[1].split('?')[0]});
     if (LIBS && url.includes('jspdf.umd')) return route.fulfill({path: LIBS + 'jspdf/dist/jspdf.umd.min.js'});
+    if (LIBS && url.includes('jspdf.plugin.autotable')) return route.fulfill({path: LIBS + 'jspdf-autotable/dist/jspdf.plugin.autotable.min.js'});
     if (url.startsWith(BASE)) return route.continue();
     if (url.startsWith('data:') || url.startsWith('blob:')) return route.continue();
     return route.fulfill({status: 204, body: ''});
   });
   await page.addInitScript({path: DIR + '/audit.js'});
+  if (seed) await page.addInitScript(data => { globalThis.__fakeSeed = data; }, seed);
   await page.addInitScript(() => { try { localStorage.clear(); } catch (_) {} });
   await page.goto(BASE + '/index.html', {waitUntil: 'load'});
   await page.waitForFunction(() => window.S?.user && document.querySelector('#content')?.children.length, null, {timeout: 20000});

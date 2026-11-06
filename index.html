@@ -428,7 +428,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/camera-capture.css?v=5">
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
-<link rel="stylesheet" href="css/geolocation.css?v=6">
+<link rel="stylesheet" href="css/geolocation.css?v=7">
 <link rel="stylesheet" href="css/pipa-refill.css?v=4">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=3">
@@ -437,6 +437,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
+<link rel="stylesheet" href="css/record-fields.css?v=1">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -516,21 +517,24 @@ import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,r
 import {uploadDurableImage} from './js/image-storage.js?v=1';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=2';
 import './js/multi-nest.js?v=1';
-import './js/defesa-civil-questionarios.js?v=1';
-import './js/modulos.js?v=108';
-import './js/water-points.js?v=4';
+import './js/defesa-civil-questionarios.js?v=2';
+import './js/modulos.js?v=109';
+import './js/water-points.js?v=5';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=12';
-import {buildDemandReportRows} from './js/demand-report.js';
+import {generateDemandPdf} from './js/demand-pdf.js?v=1';
+import {reportDateTime} from './js/demand-report.js?v=2';
+import {customFields,controlFields,commonValues} from './js/record-fields.js?v=1';
+import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=1';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=7';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=2';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=8';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
 initSmartCamera();
@@ -1347,7 +1351,7 @@ window.gerarPDFContatos=async function(){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF da cartilha…','info',8000);
   const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=30,FTR_Y=280,FTR_H=12;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -1475,7 +1479,7 @@ window.gerarPDFGaleria=async function(){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF fotográfico…','info',8000);
   const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=28,FTR_Y=274,FTR_H=14;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -1851,13 +1855,8 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
   const _html=kids.map((c,_si)=>{
     const cD=c.concluded==1,cL=!cD&&c.deadline_date&&new Date(c.deadline_date)<today;
     const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
-    const ef=c.extra_fields||{};const tags=[];
     const num=prefix?prefix+'.'+(_si+1):''+(_si+1);
-    Object.keys(ef).forEach(k=>tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(k)}:</strong> ${esc(ef[k])}</span>`));
-    if((_sec?.show_verba&&_sec?.verba_on_subitems||c.item_show_verba)&&c.verba!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(c.verba||0).toFixed(2)}</span>`);
-    if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||c.item_show_documentacao)&&c.documentacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${c.documentacao==1?'Concluída':'Pendente'}</span>`);
-    if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||c.item_show_licitacao)&&c.licitacao!=null)tags.push(`<span style="background:#0a0f1a;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${c.licitacao==1?'Concluída':'Pendente'}</span>`);
-    if(isAttendanceSection(_sec))tags.length=0;
+    const chipsHtml=isAttendanceSection(_sec)?'':window.recordChipsHtml(c,_sec,{isSub:true,templates:S.fieldTemplates,small:true});
     return`<div class="activity-subtree"><div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
@@ -1866,7 +1865,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
       <span>${cD?'✅':cL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(c.description)}${childBadge(c.id,true)}</div>
         ${c.responsaveis||c.observacao||(c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id)?`<div style="font-size:11px;color:var(--muted)">${c.responsaveis?'👤 '+esc(c.responsaveis):''}${c.responsaveis&&c.observacao?' · ':''}${c.observacao?esc(c.observacao):''}${(c.responsaveis||c.observacao)&&c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id?' · ':''}${c.secretaria_id&&c.secretaria_id!==_sec?.demanda_secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(s=>s.id===c.secretaria_id)?.name||'')}</span>`:''}</div>`:''}
-        ${tags.length?`<div style="font-size:10px;color:#94a3b8;margin-top:2px;display:flex;flex-wrap:wrap;gap:3px">${tags.join('')}</div>`:''}
+        ${chipsHtml}
       </div>
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
       ${_can?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
@@ -1901,22 +1900,7 @@ function renderItem(item,today,itemNum){
       <span>${_nt?'•':sD?'✅':sL?'🔴':'○'}</span>
       <div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(s.description)}${childBadge(s.id,true)}</div>
         ${(s.responsaveis||s.observacao||(s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id)||(s.show_conclusion_date&&s.conclusion_date))?`<div style="font-size:11px;color:var(--muted)">${s.responsaveis?'👤 '+esc(s.responsaveis):''}${s.responsaveis&&s.observacao?' · ':''}${s.observacao?esc(s.observacao):''}${(s.responsaveis||s.observacao)&&s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id?' · ':''}${s.secretaria_id&&s.secretaria_id!==_sec?.demanda_secretaria_id?`<span style="color:#fbbf24">🏛️ ${esc(S.secretarias.find(x=>x.id===s.secretaria_id)?.name||'')}</span>`:''}${!_nt&&s.show_conclusion_date&&s.conclusion_date?`<span style="color:#10b981;margin-left:6px">✅ ${fmtD(s.conclusion_date)}</span>`:''}</div>`:''}
-      ${(()=>{
-        const ef=s.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
-        const tags=[];
-        ks.forEach(k=>{
-          let label=k.replace(/^item_show_/,''), raw=ef[k];
-          if(k==='show_conclusion_date'){label='Data de Demissão'; raw=s.conclusion_date!=null?fmtD(s.conclusion_date):(raw==1?'Sim':'Não');}
-          tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px"><strong>${esc(label)}:</strong> ${esc(formatCustomFieldValue(raw))}</span>`);
-        });
-        if((_sec?.show_verba&&_sec?.verba_on_subitems||s.item_show_verba)&&s.verba!=null)tags.push(`<span style="background:#0e1729;border:1px solid #065f46;border-radius:4px;padding:1px 6px">💰 R$ ${parseFloat(s.verba||0).toFixed(2)}</span>`);
-        if((_sec?.show_origem_verba&&_sec?.origem_verba_on_subitems||s.item_show_verba)&&s.origem_verba)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📍 ${esc(s.origem_verba)}</span>`);
-        if((_sec?.show_documentacao&&_sec?.documentacao_on_subitems||s.item_show_documentacao)&&s.documentacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">📁 ${s.documentacao==1?'Concluída':'Pendente'}</span>`);
-        if((_sec?.show_licitacao&&_sec?.licitacao_on_subitems||s.item_show_licitacao)&&s.licitacao!=null)tags.push(`<span style="background:#0e1729;border:1px solid #1e3a5f;border-radius:4px;padding:1px 6px">⚖️ ${s.licitacao==1?'Concluída':'Pendente'}</span>`);
-        if(isAttendanceSection(_sec))tags.length=0;
-        if(!tags.length)return '';
-        return`<div style="font-size:10px;color:#94a3b8;margin-top:3px;display:flex;flex-wrap:wrap;gap:4px">${tags.join('')}</div>`;
-      })()}</div>
+      ${isAttendanceSection(_sec)?'':window.recordChipsHtml(s,_sec,{isSub:true,templates:S.fieldTemplates})}</div>
       ${s.resp_url?`<img src="${esc(s.resp_url)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8" loading="lazy">`:''}
       ${s.cover_url?`<img src="${esc(s.cover_url)}" style="height:26px;border-radius:4px;object-fit:contain;background:transparent" loading="lazy">`:''}
       ${_nt?'':statusBadge(s.status,s.id,'subitem')}
@@ -1953,22 +1937,7 @@ function renderItem(item,today,itemNum){
     </div>
     <div id="ib-${item.id}" style="padding:0 16px 14px;border-top:1px solid var(--border);display:none">
       ${item.observacao?`<div style="font-size:12px;color:var(--muted);padding:8px 10px;background:#0a1222;border-radius:6px;margin:8px 0">${esc(item.observacao)}</div>`:''}
-      ${(()=>{
-        const ef=item.extra_fields||{};const ks=Object.keys(ef).filter(k=>!['id','extra_fields','created_at','updated_at'].includes(k));
-        const tags=[];
-        ks.forEach(k=>{
-          let label=k.replace(/^item_show_/,''), raw=ef[k];
-          if(k==='show_conclusion_date'){label='Data de Demissão'; raw=item.conclusion_date!=null?fmtD(item.conclusion_date):(raw==1?'Sim':'Não');}
-          tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px"><strong style="color:#60a5fa">${esc(label)}:</strong> ${esc(formatCustomFieldValue(raw))}</span>`);
-        });
-        if((_sec?.show_verba||item.item_show_verba)&&item.verba!=null)tags.push(`<span style="background:#0a1222;border:1px solid #065f46;border-radius:5px;padding:2px 8px">💰 <strong style="color:#34d399">R$ ${parseFloat(item.verba||0).toFixed(2)}</strong>${item.verba_obs?' • '+esc(item.verba_obs):''}</span>`);
-        if((_sec?.show_origem_verba||item.item_show_verba)&&item.origem_verba)tags.push(`<span style="background:#0a1222;border:1px solid #1e3a5f;border-radius:5px;padding:2px 8px">📍 ${esc(item.origem_verba)}</span>`);
-        if((_sec?.show_documentacao||item.item_show_documentacao)&&item.documentacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.documentacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">📁 ${item.documentacao==1?'Doc. Concluída':'Doc. Pendente'}</span>`);
-        if((_sec?.show_licitacao||item.item_show_licitacao)&&item.licitacao!=null)tags.push(`<span style="background:#0a1222;border:1px solid ${item.licitacao==1?'#065f46':'#7f1d1d'};border-radius:5px;padding:2px 8px">⚖️ ${item.licitacao==1?'Lic. Concluída':'Lic. Pendente'}</span>`);
-        if(isAttendanceSection(_sec))tags.length=0;
-        if(!tags.length)return '';
-        return`<div style="font-size:11px;color:#94a3b8;padding:4px 0 8px;display:flex;flex-wrap:wrap;gap:5px">${tags.join('')}</div>`;
-      })()}
+      ${isAttendanceSection(_sec)?'':window.recordChipsHtml(item,_sec,{isSub:false,templates:S.fieldTemplates})}
       ${subsHtml}
       ${_topSubs.length?`<div style="padding:3px 8px;font-size:11px;color:#475569;text-align:right;border-top:1px dashed #1e3a5f;margin-top:2px">∑ Subtotal: ${_topSubs.length} sub-item(ns)</div>`:''}
       ${_can&&pr.hasSubs&&!_nt?`<button class="card-btn" style="margin-top:6px;background:#065f46;color:#6ee7b7" onclick="markItemConcluded('${item.id}','${item.atividade_id}')">✅ Concluir Tudo</button>`:''}
@@ -2456,7 +2425,7 @@ window.saveItem=async function(id,secId,isSub,parentId){
   data.show_conclusion_date=document.getElementById('it-show-conc')?.checked?1:0;
   const existingRecord=original;
   const ef=collectCustomFieldValues(document,{...recordExtra(existingRecord)});
-  const geoLocation=readLocationEditor('it-geo');if(geoLocation)ef.geo_location=geoLocation;else delete ef.geo_location;
+  const geoLocation=readLocationEditor('it-geo');if(geoLocation)ef.geo_location=geoLocation;else if(recordExtra(existingRecord).geo_location)ef.geo_location=null;else delete ef.geo_location;
   if(isRefillGroup(group)){try{applyRefillToExtra(ef,readRefillEditor('it-pipa'));}catch(error){toast(error.message,'error',6000);return;}}
   ef.show_external_geolocation=document.getElementById('it-show-external-geo')?.checked===true;
   data.extra_fields=ef;
@@ -3246,7 +3215,7 @@ window.gerarPdfResumoBCCS=async function(secId){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF resumo financeiro...','info',8000);
   const {jsPDF}=window.jspdf;
-  let doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  let doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=297,H=210,mx=14,cw=W-mx*2;
   const HDR_H=28,FTR_Y=H-12,FTR_H=12,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -3292,75 +3261,8 @@ window.gerarPdfResumoBCCS=async function(secId){
 };
 
 // ── PDF ──
-window.gerarPdfDemanda=async function(secId){
-  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
-  if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
-  toast('Preparando relatório completo…','info',8000);
-  const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,H=297,mx=13,cw=W-(mx*2),header=31,footer=14;
-  const items=S.items.filter(i=>i.atividade_id===secId);
-  const itemIds=new Set(items.map(i=>i.id));
-  const subs=S.subitems.filter(s=>itemIds.has(s.item_id));
-  const rows=buildDemandReportRows(items,subs,S.secretarias||[]);
-  const generated=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
-  const secretariat=S.secretarias.find(s=>s.id===sec.demanda_secretaria_id)?.name||'';
-  const logo=await loadB64('img/logo_sertania.png','png',120).catch(()=>null);
-  const setFont=(size,bold=false,color=[27,45,61])=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...color);};
-  const pageHeader=()=>{
-    doc.setFillColor(8,51,68);doc.rect(0,0,W,header,'F');doc.setFillColor(21,132,91);doc.rect(0,header-2,W,2,'F');
-    if(logo){const ratio=logo.w/logo.h,h=18,w=h*ratio;doc.addImage(logo.d,'PNG',W-mx-w,5,w,h,'demand-logo','FAST');}
-    setFont(9,true,[152,229,203]);doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA',mx,9);
-    setFont(15,true,[255,255,255]);doc.text('RELATÓRIO DE DEMANDAS',mx,17);
-    setFont(8,false,[218,235,240]);doc.text('Gestão de Atividades  •  Emitido em '+generated,mx,24);
-  };
-  const pageFooter=()=>{
-    doc.setFillColor(8,51,68);doc.rect(0,H-footer,W,footer,'F');doc.setFillColor(21,132,91);doc.rect(0,H-footer,W,1.2,'F');
-    setFont(8,false,[218,235,240]);doc.text('Documento gerado pelo Sistema de Gestão de Atividades',mx,H-5);
-  };
-  pageHeader();let y=header+7;
-  setFont(18,true,[12,42,62]);doc.text(String(sec.name||'DEMANDAS').toUpperCase(),mx,y+6);y+=11;
-  if(secretariat){setFont(9,true,[21,132,91]);doc.text(secretariat.toUpperCase(),mx,y+2);y+=7;}
-  if(sec.assunto||recordExtra(sec).assunto){setFont(9,true,[50,75,92]);doc.text('Assunto: '+(sec.assunto||recordExtra(sec).assunto),mx,y+2);y+=7;}
-  const groupMeta=[sec.responsaveis?'Responsáveis: '+sec.responsaveis:'',sec.start_date?'Início: '+fmtD(sec.start_date):'',sec.end_date?'Término: '+fmtD(sec.end_date):''].filter(Boolean).join('  •  ');
-  if(groupMeta){const metaLines=doc.splitTextToSize(groupMeta,cw);setFont(8.5,false,[69,91,105]);doc.text(metaLines,mx,y+2);y+=metaLines.length*4+3;}
-  if(sec.observacoes){
-    const lines=doc.splitTextToSize(sec.observacoes,cw-8),boxH=Math.max(12,lines.length*4.2+7);
-    doc.setFillColor(245,249,251);doc.setDrawColor(210,224,232);doc.roundedRect(mx,y,cw,boxH,2,2,'FD');doc.setFillColor(21,132,91);doc.rect(mx,y,2.2,boxH,'F');
-    setFont(8.5,false,[69,91,105]);doc.text(lines,mx+6,y+6);y+=boxH+4;
-  }
-  const summaryY=y,boxW=(cw-6)/3;
-  [{v:items.length,l:'ITENS PRINCIPAIS'},{v:subs.length,l:'SUBITENS'},{v:rows.filter(r=>r.priority).length,l:'PRIORITÁRIOS'}].forEach((card,index)=>{
-    const x=mx+index*(boxW+3);doc.setFillColor(index===2?255:241,index===2?248:247,index===2?230:249);doc.setDrawColor(210,224,232);doc.roundedRect(x,summaryY,boxW,17,2,2,'FD');
-    setFont(14,true,index===2?[166,93,18]:[8,81,71]);doc.text(String(card.v),x+5,summaryY+8);setFont(7.5,true,[92,113,126]);doc.text(card.l,x+5,summaryY+13);
-  });y+=22;
-  const line=(label,value)=>value?label+': '+value:'';
-  const dateOnly=value=>value?fmtD(value):'';
-  const body=rows.map(row=>{
-    const details=[line('Observação',row.observation),line('Responsável',row.responsibles),line('Solicitante',row.requester),line('Secretaria',row.secretariat),...row.extra.map(x=>line(x.label,x.value))].filter(Boolean).join('\n')||'Sem informações complementares';
-    const follow=[line('Urgência',row.urgency),row.priority?'Prioridade: Atendimento prioritário':'',line('Status',row.status),line('Prazo',dateOnly(row.deadline)),line('Conclusão',dateOnly(row.conclusion))].filter(Boolean).join('\n');
-    const register=[`Criado por: ${row.createdBy}${row.createdAt?'\nEm: '+row.createdAt:''}`,row.updatedBy?`Última edição: ${row.updatedBy}${row.updatedAt?'\nEm: '+row.updatedAt:''}`:''].filter(Boolean).join('\n\n');
-    return [
-      {content:row.number,styles:{halign:'center',fontStyle:'bold',textColor:row.isSubitem?[79,102,118]:[8,81,71]}},
-      {content:(row.isSubitem?'SUBITEM\n':'')+row.title+'\n\n'+details,styles:{fontStyle:row.isSubitem?'normal':'bold'}},
-      follow,
-      register
-    ];
-  });
-  if(!body.length)body.push([{content:'—',styles:{halign:'center'}},{content:'Nenhum lançamento cadastrado.',colSpan:3,styles:{halign:'center',textColor:[100,116,127]}}]);
-  doc.autoTable({
-    startY:y,head:[['#','SOLICITAÇÃO E INFORMAÇÕES','ATENDIMENTO','REGISTRO']],body,
-    margin:{left:mx,right:mx,top:header+4,bottom:footer+4},rowPageBreak:'avoid',
-    styles:{fontSize:7.7,cellPadding:2.5,overflow:'linebreak',valign:'top',textColor:[35,57,72],lineColor:[205,219,227],lineWidth:.18},
-    headStyles:{fillColor:[8,81,71],textColor:[255,255,255],fontStyle:'bold',fontSize:8.2,cellPadding:3},
-    alternateRowStyles:{fillColor:[247,250,251]},columnStyles:{0:{cellWidth:10},1:{cellWidth:72},2:{cellWidth:47},3:{cellWidth:55}},
-    didParseCell:data=>{if(data.section==='body'&&rows[data.row.index]?.isSubitem)data.cell.styles.fillColor=[242,246,248];},
-    didDrawPage:data=>{if(data.pageNumber>1)pageHeader();pageFooter();}
-  });
-  pageFooter();
-  const pages=doc.internal.getNumberOfPages();for(let page=1;page<=pages;page++){doc.setPage(page);setFont(8,true,[218,235,240]);doc.text(`${page}/${pages}`,W-mx,H-5,{align:'right'});}
-  const file=('RELATORIO-'+(sec.name||'DEMANDAS')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase();
-  doc.save(file+'-'+new Date().toISOString().slice(0,10)+'.pdf');toast('Relatório completo gerado!','success');
-};
+// Relatório de demandas: motor compacto em js/demand-pdf.js (pergunta as opções antes de gerar).
+window.gerarPdfDemanda=(secId,opts)=>generateDemandPdf(secId,opts);
 
 window.gerarPdf=async function(secId,opts){
   if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
@@ -3373,7 +3275,7 @@ window.gerarPdf=async function(secId,opts){
   const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:2))+(opts.efFields?opts.efFields.length:0);
   const useLandscape=totalCols>6;
-  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
+  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
   const HDR_H=27,FTR_Y=H-13,FTR_H=13,BODY_TOP=HDR_H+4,BODY_BOT=FTR_Y-3;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -3641,61 +3543,43 @@ window.gerarPdf=async function(secId,opts){
     });
     tblB.push(totRow);tblE.push({cu:null,ru:null});
   }else{
-    tblH=_cp?[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis','Progresso','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Observa\u00e7\u00e3o / Respons\u00e1veis']];
+    // Lista compacta: cada item em um bloco com situação e campos preenchidos lado a lado.
+    const tplAll=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId);
+    const chosen=k=>!Array.isArray(opts.efFields)||opts.efAll||opts.efFields.includes(k);
+    const registro=r=>[opts.showCreated?'Criado por '+(r.created_by_name||'não registrado')+(r.created_at?' em '+reportDateTime(r.created_at):''):'',opts.showUpdated&&r.updated_by_name?'Última edição por '+r.updated_by_name+(r.updated_at?' em '+reportDateTime(r.updated_at):''):''].filter(Boolean).join('  ·  ');
+    const badgesOf=(r,done,late,pct)=>{const b=[];
+      if(_cp){if(done)b.push({text:r.conclusion_date?'Concluído em '+fmtD(r.conclusion_date):'Concluído',tone:'done'});else{if(pct>0&&pct<100)b.push({text:pct+'% concluído',tone:'info'});b.push(late?{text:'Atrasado',tone:'late'}:{text:'Pendente',tone:'pending'});if(r.deadline_date)b.push({text:'Prazo '+fmtD(r.deadline_date),tone:late?'late':'info'});}}
+      else if(Number(r.concluded)===1)b.push({text:Number(r.show_conclusion_date)===1&&r.conclusion_date?'Concluído em '+fmtD(r.conclusion_date):'Concluído',tone:'done'});
+      return b;};
+    const fieldsOf=(r,isSub)=>[...(r.responsaveis?[{label:'Responsável',value:r.responsaveis}]:[]),...(r.secretaria_id&&r.secretaria_id!==(S.secs.find(g=>g.id===r.atividade_id)||sec).demanda_secretaria_id?[{label:'Secretaria',value:S.secretarias.find(x=>x.id===r.secretaria_id)?.name||''}]:[]),...customFields(r,tplAll).filter(f=>chosen(f.key)),...controlFields(r,sec,isSub)];
+    const recs=[],thumbSrc=[];
+    const money=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2});
+    let subCount=0;
     for(let ii=0;ii<items.length;ii++){
-      const item=items[ii];const pr=itemProgs[ii].prog;
-      const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);
+      const item=items[ii],pr=itemProgs[ii].prog;
+      const done=pr.hasSubs?pr.pct===100:item.concluded==1;
       const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
-      const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
-      rowNum++;
-      let cell1=item.description;
-      if(item.observacao)cell1+='\nObs: '+item.observacao;
-      if(item.responsaveis)cell1+='\nResp: '+item.responsaveis;
-      if(opts.efFields&&opts.efFields.length){const ef=item.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])cell1+='\n'+fn+': '+formatCustomFieldValue(ef[fn]);});}
-      const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
-      const itemRow=_cp?[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[15,23,42]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[15,23,42]}},
-        {content:pct+'%',styles:{halign:'center',fillColor:[255,255,255],textColor:[15,23,42]}},
-        {content:st,styles:{fillColor:[255,255,255],textColor:[15,23,42]}},
-        {content:item.deadline_date?fmtD(item.deadline_date):'\u2014',styles:{fillColor:[255,255,255],textColor:[15,23,42]}}
-      ]:[
-        {content:String(rowNum),styles:{halign:'center',fontStyle:'bold',fillColor:[255,255,255],textColor:[15,23,42]}},
-        {content:cell1,styles:{fontStyle:'bold',fillColor:[255,255,255],textColor:[15,23,42]}}
-      ];
-      tblB.push(itemRow);
-      tblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
-      if(pr.hasSubs){const subR=_pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal);subR.rows.forEach(r=>tblB.push(r));subR.imgs.forEach(e=>tblE.push(e));
-        const subRow=_cp?[
-          {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
-          {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
-          {content:'',styles:{fillColor:[226,232,240],textColor:[15,23,42]}},
-          {content:'',styles:{fillColor:[226,232,240],textColor:[15,23,42]}},
-          {content:'',styles:{fillColor:[226,232,240],textColor:[15,23,42]}}
-        ]:[
-          {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
-          {content:'Subtotal: '+subR.count+' sub-item(ns)'+subR.subSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}}
-        ];
-        tblB.push(subRow);tblE.push({cu:null,ru:null});
-        if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
-      }else if(ii<items.length-1){const sp=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}];tblB.push(sp);tblE.push({cu:null,ru:null});}
+      recs.push({num:String(ii+1),level:0,title:item.description,badges:badgesOf(item,done,late,pr.hasSubs?pr.pct:0),fields:fieldsOf(item,false),note:item.observacao||'',meta:registro(item)});
+      thumbSrc.push([opts.itemCov&&item.cover_url,opts.itemResp&&item.resp_url].filter(Boolean));
+      if(pr.hasSubs){
+        const flat=flattenSubTree(getSubTree(item.id),String(ii+1));subCount+=flat.length;
+        for(const s2 of flat){const sD=s2.concluded==1,sL=_cp&&!sD&&s2.deadline_date&&new Date(s2.deadline_date)<today;
+          recs.push({num:s2._hierNum,level:(s2._level||0)+1,title:s2.description,badges:badgesOf(s2,sD,sL,0),fields:fieldsOf(s2,true),note:s2.observacao||'',meta:registro(s2),accent:[[21,132,91],[37,99,235],[180,120,10],[124,58,237],[190,40,110]][Math.min(s2._level||0,4)]});
+          thumbSrc.push([opts.subResp&&s2.resp_url].filter(Boolean));}
+        const sums=numFields.map(fn=>[fn,flat.reduce((acc,x)=>acc+sumVal((x.extra_fields||{})[fn]),0)]).filter(([,v])=>v>0);
+        if(sums.length){recs.push({kind:'subtotal',level:1,title:'Subtotal de '+(item.description||'item')+': '+sums.map(([fn,v])=>fn+' '+money(v)).join('  ·  ')});thumbSrc.push([]);}
+      }
     }
-    const allSums=numFields.map(fn=>items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);
-    const totSumTxt=allSums.length?'  |  '+allSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
-    const totRow=_cp?[
-      {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}},
-      {content:'Total: '+items.length+' item(ns)'+totSumTxt,styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}},
-      {content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}},
-      {content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}},
-      {content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}}
-    ]:[
-      {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}},
-      {content:'Total: '+items.length+' item(ns)'+totSumTxt,styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}}
-    ];
-    const spTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}];
-    tblB.push(spTot);tblE.push({cu:null,ru:null});
-    tblB.push(totRow);tblE.push({cu:null,ru:null});
+    const allSums=numFields.map(fn=>[fn,items.reduce((acc,it)=>acc+S.subitems.filter(x=>x.item_id===it.id).reduce((b2,x)=>b2+sumVal((x.extra_fields||{})[fn]),0),0)]).filter(([,v])=>v>0);
+    recs.push({kind:'total',title:'Total: '+items.length+' item(ns)'+(subCount?' · '+subCount+' subitem(ns)':'')+(allSums.length?'  ·  '+allSums.map(([fn,v])=>fn+' '+money(v)).join('  ·  '):'')});thumbSrc.push([]);
+    // Valores iguais em todos os itens (ex.: a mesma secretaria) aparecem uma vez só, acima da lista.
+    const mainRecs=recs.filter(r=>!r.kind&&r.level===0);
+    const common=commonValues(mainRecs.map(r=>({fields:r.fields})));
+    if(common.length){mainRecs.forEach(r=>{r.fields=r.fields.filter(f=>!common.some(c=>c.label===f.label&&c.value===f.value));});chk(10);y=drawCommonBox(doc,mx,y,cw,common,'Comum a todos os itens')+3;}
+    const thumbs=await Promise.all(thumbSrc.map(list=>Promise.all(list.map(u=>loadB64(u,'jpeg',140).catch(()=>null))).then(r=>r.filter(Boolean))));
+    drawRecordsTable(doc,recs,{startY:y,width:cw,thumbs,headColor:[15,61,49],head:['Nº',_cp?'ITEM, SITUAÇÃO E INFORMAÇÕES':'ITENS E INFORMAÇÕES'],margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},onPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
   }
+  if(useTable){
   const iDims=await Promise.all(tblE.map(async e=>({
     cd:e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null,
     rd:e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null
@@ -3726,6 +3610,7 @@ window.gerarPdf=async function(secId,opts){
     },
     didDrawPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}
   });
+  }
   }
 
   // ── Sub-itens separados ──
@@ -4137,7 +4022,7 @@ window.limparAtividade=function(secId){
   const hasLic=its.some(it=>it.licitacao!=null)||subAll.some(s=>s.licitacao!=null);
 
   const efKeys=new Set();
-  [...its,...subAll].forEach(e=>{const ef=e.extra_fields||{};Object.keys(ef).forEach(k=>{if(ef[k]!==''&&ef[k]!=null)efKeys.add(k);});});
+  [...its,...subAll].forEach(e=>customFields(e).forEach(f=>efKeys.add(f.key)));
 
   let extraChecks='';
   if(hasVerba)extraChecks+=`<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;margin-bottom:6px"><input type="checkbox" id="limpar-verba" style="width:14px;height:14px;accent-color:#f59e0b"> Limpar Verba (valor)</label>`;
@@ -4650,7 +4535,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando relatório…','info',8000);
   const{jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=210,H=297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=281,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
@@ -4709,6 +4594,12 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-table-mode" style="accent-color:#f59e0b;width:15px;height:15px"> 🗂️ Formato de tabela (colunas)</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-cards" checked style="accent-color:#f59e0b;width:15px;height:15px"> 📊 Mostrar cards de somatório</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-ranking" style="accent-color:#f59e0b;width:15px;height:15px"> 📈 Mostrar ranking de progresso por item</label>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px;flex-shrink:0">
+      <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🧾 Registro</div>
+      <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Aparece em letra pequena no canto de cada lançamento.</div>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-show-created" style="accent-color:#10b981;width:15px;height:15px"> Mostrar “Criado por”</label>
+      <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-show-updated" style="accent-color:#10b981;width:15px;height:15px"> Mostrar “Última edição”</label>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🔀 Separar no PDF</div>
@@ -4770,9 +4661,22 @@ function abrirPdfOpts(secId){
     opts+=tpls.map(t=>'<option value="'+t.field_name+'">'+t.field_name+'</option>').join('');
     sel.innerHTML=opts;
   }
-  // Popular campos extras de subitem
+  // Campos personalizados de itens e subitens — todos marcados por padrão, com quantos lançamentos têm cada um preenchido.
   const efList=document.getElementById('popt-ef-list');
-  if(efList){efList.innerHTML='';const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');if(subTpls.length){subTpls.forEach((t,i)=>{efList.innerHTML+='<label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-ef-'+i+'" data-ef="'+t.field_name+'" style="accent-color:#8b5cf6;width:15px;height:15px"> '+t.field_name+'</label>';});}else{efList.innerHTML='<span style="font-size:12px;color:#64748b">Nenhum campo personalizado</span>';}}
+  if(efList){
+    const its=S.items.filter(i=>i.atividade_id===secId),ids=new Set(its.map(i=>i.id)),subs=S.subitems.filter(x=>ids.has(x.item_id));
+    const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const filled=(list,name)=>list.filter(r=>(window.recordCustomFields?.(r)||[]).some(f=>f.key===name)).length;
+    const tpls=(S.fieldTemplates||[]).filter(t=>t.atividade_id===secId).sort((a,b)=>(a.scope===b.scope?0:a.scope==='item'?-1:1)||(a.order_num||0)-(b.order_num||0));
+    const seen=new Set();let html='';
+    for(const scope of ['item','subitem']){
+      const list=tpls.filter(t=>t.scope===scope&&!seen.has(t.field_name));if(!list.length)continue;
+      html+='<div class="popt-ef-group">'+(scope==='item'?'Campos dos itens':'Campos dos subitens')+'</div>';
+      list.forEach(t=>{seen.add(t.field_name);const n=filled(scope==='item'?its:subs,t.field_name);html+='<label class="popt-ef"><input type="checkbox" data-ef="'+esc(t.field_name)+'" checked> <span>'+esc(t.field_name)+'</span><small>'+(n?n+' preenchido(s)':'vazio')+'</small></label>';});
+    }
+    efList.innerHTML=html?'<div class="popt-ef-tools"><button type="button" onclick="poptEfAll(true)">Marcar todos</button><button type="button" onclick="poptEfAll(false)">Desmarcar todos</button></div>'+html:'<span class="popt-ef-none">Este grupo não tem campos personalizados.</span>';
+  }
+  ['popt-show-created','popt-show-updated'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   // Popular separação por campo
   const sepField=document.getElementById('popt-sep-field');
   if(sepField){const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');let opts='<option value="">— Sem separação —</option>';if(subTpls.length){subTpls.forEach(t=>{opts+='<option value="'+t.field_name+'">'+t.field_name+'</option>';});}sepField.innerHTML=opts;}
@@ -4780,6 +4684,7 @@ function abrirPdfOpts(secId){
   document.getElementById('pdf-opts-overlay').style.display='flex';
 }
 function fecharPdfOpts(){document.getElementById('pdf-opts-overlay').style.display='none';}
+window.poptEfAll=on=>document.querySelectorAll('#popt-ef-list input[data-ef]').forEach(cb=>{cb.checked=on;});
 window.atualizarSepValues=function(){
   const field=document.getElementById('popt-sep-field')?.value||'';
   const valSel=document.getElementById('popt-sep-val');
@@ -4806,7 +4711,9 @@ function confirmarGerarPdf(){
     showRanking:document.getElementById('popt-show-ranking').checked,
     sepField:document.getElementById('popt-sep-field')?.value||'',
     sepVal:document.getElementById('popt-sep-val')?.value||'',
-    onlySep:document.getElementById('popt-only-sep').checked
+    onlySep:document.getElementById('popt-only-sep').checked,
+    showCreated:document.getElementById('popt-show-created')?.checked===true,
+    showUpdated:document.getElementById('popt-show-updated')?.checked===true
   };
   window.gerarPdf(_pdfOptsSecId,opts);
 }
@@ -5309,7 +5216,7 @@ async function gerarPdfBusca(){
   const useTable=tableMode&&efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:3))+efFields.length;
   const useLandscape=totalCols>6;
-  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});
+  let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
   const HDR_H=32,FTR_Y=H-16,FTR_H=16,BODY_TOP=HDR_H+6,BODY_BOT=FTR_Y-4;
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};

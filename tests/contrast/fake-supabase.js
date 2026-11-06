@@ -36,6 +36,8 @@ const T = globalThis.__fakeDb = {
   trash_items: [{id: 't1', source_table: 'items', source_label: 'ITEM REMOVIDO', source_secretaria_name: 'SAÚDE', source_activity_name: 'MANUTENÇÃO', deleted_at: iso(now - 1e7), deleted_by_name: 'Ricardo', payload: {}}],
   entity_images: [{id: 'img6', entity_type: 'item', entity_id: 'i6', imgbb_url: 'data:,', order_num: 0}], galeria: [], chamados: [], extintores: [], extintor_abas: [], bulk_entry_drafts: [], distribuicao: []
 };
+// Testes podem acrescentar dados próprios antes de abrir o app (window.__fakeSeed).
+if (globalThis.__fakeSeed) for (const [k, rows] of Object.entries(globalThis.__fakeSeed)) T[k] = [...(T[k] || []), ...rows];
 const val = (r, c) => r?.[c];
 function builder(table) {
   const st = {filters: [], order: [], range: null, head: false, cols: '*', single: false, write: null};

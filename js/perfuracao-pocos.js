@@ -742,7 +742,7 @@
     const pdfButton=document.getElementById('pw-pdf-btn');if(pdfButton){pdfButton.disabled=true;pdfButton.textContent='⏳ Gerando PDF...';}
     window.toast('Gerando relatório institucional…','info',12000);
     try{
-    const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,bottom=H-FTR-4;
+    const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,bottom=H-FTR-4;(window.safePdf||(d=>d))(doc);
     const incluirFotos=options.incluirFotos!==false;
     const logo=await withTimeout(window.loadB64('img/logo_sertania.png','png',140),10000,'Tempo esgotado ao carregar o brasão').catch(()=>null);
     const sf=(n,b,c)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(n);doc.setTextColor(...(c||[30,41,59]));};

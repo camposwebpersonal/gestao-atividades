@@ -75,7 +75,7 @@ import { searchRecord } from './search-engine.js';
     const tab=activeTab();
     window.toast('Gerando relatório institucional de extintores…','info',9000);
     try{
-      const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=37;
+      const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=37;(window.safePdf||(d=>d))(doc);
       const logo=window.loadB64?await window.loadB64('img/logo_sertania.png','png',120).catch(()=>null):null;
       const font=(s,b,c)=>{doc.setFont('helvetica',b?'bold':'normal');doc.setFontSize(s);doc.setTextColor(...(c||[30,41,59]));};
       const header=()=>{doc.setFillColor(245,252,245);doc.rect(0,0,W,HDR,'F');doc.setFillColor(20,82,20);doc.rect(0,0,6,HDR,'F');doc.setFillColor(110,192,46);doc.rect(0,HDR-3,W,3,'F');if(logo?.d){let h=22,w=h*(logo.w/logo.h);if(w>30){w=30;h=w/(logo.w/logo.h);}doc.addImage(logo.d,'PNG',W-mx-w,3+(23-h)/2,w,h,undefined,'FAST');}font(14,true,[20,82,20]);doc.text('RELATÓRIO DE EXTINTORES — '+String(tab?.nome||'SETOR').toUpperCase(),mx+8,13);font(7.5,false,[30,123,30]);doc.text('Prefeitura Municipal de Sertânia — PE  •  Gestão de Atividades  •  '+new Date().toLocaleDateString('pt-BR'),mx+8,22);};

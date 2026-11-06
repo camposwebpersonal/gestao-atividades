@@ -355,7 +355,7 @@ window.distExportarPDF = function(secId){
   const sec = S.secs.find(s => s.id === secId); if (!sec) return;
   if (!window.jspdf?.jsPDF) { toast('jsPDF não carregado', 'error'); return; }
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' }); (window.safePdf||(d=>d))(doc);
   const buscaAtiva = document.getElementById('dist-busca')?.value || '';
   const itens = [...S.items.filter(i => i.atividade_id === secId)].filter(it => _distMatchesBusca(it, buscaAtiva)).sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
   const agora = new Date().toLocaleDateString('pt-BR');

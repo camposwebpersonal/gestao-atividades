@@ -1,80 +1,98 @@
-import {URGENCIAS,attendanceValue,recordExtra} from './atendimento-meta.js';
+// Monta os lançamentos do "Relatório de demandas" no formato compacto do motor de PDF.
+import {URGENCIAS, attendanceValue, recordExtra} from './atendimento-meta.js';
+import {customFields, controlFields} from './record-fields.js?v=1';
 
-const HIDDEN_FIELDS=new Set([
-  'id','extra_fields','created_at','updated_at','created_by','created_by_name','updated_by','updated_by_name',
-  'urgencia','prioritario','solicitante','show_conclusion_date','item_show_verba','item_show_documentacao',
-  'item_show_licitacao','registro_tipo','modulo','controle_pocos'
-]);
+export const STATUS_LABELS = {pendente: 'Pendente', solicitado: 'Solicitado', recebido: 'Recebido', analisando: 'Analisando', aprovado: 'Aprovado', ressalva: 'Ressalva', reprovado: 'Reprovado', andamento: 'Em andamento', concluido: 'Concluído', cancelado: 'Cancelado'};
+const URGENCY_TONE = {vermelho: 'urgent', amarelo: 'attention', verde: 'calm'};
+const URGENCY_SHORT = {vermelho: 'Urgente', amarelo: 'Necessita de atenção', verde: 'Pode aguardar'};
 
-export function reportDateTime(value){
-  if(!value)return '';
-  const raw=typeof value?.toDate==='function'?value.toDate():value?.seconds?new Date(value.seconds*1000):new Date(value);
-  if(Number.isNaN(raw.getTime()))return '';
-  return raw.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+export function reportDateTime(value) {
+  if (!value) return '';
+  const raw = typeof value?.toDate === 'function' ? value.toDate() : value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+  if (Number.isNaN(raw.getTime())) return '';
+  return raw.toLocaleString('pt-BR', {dateStyle: 'short', timeStyle: 'short'});
 }
 
-export function meaningfulExtraFields(record){
-  return Object.entries(recordExtra(record)).filter(([key,value])=>{
-    if(HIDDEN_FIELDS.has(key)||key.startsWith('item_show_'))return false;
-    if(value==null||value===''||value===false||value===0||value==='0')return false;
-    if(typeof value==='object')return false;
-    return true;
-  }).map(([key,value])=>({
-    label:key.replace(/_/g,' ').split(' ').map(word=>word?word.charAt(0).toLocaleUpperCase('pt-BR')+word.slice(1):word).join(' '),
-    value:value===true?'Sim':String(value)
-  }));
+export function fmtDay(value) {
+  const m = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  const d = value ? new Date(value) : null;
+  return d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString('pt-BR') : '';
 }
 
-function statusOf(record){
-  if(record.concluded==1)return 'Concluído';
-  const labels={pendente:'Pendente',andamento:'Em andamento',concluido:'Concluído',cancelado:'Cancelado'};
-  return labels[record.status]||record.status||'Pendente';
+/** Mantido para quem ainda usa: campos personalizados preenchidos, sem dados internos. */
+export function meaningfulExtraFields(record) {
+  return customFields(record).map(f => ({label: f.label, value: f.value}));
 }
 
-function normalizeRecord(record,number,secretariaName){
-  const urgency=attendanceValue(record,'urgencia',null);
-  const extra=meaningfulExtraFields(record);
-  if(Number(record.verba)>0)extra.push({label:'Verba',value:Number(record.verba).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})});
-  if(record.origem_verba)extra.push({label:'Origem da Verba',value:String(record.origem_verba)});
-  if(record.documentacao==1)extra.push({label:'Documentação',value:'Concluída'});
-  if(record.licitacao==1)extra.push({label:'Licitação',value:'Concluída'});
+function statusOf(record) {
+  if (Number(record.concluded) === 1) return 'Concluído';
+  return STATUS_LABELS[record.status] || (record.status ? String(record.status).charAt(0).toUpperCase() + String(record.status).slice(1) : 'Pendente');
+}
+
+/**
+ * Converte um item/subitem em registro do PDF.
+ * opts: {group, templates, secretarias, showCreated, showUpdated, today}
+ */
+export function demandRecord(record, number, level, opts = {}) {
+  const today = opts.today || new Date().toISOString().slice(0, 10);
+  const urgency = attendanceValue(record, 'urgencia', null);
+  const done = Number(record.concluded) === 1;
+  const badges = [];
+  if (URGENCIAS[urgency]) badges.push({text: URGENCY_SHORT[urgency] || URGENCIAS[urgency], tone: URGENCY_TONE[urgency] || 'muted'});
+  if (attendanceValue(record, 'prioritario', false)) badges.push({text: 'Prioritário', tone: 'star'});
+  if (done) badges.push({text: record.conclusion_date ? 'Concluído em ' + fmtDay(record.conclusion_date) : 'Concluído', tone: 'done'});
+  else {
+    badges.push({text: statusOf(record), tone: 'pending'});
+    const deadline = String(record.deadline_date || '').slice(0, 10);
+    if (deadline) badges.push(deadline < today ? {text: 'Atrasado · prazo ' + fmtDay(deadline), tone: 'late'} : {text: 'Prazo ' + fmtDay(deadline), tone: 'info'});
+  }
+  const fields = [];
+  if (record.responsaveis) fields.push({label: 'Responsável', value: record.responsaveis});
+  const requester = attendanceValue(record, 'solicitante', '');
+  if (requester) fields.push({label: 'Solicitante', value: requester});
+  const groupSecretary = opts.group?.demanda_secretaria_id;
+  if (record.secretaria_id && record.secretaria_id !== groupSecretary) {
+    const name = (opts.secretarias || []).find(s => s.id === record.secretaria_id)?.name;
+    if (name) fields.push({label: 'Secretaria', value: name});
+  }
+  const tpl = (opts.templates || []).filter(t => t.atividade_id === opts.group?.id);
+  fields.push(...customFields(record, tpl), ...controlFields(record, opts.group, level > 0).map(f => ({label: f.label, value: f.value})));
+  if (!done && Number(record.show_conclusion_date) === 1 && record.conclusion_date) fields.push({label: 'Data de conclusão', value: fmtDay(record.conclusion_date)});
+  const meta = [];
+  if (opts.showCreated) meta.push('Criado por ' + (record.created_by_name || 'não registrado') + (record.created_at ? ' em ' + reportDateTime(record.created_at) : ''));
+  if (opts.showUpdated && record.updated_by_name) meta.push('Última edição por ' + record.updated_by_name + (record.updated_at ? ' em ' + reportDateTime(record.updated_at) : ''));
   return {
-    number,
-    title:record.description||'Sem descrição',
-    observation:record.observacao||'',
-    responsibles:record.responsaveis||'',
-    requester:attendanceValue(record,'solicitante',''),
-    urgency:URGENCIAS[urgency]||'Não informada',
-    priority:!!attendanceValue(record,'prioritario',false),
-    status:statusOf(record),
-    deadline:record.deadline_date||'',
-    conclusion:record.conclusion_date||'',
-    secretariat:secretariaName||'',
-    createdBy:record.created_by_name||'Não registrado (cadastro anterior)',
-    createdAt:reportDateTime(record.created_at),
-    updatedBy:record.updated_by_name||'',
-    updatedAt:reportDateTime(record.updated_at),
-    extra
+    num: number, level, title: record.description || 'Sem descrição', badges, fields,
+    note: record.observacao || '', meta: meta.join('  ·  '),
+    priority: !!attendanceValue(record, 'prioritario', false), urgency, done,
+    late: !done && !!record.deadline_date && String(record.deadline_date).slice(0, 10) < today,
   };
 }
 
-export function buildDemandReportRows(items,subitems,secretarias=[]){
-  const secretaryName=id=>secretarias.find(s=>s.id===id)?.name||'';
-  const rows=[];
-  const ordered=[...items].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-  const appendChildren=(itemId,parentId,parentType,prefix)=>{
-    const children=subitems.filter(s=>s.item_id===itemId&&s.parent_id===parentId&&(parentType==='item'?s.parent_type!=='subitem':s.parent_type==='subitem'))
-      .sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-    children.forEach((child,index)=>{
-      const number=prefix+'.'+(index+1);
-      rows.push({...normalizeRecord(child,number,secretaryName(child.secretaria_id)),isSubitem:true});
-      appendChildren(itemId,child.id,'subitem',number);
-    });
-  };
-  ordered.forEach((item,index)=>{
-    const number=String(index+1);
-    rows.push({...normalizeRecord(item,number,secretaryName(item.secretaria_id)),isSubitem:false});
-    appendChildren(item.id,item.id,'item',number);
+/** Lista na ordem da tela: item, seus subitens (em árvore), próximo item… */
+export function buildDemandRecords(items, subitems, opts = {}) {
+  const rows = [];
+  const ordered = [...items].sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
+  const children = (itemId, parentId, parentType) => subitems
+    .filter(s => s.item_id === itemId && s.parent_id === parentId && (parentType === 'item' ? s.parent_type !== 'subitem' : s.parent_type === 'subitem'))
+    .sort((a, b) => (a.order_num || 0) - (b.order_num || 0));
+  const walk = (itemId, parentId, parentType, prefix, level) => children(itemId, parentId, parentType).forEach((child, i) => {
+    const number = prefix + '.' + (i + 1);
+    if (opts.includeSubitems !== false && (opts.includeDone !== false || Number(child.concluded) !== 1)) rows.push(demandRecord(child, number, level, opts));
+    walk(itemId, child.id, 'subitem', number, level + 1);
+  });
+  ordered.forEach((item, index) => {
+    if (opts.includeDone === false && Number(item.concluded) === 1) return;
+    const number = String(index + 1);
+    rows.push(demandRecord(item, number, 0, opts));
+    walk(item.id, item.id, 'item', number, 1);
   });
   return rows;
 }
+
+// Compatibilidade com chamadas antigas.
+export function buildDemandReportRows(items, subitems, secretarias = []) {
+  return buildDemandRecords(items, subitems, {secretarias}).map(r => ({...r, isSubitem: r.level > 0, extra: r.fields}));
+}
+export {recordExtra};

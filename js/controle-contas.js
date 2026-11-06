@@ -968,7 +968,7 @@ window.ccGerarPdf = async function(secId, opts){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando PDF...','info',8000);
   const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const doc = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}); (window.safePdf||(d=>d))(doc);
   const W=297, mx=12, cw=W-mx*2;
   const fmtMoney=v=>parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
   const fmtPdfD=d=>d?fmtD(d):'-';

@@ -45,3 +45,9 @@
 .geo-picker-methods .geo-picker-google{display:inline-flex;align-items:center;gap:6px;border:1px solid #c6d4e6!important;background:#fff!important;color:#1f3b63!important}
 @media(max-width:720px){.geo-editor-actions{grid-template-columns:1fr 1fr}.geo-editor-actions button.google{grid-column:1/-1;order:-1}.field-location-actions{grid-template-columns:1fr 1fr}.field-location-actions button.google{grid-column:1/-1;order:-1}}
 @media(prefers-reduced-motion:reduce){.geo-saved-fresh{animation:none}}
+.geo-empty{color:#4d6159}
+.geo-saved button.geo-remove{border-color:#f0b4ae;color:#a3221a;background:#fff}
+.geo-saved button.geo-remove:hover{background:#fdecea}
+.geo-removed{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 10px;border-radius:9px;background:#fff4e5;color:#6b3d00;border:1px dashed #f0b45a}
+.geo-removed span{flex:1;min-width:200px;font-size:12px}.geo-removed b{color:#5a3300}
+.geo-removed .geo-undo{border:1px solid #d9a24a;border-radius:7px;background:#fff;color:#6b3d00;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer}

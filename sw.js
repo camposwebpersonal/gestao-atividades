@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v177';
+const CACHE_NAME = 'gestao-pms-v178';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -31,6 +31,11 @@ const STATIC_ASSETS = [
   'js/access-scope.js',
   'js/supabase-status.js',
   'js/demand-report.js',
+  'js/demand-pdf.js',
+  'js/pdf-records.js',
+  'js/record-fields.js',
+  'js/report-options.js',
+  'css/record-fields.css',
   'exames.html',
   'manifest.json',
   'bcc_data_junho_2026.json',

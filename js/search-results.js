@@ -1,3 +1,4 @@
+import {isSystemKey, isBlankValue} from './record-fields.js?v=1';
 // Organização e exibição dos resultados da busca global.
 // Lançamentos aparecem agrupados por Secretaria → Grupo, com o termo destacado e a
 // indicação do campo onde ele foi encontrado (ex.: "Assunto: PIPA D'ÁGUA").
@@ -26,7 +27,7 @@ export function recordSearchFields(record, {parent} = {}) {
     push('Nome', record?.description || record?.name);
     push('Observação', record?.observacao);
     push('Responsáveis', record?.responsaveis);
-    for (const [key, value] of Object.entries(extraOf(record))) if (!INTERNAL_KEY.test(key)) push(prettyKey(key), value);
+    for (const [key, value] of Object.entries(extraOf(record))) if (!INTERNAL_KEY.test(key) && !isSystemKey(key) && !isBlankValue(value)) push(prettyKey(key), value);
     if (parent) push('Item principal', parent.description);
     return fields;
 }

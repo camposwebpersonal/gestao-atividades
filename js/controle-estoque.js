@@ -556,7 +556,7 @@ window.ceGerarPdf=async function(secId){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error'); return;}
   toast('Gerando PDF…','info',8000);
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}); (window.safePdf||(d=>d))(doc);
   const W=297, mx=12, cw=W-mx*2;
   const now=new Date().toLocaleDateString('pt-BR');
 

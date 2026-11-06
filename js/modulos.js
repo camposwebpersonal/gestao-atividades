@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
 import {supabase} from '../supabase_compat.js?v=11';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=10';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=11';
 import './perfuracao-pocos.js?v=103';
 import './controle-extintores.js?v=5';
 import './controle-licitacoes.js?v=8';
@@ -347,7 +347,7 @@ window.gerarRelatorioModulo = async function(modId){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('jsPDF não carregado','error'); return; }
   toast('Gerando PDF do módulo…','info',8000);
   const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'});
+  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'}); (window.safePdf||(d=>d))(doc);
   const W = 210, mx = 14;
   const now = new Date().toLocaleString('pt-BR');
   doc.setFillColor(15,23,42); doc.rect(0,0,W,30,'F');
@@ -387,7 +387,7 @@ window.gerarRelatorioModulo = async function(modId){
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando relatório institucional…','info',8000);
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); (window.safePdf||(d=>d))(doc);
   const W=210,H=297,mx=14;
   let logo=null;
   try{logo=await window.loadB64?.('img/logo_sertania.png','png',120);}catch(e){}

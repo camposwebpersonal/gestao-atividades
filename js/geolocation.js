@@ -135,16 +135,16 @@ window.chooseLocationSearchResult=index=>{const result=locationPickerState?.resu
 window.confirmLocationPicker=async()=>{const state=locationPickerState,location=state?.selected,button=document.getElementById('geo-picker-confirm');if(!state||!location)return;if(button){button.disabled=true;button.textContent='Salvando…';}try{if(state.onConfirm)await state.onConfirm(location);else renderEditor(state.prefix,location);document.dispatchEvent(new CustomEvent('geo:changed',{detail:{prefix:state.prefix,location}}));window.closeLocationPicker();window.toast?.('Localização selecionada!','success');}catch(error){window.toast?.(error.message||error,'error',7500);if(button?.isConnected){button.disabled=false;button.textContent='Usar esta localização';}}};
 
 const SOURCE_TITLES={manual:'Localização escolhida no mapa','google-link':'Localização marcada no Google Maps','google-coords':'Localização marcada no Google Maps','google-dms':'Localização marcada no Google Maps','google-pluscode':'Localização marcada no Google Maps',exif:'Localização lida da foto'};
-function savedPanelHtml(location,title='Localização salva'){
+function savedPanelHtml(location,title='Localização salva',prefix=''){
  if(!location)return '<div class="geo-empty">Nenhuma localização vinculada a este lançamento.</div>';
  const url=mapsUrl(location.latitude,location.longitude),coords=`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
- return `<div class="geo-saved"><span>✓</span><div><strong>${esc(title)}</strong><small><b class="geo-coords">${coords}</b>${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(url)}" target="_blank" rel="noopener" title="Abrir este ponto no Google Maps">Google Maps</a><button type="button" onclick="copyGeoCoordinates('${coords}')" title="Copiar coordenadas">Copiar</button><button type="button" onclick="shareGeoLocation('${esc(url)}','Localização do lançamento')">Compartilhar</button></div>`;
+ return `<div class="geo-saved"><span>✓</span><div><strong>${esc(title)}</strong><small><b class="geo-coords">${coords}</b>${location.accuracy?` · precisão aproximada ${location.accuracy} m`:''}</small></div><a href="${esc(url)}" target="_blank" rel="noopener" title="Abrir este ponto no Google Maps">Google Maps</a><button type="button" onclick="copyGeoCoordinates('${coords}')" title="Copiar coordenadas">Copiar</button><button type="button" onclick="shareGeoLocation('${esc(url)}','Localização do lançamento')">Compartilhar</button>${prefix?`<button type="button" class="geo-remove" onclick="clearGeoLocation('${esc(prefix)}')" title="Apagar esta localização (para marcar a certa depois)">🗑 Apagar</button>`:''}</div>`;
 }
 function renderEditor(prefix,location){
  const lat=document.getElementById(prefix+'-lat'),lng=document.getElementById(prefix+'-lng'),accuracy=document.getElementById(prefix+'-accuracy'),captured=document.getElementById(prefix+'-captured'),source=document.getElementById(prefix+'-source');
  if(lat)lat.value=location?.latitude??'';if(lng)lng.value=location?.longitude??'';if(accuracy)accuracy.value=location?.accuracy??'';if(captured)captured.value=location?.captured_at??'';if(source)source.value=location?.source||'';
  const host=document.getElementById(prefix+'-panel');if(!host)return;
- host.innerHTML=savedPanelHtml(location,location?(SOURCE_TITLES[location.source]||'Localização capturada pelo GPS'):undefined);
+ host.innerHTML=savedPanelHtml(location,location?(SOURCE_TITLES[location.source]||'Localização capturada pelo GPS'):undefined,prefix);
  host.querySelector('.geo-saved')?.classList.add('geo-saved-fresh');
 }
 // Aplica uma nova localização no editor e avisa quem estiver ouvindo (ex.: Registro de Campo).
@@ -213,10 +213,19 @@ export function googlePasteHtml(prefix){
  return `<div class="geo-google-paste"><label for="${prefix}-gpaste">Marcou no Google Maps? Cole aqui o link ou as coordenadas</label><div><input id="${prefix}-gpaste" type="text" autocomplete="off" placeholder="Ex.: -8.071234, -37.263456 ou link maps.app.goo.gl" onpaste="setTimeout(()=>pasteGoogleLocation('${prefix}'),30)" oninput="googlePasteChanged('${prefix}',this)"><button type="button" onclick="pasteGoogleLocation('${prefix}')">Colar</button></div></div><div class="geo-google-guide" id="${prefix}-gguide" hidden></div>`;
 }
 window.setLocationEditorValue=renderEditor;
+// Apaga a localização do editor. Só vale de verdade ao salvar o lançamento — dá para desfazer.
+window.clearGeoLocation=prefix=>{
+ const previous=readLocationEditor(prefix);if(!previous)return;
+ applyEditorLocation(prefix,null);
+ const host=document.getElementById(prefix+'-panel');
+ if(host){host.innerHTML='<div class="geo-empty geo-removed"><span>Localização apagada. Ela some do lançamento ao <b>salvar</b>. Marque a certa com o GPS, o Google Maps ou o mapa rápido.</span><button type="button" class="geo-undo">↩ Desfazer</button></div>';
+  host.querySelector('.geo-undo').onclick=()=>{applyEditorLocation(prefix,previous);window.toast?.('Localização restaurada.','success');};}
+ window.toast?.('Localização apagada. Salve o lançamento para confirmar.','info',5000);
+};
 
 export function locationEditorHtml(record,prefix='it-geo'){
  const location=locationOf(record);
- return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Use o GPS, marque o ponto no Google Maps ou escolha no mapa rápido.</small></div><div class="geo-editor-actions"><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Usar GPS</button><button type="button" class="google" onclick="openGoogleMapsPicker('${prefix}')"><span class="g-mark" aria-hidden="true">G</span> Marcar no Google Maps</button><button type="button" class="manual" onclick="openManualLocationPicker('${prefix}')">🗺 Mapa rápido</button></div></div>${googlePasteHtml(prefix)}<input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><input type="hidden" id="${prefix}-source" value="${esc(location?.source||'')}"><div id="${prefix}-panel">${savedPanelHtml(location)}</div></section>`;
+ return `<section class="geo-editor"><div class="geo-editor-head"><div><strong>📍 Geolocalização</strong><small>Use o GPS, marque o ponto no Google Maps ou escolha no mapa rápido.</small></div><div class="geo-editor-actions"><button type="button" onclick="captureLocationInto('${prefix}')">⌖ Usar GPS</button><button type="button" class="google" onclick="openGoogleMapsPicker('${prefix}')"><span class="g-mark" aria-hidden="true">G</span> Marcar no Google Maps</button><button type="button" class="manual" onclick="openManualLocationPicker('${prefix}')">🗺 Mapa rápido</button></div></div>${googlePasteHtml(prefix)}<input type="hidden" id="${prefix}-lat" value="${location?.latitude??''}"><input type="hidden" id="${prefix}-lng" value="${location?.longitude??''}"><input type="hidden" id="${prefix}-accuracy" value="${location?.accuracy??''}"><input type="hidden" id="${prefix}-captured" value="${esc(location?.captured_at||'')}"><input type="hidden" id="${prefix}-source" value="${esc(location?.source||'')}"><div id="${prefix}-panel">${savedPanelHtml(location,undefined,prefix)}</div></section>`;
 }
 
 export function readLocationEditor(prefix='it-geo'){

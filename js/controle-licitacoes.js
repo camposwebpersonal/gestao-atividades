@@ -117,7 +117,7 @@ import {supabase,collection,doc,addDoc,updateDoc,deleteDoc,serverTimestamp} from
     const g=findGroup(id),model=g?pdfModel(g):null;if(!g)return;if(!model.rows.length){window.toast('Este grupo ainda não possui lançamentos salvos para o relatório.','error');return;}
     state.pdfBusy=true;window.toast('Preparando o relatório deste grupo…','info',7000);
     try{
-      const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,year=groupYear(g),scope=year?'Exercício '+val(year,'ano'):'Grupo permanente';
+      const {jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'}),W=297,H=210,mx=12,HDR=30,FTR=15,top=36,year=groupYear(g),scope=year?'Exercício '+val(year,'ano'):'Grupo permanente';(window.safePdf||(d=>d))(doc);
       if(typeof doc.autoTable!=='function')throw new Error('Componente de tabelas do PDF indisponível');
       const logo=window.loadB64?await window.loadB64('img/logo_sertania.png','png',120).catch(()=>null):null;
       const font=(size,bold,color)=>{doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...(color||[30,41,59]));};
