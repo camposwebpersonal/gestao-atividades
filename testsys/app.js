@@ -71,8 +71,8 @@
   const activationDetail = document.querySelector('[data-activation-detail]');
 
   function readActivation() {
-    try { return localStorage.getItem('testsys-click-5879-activated') === 'true'; }
-    catch { return false; }
+    try { return localStorage.getItem('testsys-click-5879-activated') !== 'false'; }
+    catch { return true; }
   }
 
   function renderActivation(active) {
@@ -80,7 +80,7 @@
     activationButton.classList.toggle('activated', active);
     activationButton.setAttribute('aria-label', active ? 'Cartão final 5879 ativado' : 'Ativar cartão final 5879');
     if (activationLabel) activationLabel.textContent = active ? 'Cartão ativado' : 'Ativar cartão';
-    if (activationDetail) activationDetail.textContent = active ? 'Ativação concluída' : 'Pronto para ativação';
+    if (activationDetail) activationDetail.textContent = active ? 'Ativado agora' : 'Pronto para ativação';
     const arrow = activationButton.querySelector(':scope > b');
     if (arrow) arrow.textContent = active ? '✓' : '›';
   }

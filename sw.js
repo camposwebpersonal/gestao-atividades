@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v183';
+const CACHE_NAME = 'gestao-pms-v184';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -14,6 +14,12 @@ const STATIC_ASSETS = [
   'sys88/servicos.html',
   'sys88/app.css',
   'sys88/score.css',
+  'testsys/index.html',
+  'testsys/fatura.html',
+  'testsys/compra.html',
+  'testsys/style.css',
+  'testsys/app.js',
+  'testsys/logo.svg',
   'js/usuario-login.js',
   'js/atendimento-meta.js',
   'js/atendimento-fluxo.js',
