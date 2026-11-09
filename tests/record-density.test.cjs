@@ -39,7 +39,8 @@ test('conteúdo quebra linha sem sobreposição ou corte em zoom',()=>{
   assert.match(css,/record-audit[^}]*white-space:normal!important/);
   assert.match(archive,/completed-row-main[^}]*flex-wrap:wrap/);
   assert.match(archive,/completed-row-main>strong[^}]*overflow-wrap:anywhere/);
-  assert.match(completed,/class="completed-row-side"/);
+  assert.match(completed,/class="cr-head"/);
+  assert.match(completed,/class="cr-details"/);
   assert.match(audit,/moveTarget\.insertBefore\(button/);
 });
 

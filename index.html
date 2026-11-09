@@ -420,6 +420,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/module-groups.css?v=1">
 <link rel="stylesheet" href="css/access-permissions.css?v=4">
 <link rel="stylesheet" href="css/bulk-archive.css?v=12">
+<link rel="stylesheet" href="css/completed-details.css?v=1">
 <link rel="stylesheet" href="css/trash.css?v=1">
 <link rel="stylesheet" href="css/custom-fields.css?v=2">
 <link rel="stylesheet" href="css/controle-licitacoes.css?v=5">
@@ -437,7 +438,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
-<link rel="stylesheet" href="css/record-fields.css?v=2">
+<link rel="stylesheet" href="css/record-fields.css?v=3">
 <link rel="stylesheet" href="css/whatsapp-avisos.css?v=1">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -525,8 +526,8 @@ import './js/water-points.js?v=7';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=3';
-import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=12';
-import {generateDemandPdf} from './js/demand-pdf.js?v=2';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=13';
+import {generateDemandPdf} from './js/demand-pdf.js?v=3';
 import {reportDateTime} from './js/demand-report.js?v=3';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=2';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
@@ -534,7 +535,8 @@ import './js/modal-context.js?v=1';
 import './js/whatsapp-avisos.js?v=3';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
-import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=7';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=8';
+import './js/pdf-picker.js?v=1';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=3';
@@ -3285,7 +3287,20 @@ window.gerarPdfResumoBCCS=async function(secId){
 // Relatório de demandas: motor compacto em js/demand-pdf.js (pergunta as opções antes de gerar).
 window.gerarPdfDemanda=(secId,opts)=>generateDemandPdf(secId,opts);
 
+// Escolha de lançamentos (em andamento / concluídos / um a um): o gerador trabalha só com os
+// itens e subitens escolhidos, em todas as seções do PDF (resumo, tabela, separações).
 window.gerarPdf=async function(secId,opts){
+  if(!opts||(!opts.pickIds&&(!opts.scope||opts.scope==='todos')))return _gerarPdfCore(secId,opts);
+  const allItems=S.items,allSubs=S.subitems;
+  const mine=allItems.filter(i=>i.atividade_id===secId),ids=new Set(mine.map(i=>i.id));
+  const scoped=window.pdfPicker.apply(mine,allSubs.filter(x=>ids.has(x.item_id)),opts);
+  const keepItems=new Set(scoped.items.map(i=>i.id)),keepSubs=new Set(scoped.subitems.map(x=>x.id));
+  const fItems=allItems.filter(i=>i.atividade_id!==secId||keepItems.has(i.id)),fSubs=allSubs.filter(x=>!ids.has(x.item_id)||keepSubs.has(x.id));
+  S.items=fItems;S.subitems=fSubs;
+  try{return await _gerarPdfCore(secId,opts);}
+  finally{if(S.items===fItems)S.items=allItems;if(S.subitems===fSubs)S.subitems=allSubs;}
+};
+async function _gerarPdfCore(secId,opts){
   if(!opts)opts={actCov:true,actResp:true,itemCov:true,itemResp:true,subResp:true};
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1)return window.gerarPdfDemanda(secId);
@@ -4616,6 +4631,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-cards" checked style="accent-color:#f59e0b;width:15px;height:15px"> 📊 Mostrar cards de somatório</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer;margin-top:6px"><input type="checkbox" id="popt-show-ranking" style="accent-color:#f59e0b;width:15px;height:15px"> 📈 Mostrar ranking de progresso por item</label>
     </div>
+    <div id="popt-pick"></div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px;flex-shrink:0">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">🧾 Registro</div>
       <div style="font-size:12px;color:#94a3b8;margin-bottom:4px">Aparece em letra pequena no canto de cada lançamento.</div>
@@ -4698,6 +4714,7 @@ function abrirPdfOpts(secId){
     efList.innerHTML=html?'<div class="popt-ef-tools"><button type="button" onclick="poptEfAll(true)">Marcar todos</button><button type="button" onclick="poptEfAll(false)">Desmarcar todos</button></div>'+html:'<span class="popt-ef-none">Este grupo não tem campos personalizados.</span>';
   }
   ['popt-show-created','popt-show-updated'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  window.pdfPicker?.render(document.getElementById('popt-pick'),secId);
   // Popular separação por campo
   const sepField=document.getElementById('popt-sep-field');
   if(sepField){const subTpls=(window.S?.fieldTemplates||[]).filter(t=>t.atividade_id===secId&&t.scope==='subitem');let opts='<option value="">— Sem separação —</option>';if(subTpls.length){subTpls.forEach(t=>{opts+='<option value="'+t.field_name+'">'+t.field_name+'</option>';});}sepField.innerHTML=opts;}
@@ -4717,7 +4734,6 @@ window.atualizarSepValues=function(){
   valSel.innerHTML=opts;valSel.style.display='block';
 };
 function confirmarGerarPdf(){
-  fecharPdfOpts();
   const efFields=[];
   document.querySelectorAll('#popt-ef-list input[data-ef]').forEach(cb=>{if(cb.checked)efFields.push(cb.getAttribute('data-ef'));});
   const opts={
@@ -4736,6 +4752,10 @@ function confirmarGerarPdf(){
     showCreated:document.getElementById('popt-show-created')?.checked===true,
     showUpdated:document.getElementById('popt-show-updated')?.checked===true
   };
+  const pick=window.pdfPicker?.read(document.getElementById('popt-pick'))||{};
+  if(pick.error){(window.toast||toast)(pick.error,'error',6000);document.querySelector('#popt-pick .pdf-pick-list')?.scrollIntoView({block:'nearest'});return;}
+  opts.scope=pick.scope||'todos';opts.pickIds=pick.pickIds||null;
+  fecharPdfOpts();
   window.gerarPdf(_pdfOptsSecId,opts);
 }
 function confirmarGerarRelatorio(){

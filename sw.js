@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v184';
+const CACHE_NAME = 'gestao-pms-v185';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -43,6 +43,8 @@ const STATIC_ASSETS = [
   'js/report-options.js',
   'js/modal-context.js',
   'js/whatsapp-avisos.js',
+  'js/pdf-picker.js',
+  'css/completed-details.css',
   'css/whatsapp-avisos.css',
   'css/record-fields.css',
   'exames.html',

@@ -1,0 +1,69 @@
+/* Concluídos do mês: linha compacta que abre um card com os campos preenchidos. */
+.completed-month-list{gap:4px;padding:6px}
+.completed-row.cr-card{display:block;padding:0;line-height:1.3;border-left-width:4px}
+.cr-head{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:6px 8px;min-width:0}
+.cr-head .completed-row-check{width:20px;height:20px;font-size:12px}
+.cr-toggle{all:unset;box-sizing:border-box;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0;min-height:32px;cursor:pointer;border-radius:6px;padding:2px 4px}
+.cr-toggle:hover .cr-name,.cr-toggle:focus-visible .cr-name{color:#0b4f8a;text-decoration:underline;text-underline-offset:3px}
+.cr-toggle:focus-visible{box-shadow:0 0 0 3px rgba(11,79,138,.25)}
+.cr-caret{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:#e3f1ec;color:#0b6e53;font-size:11px;transition:transform .15s}
+.cr-card.is-open .cr-caret{transform:rotate(90deg);background:#0b6e53;color:#fff}
+.cr-name{font-size:13px;font-weight:800;color:#173e43;overflow-wrap:anywhere;min-width:0}
+.cr-name small{font-size:11px;font-weight:800;color:#0b6e53;letter-spacing:.04em}
+.cr-count,.cr-pin{font-style:normal;font-size:11px;font-weight:700;color:#0b4f8a;background:#e8f2fb;border:1px solid #c6ddf1;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.cr-pin{background:#fff;padding:1px 6px}
+.cr-date{display:flex;flex-direction:column;align-items:flex-end;font-size:12px;font-weight:700;color:#173e43;white-space:nowrap}
+.cr-date small{font-size:11px;font-weight:600;color:#4b6473}
+.cr-head .completed-row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;grid-row:1;grid-column:4}
+.cr-head .completed-row-actions button{min-height:32px;padding:5px 10px;font-size:12px}
+.cr-head .completed-row-check{grid-column:1;grid-row:1}.cr-toggle{grid-column:2;grid-row:1}.cr-date{grid-column:3;grid-row:1}
+.cr-details{border-top:1px dashed #cfe2dc;margin:0 8px;padding:10px 4px 12px 28px;display:flex;flex-direction:column;gap:8px;background:#fbfdfc}
+.cr-details[hidden]{display:none}
+.cr-parent{margin:0;font-size:12px;color:#334155}.cr-parent b{color:#173e43}
+.cr-facts{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0}
+.cr-facts div{display:flex;flex-direction:column;min-width:0}.cr-facts dt{font-size:11px;font-weight:700;color:#4b6473;text-transform:uppercase;letter-spacing:.03em}.cr-facts dd{margin:0;font-size:13px;font-weight:700;color:#173e43;overflow-wrap:anywhere}
+.cr-details .rf-chips{padding:0}
+.cr-empty{margin:0;font-size:12px;color:#4b6473;font-style:italic}
+.cr-note{margin:0;font-size:13px;color:#334155;background:#fff8e6;border-left:3px solid #e0a21b;padding:6px 9px;border-radius:6px;overflow-wrap:anywhere}.cr-note b{color:#6b4500}
+.cr-kids b{font-size:12px;color:#173e43}.cr-kids ul{margin:4px 0 0;padding-left:4px;list-style:none;display:flex;flex-direction:column;gap:2px;font-size:12px;color:#334155}.cr-kids li.is-done{color:#14532d}
+.cr-map{align-self:flex-start;min-height:32px;padding:5px 12px;border:1px solid #8bbcaf;border-radius:8px;background:#fff;color:#176451;font-size:12px;font-weight:800;cursor:pointer}
+.cr-tools{display:flex;gap:8px;flex-wrap:wrap;padding:8px 8px 2px;background:#eef5f3}
+.cr-search{flex:1 1 220px;min-height:38px;padding:6px 12px;border:1px solid #bcd8ce;border-radius:9px;background:#fff;color:#173e43;font-size:13px}
+.cr-tools button{min-height:38px;padding:6px 12px;border:1px solid #bcd8ce;border-radius:9px;background:#fff;color:#08755b;font-size:12px;font-weight:800;cursor:pointer}
+.cr-none{margin:8px;color:#4b6473;font-size:13px}
+.completed-month-screen-head>button{min-height:34px;font-size:12px}.completed-month-screen-head small{font-size:11px}.completed-month-screen-head>b{font-size:12px}
+@media(max-width:760px){
+ .cr-head{grid-template-columns:20px minmax(0,1fr) auto;row-gap:4px}
+ .cr-head .completed-row-actions{grid-column:2/-1;grid-row:2;justify-content:flex-start}
+ .cr-details{padding-left:8px}
+}
+/* Escolha de lançamentos para o PDF */
+.pdf-pick{display:flex;flex-direction:column;gap:9px;padding:14px;border-radius:10px;border:1px solid #c9dbe6;background:#f7fbfd;color:#0f172a;margin-bottom:16px;flex-shrink:0}
+.pdf-pick-title{font-size:12px;font-weight:800;color:#0f5132;text-transform:uppercase;letter-spacing:.05em}
+.pdf-pick-scope{display:flex;flex-wrap:wrap;gap:6px}
+.pdf-pick-scope label{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #c9dbe6;border-radius:999px;background:#fff;color:#0f172a;font-size:13px;font-weight:700;cursor:pointer}
+.pdf-pick-scope label:has(input:checked){border-color:#15845b;background:#e8f7ee;color:#0f5132}
+.pdf-pick-scope small{font-size:11px;color:#334155;background:#eef2f6;border-radius:999px;padding:0 7px}
+.pdf-pick-scope input,.pdf-pick-toggle input,.pdf-pick-row input{accent-color:#15845b;width:17px;height:17px;flex:none}
+.pdf-pick-toggle{display:flex;align-items:flex-start;gap:9px;cursor:pointer;color:#0f172a;font-size:13px}
+.pdf-pick-toggle b{display:block}.pdf-pick-toggle small{display:block;color:#475569;font-size:12px;font-weight:500}
+.pdf-pick-panel{display:flex;flex-direction:column;gap:8px}.pdf-pick-panel[hidden]{display:none}
+.pdf-pick-tools{display:flex;flex-wrap:wrap;gap:6px}.pdf-pick-search{flex:1 1 200px;min-height:36px;padding:6px 10px;border:1px solid #b9cbd8;border-radius:8px;background:#fff;color:#0f172a;font-size:13px}
+.pdf-pick button{min-height:32px;padding:4px 10px;border:1px solid #b9cbd8;border-radius:8px;background:#fff;color:#0f3d5c;font-size:12px;font-weight:800;cursor:pointer}
+.pdf-pick-count{font-size:13px;font-weight:800;color:#0f5132}.pdf-pick-count.is-empty{color:#7a4500}
+.pdf-pick-list{max-height:320px;overflow:auto;border:1px solid #d5e1e7;border-radius:9px;background:#fff}
+.pdf-pick-sec[hidden],.pdf-pick-month[hidden],.pdf-pick-row[hidden]{display:none}
+.pdf-pick-sec>header{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:8px;padding:7px 10px;background:#eef6f2;border-bottom:1px solid #d5e1e7;color:#0f172a}
+.pdf-pick-sec>header b{font-size:13px}.pdf-pick-sec>header span{font-size:11px;font-weight:800;background:#fff;border-radius:999px;padding:1px 8px;color:#334155}.pdf-pick-sec>header button{margin-left:auto}
+.pdf-pick-month-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px;background:#f6f9fb;border-bottom:1px solid #edf2f5;font-size:12px;font-weight:800;color:#0f5132}
+.pdf-pick-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-bottom:1px solid #f0f4f6;cursor:pointer;color:#0f172a;font-size:13px}
+.pdf-pick-row.is-on{background:#ecf8f1}.pdf-pick-name{flex:1;min-width:0;overflow-wrap:anywhere;font-weight:600}.pdf-pick-row small{font-size:11px;color:#475569;white-space:nowrap}
+.pdf-pick-empty{margin:10px;color:#475569;font-size:13px}
+.cr-card,.cr-tools{scroll-margin-top:140px}
+.completed-month-screen-head .cr-tools{grid-column:1/-1;padding:4px 0 0;background:transparent}
+/* overflow:hidden fazia o cabeçalho "grudar" dentro da própria caixa e cobrir o 1º lançamento no celular. */
+.completed-month-screen{overflow:visible;overflow:clip}
+.completed-month-screen-head{border-radius:14px 14px 0 0}
+.completed-row.cr-card[hidden],.cr-none[hidden]{display:none}
+.cr-caret{flex:none}.cr-name{flex:1 1 calc(100% - 32px)}
+.cr-card.is-open .cr-caret{transform:none}.cr-caret::before{content:'▸'}.cr-card.is-open .cr-caret::before{content:'▾'}

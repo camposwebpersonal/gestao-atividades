@@ -2,7 +2,7 @@
 import {buildDemandRecords, fmtDay} from './demand-report.js?v=3';
 import {drawRecordsTable, drawKpis, drawCommonBox, pdfSafe, safePdf} from './pdf-records.js?v=2';
 import {commonValues} from './record-fields.js?v=2';
-import {askDemandReportOptions} from './report-options.js?v=1';
+import {askDemandReportOptions} from './report-options.js?v=2';
 import {recordExtra} from './atendimento-meta.js';
 
 const fileName = name => ('RELATORIO-' + (name || 'DEMANDAS')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase();
@@ -15,12 +15,13 @@ export async function generateDemandPdf(secId, opts) {
   const itemIds = new Set(items.map(i => i.id));
   const subs = S.subitems.filter(s => itemIds.has(s.item_id));
   if (!opts) {
-    opts = await askDemandReportOptions({title: sec.name, counts: {subitems: subs.length, done: [...items, ...subs].filter(r => Number(r.concluded) === 1).length}});
+    opts = await askDemandReportOptions({title: sec.name, groupId: secId, counts: {subitems: subs.length}});
     if (!opts) return;
   }
   toast('Preparando o relatório…', 'info', 6000);
   const secretariat = S.secretarias?.find(s => s.id === sec.demanda_secretaria_id)?.name || '';
-  let records = buildDemandRecords(items, subs, {...opts, group: sec, templates: S.fieldTemplates || [], secretarias: S.secretarias || []});
+  const scoped = window.pdfPicker && (opts.pickIds || (opts.scope && opts.scope !== 'todos')) ? window.pdfPicker.apply(items, subs, opts) : {items, subitems: subs};
+  let records = buildDemandRecords(scoped.items, scoped.subitems, {...opts, group: sec, templates: S.fieldTemplates || [], secretarias: S.secretarias || []});
   if (opts.includeNotes === false) records.forEach(r => { r.note = ''; });
 
   // Informações iguais em todos os lançamentos vão para o cabeçalho, não para cada linha.

@@ -60,6 +60,8 @@ function entryForElement(element,byId=indexedEntries()){
  return identifiers.map(id=>byId.get(String(id))).find(Boolean)||null;
 }
 export function auditTarget(host,isAttendance){
+ // Concluídos do mês: autoria, localização e etiquetas ficam dentro do card que abre/fecha.
+ if(host.classList.contains('cr-card')){const details=host.querySelector(':scope > .cr-details');if(details)return details;}
  if(isAttendance&&host.classList.contains('completed-row')){
   const main=host.querySelector(':scope > .completed-row-main');
   if(main){host.classList.add('completed-audit-compact');return main;}
@@ -109,11 +111,11 @@ export function initAuditUI(){
     if(!meta){meta=document.createElement('div');meta.className='attendance-record-meta';target.prepend(meta);}
     const badges=window.attendanceBadges(record);if(meta.innerHTML!==badges)meta.innerHTML=badges;
     const group=window.S?.secs?.find(section=>section.id===record.atividade_id);
-    const moveTarget=host.classList.contains('completed-row')?(host.querySelector(':scope > .completed-row-side')||target):target;
+    const moveTarget=host.classList.contains('completed-row')?(host.querySelector(':scope > .cr-head > .completed-row-actions')||host.querySelector(':scope > .completed-row-side')||target):target;
     if(window.userCanGroup?.(group,'editar')&&!host.querySelector('.attendance-move-button')){
      const fieldDemand=window.isFieldDemandGroup?.(group)===true;
      const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent=fieldDemand?'Redirecionar':'Mover';button.title=fieldDemand?'Encaminhar esta demanda de campo ao grupo correto':'Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
-     if(moveTarget!==target)moveTarget.insertBefore(button,moveTarget.querySelector(':scope > .completed-row-actions'));
+     if(moveTarget!==target)moveTarget.classList.contains('completed-row-actions')?moveTarget.prepend(button):moveTarget.insertBefore(button,moveTarget.querySelector(':scope > .completed-row-actions'));
     }
    }
   }

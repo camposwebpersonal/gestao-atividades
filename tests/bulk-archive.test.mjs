@@ -69,7 +69,9 @@ test('arquivo agrupa pela Data Início e abre o mês em tela própria',()=>{
  const detail=renderCompletedArchive(data);
  assert.match(detail,/completed-month-screen/);
  assert.match(detail,/>ABR-2026</);
- assert.equal((detail.match(/class="completed-row"/g)||[]).length,1);
+ assert.equal((detail.match(/class="completed-row cr-card/g)||[]).length,1);
+ assert.match(detail,/class="cr-toggle"[^>]*aria-expanded="false"/);
+ assert.match(detail,/class="cr-details"[^>]*hidden/);
  assert.doesNotMatch(detail,/completed-month-card/);
  clearCompletedArchiveMonth('g1');
 });
