@@ -418,7 +418,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=78">
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=4">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
-<link rel="stylesheet" href="css/access-permissions.css?v=6">
+<link rel="stylesheet" href="css/access-permissions.css?v=7">
 <link rel="stylesheet" href="css/bulk-archive.css?v=12">
 <link rel="stylesheet" href="css/completed-details.css?v=1">
 <link rel="stylesheet" href="css/trash.css?v=1">
@@ -534,6 +534,7 @@ import {customFields,controlFields,commonValues} from './js/record-fields.js?v=2
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
 import './js/modal-context.js?v=2';
 import './js/nav-trail.js?v=1';
+import './js/mail-settings.js?v=1';
 import './js/whatsapp-avisos.js?v=3';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
@@ -2709,6 +2710,7 @@ function renderAdmin(){
     <div class="users-toolbar"><div class="users-search"><label for="users-search">Buscar usuário</label><input id="users-search" type="search" placeholder="Nome, login ou e-mail de contato" oninput="filterAdminUsers()"></div><div class="users-role-filter"><label for="users-role-filter">Nível de acesso</label><select id="users-role-filter" onchange="filterAdminUsers()"><option value="">Todos os níveis</option><option value="admin">Administrador</option><option value="gestor">Gestor</option><option value="usuario">Usuário</option></select></div><span id="users-visible-count" aria-live="polite">${users.length} ${users.length===1?'usuário':'usuários'}</span></div>
     <div class="users-list">${cards}</div><div id="users-empty" class="users-empty" ${users.length?'hidden':''}>Nenhum usuário encontrado.</div>
     <p class="users-login-note">O acesso é feito pelo nome de usuário. E-mail de contato é opcional.</p>
+    <details class="users-advanced mail-settings" id="mail-settings" ontoggle="if(this.open)window.renderMailSettings?.()"><summary>✉️ E-mail para “Esqueci minha senha” <span id="mail-settings-badge"></span></summary><div id="mail-settings-body"><p class="mail-muted">Abra para configurar.</p></div></details>
     <details class="users-advanced"><summary>Configurações avançadas</summary><div class="admin-security-box"><label for="admin-svc-key">Chave administrativa</label><input type="password" id="admin-svc-key" value="${esc(svcKey)}" placeholder="Chave de serviço"><div class="user-card-actions"><button type="button" class="users-button" onclick="localStorage.setItem('sb_service_role_key',document.getElementById('admin-svc-key').value.trim());toast('Chave salva no navegador','info')">Salvar chave</button><button type="button" class="users-button users-button-soft" onclick="localStorage.removeItem('sb_service_role_key');document.getElementById('admin-svc-key').value='';toast('Chave removida','info')">Remover chave</button></div></div></details>
   </section>`);
 }
@@ -2981,13 +2983,13 @@ window.changeUserPassword=async function(id){
 window.sendUserPasswordReset=async function(id){
   const u=S.users.find(x=>x.id===id);
   if(!u)return;
-  const target=u.email_contato||u.email;
-  if(!target){toast('Usuário não possui email para enviar redefinição','error');return;}
+  if(!u.email_contato){toast('Este usuário não tem e-mail de contato. Cadastre em “Informações complementares”.','error',6000);return;}
   try{
-    await sendPasswordResetEmail(auth,target);
-    toast('Link de redefinição enviado para '+target,'info',4000);
+    const r=await window.sendResetLinkForUser(id);
+    if(r?.ok)toast('✉️ Link de redefinição enviado para '+r.sent_to,'success',5000);
+    else toast(window.mailResetReason?.(r?.reason)||'Não foi possível enviar.','error',7000);
   }catch(e){
-    toast('Erro ao enviar redefinição: '+e.message,'error');
+    toast('Erro ao enviar redefinição: '+(e.message||e),'error');
   }
 };
 window.deleteUser=async function(id){

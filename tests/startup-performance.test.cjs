@@ -24,6 +24,6 @@ test('recursos secundários não bloqueiam a primeira pintura',()=>{
 test('manifesto usa ícones realmente dimensionados e cache renovado',()=>{
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
   assert.deepEqual(manifest.icons.map(icon=>icon.sizes),['192x192','512x512']);
-  assert.match(sw,/gestao-pms-v188/);
+  assert.match(sw,/gestao-pms-v189/);
   assert.doesNotMatch(sw,/^\s*'img\/logo_sertania\.png',/m);
 });

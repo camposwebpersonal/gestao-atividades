@@ -94,3 +94,31 @@
   quando vários lançamentos chegam juntos. Manutenções em massa direto no banco devem rodar com
   `set local pms.whatsapp_off = 'on'` para não disparar avisos. Chaves de envio ficam só no
   banco (coluna sem leitura pelo navegador); nunca versionar ou imprimir.
+
+## Navegação coerente em TODAS as telas (regra permanente)
+
+- Toda tela do site mostra, fixos no topo enquanto o usuário rola, o botão **← Voltar**
+  (sempre para a tela PAI, nunca para o "início" genérico) e os **breadcrumbs** completos
+  até a **Visão geral** (ex.: Visão geral › SECRETARIA DE AGRICULTURA › Controle de Demandas
+  › Grupo). O usuário precisa saber sempre onde está e como subir um nível.
+- Implementação central: `js/nav-trail.js` + `css/nav-trail.css`. O caminho sai da rota
+  (`#view/…`, `#module/…`, `#activity/…`, `#page/…`, `#secretaria/…`). Tela nova deve
+  registrar a rota com `rememberWorkspace(...)` (e `workspacePages[id]` para `#page/`); tela
+  que não muda a rota (ex.: mapa de um grupo) chama `setNavLeaf({selector, icon, label, back})`.
+  Não criar botões "← Voltar" próprios no topo das telas: a barra já faz isso (os antigos são
+  ocultados automaticamente).
+- Secretaria com duas ou mais áreas (ex.: Agricultura: Controle de Demandas + Locais de
+  Captação de Água) tem a tela de escolha como pai dessas áreas.
+- Elementos fixos de cada tela (`.top-actions-fixed`, abas) grudam logo abaixo da barra
+  (`--nav-trail-top` + `--nav-trail-h`). No celular o `body` usa `overflow-x:clip`: nunca
+  voltar para `overflow-x:hidden`, que quebra todo `position:sticky`.
+- Janelas de edição mantêm no topo fixo o contexto (nome + caminho; em usuários, "NOME · login").
+- Teste obrigatório: `NODE_PATH=$(npm root -g) W=390 node tests/nav-trail.browser.cjs` (e `W=1366`).
+
+## Esqueci minha senha (e-mail)
+
+- Login usa e-mails sintéticos; por isso o reset é próprio: função `password-reset`
+  (verify_jwt=false) envia link de uso único (30 min, hash SHA-256 em `password_reset_tokens`)
+  para `users.email_contato`, para `login.html#redefinir-senha/<token>`. Não existe "criar acesso".
+- SMTP em `mail_settings` (admin); a senha do e-mail fica só no Vault (`pms_set_smtp_password`),
+  lida apenas pela função (`pms_smtp_password`, service_role). Nunca versionar ou imprimir.

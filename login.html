@@ -22,7 +22,7 @@ body{min-height:100vh;background:linear-gradient(105deg,#071827 0%,#0a3b38 42%,#
 .logo-txt{font-size:12px;font-weight:750;color:#617184;letter-spacing:.8px;text-transform:uppercase;line-height:1.35}
 .logo-txt strong{display:block;font-size:18px;color:#18324a;letter-spacing:.1px}
 h2{text-align:center;font-size:25px;font-weight:850;color:#142337;margin-bottom:7px;letter-spacing:-.035em}
-.sub{text-align:center;font-size:14px;color:#718096;margin-bottom:29px}
+.sub{text-align:center;font-size:14px;color:#56657a;margin-bottom:29px}
 .field{margin-bottom:17px;position:relative}
 .field label{display:block;font-size:12px;font-weight:750;color:#526174;margin-bottom:7px;letter-spacing:.3px;text-transform:uppercase}
 .field input{width:100%;min-height:48px;background:#f8fafc;border:1px solid #cbd7e2;border-radius:11px;color:#172033;padding:12px 15px;font-size:15px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;letter-spacing:.2px}
@@ -33,7 +33,18 @@ h2{text-align:center;font-size:25px;font-weight:850;color:#142337;margin-bottom:
 .btn:active{transform:scale(.985)}
 .btn:disabled{opacity:.55;cursor:not-allowed}
 .err{background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:9px;padding:11px 14px;font-size:13px;text-align:center;margin-top:14px;display:none}
-.footer{text-align:center;font-size:11px;color:#94a3b8;margin-top:29px}
+.footer{text-align:center;font-size:11px;color:#5d6b7c;margin-top:29px}
+.linkbtn{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 10px;border:0;background:none;color:#11653f;font-size:14px;font-weight:750;cursor:pointer;border-radius:8px}
+.linkbtn:hover{background:#eef8f2;text-decoration:underline}.linkbtn:focus-visible{outline:3px solid #2563eb}
+.view[hidden]{display:none}
+.ok{background:#ecfdf3;border:1px solid #a7e3bf;color:#11553f;border-radius:9px;padding:12px 14px;font-size:14px;line-height:1.45;margin-top:14px}
+.ok[hidden]{display:none}
+.hint{font-size:13px;color:#46566a;line-height:1.5;margin:-14px 0 20px;text-align:center}
+.who{display:flex;justify-content:center;gap:8px;align-items:center;margin:6px 0 20px;flex-wrap:wrap}
+.who b{font-size:15px;color:#142337}.who code{font-size:13px;font-weight:700;color:#0b4f8a;background:#e6f0f8;border:1px solid #b9d3e8;border-radius:999px;padding:3px 10px}
+.pass-row{display:flex;gap:8px}.pass-row input{flex:1;font-family:ui-monospace,Menlo,Consolas,monospace}
+.pass-row button{flex:0 0 auto;min-height:48px;padding:0 12px;border:1px solid #cbd7e2;border-radius:11px;background:#fff;color:#11653f;font-weight:800;cursor:pointer}
+.meter{font-size:12px;font-weight:700;margin-top:6px;min-height:16px}.meter.weak{color:#a1261b}.meter.okk{color:#7a4a00}.meter.strong{color:#11653f}
 @media(max-width:700px){body{background:linear-gradient(180deg,#071827 0,#0a3b38 25%,#eef3f7 25%);padding:18px}.card{padding:34px 25px;border-radius:20px}}
 </style>
 </head>
@@ -43,20 +54,46 @@ h2{text-align:center;font-size:25px;font-weight:850;color:#142337;margin-bottom:
     <img src="img/logo_sertania.png" alt="Logo PMS">
     <div class="logo-txt"><span>Prefeitura Municipal de</span><strong>Sertânia</strong></div>
   </div>
+  <section class="view" id="v-login">
   <h2>Bem-vindo</h2>
   <p class="sub">Sistema de Gestão de Atividades</p>
-
   <div class="field">
-    <label>Usuário</label>
+    <label for="usuario">Usuário</label>
     <input type="text" id="usuario" autocomplete="username" autocapitalize="off" spellcheck="false">
   </div>
   <div class="field">
-    <label>Senha</label>
+    <label for="senha">Senha</label>
     <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
   </div>
   <button class="btn" id="btn" onclick="doLogin()">Entrar</button>
-  <div style="text-align:center;margin-top:12px"><a href="#" onclick="recuperarSenha();return false;" style="color:#16803d;font-size:13px;font-weight:650;text-decoration:none">🔑 Esqueci minha senha</a></div>
-  <div class="err" id="err"></div>
+  <div style="text-align:center;margin-top:12px"><button type="button" class="linkbtn" onclick="showForgot()">🔑 Esqueci minha senha</button></div>
+  </section>
+
+  <section class="view" id="v-forgot" hidden>
+  <h2>Esqueci minha senha</h2>
+  <p class="sub">Enviaremos um link para o e-mail de contato cadastrado em Usuários e acessos.</p>
+  <div class="field">
+    <label for="f-usuario">Seu usuário</label>
+    <input type="text" id="f-usuario" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="Ex.: claudiaif">
+  </div>
+  <button class="btn" id="f-btn" onclick="requestReset()">✉️ Enviar link por e-mail</button>
+  <div class="ok" id="f-ok" role="status" hidden></div>
+  <div style="text-align:center;margin-top:12px"><button type="button" class="linkbtn" onclick="showLogin()">← Voltar ao login</button></div>
+  </section>
+
+  <section class="view" id="v-reset" hidden>
+  <h2>Criar nova senha</h2>
+  <div class="who" id="r-who"></div>
+  <div class="field">
+    <label for="r-senha">Nova senha <span style="text-transform:none;font-weight:600">(fica visível para você conferir)</span></label>
+    <div class="pass-row"><input type="text" id="r-senha" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Mínimo 6 caracteres" oninput="paintMeter()"><button type="button" onclick="suggest()" title="Sugerir uma senha fácil de lembrar">🎲 Sugerir</button></div>
+    <div class="meter" id="r-meter" aria-live="polite"></div>
+  </div>
+  <button class="btn" id="r-btn" onclick="confirmReset()">Salvar nova senha</button>
+  <div class="ok" id="r-ok" role="status" hidden></div>
+  <div style="text-align:center;margin-top:12px"><button type="button" class="linkbtn" onclick="showLogin(true)">← Ir para o login</button></div>
+  </section>
+  <div class="err" id="err" role="alert"></div>
   <div class="footer">Gestão de Atividades PMS &copy; 2026</div>
 </div>
 
@@ -69,8 +106,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Se já logado, vai direto para o app
-supabase.auth.getSession().then(({ data })=>{ if(data.session) location.href='index.html'; });
-supabase.auth.onAuthStateChange((event, session)=>{ if(session) location.href='index.html'; });
+const resetRoute=()=>(location.hash.match(/^#redefinir-senha\/([A-Za-z0-9_-]{20,})/)||[])[1]||'';
+supabase.auth.getSession().then(({ data })=>{ if(data.session&&!resetRoute()) location.href='index.html'; });
+supabase.auth.onAuthStateChange((event, session)=>{ if(session&&!resetRoute()&&!window.__resetting) location.href='index.html'; });
 
 // Converte usuário → email interno
 function toEmail(user){return loginEmails(user)[0];}
@@ -103,21 +141,64 @@ window.doLogin=async function(){
   }
 };
 
-window.recuperarSenha=async function(){
-  const user=document.getElementById('usuario').value.trim();
-  const err=document.getElementById('err');
-  if(!user){showErr('Digite seu usuário para recuperar a senha.');return;}
-  try{
-    const { error } = await supabase.auth.resetPasswordForEmail(toEmail(user));
-    if(error) throw error;
-    err.style.color='#34d399';err.style.borderColor='rgba(16,185,129,.3)';err.style.background='rgba(16,185,129,.1)';
-    showErr('✅ E-mail de recuperação enviado! Verifique sua caixa de entrada.');
-  }catch(e){
-    const msg=e.message||e.code||'';
-    const msgs={'User not found':'Usuário não encontrado.','too-many-requests':'Muitas tentativas. Aguarde.'};
-    showErr(msgs[msg]||'Erro ao enviar e-mail. ('+msg+')');
-  }
+// ── Esqueci minha senha (link de uso único no e-mail de contato) ──
+const REASONS={
+  nao_configurado:'O envio de e-mails ainda não foi configurado. Peça ao administrador para trocar sua senha.',
+  nao_encontrado:'Usuário não encontrado. Confira como você digita no login.',
+  sem_email:'Seu usuário não tem e-mail de contato cadastrado. Peça ao administrador para cadastrar ou trocar sua senha.',
+  limite:'Muitos pedidos seguidos. Aguarde uma hora ou peça ao administrador.',
+  smtp_login:'O servidor de e-mail recusou o envio. Avise o administrador.',
+  invalido:'Este link já foi usado ou expirou. Peça um novo em “Esqueci minha senha”.',
+  senha_curta:'A senha precisa ter pelo menos 6 caracteres.',
+  falha:'Não foi possível concluir agora. Tente de novo em instantes.'
 };
+const call=async body=>{const {data,error}=await supabase.functions.invoke('password-reset',{body});if(error)throw error;return data||{};};
+const view=id=>{document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!==id);hideErr();};
+function hideErr(){const e=document.getElementById('err');e.style.display='none';}
+window.showForgot=()=>{view('v-forgot');const u=document.getElementById('usuario').value.trim();const f=document.getElementById('f-usuario');if(u)f.value=u;document.getElementById('f-ok').hidden=true;f.focus();};
+window.showLogin=(clear)=>{if(clear)history.replaceState(null,'',location.pathname);view('v-login');document.getElementById('usuario').focus();};
+window.requestReset=async function(){
+  const login=document.getElementById('f-usuario').value.trim(),btn=document.getElementById('f-btn'),ok=document.getElementById('f-ok');
+  if(!login){showErr('Digite seu usuário.');return;}
+  btn.disabled=true;btn.textContent='Enviando…';hideErr();ok.hidden=true;
+  try{
+    const r=await call({action:'request',login});
+    if(r.ok){ok.hidden=false;ok.innerHTML=`✅ Link enviado para <b>${r.sent_to}</b>.<br>Abra o e-mail (confira também o spam) e toque em <b>Criar nova senha</b>. O link vale por 30 minutos.`;}
+    else showErr(REASONS[r.reason]||REASONS.falha);
+  }catch(e){showErr(REASONS.falha);}
+  finally{btn.disabled=false;btn.textContent='✉️ Enviar link por e-mail';}
+};
+window.suggest=function(){const w=['sol','rio','mar','pipa','caju','ipe','serra','lua','vento','barro','milho','agua','cacto','jatoba','umbu'];const r=()=>crypto.getRandomValues(new Uint32Array(1))[0];const i=document.getElementById('r-senha');i.value=`${w[r()%w.length]}-${w[r()%w.length]}-${10+r()%90}`;paintMeter();i.focus();};
+window.paintMeter=function(){const v=document.getElementById('r-senha').value,m=document.getElementById('r-meter');if(!v){m.textContent='';m.className='meter';return;}const k=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(x=>x.test(v)).length;const l=v.length<6?0:(v.length>=10&&k>=2)||v.length>=14?2:1;m.className='meter '+['weak','okk','strong'][l];m.textContent=['Curta demais · mínimo 6','Senha aceitável','Senha forte'][l]+` · ${v.length} caracteres`;};
+async function openReset(token){
+  view('v-reset');
+  const who=document.getElementById('r-who'),btn=document.getElementById('r-btn');
+  who.textContent='Conferindo o link…';btn.disabled=true;
+  try{
+    const r=await call({action:'check',token});
+    if(!r.ok){who.textContent='';showErr(REASONS[r.reason]||REASONS.invalido);return;}
+    who.innerHTML='';const b=document.createElement('b');b.textContent=r.name||'Usuário';const c=document.createElement('code');c.textContent=r.login;who.append(b,c);
+    btn.disabled=false;document.getElementById('r-senha').focus();
+  }catch(e){who.textContent='';showErr(REASONS.falha);}
+}
+window.confirmReset=async function(){
+  const token=resetRoute(),password=document.getElementById('r-senha').value,btn=document.getElementById('r-btn');
+  if(password.length<6){showErr(REASONS.senha_curta);return;}
+  btn.disabled=true;btn.textContent='Salvando…';hideErr();
+  try{
+    const r=await call({action:'confirm',token,password});
+    if(!r.ok){showErr(REASONS[r.reason]||REASONS.falha);btn.disabled=false;btn.textContent='Salvar nova senha';return;}
+    const ok=document.getElementById('r-ok');ok.hidden=false;ok.innerHTML='✅ Senha alterada! Entrando…';btn.hidden=true;
+    window.__resetting=true;history.replaceState(null,'',location.pathname);
+    const {error}=await signInUsername(supabase.auth,r.login,password);
+    if(error){ok.innerHTML='✅ Senha alterada! Agora entre com o usuário <b></b> e a nova senha.';ok.querySelector('b').textContent=r.login;document.getElementById('usuario').value=r.login;setTimeout(()=>view('v-login'),1800);}
+    else setTimeout(()=>location.href='index.html',500);
+  }catch(e){showErr(REASONS.falha);btn.disabled=false;btn.textContent='Salvar nova senha';}
+};
+if(resetRoute())openReset(resetRoute());else view('v-login');
+window.addEventListener('hashchange',()=>{if(resetRoute())openReset(resetRoute());});
+document.getElementById('f-usuario').addEventListener('keydown',e=>{if(e.key==='Enter')window.requestReset();});
+document.getElementById('r-senha').addEventListener('keydown',e=>{if(e.key==='Enter')window.confirmReset();});
 function showErr(m){const e=document.getElementById('err');e.textContent=m;e.style.display='block';}
 document.getElementById('senha').addEventListener('keydown',e=>{if(e.key==='Enter')window.doLogin();});
 document.getElementById('usuario').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('senha').focus();});

@@ -27,3 +27,16 @@
 .user-pass-meter.is-weak{color:#a1261b}.user-pass-meter.is-ok{color:#7a4a00}.user-pass-meter.is-strong{color:#11653f}
 @media(max-width:650px){.user-password-edit{flex-wrap:wrap}.user-password-edit input{flex:1 1 100%}.perm-card-sum{order:5}}
 #modal-body .form-group>label>small{color:#4d6475;font-weight:500}
+/* ✉️ E-mail para "Esqueci minha senha" */
+.mail-settings>summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mail-badge{font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px}.mail-badge.is-on{background:#dcf3e8;color:#11553f}.mail-badge.is-off{background:#fff1d6;color:#7a4a00}
+.mail-settings-box{display:grid;gap:12px;padding:12px 2px}
+.mail-intro,.mail-help,.mail-safe,.mail-muted,.mail-warn{margin:0;font-size:13px;line-height:1.5;color:#33475a}
+.mail-safe{color:#11553f;font-weight:600}.mail-warn{color:#7a1d16;font-weight:600}.mail-muted{color:#4d6475}
+.mail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mail-grid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:#28465c;min-width:0}
+.mail-grid :is(input,select){min-height:44px;padding:8px 10px;border:1px solid #b7cdda;border-radius:9px;background:#fff;color:#12324a;font-size:14px;width:100%}
+.mail-ok{font-style:normal;color:#11653f;font-weight:800}
+.mail-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.mail-test{display:flex;gap:8px;flex:1 1 280px;justify-content:flex-end}.mail-test input{flex:1;min-width:0;min-height:44px;padding:8px 10px;border:1px solid #b7cdda;border-radius:9px;font-size:14px}
+@media(max-width:760px){.mail-grid{grid-template-columns:1fr}.mail-test{justify-content:stretch}}
