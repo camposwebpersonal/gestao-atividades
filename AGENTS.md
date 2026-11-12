@@ -155,3 +155,10 @@
   nem permissões). Ao mudar `access-scope.js`, `NOME_MODULO` ou `_md.modFor`, atualizar as funções
   `pms_group_module`/`pms_group_allows` (migração 20261112180000) e repetir a verificação da
   migração 20261112180500 (Cláudia 1 grupo, admin tudo, Olavo 8, sem login nada).
+
+## Senhas vazadas (regra permanente)
+
+- Toda senha criada ou trocada passa por `js/pwned-check.js` (Pwned Passwords, k-anonimato: só
+  5 caracteres do SHA-1 saem do aparelho). Vale em criar usuário, alterar senha e "Esqueci minha
+  senha" (também conferido na função `password-reset`). Se a consulta falhar, NÃO bloqueia.
+  Teste: `tests/pwned-password.browser.cjs` e `tests/password-reset.browser.cjs`.

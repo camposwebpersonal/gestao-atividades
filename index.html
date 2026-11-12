@@ -536,6 +536,7 @@ import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
 import './js/modal-context.js?v=2';
 import './js/nav-trail.js?v=2';
 import './js/mail-settings.js?v=1';
+import './js/pwned-check.js?v=1';
 import './js/whatsapp-avisos.js?v=3';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
@@ -2914,6 +2915,12 @@ window._suggestPassword=function(inputId){
   const input=document.getElementById(inputId);if(!input)return;
   input.value=value;input.dispatchEvent(new Event('input'));input.focus();input.select();
 };
+window._paintPassStrengthLeak=function(input){
+  clearTimeout(input.__leakT);const v=input.value||'';if(v.length<6)return;
+  input.__leakT=setTimeout(async()=>{const r=await window.checkPwnedPassword?.(v);if(input.value!==v)return;const box=document.querySelector(`.user-pass-meter[data-for="${input.id}"]`);if(!box)return;
+    if(r?.pwned){box.className='user-pass-meter is-weak';box.textContent='⚠️ '+window.pwnedMessage(r.count);}
+    else if(r?.checked&&!/vazamento/.test(box.textContent))box.textContent+=' · ✓ não aparece em vazamentos';},600);
+};
 window._paintPassStrength=function(input){
   const box=document.querySelector(`.user-pass-meter[data-for="${input.id}"]`);if(!box)return;
   const v=input.value||'';
@@ -2921,7 +2928,7 @@ window._paintPassStrength=function(input){
   const kinds=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(r=>r.test(v)).length;
   const level=v.length<6?0:(v.length>=10&&kinds>=2)||v.length>=14?2:1;
   const text=['Curta demais · mínimo 6 caracteres','Senha aceitável','Senha forte'][level];
-  box.className='user-pass-meter is-'+['weak','ok','strong'][level];box.dataset.for=input.id;box.textContent=`${text} · ${v.length} caracteres`;
+  box.className='user-pass-meter is-'+['weak','ok','strong'][level];box.dataset.for=input.id;box.textContent=`${text} · ${v.length} caracteres`;window._paintPassStrengthLeak(input);
 };
 window.saveUser=async function(id){
   if(window._savingUser){toast('Aguarde a operação atual','warn');return;}
@@ -2953,6 +2960,7 @@ window.saveUser=async function(id){
     if(!user||user.length<2){toast('Usuário inválido. Use pelo menos 2 letras/números.','error');return;}
     const password=document.getElementById('usr-password')?.value||'';
     if(password.length<6){toast('A senha deve ter pelo menos 6 caracteres','error');return;}
+    {const leak=await window.checkPwnedPassword?.(password);if(leak?.pwned){toast(window.pwnedMessage(leak.count),'error',8000);document.getElementById('usr-password')?.focus();return;}}
     const email=_toEmail(user);
     const existing=(window.S&&S.users||[]).find(u=>normalizeUsername(_usernameFromEmail(u.email))===user);
     if(existing){toast('Este nome de usuário já existe no cadastro. Escolha outro.','error');return;}
@@ -2987,6 +2995,7 @@ window.changeUserPassword=async function(id){
   const input=source==='card'?document.getElementById('usr-nova-senha-'+id):document.getElementById('usr-nova-senha');
   const pwd=(input?.value||'').trim();
   if(pwd.length<6){toast('A nova senha deve ter pelo menos 6 caracteres','error');return false;}
+  {const leak=await window.checkPwnedPassword?.(pwd);if(leak?.pwned){toast(window.pwnedMessage(leak.count),'error',8000);input?.focus();return false;}}
   const serviceKey=localStorage.getItem('sb_service_role_key')?.trim();
   try{
     if(serviceKey)await updateUserPassword(u.id,pwd,serviceKey);

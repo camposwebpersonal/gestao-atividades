@@ -156,6 +156,7 @@ const REASONS={
   smtp_login:'O servidor de e-mail recusou o envio. Avise o administrador.',
   invalido:'Este link já foi usado ou expirou. Peça um novo em “Esqueci minha senha”.',
   senha_curta:'A senha precisa ter pelo menos 6 caracteres.',
+  senha_vazada:'Essa senha já apareceu em vazamentos na internet. Escolha outra — use 🎲 Sugerir.',
   falha:'Não foi possível concluir agora. Tente de novo em instantes.'
 };
 const call=async body=>{const {data,error}=await supabase.functions.invoke('password-reset',{body});if(error)throw error;return data||{};};
@@ -175,7 +176,7 @@ window.requestReset=async function(){
   finally{btn.disabled=false;btn.textContent='✉️ Enviar link por e-mail';}
 };
 window.suggest=function(){const w=['sol','rio','mar','pipa','caju','ipe','serra','lua','vento','barro','milho','agua','cacto','jatoba','umbu'];const r=()=>crypto.getRandomValues(new Uint32Array(1))[0];const i=document.getElementById('r-senha');i.value=`${w[r()%w.length]}-${w[r()%w.length]}-${10+r()%90}`;paintMeter();i.focus();};
-window.paintMeter=function(){const v=document.getElementById('r-senha').value,m=document.getElementById('r-meter');if(!v){m.textContent='';m.className='meter';return;}const k=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(x=>x.test(v)).length;const l=v.length<6?0:(v.length>=10&&k>=2)||v.length>=14?2:1;m.className='meter '+['weak','okk','strong'][l];m.textContent=['Curta demais · mínimo 6','Senha aceitável','Senha forte'][l]+` · ${v.length} caracteres`;};
+window.paintMeter=function(){const v=document.getElementById('r-senha').value,m=document.getElementById('r-meter');if(!v){m.textContent='';m.className='meter';return;}const k=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(x=>x.test(v)).length;const l=v.length<6?0:(v.length>=10&&k>=2)||v.length>=14?2:1;m.className='meter '+['weak','okk','strong'][l];m.textContent=['Curta demais · mínimo 6','Senha aceitável','Senha forte'][l]+` · ${v.length} caracteres`;clearTimeout(window.__leakT);if(v.length>=6)window.__leakT=setTimeout(async()=>{try{const {checkPwnedPassword,pwnedMessage}=await import('./js/pwned-check.js?v=1');const r=await checkPwnedPassword(v);if(document.getElementById('r-senha').value!==v)return;if(r.pwned){m.className='meter weak';m.textContent='⚠️ '+pwnedMessage(r.count);}else if(r.checked)m.textContent+=' · ✓ não aparece em vazamentos';}catch(_){}},600);};
 async function openReset(token){
   view('v-reset');
   const who=document.getElementById('r-who'),btn=document.getElementById('r-btn');
@@ -190,7 +191,9 @@ async function openReset(token){
 window.confirmReset=async function(){
   const token=resetRoute(),password=document.getElementById('r-senha').value,btn=document.getElementById('r-btn');
   if(password.length<6){showErr(REASONS.senha_curta);return;}
-  btn.disabled=true;btn.textContent='Salvando…';hideErr();
+  btn.disabled=true;btn.textContent='Conferindo…';hideErr();
+  try{const {checkPwnedPassword,pwnedMessage}=await import('./js/pwned-check.js?v=1');const leak=await checkPwnedPassword(password);if(leak.pwned){showErr(pwnedMessage(leak.count));btn.disabled=false;btn.textContent='Salvar nova senha';return;}}catch(_){}
+  btn.textContent='Salvando…';
   try{
     const r=await call({action:'confirm',token,password});
     if(!r.ok){showErr(REASONS[r.reason]||REASONS.falha);btn.disabled=false;btn.textContent='Salvar nova senha';return;}

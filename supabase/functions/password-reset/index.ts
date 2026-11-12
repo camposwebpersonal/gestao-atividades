@@ -77,6 +77,18 @@ async function issue(user: any, requestedBy: string, ip: string, cfg: any) {
   return {ok: true, sent_to: mask(to)};
 }
 
+// Senha vazada? (Pwned Passwords, k-anonimato; se o serviço falhar, não bloqueia)
+async function pwnedCount(password: string): Promise<number> {
+  try {
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
+    const hash = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${hash.slice(0, 5)}`, {headers: {'Add-Padding': 'true'}, signal: AbortSignal.timeout(4000)});
+    if (!res.ok) return 0;
+    for (const line of (await res.text()).split('\n')) { const [suf, n] = line.trim().split(':'); if (suf === hash.slice(5)) return Number(n) || 0; }
+  } catch { /* falha de rede: não bloqueia */ }
+  return 0;
+}
+
 async function tokenRow(token: string) {
   if (!token || token.length < 20) return null;
   const {data} = await db.from('password_reset_tokens').select('*').eq('token_hash', await sha256(token)).maybeSingle();
@@ -123,6 +135,8 @@ Deno.serve(async req => {
       case 'confirm': {
         const password = String(body.password || '');
         if (password.length < 6) return json({ok: false, reason: 'senha_curta'});
+        const leaks = await pwnedCount(password);
+        if (leaks > 0) return json({ok: false, reason: 'senha_vazada', count: leaks});
         const row = await tokenRow(body.token);
         if (!row) return json({ok: false, reason: 'invalido'});
         // Marca como usado antes de trocar (evita uso duplo em cliques repetidos).

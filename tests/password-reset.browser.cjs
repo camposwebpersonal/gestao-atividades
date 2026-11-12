@@ -20,6 +20,8 @@ export function createClient(){return {
   page.setDefaultTimeout(8000);
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.route('**/esm.sh/**', r => r.fulfill({contentType: 'application/javascript', body: FAKE}));
+  // Base de senhas vazadas simulada: "123456" está vazada; o resto não.
+  await page.route('https://api.pwnedpasswords.com/range/**', r => r.fulfill({contentType: 'text/plain', body: r.request().url().endsWith('7C4A8') ? 'D09CA3762AF61E59520943DC26494F8941B:37359195\r\n0000000000000000000000000000000000A:0' : '0000000000000000000000000000000000B:1'}));
   await page.goto('http://127.0.0.1:8090/login.html');
   // Olho no campo de senha: mostra e oculta
   await page.fill('#senha', 'segredo123');
@@ -46,6 +48,12 @@ export function createClient(){return {
   await page.waitForSelector('#r-who code');
   assert.equal(await page.textContent('#r-who code'), 'claudiaif');
   assert.equal(await page.getAttribute('#r-senha', 'type'), 'text');
+  // senha vazada é recusada antes de chamar o servidor
+  await page.fill('#r-senha', '123456');
+  await page.click('#r-btn');
+  await page.waitForSelector('#err', {state: 'visible'});
+  assert.match(await page.textContent('#err'), /vazamentos/);
+  assert.equal(await page.evaluate(() => globalThis.__calls.some(c => c.body.action === 'confirm')), false);
   await page.click('text=🎲 Sugerir');
   assert.match(await page.textContent('#r-meter'), /caracteres/);
   await page.screenshot({path: os.tmpdir() + `/reset-new-${W}.png`});

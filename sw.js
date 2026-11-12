@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v193';
+const CACHE_NAME = 'gestao-pms-v194';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -65,6 +65,7 @@ const STATIC_ASSETS = [
   'js/search-results.js',
   'js/nav-trail.js',
   'js/mail-settings.js',
+  'js/pwned-check.js',
   'css/nav-trail.css',
   'css/quantitativo.css',
   'js/water-points.js',
@@ -159,6 +160,8 @@ self.addEventListener('fetch', event => {
   const {request} = event;
   if(request.method !== 'GET') return;
   const url = new URL(request.url);
+  // Consulta de senhas vazadas: sempre direto na rede, nunca em cache.
+  if(url.hostname === 'api.pwnedpasswords.com') return;
 
   // Firebase Firestore/API e Supabase: network-first, sem cache
   if(url.hostname.includes('googleapis.com') || url.hostname.includes('firebase') || url.hostname.includes('supabase.co')){
