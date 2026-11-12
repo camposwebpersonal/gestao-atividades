@@ -147,3 +147,11 @@
   acesso que o site usa; `public.users` só é alterada por administrador (`pms_user_is_admin()`).
   Tabela nova já nasce com RLS e política `to authenticated` — nunca `to anon` nem RLS desligado.
   Conferir com o assistente de segurança do Supabase (get_advisors) após cada migração.
+- Fase 2 (12/11/2026): o banco confere as MESMAS permissões do site. `pms_my_group_ids()`
+  (espelho de `groupPermission` + `_md.modFor`) decide quais grupos cada usuário lê/grava;
+  `items`, `subitems`, `field_templates`, `contas`, `estoque`, `requisicoes`, `chamados`,
+  `galeria` e `entity_images` seguem o grupo; extintores seguem o módulo; `users` mostra só a
+  própria linha (admin vê todas) e o resto vem de `pms_users_directory()` (sem e-mail de contato
+  nem permissões). Ao mudar `access-scope.js`, `NOME_MODULO` ou `_md.modFor`, atualizar as funções
+  `pms_group_module`/`pms_group_allows` (migração 20261112180000) e repetir a verificação da
+  migração 20261112180500 (Cláudia 1 grupo, admin tudo, Olavo 8, sem login nada).

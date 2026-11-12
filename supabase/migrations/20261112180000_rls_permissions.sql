@@ -121,51 +121,8 @@ revoke all on function public.pms_my_group_ids() from public, anon;
 revoke all on function public.pms_my_module_allows(text) from public, anon;
 grant execute on function public.pms_my_perms(), public.pms_my_group_ids(), public.pms_my_module_allows(text) to authenticated;
 
--- ── Grupos ──
-drop policy if exists atividades_logados on public.atividades;
-create policy atividades_ver on public.atividades for select to authenticated
-  using (id = any((select public.pms_my_group_ids())) or created_by = (select auth.uid())::text);
-create policy atividades_criar on public.atividades for insert to authenticated with check (true); -- gatilho exige pode_criar_grupos
-create policy atividades_alterar on public.atividades for update to authenticated
-  using (id = any((select public.pms_my_group_ids())))
-  with check (id = any((select public.pms_my_group_ids())) or created_by = (select auth.uid())::text);
-create policy atividades_excluir on public.atividades for delete to authenticated
-  using (id = any((select public.pms_my_group_ids()))); -- gatilho exige pode_excluir_grupos
-
--- ── Tabelas ligadas a um grupo por atividade_id ──
-do $$
-declare t text;
-begin
-  foreach t in array array['items','subitems','field_templates','contas','chamados','galeria'] loop
-    execute format('drop policy if exists %I on public.%I', t||'_logados', t);
-    execute format('create policy %I on public.%I for all to authenticated using (atividade_id = any((select public.pms_my_group_ids()))) with check (atividade_id = any((select public.pms_my_group_ids())))', t||'_grupo', t);
-  end loop;
-  foreach t in array array['estoque','requisicoes'] loop
-    execute format('drop policy if exists %I on public.%I', t||'_all', t);
-    execute format('create policy %I on public.%I for all to authenticated using (atividade_id = any((select public.pms_my_group_ids()))) with check (atividade_id = any((select public.pms_my_group_ids())))', t||'_grupo', t);
-  end loop;
-end $$;
-
--- ── Imagens: do grupo (activity) ou de um lançamento/subitem visível ──
-drop policy if exists entity_images_logados on public.entity_images;
-create policy entity_images_grupo on public.entity_images for all to authenticated
-  using ((entity_type = 'activity' and entity_id = any((select public.pms_my_group_ids())))
-      or (entity_type <> 'activity' and (exists (select 1 from public.items i where i.id = entity_id) or exists (select 1 from public.subitems s where s.id = entity_id))))
-  with check ((entity_type = 'activity' and entity_id = any((select public.pms_my_group_ids())))
-      or (entity_type <> 'activity' and (exists (select 1 from public.items i where i.id = entity_id) or exists (select 1 from public.subitems s where s.id = entity_id))));
-
--- ── Extintores: módulo Controle de Extintores ──
-drop policy if exists extintores_all on public.extintores;
-drop policy if exists extintor_abas_all on public.extintor_abas;
-create policy extintores_modulo on public.extintores for all to authenticated
-  using ((select public.pms_my_module_allows('extintores'))) with check ((select public.pms_my_module_allows('extintores')));
-create policy extintor_abas_modulo on public.extintor_abas for all to authenticated
-  using ((select public.pms_my_module_allows('extintores'))) with check ((select public.pms_my_module_allows('extintores')));
-
--- ── Usuários: cada um lê só a própria linha completa; admin lê todos ──
-drop policy if exists users_select_logados on public.users;
-create policy users_ver on public.users for select to authenticated
-  using (id = (select auth.uid())::text or (select public.pms_user_is_admin()));
+-- As políticas que usam estas funções estão em 20261112180500_rls_permissions_policies.sql
+-- (aplicadas com ALTER POLICY e verificação automática na mesma transação).
 
 -- Diretório sem dados sensíveis (nome, login e vínculo), para mostrar autores e responsáveis.
 create or replace function public.pms_users_directory()
