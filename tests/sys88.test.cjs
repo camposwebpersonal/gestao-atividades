@@ -18,7 +18,7 @@ test('subsite é responsivo e fica disponível no cache offline',()=>{
   assert.match(page,/name="viewport"/);
   assert.match(css,/@media\(max-width:370px\)/);
   assert.match(sw,/sys88\/index\.html/);
-  assert.match(sw,/gestao-pms-v186/);
+  assert.match(sw,/gestao-pms-v187/);
 });
 
 test('o score 877 aparece em um gráfico acessível e responsivo',()=>{

@@ -9,3 +9,20 @@
 .user-general-permissions-grid .permission-supabase-status{grid-column:1/-1;border-color:#8fc9bd;background:linear-gradient(135deg,#f6fffb,#edf9f5)}.user-general-permissions-grid .permission-supabase-status:has(input:checked){border-color:#087e68;background:#e8f8f2;box-shadow:0 0 0 2px rgba(8,126,104,.1)}.user-general-permissions-grid .permission-supabase-status input:disabled{cursor:not-allowed;opacity:.75}.user-general-permissions-grid .permission-supabase-status:has(input:disabled){cursor:default}
 .user-general-permissions-grid .permission-create-items{border-color:#9ccbd9}.user-general-permissions-grid .permission-delete-items:has(input:checked){border-color:#d18b72;background:#fff8f3}
 @media(max-width:650px){.admin-permission-module>.admin-permission-row,.permission-scope-row{align-items:flex-start;flex-direction:column}.permission-checks{align-self:stretch;justify-content:flex-end}.permission-groups{margin-left:8px}.context-locked-field>b{display:none}.user-general-permissions-grid{grid-template-columns:1fr}.user-general-permissions-grid .permission-trash-access,.user-general-permissions-grid .permission-supabase-status{grid-column:auto}.user-general-permissions-heading>b{display:none}}
+/* Secretarias como cards recolhíveis (fechados por padrão) */
+.perm-card-tools{display:flex;justify-content:flex-end;gap:12px;padding:0 12px 6px}
+.perm-card{margin:0 0 8px;border:1px solid #cddbe6;border-radius:10px;background:#fff;overflow:hidden}
+.perm-card-toggle{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:9px 12px;border:0;background:#f6f9fc;color:#16364d;text-align:left;cursor:pointer;font:inherit;flex-wrap:wrap}
+.perm-card-toggle:hover{background:#edf4fa}.perm-card-toggle:focus-visible{outline:3px solid #2563eb;outline-offset:-3px}
+.perm-card-toggle strong{font-size:13px;flex:1 1 140px;min-width:0;overflow-wrap:anywhere}
+.perm-card-toggle small{font-size:11px;color:#4d6475}
+.perm-card-caret::before{content:'›';display:inline-block;font-size:18px;line-height:1;color:#0b4f8a;transition:transform .16s}
+.perm-card:not(.is-collapsed) .perm-card-caret::before{transform:rotate(90deg)}
+.perm-card-sum{font-style:normal;font-size:11px;font-weight:750;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.perm-card-sum.is-all{background:#dcf3e8;color:#11553f}.perm-card-sum.is-some{background:#fff1d6;color:#7a4a00}.perm-card-sum.is-none{background:#eef1f4;color:#4a5865}
+.perm-card-body{padding:4px 10px 10px;border-top:1px solid #e3ebf1}.perm-card-body[hidden]{display:none}
+.user-password-inline small{font-weight:500;color:#4d6475;margin-left:4px}
+.user-password-edit input#usr-nova-senha,.user-password-edit input#usr-password{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.02em}
+.user-pass-meter{min-height:16px;margin-top:4px;font-size:11px;font-weight:700}
+.user-pass-meter.is-weak{color:#a1261b}.user-pass-meter.is-ok{color:#7a4a00}.user-pass-meter.is-strong{color:#11653f}
+@media(max-width:650px){.user-password-edit{flex-wrap:wrap}.user-password-edit input{flex:1 1 100%}.perm-card-sum{order:5}}

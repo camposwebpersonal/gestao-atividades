@@ -3,7 +3,7 @@
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const EDIT_TITLE = /(✏️|➕|🆕|🧯|editar|novo|nova|lançamento)/i;
 const NAME_FIELDS = '#it-name,#wp-name,input[id$="-name"],input[id$="-nome"],input[id$="-descricao"],input[id$="-desc"],input[name="nome"],input[name="name"]';
-let explicit = false, bound = null;
+let explicit = false, bound = null, boundSuffix = null;
 
 function host() {
   const head = document.querySelector('#modal-ov .modal-head > div');
@@ -28,9 +28,10 @@ export function groupCrumbs(group, secretariaId) {
   return [sec && {icon: '🏛️', label: sec.name, kind: 'sec'}, {icon: '📁', label: group.name, kind: 'group'}].filter(Boolean);
 }
 
-function render({name = '', nameInput = null, crumbs = [], placeholder = 'Novo lançamento'} = {}) {
+function render({name = '', nameInput = null, crumbs = [], placeholder = 'Novo lançamento', suffixInput = null, suffix = '', suffixPrefix = ''} = {}) {
   const el = host(); if (!el) return;
   if (bound) { bound.input.removeEventListener('input', bound.fn); bound = null; }
+  if (boundSuffix) { boundSuffix.input.removeEventListener('input', boundSuffix.fn); boundSuffix = null; }
   crumbs = crumbs.filter(c => c && c.label);
   const input = typeof nameInput === 'string' ? document.getElementById(nameInput) : nameInput;
   if (!name && !input && !crumbs.length) { el.hidden = true; el.innerHTML = ''; return; }
@@ -41,6 +42,17 @@ function render({name = '', nameInput = null, crumbs = [], placeholder = 'Novo l
   paint(input ? input.value || name : name);
   if (!input && !name) nameEl.remove();
   if (input) { const fn = () => paint(input.value); input.addEventListener('input', fn); bound = {input, fn}; }
+  // Complemento ao lado do nome (ex.: login do usuário "CLAUDIA · claudiaif").
+  const sInput = typeof suffixInput === 'string' ? document.getElementById(suffixInput) : suffixInput;
+  if (sInput || suffix) {
+    const row = document.createElement('div'); row.className = 'modal-ctx-line';
+    const nameNode = el.querySelector('.modal-ctx-name');
+    if (nameNode) { el.insertBefore(row, nameNode); row.appendChild(nameNode); } else el.prepend(row);
+    const tag = document.createElement('span'); tag.className = 'modal-ctx-suffix'; row.appendChild(tag);
+    const paintS = value => { const v = String(value || '').trim(); tag.textContent = v ? `${suffixPrefix}${v}` : ''; tag.hidden = !v; tag.title = v; };
+    paintS(sInput ? sInput.value || suffix : suffix);
+    if (sInput) { const fn = () => paintS(sInput.value); sInput.addEventListener('input', fn); boundSuffix = {input: sInput, fn}; }
+  }
 }
 
 /** Define o contexto da janela aberta agora (chamado logo após openModal). */

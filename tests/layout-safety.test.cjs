@@ -38,6 +38,6 @@ test('regras ficam persistidas e a camada entra no cache offline renovado',()=>{
   assert.match(agents,/Nunca usar texto operacional minúsculo/);
   assert.match(agents,/Nunca aceitar elementos sobrepostos/);
   assert.match(agents,/uma secretaria com apenas Controle de Demandas abre diretamente/);
-  assert.match(sw,/gestao-pms-v186/);
+  assert.match(sw,/gestao-pms-v187/);
   assert.match(sw,/css\/layout-safety\.css/);
 });

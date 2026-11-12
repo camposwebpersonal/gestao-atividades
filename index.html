@@ -418,7 +418,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/prefeitura-shell.css?v=78">
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=4">
 <link rel="stylesheet" href="css/module-groups.css?v=1">
-<link rel="stylesheet" href="css/access-permissions.css?v=4">
+<link rel="stylesheet" href="css/access-permissions.css?v=5">
 <link rel="stylesheet" href="css/bulk-archive.css?v=12">
 <link rel="stylesheet" href="css/completed-details.css?v=1">
 <link rel="stylesheet" href="css/trash.css?v=1">
@@ -438,7 +438,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/layout-safety.css?v=2">
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=2">
 <link rel="stylesheet" href="css/multi-nest.css?v=2">
-<link rel="stylesheet" href="css/record-fields.css?v=3">
+<link rel="stylesheet" href="css/record-fields.css?v=4">
 <link rel="stylesheet" href="css/whatsapp-avisos.css?v=1">
 <link rel="stylesheet" href="css/contrast-guard.css?v=3">
 <link rel="preconnect" href="https://images.weserv.nl">
@@ -531,7 +531,7 @@ import {generateDemandPdf} from './js/demand-pdf.js?v=3';
 import {reportDateTime} from './js/demand-report.js?v=3';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=2';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
-import './js/modal-context.js?v=1';
+import './js/modal-context.js?v=2';
 import './js/whatsapp-avisos.js?v=3';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
@@ -2763,19 +2763,26 @@ function _buildPermMatrix(u){
     const groups=S.secs.filter(group=>window.modForSec?.(group)===m.id).sort((x,y)=>(x.name||'').localeCompare(y.name||'','pt-BR'));
     const check=(entry,kind,fallback=false)=>((kind==='acesso'?(entry?.acesso||entry?.gerenciar):entry?.gerenciar)||fallback)?'checked':'';
     const scope=(type,id,label,entry,description='')=>`<div class="permission-scope-row permission-scope-${type}"><div><strong>${esc(label)}</strong>${description?`<small>${esc(description)}</small>`:''}</div><div class="permission-checks"><label><input type="checkbox" data-perm-module="${m.id}" data-perm-scope="${type}" data-perm-id="${esc(id)}" data-perm-kind="acesso" ${check(entry,'acesso',legacy&&a)} onchange="permissionScopeChanged(this)"> Acessar</label><label><input type="checkbox" data-perm-module="${m.id}" data-perm-scope="${type}" data-perm-id="${esc(id)}" data-perm-kind="gerenciar" ${check(entry,'gerenciar',legacy&&g)} onchange="permissionScopeChanged(this)"> Gerenciar</label></div></div>`;
+    // Cada secretaria vira um card recolhível (fechado por padrão): o cabeçalho mostra
+    // o nome, quantos grupos tem e um resumo do que está liberado.
+    const permCard=(title,headScope,body,total,secEntry,liberados)=>{
+      const sum=secEntry?.gerenciar?'Gerencia tudo':secEntry?.acesso?'Acessa tudo':liberados?`${liberados} de ${total} liberado${liberados===1?'':'s'}`:'Nada liberado';
+      const tone=secEntry?.gerenciar||secEntry?.acesso?'all':liberados?'some':'none';
+      return `<section class="permission-secretary perm-card is-collapsed"><button type="button" class="perm-card-toggle" aria-expanded="false" onclick="togglePermCard(this)"><span class="perm-card-caret" aria-hidden="true"></span><strong>${esc(title)}</strong><small>${total} grupo${total===1?'':'s'}</small><em class="perm-card-sum is-${tone}">${esc(sum)}</em></button><div class="perm-card-body" hidden>${headScope?`<header>${headScope}</header>`:''}<div class="permission-groups">${body}</div></div></section>`;
+    };
     let details='';
     if(m.id==='atendimentos'){
       const secretarias=(S.secretarias||[]).filter(s=>s.demandas_ativa||groups.some(group=>group.demanda_secretaria_id===s.id)).sort((x,y)=>(x.name||'').localeCompare(y.name||'','pt-BR'));
       details=secretarias.map(secretaria=>{
         const children=groups.filter(group=>group.demanda_secretaria_id===secretaria.id);
-        return `<section class="permission-secretary"><header>${scope('secretaria',secretaria.id,secretaria.name,mp.secretarias?.[secretaria.id],'Todos os grupos atuais e futuros desta secretaria')}</header><div class="permission-groups">${children.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')||'<p>Nenhum grupo criado ainda.</p>'}</div></section>`;
+        return permCard(secretaria.name,scope('secretaria',secretaria.id,'Toda a secretaria',mp.secretarias?.[secretaria.id],'Todos os grupos atuais e futuros de '+secretaria.name),children.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')||'<p>Nenhum grupo criado ainda.</p>',children.length,mp.secretarias?.[secretaria.id],children.filter(group=>mp.grupos?.[group.id]?.acesso||mp.grupos?.[group.id]?.gerenciar).length);
       }).join('');
       const unassigned=groups.filter(group=>!group.demanda_secretaria_id);
-      if(unassigned.length)details+=`<section class="permission-secretary"><h5>Grupos ainda sem secretaria</h5><div class="permission-groups">${unassigned.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')}</div></section>`;
+      if(unassigned.length)details+=permCard('Grupos ainda sem secretaria','',unassigned.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join(''),unassigned.length,null,unassigned.filter(group=>mp.grupos?.[group.id]?.acesso||mp.grupos?.[group.id]?.gerenciar).length);
     }else{
       details=scope('todos','*','Todos os grupos',mp.todos_grupos,'Inclui automaticamente os grupos criados no futuro')+`<div class="permission-groups">${groups.map(group=>scope('grupo',group.id,group.name,mp.grupos?.[group.id])).join('')||'<p>Nenhum grupo criado ainda.</p>'}</div>`;
     }
-    return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary><div class="permission-scope-list">${details}</div></details></section>`;
+    return `<section class="admin-permission-module" data-permission-module="${m.id}"><div class="admin-permission-row"><div class="permission-module-title"><span>${m.icon}</span><div><strong>${esc(m.label)}</strong><small>${esc(m.desc)}</small></div></div><div class="permission-checks"><label><input type="checkbox" id="perm-${m.id}-acesso" data-perm-module="${m.id}" data-perm-kind="acesso" ${a?'checked':''} onchange="permissionModuleChanged(this)"> Acessar</label><label><input type="checkbox" id="perm-${m.id}-ger" data-perm-module="${m.id}" data-perm-kind="gerenciar" ${g?'checked':''} onchange="permissionModuleChanged(this)"> Gerenciar</label></div></div><details class="permission-details" ${(a||g)?'open':''}><summary>Escolher secretarias e grupos <span>Permissão detalhada</span></summary>${m.id==='atendimentos'?'<div class="perm-card-tools"><button type="button" class="users-text-button" onclick="togglePermCardsAll(this,true)">Expandir todas</button><button type="button" class="users-text-button" onclick="togglePermCardsAll(this,false)">Recolher todas</button></div>':''}<div class="permission-scope-list">${details}</div></details></section>`;
   }).join('');
   return `<div class="form-group full"><label>Permissões por módulo, secretaria e grupo</label><div>${rows}</div><div class="permission-help">“Acessar” permite consultar. “Gerenciar” permite alimentar e editar os grupos liberados. Criar e excluir grupos dependem também das permissões gerais destacadas no início. As opções “atuais e futuros” acompanham automaticamente os novos grupos.</div></div>`;
 }
@@ -2791,6 +2798,18 @@ function _generalUserPermissions(u){
   const p=u?.permissoes||{},statusAllowed=_statusPermissionForUser(u),ownerAccount=String(u?.email||'').trim().toLowerCase()===_statusOwnerEmail,canManage=_isStatusOwner();
   return `<section class="user-form-section user-general-permissions"><div class="user-general-permissions-heading"><div><span>CONTROLES PRINCIPAIS</span><h3>Permissões gerais</h3><p>Defina rapidamente o que este usuário pode criar, alimentar e excluir.</p></div><b>Sempre visível</b></div><div class="user-general-permissions-grid"><label class="permission-create-groups"><input type="checkbox" id="usr-can-create-groups" ${p.pode_criar_grupos===true?'checked':''}><span><strong>Permitir criar grupos de lançamento</strong><small>Permite criar novos grupos nas áreas e secretarias liberadas.</small></span></label><label class="permission-create-groups permission-delete-groups"><input type="checkbox" id="usr-can-delete-groups" ${p.pode_excluir_grupos===true?'checked':''}><span><strong>Permitir excluir grupos de lançamento</strong><small>Envia qualquer grupo permitido para a lixeira, inclusive grupos de entrada de campo.</small></span></label><label class="permission-create-groups permission-create-items"><input type="checkbox" id="usr-can-create-items" ${p.pode_criar_itens!==false?'checked':''}><span><strong>Permitir criar itens e subitens</strong><small>Inclui subitens em qualquer profundidade, sem limitar a alimentação do sistema.</small></span></label><label class="permission-create-groups permission-delete-items"><input type="checkbox" id="usr-can-delete-items" ${p.pode_excluir_itens!==false?'checked':''}><span><strong>Permitir excluir itens e subitens</strong><small>Envia lançamentos e seus descendentes para a lixeira.</small></span></label><label class="permission-create-groups permission-trash-access"><input type="checkbox" id="usr-can-view-trash" ${p.pode_ver_lixeira===true?'checked':''}><span><strong>Visualizar a lixeira</strong><small>Consulta registros excluídos; restauração definitiva continua administrativa.</small></span></label><label class="permission-create-groups permission-supabase-status"><input type="checkbox" id="usr-can-view-supabase-status" ${statusAllowed?'checked':''} ${(ownerAccount||!canManage)?'disabled':''}><span><strong>Visualizar status do Supabase</strong><small>${ownerAccount?'Acesso permanente da conta RCAMPOS.':canManage?'Mostra uso do banco, armazenamento, fotos, limites e saúde do projeto.':'Somente RCAMPOS pode alterar esta permissão.'}</small></span></label></div></section>`;
 }
+window.togglePermCard=function(btn,force){
+  const card=btn.closest('.perm-card');const body=card?.querySelector('.perm-card-body');if(!body)return;
+  const open=typeof force==='boolean'?force:body.hidden;
+  body.hidden=!open;card.classList.toggle('is-collapsed',!open);btn.setAttribute('aria-expanded',String(open));
+};
+window._refreshPermCardSum=function(card){
+  if(!card)return;const tag=card.querySelector('.perm-card-sum');if(!tag)return;
+  const sec=card.querySelector('[data-perm-scope="secretaria"][data-perm-kind="gerenciar"]')?.checked?'Gerencia tudo':card.querySelector('[data-perm-scope="secretaria"][data-perm-kind="acesso"]')?.checked?'Acessa tudo':'';
+  const groups=[...card.querySelectorAll('[data-perm-scope="grupo"][data-perm-kind="acesso"]')];const on=groups.filter(i=>i.checked).length;
+  tag.textContent=sec||(on?`${on} de ${groups.length} liberado${on===1?'':'s'}`:'Nada liberado');tag.className='perm-card-sum is-'+(sec?'all':on?'some':'none');
+};
+window.togglePermCardsAll=function(btn,open){btn.closest('.permission-scope-list,.permission-details')?.querySelectorAll('.perm-card-toggle').forEach(b=>togglePermCard(b,open));};
 window.permissionModuleChanged=function(input){
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind;
   if(input.checked){const details=card.querySelector('.permission-details');if(details)details.open=true;}
@@ -2803,6 +2822,7 @@ window.permissionModuleChanged=function(input){
   }
 };
 window.permissionScopeChanged=function(input){
+  queueMicrotask(()=>_refreshPermCardSum(input.closest('.perm-card')));
   const card=input.closest('[data-permission-module]'),kind=input.dataset.permKind,id=input.dataset.permId,scope=input.dataset.permScope;
   if(input.checked){
     const access=document.getElementById(`perm-${input.dataset.permModule}-acesso`);if(access)access.checked=true;
@@ -2836,20 +2856,40 @@ window.openUserModal=function(id){
   const secOpts=S.secretarias.map(s=>`<option value="${esc(s.id)}" ${u?.setor_id===s.id?'selected':''}>${esc(s.name)}</option>`).join('');
   const usedIds=_usedRespIds();
   const respOpts=S.responsaveis.filter(r=>!usedIds.has(r.id)||u?.responsavel_id===r.id).map(r=>`<option value="${esc(r.id)}" ${u?.responsavel_id===r.id?'selected':''}>${esc(r.name)}</option>`).join('');
-  const password=id?`<section class="user-form-section"><h3>Alterar senha</h3><div class="user-password-edit"><input type="password" id="usr-nova-senha" autocomplete="new-password" placeholder="Nova senha · mínimo 6 caracteres" aria-label="Nova senha"><button type="button" class="users-button" onclick="changeUserPassword('${id}')">Alterar senha</button></div><button type="button" class="users-text-button" onclick="sendUserPasswordReset('${id}')">Enviar redefinição por e-mail</button></section>`
-    :`<div class="form-group"><label for="usr-password">Senha *</label><input type="password" id="usr-password" autocomplete="new-password" placeholder="Pelo menos 6 caracteres" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}"><label class="user-show-password"><input type="checkbox" id="usr-show-pass" onchange="_toggleSenha('usr-password','usr-show-pass')"> Mostrar senha</label></div>`;
+  const password=id?`<div class="form-group full user-password-inline"><label for="usr-nova-senha">Alterar senha <small>A senha fica visível para conferir · deixe em branco para manter a atual</small></label><div class="user-password-edit"><input type="text" id="usr-nova-senha" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Nova senha · mínimo 6 caracteres" aria-label="Nova senha" oninput="_paintPassStrength(this)"><button type="button" class="users-button users-button-soft" title="Gerar uma senha fácil de ditar" onclick="_suggestPassword('usr-nova-senha')">🎲 Sugerir</button><button type="button" class="users-button" onclick="changeUserPassword('${id}')">Alterar senha</button></div><div class="user-pass-meter" data-for="usr-nova-senha" aria-live="polite"></div><button type="button" class="users-text-button" onclick="sendUserPasswordReset('${id}')">✉️ Enviar link de redefinição para o e-mail de contato</button></div>`
+    :`<div class="form-group"><label for="usr-password">Senha * <small>visível para conferir</small></label><div class="user-password-edit"><input type="text" id="usr-password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Pelo menos 6 caracteres" oninput="_paintPassStrength(this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveUser('')}"><button type="button" class="users-button users-button-soft" title="Gerar uma senha fácil de ditar" onclick="_suggestPassword('usr-password')">🎲</button></div><div class="user-pass-meter" data-for="usr-password" aria-live="polite"></div></div>`;
   openModal(id?'Editar usuário':'Novo usuário','E-mail de contato é opcional.',
     `<div class="user-form"><section class="user-form-section"><h3>Dados de acesso</h3><div class="form-grid">
       <div class="form-group full"><label for="usr-name">Nome completo *</label><input id="usr-name" autocomplete="name" placeholder="Nome da pessoa" value="${esc(u?.displayName||u?.display_name||u?.name||'')}"></div>
       <div class="form-group"><label for="usr-user">Usuário${id?'':' *'}</label><input id="usr-user" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ex.: carlos" value="${esc(id?_usernameFromEmail(u?.email):'')}"><small>Nome usado para entrar no sistema.</small></div>
       ${id?'':password}
       <div class="form-group ${id?'':'full'}"><label for="usr-role">Nível de acesso</label><select id="usr-role"><option value="usuario" ${!u||u.role==='usuario'||u.role==='user'?'selected':''}>Usuário · consulta</option><option value="gestor" ${u?.role==='gestor'?'selected':''}>Gestor · gerencia módulos</option><option value="admin" ${u?.role==='admin'?'selected':''}>Administrador · acesso total</option></select></div>
+      ${id?password:''}
     </div></section>
     ${_generalUserPermissions(u)}
     <details class="user-form-disclosure" ${id?'open':''}><summary>Informações complementares <span>Opcionais</span></summary><div class="form-grid"><div class="form-group full"><label for="usr-email-contato">E-mail de contato</label><input id="usr-email-contato" type="email" autocomplete="email" value="${esc(u?.email_contato||'')}" placeholder="email@exemplo.com"><small>Pode ser compartilhado por vários usuários.</small></div><div class="form-group"><label for="usr-setor">Setor / Secretaria</label><select id="usr-setor"><option value="">Sem vínculo</option>${secOpts}</select></div><div class="form-group"><label for="usr-resp">Responsável</label><select id="usr-resp"><option value="">Sem vínculo</option>${respOpts}</select></div></div></details>
-    <details class="user-form-disclosure user-form-permissions" ${id?'open':''}><summary>Permissões por módulo <span>Definir acessos</span></summary><div class="user-permissions-body">${_buildPermMatrix(u)}</div></details>${id?password:''}
+    <details class="user-form-disclosure user-form-permissions" ${id?'open':''}><summary>Permissões por módulo <span>Definir acessos</span></summary><div class="user-permissions-body">${_buildPermMatrix(u)}</div></details>
     <div class="modal-actions user-form-actions">${id?`<button type="button" class="users-text-button users-danger" onclick="deleteUser('${id}')">Excluir usuário</button>`:''}<button type="button" class="users-button users-button-soft" onclick="closeModal()">Cancelar</button><button type="button" class="users-button users-button-primary" onclick="saveUser('${id||''}')">${id?'Salvar alterações':'Criar usuário'}</button></div></div>`);
+  window.setModalContext?.({nameInput:'usr-name',placeholder:'Novo usuário',suffixInput:'usr-user',crumbs:[{icon:'👥',label:'Usuários e acessos',kind:'sec'}]});
   document.getElementById('usr-name')?.focus();
+};
+// Senha sempre visível no cadastro: sugestão fácil de ditar por telefone e medidor simples.
+window._suggestPassword=function(inputId){
+  const words=['sol','rio','mar','pipa','caju','ipe','serra','lua','vento','barro','milho','agua','cacto','jatoba','umbu'];
+  const pick=()=>words[crypto.getRandomValues(new Uint32Array(1))[0]%words.length];
+  const n=String(10+crypto.getRandomValues(new Uint32Array(1))[0]%90);
+  const value=`${pick()}-${pick()}-${n}`;
+  const input=document.getElementById(inputId);if(!input)return;
+  input.value=value;input.dispatchEvent(new Event('input'));input.focus();input.select();
+};
+window._paintPassStrength=function(input){
+  const box=document.querySelector(`.user-pass-meter[data-for="${input.id}"]`);if(!box)return;
+  const v=input.value||'';
+  if(!v){box.textContent='';box.className='user-pass-meter';box.dataset.for=input.id;return;}
+  const kinds=[/[a-z]/,/[A-Z]/,/\d/,/[^A-Za-z0-9]/].filter(r=>r.test(v)).length;
+  const level=v.length<6?0:(v.length>=10&&kinds>=2)||v.length>=14?2:1;
+  const text=['Curta demais · mínimo 6 caracteres','Senha aceitável','Senha forte'][level];
+  box.className='user-pass-meter is-'+['weak','ok','strong'][level];box.dataset.for=input.id;box.textContent=`${text} · ${v.length} caracteres`;
 };
 window.saveUser=async function(id){
   if(window._savingUser){toast('Aguarde a operação atual','warn');return;}

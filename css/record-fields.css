@@ -34,3 +34,11 @@
 #modal-ov .modal-head>div{min-width:0;flex:1}
 @media(max-width:600px){.modal-ctx-name{font-size:14px}.modal-ctx-crumb{max-width:calc(100vw - 80px)}}
 .rpt-opts-card .pdf-pick{margin:10px 0}
+/* Linha nome + login no cabeçalho fixo (ex.: CLAUDIA · claudiaif) */
+.modal-ctx-line{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.modal-ctx-line .modal-ctx-name{flex:0 1 auto;min-width:0}
+.modal-ctx-suffix{font-size:13px;font-weight:700;color:#0b4f8a;background:#e6f0f8;border:1px solid #b9d3e8;border-radius:999px;padding:3px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal-ctx-suffix[hidden]{display:none}
+/* Contraste AA e fonte mínima no painel "Informações do registro" */
+details.editor-audit-panel>summary>small{color:#46625b;font-size:11px}
+.editor-audit-panel .record-audit strong,.editor-audit-panel .record-audit{color:#3f5566}
