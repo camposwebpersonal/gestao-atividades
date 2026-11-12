@@ -140,3 +140,10 @@
   somar zero em silêncio. Teste: `tests/quantitativo.browser.cjs` (390 e 1366).
 - Breadcrumbs nunca cortam o início de uma palavra: níveis anteriores encolhem com reticências e o
   nível atual aparece inteiro.
+
+## Segurança do banco (regra permanente)
+
+- Toda tabela em `public` tem RLS ligado. Sem login (anon) não lê nem grava nada; logados têm o
+  acesso que o site usa; `public.users` só é alterada por administrador (`pms_user_is_admin()`).
+  Tabela nova já nasce com RLS e política `to authenticated` — nunca `to anon` nem RLS desligado.
+  Conferir com o assistente de segurança do Supabase (get_advisors) após cada migração.
