@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-pms-v187';
+const CACHE_NAME = 'gestao-pms-v188';
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -63,6 +63,8 @@ const STATIC_ASSETS = [
   'js/defesa-civil-questionarios.js',
   'js/pipa-refill.js',
   'js/search-results.js',
+  'js/nav-trail.js',
+  'css/nav-trail.css',
   'js/water-points.js',
   'js/demandas-secretarias.js',
   'js/demandas-model.js',

@@ -271,7 +271,7 @@ function mapRecords(secretariaId='',groupId=''){
  for(const record of [...(window.S?.items||[]),...(window.S?.subitems||[])]){
   const group=groupById.get(record.atividade_id||itemById.get(record.item_id)?.atividade_id);if(!group)continue;
   const location=locationOf(record);if(!location)continue;
-  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id);
+  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id)||window.S?.secretarias?.find(item=>item.id===record.secretaria_id);
   const table=subIds.has(record.id)&&!itemById.has(record.id)?'subitems':'items';
   points.push({record,group,secretary,location,table,parent:table==='subitems'?itemById.get(record.item_id):null,refill:isRefillGroup(group)?recordRefillStatus(record):null});
  }
@@ -301,8 +301,10 @@ function pointContextHtml(point){
 }
 const focusButton=point=>`<button type="button" class="geo-goto" onclick="geoFocusRecord('${point.table}','${jsArg(point.record.id)}')" title="Abrir o grupo com todos os lançamentos, já neste">📋 Ver no grupo</button>`;
 let mapReturn=null;
-function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas',back='',filter='todos',focus=''}={}){
- mapReturn={secretariaId,groupId,title,back,filter};
+function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas',back='',filter='todos',focus='',pickSec='',pickGroup=''}={}){
+ mapReturn={secretariaId,groupId,title,back,filter,pickSec,pickGroup};
+ // Breadcrumbs: mapa aberto a partir de um grupo/secretaria vira uma folha do caminho atual.
+ if(back)window.setNavLeaf?.({selector:'.geo-map-page',icon:'🗺',label:title,back});else window.setNavLeaf?.(null);
  document.getElementById('geo-back-pill')?.remove();
  const points=mapRecords(secretariaId,groupId),id='geo-map-'+Date.now();
  const refillPoints=points.filter(point=>point.refill);
@@ -310,8 +312,19 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
  let current=REFILL_FILTERS.some(([key])=>key===filter)?filter:'todos';
  const filters=refillPoints.length?`<div class="geo-refill-filters" role="group" aria-label="Filtrar pela situação do abastecimento de pipa">${REFILL_FILTERS.map(([key,label])=>`<button type="button" class="geo-refill-filter is-${key}${key===current?' active':''}" data-refill-filter="${key}" aria-pressed="${key===current}"><i aria-hidden="true"></i>${esc(label)}<b>${counts[key]}</b></button>`).join('')}</div>`:'';
  const listHtml=list=>list.map((point,index)=>{const {record,location,refill}=point;return `<article class="${refill?'has-refill is-'+refill.state:''}" data-geo-key="${esc(keyOf(point))}"><button type="button" class="geo-num" onclick="geoFlyTo('${jsArg(keyOf(point))}')" title="Mostrar no mapa">${String(index+1).padStart(2,'0')}</button><div>${pointTitleHtml(point)}${pointContextHtml(point)}${refill?`<em class="geo-list-refill is-${refill.state}">💧 ${esc(refill.detail||refill.text)}</em>`:''}</div><div class="geo-list-actions">${point.table==='galeria'?'':focusButton(point)}<button type="button" onclick="geoFlyTo('${jsArg(keyOf(point))}')">📍 No mapa</button><a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir mapa</a><a href="${esc(directionsUrl(location))}" target="_blank" rel="noopener" title="Rota até o local no Google Maps">🧭 Como chegar</a><button type="button" onclick="shareGeoLocation('${esc(location.maps_url)}','${jsArg(record.description||'Localização da demanda')}')">Compartilhar</button></div></article>`;}).join('');
- const visible=()=>points.filter(point=>refillFilterMatch(point,current));
- document.getElementById('content').innerHTML=`<section class="geo-map-page"><header><div><span class="workspace-kicker">INTELIGÊNCIA DE CAMPO</span><h1>${esc(title)}</h1><p>${points.length} ponto${points.length===1?'':'s'} com localização cadastrada.${refillPoints.length?` ${counts.vencido} vencido${counts.vencido===1?'':'s'} · ${counts.alerta} vence${counts.alerta===1?'':'m'} em até 5 dias.`:''}</p></div>${back?`<button type="button" onclick="${back}">← Voltar</button>`:''}</header>${filters}<div class="geo-map-toolbar"><span><i></i> ${refillPoints.length?'Cores: vermelho vencido · amarelo até 5 dias · verde em dia':'Clique em um ponto para ver e compartilhar'}</span><button type="button" onclick="fitGeoMap()">Enquadrar pontos</button></div><div id="${id}" class="geo-map-canvas"></div>${points.length?'':`<div class="geo-map-empty"><span>⌖</span><strong>Nenhuma localização cadastrada aqui ainda</strong><p>Use “Capturar geolocalização” ao criar ou editar um lançamento.</p></div>`}<div class="geo-map-list" id="${id}-list">${listHtml(visible())}</div></section>`;
+ // Filtro inteligente: só aparecem secretarias e grupos que têm pontos salvos no mapa.
+ let selSec=pickSec,selGroup=pickGroup;
+ const secKeyOf=point=>point.secretary?.id||'__sem__';
+ const secOptions=()=>{const m=new Map();points.forEach(point=>{const k=secKeyOf(point);const e=m.get(k)||{id:k,name:point.secretary?.name||'Sem secretaria',n:0};e.n++;m.set(k,e);});return [...m.values()].sort((a,b)=>a.id==='__sem__'?1:b.id==='__sem__'?-1:a.name.localeCompare(b.name,'pt-BR'));};
+ const groupOptions=()=>{const m=new Map();points.filter(point=>!selSec||secKeyOf(point)===selSec).forEach(point=>{const k=String(point.group.id);const e=m.get(k)||{id:k,name:point.group.name||'Grupo',n:0};e.n++;m.set(k,e);});return [...m.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));};
+ if(selSec&&!secOptions().some(o=>o.id===selSec))selSec='';
+ if(selGroup&&!groupOptions().some(o=>o.id===selGroup))selGroup='';
+ const scoped=()=>points.filter(point=>(!selSec||secKeyOf(point)===selSec)&&(!selGroup||String(point.group.id)===selGroup));
+ const optionHtml=(list,value,all)=>`<option value="">${all}</option>`+list.map(o=>`<option value="${esc(o.id)}"${o.id===value?' selected':''}>${esc(o.name)} (${o.n})</option>`).join('');
+ const showSecPick=!secretariaId&&!groupId&&secOptions().length>1,showGroupPick=!groupId&&groupOptions().length>1;
+ const pickerHtml=(showSecPick||showGroupPick)?`<div class="geo-pick" role="group" aria-label="Filtrar pontos do mapa">${showSecPick?`<label><span>🏛️ Secretaria</span><select id="${id}-sec">${optionHtml(secOptions(),selSec,'Todas as secretarias')}</select></label>`:''}<label><span>📁 Grupo de lançamento</span><select id="${id}-grp">${optionHtml(groupOptions(),selGroup,selSec||secretariaId?'Todos os grupos desta secretaria':'Todos os grupos')}</select></label><button type="button" class="geo-pick-clear" id="${id}-clear"${selSec||selGroup?'':' hidden'}>✕ Limpar</button><output id="${id}-count" aria-live="polite"></output></div>`:'';
+ const visible=()=>scoped().filter(point=>refillFilterMatch(point,current));
+ document.getElementById('content').innerHTML=`<section class="geo-map-page"><header><div><span class="workspace-kicker">INTELIGÊNCIA DE CAMPO</span><h1>${esc(title)}</h1><p>${points.length} ponto${points.length===1?'':'s'} com localização cadastrada.${refillPoints.length?` ${counts.vencido} vencido${counts.vencido===1?'':'s'} · ${counts.alerta} vence${counts.alerta===1?'':'m'} em até 5 dias.`:''}</p></div>${back?`<button type="button" onclick="${back}">← Voltar</button>`:''}</header>${pickerHtml}${filters}<div class="geo-map-toolbar"><span><i></i> ${refillPoints.length?'Cores: vermelho vencido · amarelo até 5 dias · verde em dia':'Clique em um ponto para ver e compartilhar'}</span><button type="button" onclick="fitGeoMap()">Enquadrar pontos</button></div><div id="${id}" class="geo-map-canvas"></div>${points.length?'':`<div class="geo-map-empty"><span>⌖</span><strong>Nenhuma localização cadastrada aqui ainda</strong><p>Use “Capturar geolocalização” ao criar ou editar um lançamento.</p></div>`}<div class="geo-map-list" id="${id}-list">${listHtml(visible())}</div></section>`;
  let map=null,layer=null,bounds=[];const markers=new Map();
  const draw=()=>{
   if(!map)return;layer.clearLayers();bounds=[];markers.clear();
@@ -335,6 +348,20 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
   const list=document.getElementById(id+'-list');if(list)list.innerHTML=listHtml(visible())||'<p class="geo-refill-empty">Nenhum local nesta situação.</p>';
   draw();
  }));
+ const refreshScope=()=>{
+  mapReturn={...mapReturn,pickSec:selSec,pickGroup:selGroup};
+  const grp=document.getElementById(id+'-grp');if(grp)grp.innerHTML=optionHtml(groupOptions(),selGroup,selSec||secretariaId?'Todos os grupos desta secretaria':'Todos os grupos');
+  const clear=document.getElementById(id+'-clear');if(clear)clear.hidden=!(selSec||selGroup);
+  const out=document.getElementById(id+'-count');const n=scoped().length;if(out)out.textContent=selSec||selGroup?`${n} ponto${n===1?'':'s'} no filtro`:'';
+  const base=scoped().filter(point=>point.refill);
+  document.querySelectorAll('[data-refill-filter]').forEach(button=>{const key=button.dataset.refillFilter;const b=button.querySelector('b');if(b)b.textContent=key==='todos'?scoped().length:base.filter(point=>point.refill.state===key).length;});
+  const list=document.getElementById(id+'-list');if(list)list.innerHTML=listHtml(visible())||'<p class="geo-refill-empty">Nenhum local neste filtro.</p>';
+  draw();
+ };
+ document.getElementById(id+'-sec')?.addEventListener('change',event=>{selSec=event.target.value;selGroup='';refreshScope();});
+ document.getElementById(id+'-grp')?.addEventListener('change',event=>{selGroup=event.target.value;refreshScope();});
+ document.getElementById(id+'-clear')?.addEventListener('click',()=>{selSec='';selGroup='';const sec=document.getElementById(id+'-sec');if(sec)sec.value='';refreshScope();});
+ if(selSec||selGroup)setTimeout(refreshScope,0);
  const create=()=>{
   const host=document.getElementById(id);if(!host||!window.L)return;
   map=window.L.map(host,{zoomControl:true});window.__geoMap=map;layer=window.L.layerGroup().addTo(map);

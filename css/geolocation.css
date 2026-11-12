@@ -79,3 +79,13 @@
 .geo-back-pill button{border:0;background:transparent;color:#fff;font:800 14px system-ui,sans-serif;cursor:pointer;min-height:40px;padding:0 14px;border-radius:999px}
 .geo-back-pill .geo-back-go{background:#fff;color:#0b4f8a}.geo-back-pill .geo-back-x{padding:0 12px}
 .geo-back-pill button{white-space:nowrap}
+/* Filtro inteligente do mapa: Secretaria → Grupo (só os que têm pontos) */
+.geo-pick{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:0 0 10px;padding:10px 12px;border:1px solid #cfe0ea;border-radius:12px;background:#f7fbfd}
+.geo-pick label{display:flex;flex-direction:column;gap:4px;flex:1 1 220px;min-width:0}
+.geo-pick label span{font-size:12px;font-weight:800;color:#1f4660}
+.geo-pick select{min-height:44px;width:100%;padding:8px 10px;border:1px solid #b7cdda;border-radius:9px;background:#fff;color:#12324a;font-size:14px;font-weight:600}
+.geo-pick select:focus-visible{outline:3px solid #2563eb;outline-offset:1px}
+.geo-pick-clear{min-height:44px;padding:0 14px;border:1px solid #c9d6df;border-radius:9px;background:#fff;color:#7a1d16;font-weight:800;font-size:13px;cursor:pointer}
+.geo-pick-clear[hidden]{display:none}
+.geo-pick output{flex-basis:100%;font-size:12px;font-weight:700;color:#0b4f8a}
+.geo-pick output:empty{display:none}

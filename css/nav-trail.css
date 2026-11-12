@@ -1,0 +1,27 @@
+/* Barra de navegação fixa: ← Voltar + caminho até a Visão geral (todas as telas) */
+.nav-trail{position:sticky;top:var(--nav-trail-top,0px);z-index:60;display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:7px 8px;border:1px solid #d3e0ea;border-radius:12px;background:rgba(255,255,255,.97);box-shadow:0 4px 14px rgba(15,45,70,.08);backdrop-filter:blur(8px);min-width:0}
+.nav-trail-back{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 13px;border:1px solid #0b4f8a;border-radius:9px;background:#0b4f8a;color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.nav-trail-back:hover{background:#093f6e}.nav-trail-back span{font-size:16px;line-height:1}
+.nav-trail button:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.nav-trail ol{display:flex;align-items:center;gap:2px;margin:0;padding:0;list-style:none;min-width:0;flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
+.nav-trail ol::-webkit-scrollbar{display:none}
+.nav-trail li{display:flex;align-items:center;flex:0 0 auto;min-width:0}
+.nav-trail li+li::before{content:'›';margin:0 3px;color:#4d6475;font-weight:800;font-size:14px}
+.nav-trail li>button,.nav-trail-here{display:inline-flex;align-items:center;gap:5px;max-width:240px;min-height:36px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:#0b4f8a;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.nav-trail li>button span,.nav-trail-here span{overflow:hidden;text-overflow:ellipsis}
+.nav-trail li>button:hover{background:#e8f1f8;text-decoration:underline}
+.nav-trail-here{cursor:default;color:#12273a;font-weight:850;background:#eef4f8}
+.nav-trail i{font-style:normal}
+/* Elementos fixos de cada tela passam a grudar logo abaixo da barra */
+body.has-nav-trail .top-actions-fixed,body.has-nav-trail .dcq-savebar.is-top{top:calc(var(--nav-trail-top,0px) + var(--nav-trail-h,0px) + 6px)}
+body.has-nav-trail .nav-legacy-back{display:none!important}
+@media(max-width:760px){
+  body.has-nav-trail .activity-lanes{top:calc(var(--nav-trail-top,0px) + var(--nav-trail-h,0px) + 6px)}
+  .nav-trail{margin:0 -2px 10px;padding:6px;border-radius:10px;gap:6px}
+  .nav-trail-back{min-height:40px;padding:0 10px}
+  .nav-trail li>button,.nav-trail-here{max-width:170px;font-size:12px;padding:0 6px}
+}
+/* overflow-x:hidden no body o transformava em contêiner de rolagem e quebrava todo
+   position:sticky no celular (cabeçalho, barra de navegação, ações). clip corta sem isso. */
+body{overflow-x:clip}
+@media(max-width:960px){body{overflow-y:visible;overflow-x:clip}}

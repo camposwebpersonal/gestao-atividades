@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
 import {supabase} from '../supabase_compat.js?v=11';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=13';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=14';
 import './perfuracao-pocos.js?v=103';
 import './controle-extintores.js?v=5';
 import './controle-licitacoes.js?v=8';
@@ -475,9 +475,13 @@ function _secretaryDestinations(secretary){
 window.openSecretaryWorkspace=function(secretaryId){
   const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));if(!secretary)return;
   const destinations=_secretaryDestinations(secretary);if(destinations.length===1){destinations[0].open();return;}if(!destinations.length){window.toast?.('Nenhuma área está liberada para esta secretaria.','info');return;}
-  window.__currentView='secretary-workspace';_renderSidebarModules('secretary:'+secretary.id);
+  window.__currentView='secretary-workspace';window.rememberWorkspace?.({kind:'secretaria',id:secretary.id});_renderSidebarModules('secretary:'+secretary.id);
   _md.setC(`<section class="secretary-workspace"><header><button type="button" onclick="renderModulos()">← Visão geral</button><div><span class="workspace-kicker">SECRETARIA MUNICIPAL</span><h1>${_md.esc(secretary.name)}</h1><p>Escolha a área de trabalho que deseja acessar.</p></div></header><div class="secretary-workspace-grid">${destinations.map(destination=>`<button type="button" onclick="openSecretaryDestination(${_md.arg(secretary.id)},${_md.arg(destination.id)})"><span>${destination.icon}</span><span><strong>${_md.esc(destination.title)}</strong><small>${_md.esc(destination.description)}</small></span><i>→</i></button>`).join('')}</div></section>`);
 };
+// Navegação (breadcrumbs): quantas áreas a secretaria tem e a qual secretaria um módulo especial pertence.
+window.secretaryDestinationCount=secretaryId=>{const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));return secretary?_secretaryDestinations(secretary).length:0;};
+window.secretaryOfModule=moduleId=>{const visible=_visibleModules();return (window.S?.secretarias||[]).find(secretary=>_specialModulesForSecretary(secretary,visible).some(mod=>mod.id===moduleId))||null;};
+window.secretaryByName=fragment=>(window.S?.secretarias||[]).find(secretary=>_normalizedSecretaryName(secretary.name).includes(fragment))||null;
 window.openSecretaryDestination=function(secretaryId,destinationId){const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));_secretaryDestinations(secretary).find(item=>item.id===destinationId)?.open();};
 
 function _renderSidebarModules(activeId=''){

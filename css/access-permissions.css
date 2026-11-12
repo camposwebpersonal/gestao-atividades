@@ -26,3 +26,4 @@
 .user-pass-meter{min-height:16px;margin-top:4px;font-size:11px;font-weight:700}
 .user-pass-meter.is-weak{color:#a1261b}.user-pass-meter.is-ok{color:#7a4a00}.user-pass-meter.is-strong{color:#11653f}
 @media(max-width:650px){.user-password-edit{flex-wrap:wrap}.user-password-edit input{flex:1 1 100%}.perm-card-sum{order:5}}
+#modal-body .form-group>label>small{color:#4d6475;font-weight:500}
