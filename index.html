@@ -1104,6 +1104,17 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   S.secretarias=se.docs.map(d=>({id:d.id,...d.data()}));
   S.responsaveis=resp.docs.map(d=>({id:d.id,...d.data()}));
   S.users=usr.docs.map(d=>({id:d.id,...d.data()}));
+  // Fora do perfil administrador, o banco entrega só a própria linha completa de "users".
+  // Os demais vêm do diretório (nome, login e vínculo; sem e-mail de contato nem permissões),
+  // para continuar mostrando autores e responsáveis. Sem internet, usa a última cópia.
+  if(!S.isAdmin){
+    let dir=null;
+    if(!cacheOnly){try{const {data,error}=await db.rpc('pms_users_directory');if(error)throw error;dir=data||[];try{localStorage.setItem('pms-users-dir',JSON.stringify(dir));}catch(_){}}catch(e){console.warn('Diretório de usuários indisponível:',e?.message||e);}}
+    if(!dir){try{dir=JSON.parse(localStorage.getItem('pms-users-dir')||'[]');}catch(_){dir=[];}}
+    const known=new Set(S.users.map(u=>String(u.id)));
+    for(const u of dir||[])if(!known.has(String(u.id)))S.users.push({id:u.id,display_name:u.display_name,displayName:u.display_name,email:u.email,role:u.role,isAdmin:u.role==='admin',setor_id:u.setor_id,responsavel_id:u.responsavel_id,__directory:true});
+    S.users.sort((a,b)=>String(a.displayName||'').localeCompare(String(b.displayName||''),'pt-BR'));
+  }
   S.statusAccess=statusAccess.docs.map(d=>({id:d.id,...d.data()}));
   S.me=S.users.find(u=>u.id===S.user?.uid)||{};
   S.permissoes=S.me.permissoes||{modulos:{},pode_criar:false,pode_editar:false};
