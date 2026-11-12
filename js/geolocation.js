@@ -37,7 +37,8 @@ export function isTouchDevice(){
  try{return window.matchMedia('(pointer: coarse)').matches||(navigator.maxTouchPoints>0&&'ontouchstart' in window);}catch{return false;}
 }
 export function cooperativeGestures(map,host){
- if(!map||!host||!isTouchDevice()||host.__coop)return;
+ if(!map||!host||host.__coop)return;
+ if(!isTouchDevice()){desktopWheelGuard(map,host);return;}
  host.__coop=true;
  map.dragging.disable();
  host.classList.add('geo-coop');
@@ -49,6 +50,26 @@ export function cooperativeGestures(map,host){
   else hint.classList.remove('is-on');
  },{passive:true});
  host.addEventListener('touchend',()=>{clearTimeout(timer);timer=setTimeout(()=>hint.classList.remove('is-on'),700);},{passive:true});
+}
+// Computador: a rodinha do mouse rola a PÁGINA. Zoom no mapa só com Ctrl (ou ⌘) + rodinha,
+// ou pelos botões + e −; clicar e arrastar continua movendo o mapa normalmente.
+function desktopWheelGuard(map,host){
+ host.__coop=true;
+ map.scrollWheelZoom.disable();
+ host.classList.add('geo-coop-desk');
+ const badge=document.createElement('div');badge.className='geo-coop-badge';badge.innerHTML='<b>Ctrl</b> + rodinha para dar zoom · clique e arraste para mover';host.appendChild(badge);
+ const hint=document.createElement('div');hint.className='geo-coop-hint';hint.setAttribute('role','status');hint.innerHTML='<span aria-hidden="true">⌨️</span>Segure <b>&nbsp;Ctrl&nbsp;</b> e role a rodinha para dar zoom no mapa';host.appendChild(hint);
+ let hideTimer=null,acc=0,applyTimer=null,lastPoint=null;
+ host.addEventListener('wheel',event=>{
+  if(event.ctrlKey||event.metaKey){
+   event.preventDefault(); // não dá zoom na página inteira
+   hint.classList.remove('is-on');
+   acc+=event.deltaY;lastPoint=map.mouseEventToContainerPoint(event);
+   if(!applyTimer)applyTimer=setTimeout(()=>{applyTimer=null;const step=acc<0?1:acc>0?-1:0;acc=0;if(step)map.setZoomAround(lastPoint,map.getZoom()+step);},90);
+   return;
+  }
+  hint.classList.add('is-on');clearTimeout(hideTimer);hideTimer=setTimeout(()=>hint.classList.remove('is-on'),1200);
+ },{passive:false});
 }
 window.cooperativeGestures=cooperativeGestures;
 

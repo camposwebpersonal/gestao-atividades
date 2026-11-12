@@ -167,5 +167,6 @@
 
 - Todo mapa Leaflet chama `cooperativeGestures(map, host)` (js/geolocation.js): em tela de toque,
   um dedo rola a página e o mapa fica parado; dois dedos movem e dão zoom. Aviso fixo no mapa
-  ("Use dois dedos…") e aviso grande ao tentar arrastar com um dedo. No computador nada muda.
+  ("Use dois dedos…") e aviso grande ao tentar arrastar com um dedo. No computador a rodinha do
+  mouse rola a página; zoom só com Ctrl/⌘ + rodinha (ou + e −) e clicar-arrastar move o mapa.
   Teste: `tests/map-gestures.browser.cjs`.
