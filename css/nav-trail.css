@@ -3,9 +3,14 @@
 .nav-trail-back{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 13px;border:1px solid #0b4f8a;border-radius:9px;background:#0b4f8a;color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .nav-trail-back:hover{background:#093f6e}.nav-trail-back span{font-size:16px;line-height:1}
 .nav-trail button:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
-.nav-trail ol{display:flex;align-items:center;gap:2px;margin:0;padding:0;list-style:none;min-width:0;flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
+.nav-trail ol{display:flex;align-items:center;gap:2px;margin:0;padding:0;list-style:none;min-width:0;flex:1 1 auto;overflow:hidden}
 .nav-trail ol::-webkit-scrollbar{display:none}
-.nav-trail li{display:flex;align-items:center;flex:0 0 auto;min-width:0}
+.nav-trail li{display:flex;align-items:center;flex:0 1 auto;min-width:0}
+/* Sem cortar palavras no início: os níveis anteriores encolhem com reticências e o atual tem prioridade */
+.nav-trail li:not([aria-current]){min-width:3.2em}
+.nav-trail li[aria-current]{flex:0 0 auto;max-width:72%}
+.nav-trail li>button,.nav-trail-here{min-width:0}
+.nav-trail li[aria-current] .nav-trail-here{max-width:100%}
 .nav-trail li+li::before{content:'›';margin:0 3px;color:#4d6475;font-weight:800;font-size:14px}
 .nav-trail li>button,.nav-trail-here{display:inline-flex;align-items:center;gap:5px;max-width:240px;min-height:36px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:#0b4f8a;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
 .nav-trail li>button span,.nav-trail-here span{overflow:hidden;text-overflow:ellipsis}
@@ -20,8 +25,11 @@ body.has-nav-trail .nav-legacy-back{display:none!important}
   .nav-trail{margin:0 -2px 10px;padding:6px;border-radius:10px;gap:6px}
   .nav-trail-back{min-height:40px;padding:0 10px}
   .nav-trail li>button,.nav-trail-here{max-width:170px;font-size:12px;padding:0 6px}
+  .nav-trail li.is-home:not(:only-child) span{display:none}
+  .nav-trail li[aria-current]{max-width:60%}
 }
 /* overflow-x:hidden no body o transformava em contêiner de rolagem e quebrava todo
    position:sticky no celular (cabeçalho, barra de navegação, ações). clip corta sem isso. */
 body{overflow-x:clip}
 @media(max-width:960px){body{overflow-y:visible;overflow-x:clip}}
+.nav-trail li>button span,.nav-trail-here span{display:block;min-width:0;white-space:nowrap}

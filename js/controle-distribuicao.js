@@ -52,7 +52,7 @@ function _distCalcIdade(nascimento){
 }
 
 function _distGetExtra(it, chave){
-  return (it && it.extra_fields && it.extra_fields[chave]) || '';
+  return (window._efv ? window._efv(it, chave) : (it && it.extra_fields && it.extra_fields[chave])) || '';
 }
 
 function _distNorm(s){ return String(s||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }

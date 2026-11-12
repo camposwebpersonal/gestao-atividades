@@ -129,3 +129,14 @@
   Secretaria visível = permissão na secretaria inteira OU em pelo menos um grupo dela
   (`window.userCanSeeSecretaria`). Usar isso no menu lateral, na tela de escolha, no atalho da
   câmera e em qualquer lista nova. Teste: `tests/restricted-user.browser.cjs`.
+
+## Valores de campos personalizados (regra permanente)
+
+- O mesmo campo existe no banco com grafias diferentes ("Remuneração" × "remuneração",
+  "Telefone" × "telefone"…). Nunca ler `extra_fields[nome]` direto: usar `_efv(registro, nome)`
+  (index.html / `window._efv`), que ignora maiúsculas, acentos e espaços e aceita JSON em texto.
+  Ao salvar, `collectCustomFieldValues` remove as grafias antigas do mesmo campo.
+- Somatórios (resumos, PDFs, totais) devem avisar quantos registros ficaram sem valor, em vez de
+  somar zero em silêncio. Teste: `tests/quantitativo.browser.cjs` (390 e 1366).
+- Breadcrumbs nunca cortam o início de uma palavra: níveis anteriores encolhem com reticências e o
+  nível atual aparece inteiro.

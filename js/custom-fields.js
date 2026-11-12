@@ -16,11 +16,17 @@ export function customFieldControl(template,raw,escapeHtml=value=>String(value??
  return `<div class="custom-choice-field" data-ef-choice-group data-ef-choice-key="${escapeHtml(key)}" data-ef-choice-type="${type}" role="${type==='radio'?'radiogroup':'group'}" aria-label="${escapeHtml(key)}"><small>${label}</small><div>${allOptions.map(option=>`<label><input type="${inputType}" name="ef-choice-${escapeHtml(key)}" value="${escapeHtml(option)}" ${selected.includes(option)?'checked':''}><span>${escapeHtml(option)}${!options.includes(option)?' (valor anterior)':''}</span></label>`).join('')}</div></div>`;
 }
 
+// Mesmo campo escrito de outro jeito ("remuneração" × "Remuneração"): ao salvar, fica só
+// a grafia do campo personalizado, para não duplicar valores nem somar errado.
+const fieldKey=k=>String(k||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+function dropVariants(values,key){const want=fieldKey(key);for(const k of Object.keys(values))if(k!==key&&fieldKey(k)===want)delete values[k];}
+
 export function collectCustomFieldValues(root,base={}){
  const values={...base};
- root.querySelectorAll('[data-ef-key]').forEach(element=>{const value=String(element.value??'').trim();if(value)values[element.dataset.efKey]=value;else delete values[element.dataset.efKey];});
+ root.querySelectorAll('[data-ef-key]').forEach(element=>{const value=String(element.value??'').trim();dropVariants(values,element.dataset.efKey);if(value)values[element.dataset.efKey]=value;else delete values[element.dataset.efKey];});
  root.querySelectorAll('[data-ef-choice-group]').forEach(group=>{
   const key=group.dataset.efChoiceKey,type=group.dataset.efChoiceType,checked=[...group.querySelectorAll('input:checked')].map(input=>input.value);
+  dropVariants(values,key);
   if(!checked.length)delete values[key];
   else values[key]=type==='checkboxes'?checked:checked[0];
  });

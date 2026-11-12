@@ -115,11 +115,10 @@ function render() {
     bar.innerHTML = `${parent ? `<button type="button" class="nav-trail-back" onclick="${esc(backGo)}" title="Voltar para ${esc(leaf ? crumbs[crumbs.length - 2].label : parent.label)}"><span aria-hidden="true">←</span><b>Voltar</b></button>` : ''}<ol>${crumbs.map((c, i) => {
       const last = i === crumbs.length - 1;
       const body = `<i aria-hidden="true">${c.icon}</i><span>${esc(c.label)}</span>`;
-      return `<li${last ? ' aria-current="page"' : ''}>${last || !c.go ? `<span class="nav-trail-here">${body}</span>` : `<button type="button" onclick="${esc(c.go)}" title="Ir para ${esc(c.label)}">${body}</button>`}</li>`;
+      return `<li${last ? ' aria-current="page"' : ''}${i === 0 ? ' class="is-home"' : ''}>${last || !c.go ? `<span class="nav-trail-here">${body}</span>` : `<button type="button" onclick="${esc(c.go)}" title="Ir para ${esc(c.label)}">${body}</button>`}</li>`;
     }).join('')}</ol>`;
     content.prepend(bar);
     // No celular, o item atual fica visível (rola o caminho até o fim).
-    const list = bar.querySelector('ol'); if (list) list.scrollLeft = list.scrollWidth;
   }
   document.body.classList.add('has-nav-trail');
   hideLegacyBacks(content);

@@ -1,0 +1,29 @@
+/* Resumo "Colaboradores e folha salarial por grupo" (BCCS, Empregos e Resumo Quantitativo) */
+.qt-box{margin:0 0 16px;padding:14px;border:1px solid #d3e0ea;border-radius:14px;background:#fff;box-shadow:0 2px 10px rgba(15,45,70,.05);min-width:0}
+.qt-head h3{margin:0 0 10px;font-size:15px;font-weight:850;color:#0b4f8a}
+.qt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.qt-kpi{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid #dce7ef;border-radius:11px;background:#f6f9fc;min-width:0}
+.qt-kpi b{font-size:18px;font-weight:850;color:#12273a;overflow-wrap:anywhere}.qt-kpi span{font-size:12px;font-weight:700;color:#4d6475}
+.qt-kpi.is-money{background:#edf8f1;border-color:#bfe3cc}.qt-kpi.is-money b{color:#11653f}
+.qt-warn{margin:0 0 10px;padding:8px 10px;border-radius:9px;background:#fff6e0;color:#6b4300;font-size:12px;font-weight:700}
+.qt-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.qt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:9px 11px;border:1px solid #e3ebf1;border-radius:10px;background:#fbfdfe}
+.qt-name{font-size:13px;font-weight:700;color:#16364d;min-width:0;overflow-wrap:anywhere}
+.qt-name small{display:block;font-size:11px;font-weight:600;color:#4d6475;margin-top:2px}
+.qt-vals{display:flex;align-items:center;gap:8px;justify-content:flex-end;white-space:nowrap}
+.qt-count{font-size:12px;font-weight:800;color:#0b4f8a;background:#e6f0f8;border-radius:999px;padding:3px 9px}
+.qt-money{font-size:14px;font-weight:850;color:#11653f}
+.qt-bar{grid-column:1/-1;height:5px;border-radius:99px;background:#e8eef3;overflow:hidden}
+.qt-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1f9d63,#0b6b4a)}
+.qt-meta{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;font-size:11px;font-weight:700;color:#4d6475}
+.qt-meta:empty{display:none}.qt-meta em{font-style:normal;color:#7a4a00}
+.qt-total{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:11px;background:#0b4f8a;color:#fff}
+.qt-total span{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.qt-total strong{font-size:15px;font-weight:850}
+@media(max-width:520px){
+  .qt-box{padding:11px}
+  .qt-kpis{grid-template-columns:1fr 1fr}
+  .qt-kpi.is-money{grid-column:1/-1;order:-1}
+  .qt-kpi b{font-size:16px}
+  .qt-row{grid-template-columns:1fr}
+  .qt-vals{justify-content:space-between}
+}

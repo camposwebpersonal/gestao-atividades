@@ -25,5 +25,5 @@ test('cartão amarelo Itaú Click abre ativado com limite disponível total',()=
 
 test('protótipo Itaú renovado permanece disponível offline',()=>{
   for(const asset of ['testsys/index.html','testsys/fatura.html','testsys/style.css','testsys/app.js']) assert.match(sw,new RegExp(asset.replace('.','\\.')));
-  assert.match(sw,/gestao-pms-v191/);
+  assert.match(sw,/gestao-pms-v192/);
 });

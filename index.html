@@ -430,7 +430,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/smart-camera.css?v=1">
 <link rel="stylesheet" href="css/productivity-redesign.css?v=6">
 <link rel="stylesheet" href="css/geolocation.css?v=9">
-<link rel="stylesheet" href="css/nav-trail.css?v=1">
+<link rel="stylesheet" href="css/nav-trail.css?v=2">
+<link rel="stylesheet" href="css/quantitativo.css?v=1">
 <link rel="stylesheet" href="css/pipa-refill.css?v=4">
 <link rel="stylesheet" href="css/demandas-premium.css?v=1">
 <link rel="stylesheet" href="css/supabase-status.css?v=3">
@@ -533,14 +534,14 @@ import {reportDateTime} from './js/demand-report.js?v=3';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=2';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=2';
 import './js/modal-context.js?v=2';
-import './js/nav-trail.js?v=1';
+import './js/nav-trail.js?v=2';
 import './js/mail-settings.js?v=1';
 import './js/whatsapp-avisos.js?v=3';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=8';
 import './js/pdf-picker.js?v=1';
-import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
+import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=2';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=4';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=11';
@@ -1555,6 +1556,19 @@ window.gerarPDFGaleria=async function(){
 // ── DASHBOARD ──
 // Tela antiga de Atividades removida; use renderModulos() / Central de Lançamentos.
 
+// Valor de um campo personalizado, tolerante a maiúsculas/acentos/espaços no nome
+// ("Remuneração" encontra "remuneração") e a extra_fields gravado como texto JSON.
+function _efKey(k){return String(k||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function _efv(rec,field){
+  let ef=rec?.extra_fields;
+  if(typeof ef==='string'){try{ef=JSON.parse(ef);}catch{ef={};}}
+  ef=ef||{};
+  if(ef[field]!=null&&ef[field]!=='')return ef[field];
+  const want=_efKey(field);
+  for(const k of Object.keys(ef)){if(_efKey(k)===want&&ef[k]!=null&&ef[k]!=='')return ef[k];}
+  return ef[field];
+}
+window._efv=_efv;
 function _parseValor(v){
   if(v==null||v==='')return 0;
   const n=parseFloat(String(v).replace(/[^\d,\-]/g,'').replace(',','.'));
@@ -1571,8 +1585,8 @@ function _renderResumoFinanceiro(secId){
     const subs=S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem');
     const byMonth={};
     subs.forEach(s=>{
-      const mes=(s.extra_fields||{})[monthCol]||'—';
-      const val=_parseValor((s.extra_fields||{})[valCol]);
+      const mes=_efv(s,monthCol)||'—';
+      const val=_parseValor(_efv(s,valCol));
       if(!byMonth[mes])byMonth[mes]={count:0,total:0};
       byMonth[mes].count++;byMonth[mes].total+=val;
       months.add(mes);
@@ -2408,7 +2422,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
     if(!tpls.length)return '';
     const ef=it?.extra_fields||{};
     return`<div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px"><div style="font-size:12px;font-weight:700;color:#fcd34d;margin-bottom:8px">🗂️ Campos Personalizados</div><div style="display:flex;flex-direction:column;gap:8px">${tpls.map(t=>{
-      let raw=ef[t.field_name]; if(raw===null||raw===undefined) raw=it?.[t.field_name];
+      let raw=it?_efv(it,t.field_name):undefined; if(raw===null||raw===undefined) raw=it?.[t.field_name];
       const val=raw===null||raw===undefined?'':String(raw);
       const choice=customFieldControl({...t,options:_tplOpts(t)},raw,esc);
       const inp=choice|| (t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px">`);
@@ -3217,7 +3231,7 @@ function _pdfBuildSubRows(item,rowNum,_cp,opts,numFields,sumVal){
     }
     imgs.push({cu:null,ru:opts.subResp?s.resp_url:null});
   }
-  const _itemSums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
+  const _itemSums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal(_efv(s,fn)),0)).filter(v=>v>0);
   const _subSumTxt=_itemSums.length?'  |  '+_itemSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
   return{rows,imgs,subSumTxt:_subSumTxt,count:flat.length};
 }
@@ -3232,8 +3246,8 @@ function _buildResumoMatrix(secId){
     const subs=S.subitems.filter(s=>s.item_id===item.id&&s.parent_type!=='subitem');
     const byMonth={};
     subs.forEach(s=>{
-      const mes=(s.extra_fields||{})[monthCol]||'—';
-      const val=_parseValor((s.extra_fields||{})[valCol]);
+      const mes=_efv(s,monthCol)||'—';
+      const val=_parseValor(_efv(s,valCol));
       if(!byMonth[mes])byMonth[mes]={count:0,total:0};
       byMonth[mes].count++;byMonth[mes].total+=val;
       months.add(mes);
@@ -3266,20 +3280,34 @@ function _buildResumoMatrix(secId){
 function _renderQuantitativo(secId,valField,title){
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!items.length)return '';
-  let totalAtivos=0,totalValor=0;
-  let html='<div style="margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:12px">';
-  html+=`<div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:10px">📊 ${esc(title||'Resumo Quantitativo')}</div>`;
-  html+='<div style="display:grid;gap:6px">';
-  items.forEach(it=>{
-    const subs=S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem');
-    const ativos=subs.filter(s=>s.concluded!=1);
-    totalAtivos+=ativos.length;
-    let sum=0;
-    if(valField){sum=ativos.reduce((a,s)=>a+_parseValor((s.extra_fields||{})[valField]),0);totalValor+=sum;}
-    const resp=it.responsaveis?' · 👤 '+esc(it.responsaveis):'';
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:#0e1729;border-radius:6px;padding:8px 10px"><div style="font-size:13px;color:#e2e8f0">${esc(it.description)}${resp}</div><div style="font-size:13px;font-weight:700;color:#34d399">${ativos.length}${valField?' · '+_fmtMoney(sum):''}</div></div>`;
+  // Soma por grupo: só subitens ativos (não concluídos). O nome do campo é comparado sem
+  // diferenciar maiúsculas/acentos ("Remuneração" = "remuneração").
+  const rows=items.map(it=>{
+    const ativos=S.subitems.filter(s=>s.item_id===it.id&&s.parent_type!=='subitem'&&s.concluded!=1);
+    let sum=0,blank=0;
+    if(valField)ativos.forEach(s=>{const raw=_efv(s,valField);const v=_parseValor(raw);if(!v)blank++;sum+=v;});
+    return {it,count:ativos.length,sum,blank};
   });
-  html+=`</div><div style="margin-top:10px;text-align:right;font-size:13px;color:#94a3b8">Total: <span style="font-size:14px;font-weight:800;color:#34d399">${totalAtivos} ativo(s)${valField?' · '+_fmtMoney(totalValor):''}</span></div></div>`;
+  const totalAtivos=rows.reduce((a,r)=>a+r.count,0),totalValor=rows.reduce((a,r)=>a+r.sum,0),totalBlank=rows.reduce((a,r)=>a+r.blank,0);
+  const maxSum=Math.max(...rows.map(r=>r.sum),0),maxCount=Math.max(...rows.map(r=>r.count),0);
+  const media=totalAtivos-totalBlank>0?totalValor/(totalAtivos-totalBlank):0;
+  const kpi=(label,value,cls='')=>`<div class="qt-kpi ${cls}"><b>${value}</b><span>${label}</span></div>`;
+  let html=`<section class="qt-box" aria-label="${esc(title||'Resumo Quantitativo')}">
+    <header class="qt-head"><h3>📊 ${esc(title||'Resumo Quantitativo')}</h3></header>
+    <div class="qt-kpis">${kpi('Ativos',totalAtivos.toLocaleString('pt-BR'))}${valField?kpi('Total ('+esc(valField.toLowerCase())+')',_fmtMoney(totalValor),'is-money')+kpi('Média por pessoa',_fmtMoney(media)):''}</div>
+    ${valField&&totalBlank?`<p class="qt-warn">⚠️ ${totalBlank} ativo${totalBlank===1?'':'s'} sem ${esc(valField.toLowerCase())} preenchida — não entra${totalBlank===1?'':'m'} na soma.</p>`:''}
+    <ol class="qt-list">`;
+  rows.forEach(({it,count,sum,blank})=>{
+    const share=valField?(maxSum?sum/maxSum:0):(maxCount?count/maxCount:0);
+    const pct=valField&&totalValor?Math.round(sum/totalValor*100):0;
+    html+=`<li class="qt-row">
+      <div class="qt-name">${esc(it.description)}${it.responsaveis?`<small>👤 ${esc(it.responsaveis)}</small>`:''}</div>
+      <div class="qt-vals"><span class="qt-count" title="Ativos">👥 ${count}</span>${valField?`<strong class="qt-money">${_fmtMoney(sum)}</strong>`:''}</div>
+      <div class="qt-bar" aria-hidden="true"><i style="width:${Math.max(share*100,count?2:0).toFixed(1)}%"></i></div>
+      ${valField?`<div class="qt-meta">${pct?`${pct}% do total`:''}${blank?`<em>⚠️ ${blank} sem valor</em>`:''}</div>`:''}
+    </li>`;
+  });
+  html+=`</ol><footer class="qt-total"><span>Total</span><strong>${totalAtivos.toLocaleString('pt-BR')} ativo(s)${valField?' · '+_fmtMoney(totalValor):''}</strong></footer></section>`;
   return html;
 }
 window.gerarPdfResumoBCCS=async function(secId){
@@ -3511,15 +3539,15 @@ async function _gerarPdfCore(secId,opts){
   // ── Resumo por Campos Personalizados ──
   if(opts.showCards!==false&&opts.efFields&&opts.efFields.length){
     const hasSep=opts.sepField&&opts.sepVal;
-    const calcSum=(fn,filterFn)=>{let t=0,c=0;items.forEach(it=>{S.subitems.filter(s=>s.item_id===it.id).forEach(s=>{if(filterFn&&!filterFn(s))return;const v=parseFloat(String((s.extra_fields||{})[fn]||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});return{total:t,count:c};};
+    const calcSum=(fn,filterFn)=>{let t=0,c=0;items.forEach(it=>{S.subitems.filter(s=>s.item_id===it.id).forEach(s=>{if(filterFn&&!filterFn(s))return;const v=parseFloat(String(_efv(s,fn)||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});return{total:t,count:c};};
     const allCards=[];
     // Card Geral (todos)
     opts.efFields.forEach(fn=>{const g=calcSum(fn);if(g.count>0)allCards.push({v:'R$ '+g.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:g.count+' cadastro(s)  •  '+fn,c:[245,158,11],title:'Total Geral'});});
     if(hasSep){
       // Card Demais (não separados)
-      opts.efFields.forEach(fn=>{const ns=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return!v||String(v).trim()!==opts.sepVal;});if(ns.count>0)allCards.push({v:'R$ '+ns.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:ns.count+' cadastro(s)  •  '+fn,c:[59,130,246],title:'Demais'});});
+      opts.efFields.forEach(fn=>{const ns=calcSum(fn,s=>{const v=_efv(s,opts.sepField);return!v||String(v).trim()!==opts.sepVal;});if(ns.count>0)allCards.push({v:'R$ '+ns.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:ns.count+' cadastro(s)  •  '+fn,c:[59,130,246],title:'Demais'});});
       // Card Separados
-      opts.efFields.forEach(fn=>{const sp=calcSum(fn,s=>{const v=(s.extra_fields||{})[opts.sepField];return v&&String(v).trim()===opts.sepVal;});if(sp.count>0)allCards.push({v:'R$ '+sp.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:sp.count+' cadastro(s)  •  '+fn,c:[139,92,246],title:opts.sepField.toUpperCase()+': '+opts.sepVal});});
+      opts.efFields.forEach(fn=>{const sp=calcSum(fn,s=>{const v=_efv(s,opts.sepField);return v&&String(v).trim()===opts.sepVal;});if(sp.count>0)allCards.push({v:'R$ '+sp.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:sp.count+' cadastro(s)  •  '+fn,c:[139,92,246],title:opts.sepField.toUpperCase()+': '+opts.sepVal});});
     }
     if(allCards.length){const cW=allCards.length>0?(cw-(Math.min(allCards.length,2)-1)*3)/Math.min(allCards.length,2):cw;let cardY=y;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=19;const cx=mx+col*(cW+3);chk(19);doc.setFillColor(255,255,255);doc.setDrawColor(203,213,225);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cW,17,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cW,3,1,1,'F');sf(13,true,card.c);doc.text(card.v,cx+cW/2,cardY+9,{align:'center'});if(card.title){sf(8.5,true,card.c);doc.text(card.title,cx+cW/2,cardY+13,{align:'center'});sf(7,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+16,{align:'center'});}else{sf(7.5,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+14,{align:'center'});}});y=cardY+19+2;}
   }
@@ -3605,13 +3633,13 @@ async function _gerarPdfCore(secId,opts){
           tblB.push(srow);
           tblE.push({cu:null,ru:opts.subResp?s.resp_url:null});
         });
-        const sums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
+        const sums=numFields.map(fn=>flat.reduce((a,s)=>a+sumVal(_efv(s,fn)),0)).filter(v=>v>0);
         const subTxt=sums.length?'  |  '+sums.map((v,i)=>'\u03a3 '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
         const subRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});
         subRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};
         subRow[1]={content:'Subtotal: '+flat.length+' sub-item(ns)'+subTxt,styles:{fillColor:[226,232,240],fontStyle:'bold'}};
         numFields.forEach(fn=>{
-          const v=flat.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);
+          const v=flat.reduce((a,s)=>a+sumVal(_efv(s,fn)),0);
           if(v>0){const colIdx=4+opts.efFields.indexOf(fn);subRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{halign:'right',fontStyle:'bold',fillColor:[226,232,240]}};}
         });
         tblB.push(subRow);tblE.push({cu:null,ru:null});
@@ -3623,7 +3651,7 @@ async function _gerarPdfCore(secId,opts){
     totRow[0]={content:'\u03a3',styles:{halign:'center',fillColor:[15,23,42],textColor:[255,255,255],fontStyle:'bold'}};
     totRow[1]={content:'Total: '+items.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};
     numFields.forEach(fn=>{
-      const v=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);
+      const v=items.reduce((a,it)=>a+S.subitems.filter(s=>s.item_id===it.id).reduce((b,s)=>b+sumVal(_efv(s,fn)),0),0);
       if(v>0){const colIdx=4+opts.efFields.indexOf(fn);totRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}
     });
     tblB.push(totRow);tblE.push({cu:null,ru:null});
@@ -3651,11 +3679,11 @@ async function _gerarPdfCore(secId,opts){
         for(const s2 of flat){const sD=s2.concluded==1,sL=_cp&&!sD&&s2.deadline_date&&new Date(s2.deadline_date)<today;
           recs.push({num:s2._hierNum,level:(s2._level||0)+1,title:s2.description,badges:badgesOf(s2,sD,sL,0),fields:fieldsOf(s2,true),note:s2.observacao||'',meta:registro(s2),accent:[[21,132,91],[37,99,235],[180,120,10],[124,58,237],[190,40,110]][Math.min(s2._level||0,4)]});
           thumbSrc.push([opts.subResp&&s2.resp_url].filter(Boolean));}
-        const sums=numFields.map(fn=>[fn,flat.reduce((acc,x)=>acc+sumVal((x.extra_fields||{})[fn]),0)]).filter(([,v])=>v>0);
+        const sums=numFields.map(fn=>[fn,flat.reduce((acc,x)=>acc+sumVal(_efv(x,fn)),0)]).filter(([,v])=>v>0);
         if(sums.length){recs.push({kind:'subtotal',level:1,title:'Subtotal de '+(item.description||'item')+': '+sums.map(([fn,v])=>fn+' '+money(v)).join('  ·  ')});thumbSrc.push([]);}
       }
     }
-    const allSums=numFields.map(fn=>[fn,items.reduce((acc,it)=>acc+S.subitems.filter(x=>x.item_id===it.id).reduce((b2,x)=>b2+sumVal((x.extra_fields||{})[fn]),0),0)]).filter(([,v])=>v>0);
+    const allSums=numFields.map(fn=>[fn,items.reduce((acc,it)=>acc+S.subitems.filter(x=>x.item_id===it.id).reduce((b2,x)=>b2+sumVal(_efv(x,fn)),0),0)]).filter(([,v])=>v>0);
     recs.push({kind:'total',title:'Total: '+items.length+' item(ns)'+(subCount?' · '+subCount+' subitem(ns)':'')+(allSums.length?'  ·  '+allSums.map(([fn,v])=>fn+' '+money(v)).join('  ·  '):'')});thumbSrc.push([]);
     // Valores iguais em todos os itens (ex.: a mesma secretaria) aparecem uma vez só, acima da lista.
     const mainRecs=recs.filter(r=>!r.kind&&r.level===0);
@@ -3704,7 +3732,7 @@ async function _gerarPdfCore(secId,opts){
     items.forEach((item,ii)=>{
       const pr=itemProgs[ii].prog;
       if(!pr.hasSubs)return;
-      const sepSubs=pr.subs.filter(s=>{const v=(s.extra_fields||{})[opts.sepField];return v&&String(v).trim()===opts.sepVal;});
+      const sepSubs=pr.subs.filter(s=>{const v=_efv(s,opts.sepField);return v&&String(v).trim()===opts.sepVal;});
       if(sepSubs.length>0)sepItems.push({item,pr,sepSubs});
     });
     if(sepItems.length>0){
@@ -3740,13 +3768,13 @@ async function _gerarPdfCore(secId,opts){
             if(_cp){srow.push({content:sD?'100%':'0%',styles:{halign:'center',fillColor:[248,250,252]}});srow.push({content:sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',styles:{fillColor:[248,250,252]}});srow.push({content:s.deadline_date?fmtD(s.deadline_date):'\u2014',styles:{fillColor:[248,250,252]}});}
             sTblB.push(srow);sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});
           });
-          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);
+          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal(_efv(s,fn)),0)).filter(v=>v>0);
           const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';
-          const sepSubRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});sepSubRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[226,232,240],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
+          const sepSubRow=new Array(totalCols).fill({content:'',styles:{fillColor:[226,232,240]}});sepSubRow[0]={content:'\u2211',styles:{halign:'center',fillColor:[226,232,240],fontStyle:'bold'}};sepSubRow[1]={content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240]}};numFields.forEach(fn=>{const v=sepSubs.reduce((a,s)=>a+sumVal(_efv(s,fn)),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepSubRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[226,232,240],halign:'right'}};}});sTblB.push(sepSubRow);sTblE.push({cu:null,ru:null});
           if(sii<sepItems.length-1){sTblB.push(new Array(totalCols).fill({content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}));sTblE.push({cu:null,ru:null});}
         });
         sTblB.push(new Array(totalCols).fill({content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2},fillColor:[255,255,255]}}));sTblE.push({cu:null,ru:null});
-        const sepTotRow=new Array(totalCols).fill({content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}});sepTotRow[0]={content:'\u03a3',styles:{fillColor:[15,23,42],textColor:[255,255,255],halign:'center',fontStyle:'bold'}};sepTotRow[1]={content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};numFields.forEach(fn=>{const v=sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepTotRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}});sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
+        const sepTotRow=new Array(totalCols).fill({content:'',styles:{fillColor:[15,23,42],textColor:[255,255,255]}});sepTotRow[0]={content:'\u03a3',styles:{fillColor:[15,23,42],textColor:[255,255,255],halign:'center',fontStyle:'bold'}};sepTotRow[1]={content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255]}};numFields.forEach(fn=>{const v=sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal(_efv(s,fn)),0),0);if(v>0){const colIdx=4+opts.efFields.indexOf(fn);sepTotRow[colIdx]={content:'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2}),styles:{fontStyle:'bold',fillColor:[15,23,42],textColor:[255,255,255],halign:'right'}};}});sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
       }else{
         sTblH=_cp?[['#','Item / Sub-item / Respons\u00e1veis','Prog.','Status','Prazo / Conclus\u00e3o']]:[['#','Item / Sub-item / Respons\u00e1veis']];
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
@@ -3767,7 +3795,7 @@ async function _gerarPdfCore(secId,opts){
           sTblB.push(sepItemRow);
           sTblE.push({cu:opts.itemCov?item.cover_url:null,ru:opts.itemResp?item.resp_url:null});
           sepSubs.forEach((s,si)=>{const sD=s.concluded==1;const sL=_cp&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;let sc='\u203a '+(si+1)+'. '+(s.description||'');if(s.responsaveis)sc+='\nResp: '+s.responsaveis;if(opts.efFields&&opts.efFields.length){const ef=s.extra_fields||{};opts.efFields.forEach(fn=>{if(ef[fn])sc+='\n  '+fn+': '+formatCustomFieldValue(ef[fn]);});}if(_cp){sTblB.push(['',sc,sD?'100%':'0%',sD?'\u2713 Conclu\u00eddo':sL?'\u26a0 Atrasado':'Pendente',s.deadline_date?fmtD(s.deadline_date):'\u2014']);}else{sTblB.push(['',sc]);}sTblE.push({cu:null,ru:opts.subResp?s.resp_url:null});});
-          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal((s.extra_fields||{})[fn]),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const sepSubRow=_cp?[
+          const _sepSums=numFields.map(fn=>sepSubs.reduce((a,s)=>a+sumVal(_efv(s,fn)),0)).filter(v=>v>0);const _sepSumTxt=_sepSums.length?'  |  '+_sepSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';const sepSubRow=_cp?[
             {content:'\u2211',styles:{halign:'center',fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
             {content:'Subtotal: '+sepSubs.length+' sub-item(ns)'+_sepSumTxt,styles:{fontStyle:'bold',fillColor:[226,232,240],textColor:[15,23,42]}},
             {content:'',styles:{fillColor:[226,232,240],textColor:[15,23,42]}},
@@ -3790,7 +3818,7 @@ async function _gerarPdfCore(secId,opts){
           {content:'\u03a3',styles:{halign:'center',fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}},
           {content:'Total: '+sepItems.length+' item(ns)',styles:{fontStyle:'bold',fillColor:[13,34,64],textColor:[255,255,255]}}
         ];
-        const _sepTotSums=numFields.map(fn=>sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal((s.extra_fields||{})[fn]),0),0)).filter(v=>v>0);const _sepTotSumTxt=_sepTotSums.length?'  |  '+_sepTotSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';if(_cp){sepTotRow[1].content+=_sepTotSumTxt;}else{sepTotRow[1].content+=_sepTotSumTxt;}
+        const _sepTotSums=numFields.map(fn=>sepItems.reduce((a,si)=>a+si.sepSubs.reduce((b,s)=>b+sumVal(_efv(s,fn)),0),0)).filter(v=>v>0);const _sepTotSumTxt=_sepTotSums.length?'  |  '+_sepTotSums.map((v,i)=>'Σ '+numFields[i]+': R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2})).join('  |  '):'';if(_cp){sepTotRow[1].content+=_sepTotSumTxt;}else{sepTotRow[1].content+=_sepTotSumTxt;}
         const spSepTot=_cp?[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}]:[{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}},{content:'',styles:{fontSize:1,cellPadding:{top:2,bottom:2}}}];
         sTblB.push(spSepTot);sTblE.push({cu:null,ru:null});
         sTblB.push(sepTotRow);sTblE.push({cu:null,ru:null});
@@ -4777,7 +4805,7 @@ window.atualizarSepValues=function(){
   const valSel=document.getElementById('popt-sep-val');
   if(!field||!valSel){valSel&&(valSel.style.display='none');return;}
   const vals=new Set();
-  S.subitems.forEach(s=>{const v=(s.extra_fields||{})[field];if(v&&String(v).trim())vals.add(String(v).trim());});
+  S.subitems.forEach(s=>{const v=_efv(s,field);if(v&&String(v).trim())vals.add(String(v).trim());});
   let opts='<option value="">— Qualquer valor —</option>';
   [...vals].sort().forEach(v=>{opts+='<option value="'+v+'">'+v+'</option>';});
   valSel.innerHTML=opts;valSel.style.display='block';
@@ -5113,7 +5141,7 @@ function abrirBusca(secId){
   document.getElementById('busca-overlay').style.display='block';
   setTimeout(()=>document.getElementById('busca-input').focus(),80);
 }
-function aplicarFiltroBusca(){const field=document.getElementById('bchk-filter-field').value;if(!field)return;const vals=new Set();const S=window.S;const secId=_buscaSecId;S.subitems.filter(s=>{const it=S.items.find(i=>i.id===s.item_id);return it&&it.atividade_id===secId;}).forEach(s=>{const v=(s.extra_fields||{})[field];if(v&&String(v).trim())vals.add(String(v).trim());});vals.add('(vazio)');const sel=document.getElementById('bchk-filter-value');sel.innerHTML='<option value="">— Qualquer —</option>';[...vals].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});if(window._buscaRes)executarBusca();}
+function aplicarFiltroBusca(){const field=document.getElementById('bchk-filter-field').value;if(!field)return;const vals=new Set();const S=window.S;const secId=_buscaSecId;S.subitems.filter(s=>{const it=S.items.find(i=>i.id===s.item_id);return it&&it.atividade_id===secId;}).forEach(s=>{const v=_efv(s,field);if(v&&String(v).trim())vals.add(String(v).trim());});vals.add('(vazio)');const sel=document.getElementById('bchk-filter-value');sel.innerHTML='<option value="">— Qualquer —</option>';[...vals].sort().forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});if(window._buscaRes)executarBusca();}
 function limparFiltroBusca(){document.getElementById('bchk-filter-field').value='';document.getElementById('bchk-filter-value').innerHTML='<option value="">— Qualquer —</option>';if(window._buscaRes)executarBusca();}
 function fecharBusca(){document.getElementById('busca-overlay').style.display='none';}
 function limparBusca(){document.getElementById('busca-input').value='';document.getElementById('busca-resultados').innerHTML='';window._buscaRes=null;}
@@ -5143,7 +5171,7 @@ function executarBusca(){
   const filterVal=document.getElementById('bchk-filter-value')?.value||'';
   const _passFilter=(it)=>{
     if(!filterField||!filterVal)return true;
-    const ef=(it.extra_fields||{})[filterField];
+    const ef=_efv(it,filterField);
     if(filterVal==='(vazio)')return !ef||!String(ef).trim();
     return String(ef||'').trim()===filterVal;
   };
@@ -5175,10 +5203,10 @@ function executarBusca(){
   const sumDiv=document.getElementById('busca-pdf-sum');
   if(sumDiv){sumDiv.querySelectorAll('input[data-ef]').forEach(cb=>{if(cb.checked)sumFields.push(cb.getAttribute('data-ef'));});}
   const sumData={};
-  sumFields.forEach(fn=>{let t=0,c=0;results.forEach(r=>{r.displaySubs.forEach(s=>{const v=parseFloat(String((s.extra_fields||{})[fn]||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});sumData[fn]={total:t,count:c};});
+  sumFields.forEach(fn=>{let t=0,c=0;results.forEach(r=>{r.displaySubs.forEach(s=>{const v=parseFloat(String(_efv(s,fn)||'').replace(/[^\d,\-]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){t+=v;c++;}});});sumData[fn]={total:t,count:c};});
   // Quantitativos por campo personalizado
   const qtFields=[];
-  ftSubs.forEach(t=>{const vals={};let vazio=0;results.forEach(r=>{r.displaySubs.forEach(s=>{const v=(s.extra_fields||{})[t.field_name];if(v&&String(v).trim()){const key=String(v).trim();vals[key]=(vals[key]||0)+1;}else{vazio++;}});});if(Object.keys(vals).length>0||vazio>0)qtFields.push({field:t.field_name,vals,vazio});});
+  ftSubs.forEach(t=>{const vals={};let vazio=0;results.forEach(r=>{r.displaySubs.forEach(s=>{const v=_efv(s,t.field_name);if(v&&String(v).trim()){const key=String(v).trim();vals[key]=(vals[key]||0)+1;}else{vazio++;}});});if(Object.keys(vals).length>0||vazio>0)qtFields.push({field:t.field_name,vals,vazio});});
   let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px"><div style="font-size:13px;color:#64748b"><strong style="color:#0e7490">${total}</strong> resultado(s) para “<strong>${_buscaEsc(qRaw)}</strong>”${filterField?' | Filtro: '+_buscaEsc(filterField)+'='+_buscaEsc(filterVal):''}<br><small>Busca inteligente: acentos, palavras fora de ordem e pequenas variações são aceitos.</small></div><button onclick="gerarPdfBusca()" style="padding:8px 14px;background:#8b5cf6;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF dos Resultados</button></div>`;
   // Stats cards
   if(sumFields.length||qtFields.length){
@@ -5202,7 +5230,7 @@ function executarBusca(){
       html+=`<td style="padding:8px 10px;color:#e2e8f0;font-weight:700;border-bottom:1px solid #1e293b">${item.description||''}</td>`;
       html+=`<td style="padding:8px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${item.responsaveis||''}</td>`;
       html+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">${item.observacao||''}</td>`;
-      ftSubs.forEach(t=>{const v=(item.extra_fields||{})[t.field_name];html+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${v||''}</td>`;});
+      ftSubs.forEach(t=>{const v=_efv(item,t.field_name);html+=`<td style="padding:8px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${v||''}</td>`;});
       if(_cp){html+=`<td style="padding:8px 10px;color:#64748b;border-bottom:1px solid #1e293b">—</td><td style="padding:8px 10px;color:${isDone?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${isDone?'✅ Concluído':'⏳ Pendente'}</td>`;}
       html+='</tr>';
       displaySubs.forEach((s,si)=>{
@@ -5213,7 +5241,7 @@ function executarBusca(){
         html+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${s.description||''}</td>`;
         html+=`<td style="padding:6px 10px;color:#a78bfa;border-bottom:1px solid #1e293b">${s.responsaveis||''}</td>`;
         html+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${s.observacao||''}</td>`;
-        ftSubs.forEach(t=>{const v=(s.extra_fields||{})[t.field_name];html+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${v||''}</td>`;});
+        ftSubs.forEach(t=>{const v=_efv(s,t.field_name);html+=`<td style="padding:6px 10px;color:#e2e8f0;border-bottom:1px solid #1e293b">${v||''}</td>`;});
         if(_cp){html+=`<td style="padding:6px 10px;color:#64748b;border-bottom:1px solid #1e293b">${sD?'100%':'0%'}</td><td style="padding:6px 10px;color:${sD?'#34d399':'#94a3b8'};border-bottom:1px solid #1e293b">${sD?'✅ Concluído':'⏳ Pendente'}</td>`;}
         html+='</tr>';
       });
@@ -5243,7 +5271,7 @@ function executarBusca(){
           html+=`<div style="background:#0e1729;border-radius:8px;padding:8px 12px;border-left:2px solid ${sMatched?'#0e7490':'transparent'}"><div style="font-size:12px;font-weight:600;color:${sD?'#34d399':'#e2e8f0'}">${si+1}. › ${sMatched?hl(s.description):s.description||''}</div>`;
           if(s.responsaveis) html+=`<div style="font-size:10px;color:#a78bfa;margin-top:2px">👤 ${sMatched?hl(s.responsaveis):s.responsaveis}</div>`;
           if(s.observacao) html+=`<div style="font-size:10px;color:#64748b;margin-top:2px;font-style:italic">📝 ${sMatched?hl(s.observacao):s.observacao}</div>`;
-          ftSubs.forEach(t=>{const v=(s.extra_fields||{})[t.field_name];if(v&&String(v).trim())html+=`<div style="font-size:10px;color:#94a3b8;margin-top:1px">📌 ${t.field_name}: <strong style="color:#e2e8f0">${v}</strong></div>`;});
+          ftSubs.forEach(t=>{const v=_efv(s,t.field_name);if(v&&String(v).trim())html+=`<div style="font-size:10px;color:#94a3b8;margin-top:1px">📌 ${t.field_name}: <strong style="color:#e2e8f0">${v}</strong></div>`;});
           html+='</div>';
         });
         html+=`<div style="font-size:10px;color:#475569;text-align:right;padding:4px 0;border-top:1px solid #1e293b">∑ Subtotal: ${displaySubs.length} sub-item(ns)</div>`;
