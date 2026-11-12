@@ -66,3 +66,21 @@ test('busca do topo usa a nova organização e a película não cobre mais o cam
     assert.match(html, /secretaryOf=\(group,record\)/);
     assert.match(css, /body\.global-search-open #navbar\{z-index:1601!important\}/);
 });
+
+// Regressão: grupo sem secretaria cujo nome casou não pode aparecer duas vezes
+// ("Sem secretaria" + a secretaria dos lançamentos).
+{
+    const {organizeResults: org} = await import('../js/search-results.js');
+    const group = {id: 'g1', name: 'BENEFICIÁRIOS MINHA CASA MINHA VIDA'};
+    const rows = [
+        {type: 'group', data: group, secretaryId: '', secretaryName: '', score: 9},
+        ...Array.from({length: 3}, (_, i) => ({type: 'item', group, data: {id: 'i' + i}, secretaryId: 'adm', secretaryName: 'ADMINISTRAÇÃO', score: 5})),
+        {type: 'item', group, data: {id: 'x'}, secretaryId: 'soc', secretaryName: 'AÇÃO SOCIAL', score: 4},
+    ];
+    const {tree} = org(rows);
+    const sem = tree.find(sec => sec.name === 'Sem secretaria');
+    if (sem) throw new Error('grupo duplicado em "Sem secretaria"');
+    const adm = tree.find(sec => sec.id === 'adm');
+    if (!adm.groups[0].groupMatched || adm.count !== 3) throw new Error('grupo deveria ficar em ADMINISTRAÇÃO');
+    console.log('ok - grupo sem secretaria não duplica na busca');
+}

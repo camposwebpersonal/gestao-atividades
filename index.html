@@ -539,7 +539,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=1';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=1';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=1';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=3';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=4';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=10';
 import {initSmartCamera} from './js/smart-camera.js?v=1';
 
@@ -625,7 +625,9 @@ function _globalSearchEntries(){
  for(const module of window.visibleSystemModules?.()||window.MODULOS||[]){if(window.userCan?.(module.id,'acesso')!==false)entries.push({type:'module',icon:module.icon||'▦',title:module.label,context:'Área do sistema',data:module,search:[module.label,module.id,module.desc]});}
  const secretaryById=new Map((S.secretarias||[]).map(secretary=>[String(secretary.id),secretary]));
  const secretaryOf=(group,record)=>secretaryById.get(String(group?.demanda_secretaria_id||''))||secretaryById.get(String(record?.secretaria_id||''))||null;
- for(const group of groups.values()){const secretary=secretaryOf(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
+ const _domSec=new Map();for(const item of S.items||[]){const g=groups.get(item.atividade_id);if(!g||g.demanda_secretaria_id||!item.secretaria_id)continue;const m=_domSec.get(g.id)||new Map();m.set(String(item.secretaria_id),(m.get(String(item.secretaria_id))||0)+1);_domSec.set(g.id,m);}
+ const groupSecretary=group=>secretaryOf(group)||secretaryById.get([...(_domSec.get(group.id)||new Map()).entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'')||null;
+ for(const group of groups.values()){const secretary=groupSecretary(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
  for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(!group)continue;const secretary=secretaryOf(group,item);entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(item),data:item,group,search:[item,group.name,secretary?.name]});}
  const itemById=new Map((S.items||[]).map(item=>[item.id,item]));
  for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(!group)continue;const secretary=secretaryOf(group,subitem);entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo',parent?.description].filter(Boolean),parentTitle:parent?.description||'',secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(subitem,{parent}),data:subitem,group,search:[subitem,parent?.description,group.name,secretary?.name]});}

@@ -74,6 +74,19 @@ const OTHER_ORDER = ['module', 'secretary', 'contact', 'responsible', 'water', '
 export function organizeResults(results) {
     const secretaries = new Map();
     const others = new Map();
+    // Um grupo nunca aparece duas vezes: se o nome do grupo casou e ele também tem
+    // lançamentos encontrados, a marca "grupo encontrado" vai para a seção onde estão
+    // os lançamentos (a de mais lançamentos), em vez de criar uma seção à parte.
+    const rowSecs = new Map();
+    for (const entry of results) {
+        if (entry.type !== 'item' && entry.type !== 'subitem') continue;
+        const gid = String(entry.group?.id || '');
+        const key = entry.secretaryId || '__sem__';
+        const m = rowSecs.get(gid) || new Map();
+        if (!m.has(key)) m.set(key, {id: entry.secretaryId || '', name: entry.secretaryName || '', n: 0});
+        m.get(key).n += 1;
+        rowSecs.set(gid, m);
+    }
     for (const entry of results) {
         if (!['group', 'item', 'subitem'].includes(entry.type)) {
             if (!others.has(entry.type)) others.set(entry.type, []);
@@ -81,8 +94,16 @@ export function organizeResults(results) {
             continue;
         }
         const group = entry.type === 'group' ? entry.data : entry.group;
-        const secKey = entry.secretaryId || '__sem__';
-        if (!secretaries.has(secKey)) secretaries.set(secKey, {id: entry.secretaryId || '', name: entry.secretaryName || 'Sem secretaria', score: 0, count: 0, groups: new Map()});
+        let secKey = entry.secretaryId || '__sem__';
+        let secId = entry.secretaryId || '', secName = entry.secretaryName || '';
+        if (entry.type === 'group') {
+            const homes = rowSecs.get(String(group?.id || ''));
+            if (homes && homes.size && !homes.has(secKey)) {
+                const best = [...homes.entries()].sort((a, b) => b[1].n - a[1].n)[0];
+                secKey = best[0]; secId = best[1].id; secName = best[1].name;
+            }
+        }
+        if (!secretaries.has(secKey)) secretaries.set(secKey, {id: secId, name: secName || 'Sem secretaria', score: 0, count: 0, groups: new Map()});
         const sec = secretaries.get(secKey);
         sec.score = Math.max(sec.score, entry.score || 0);
         const gKey = String(group?.id || '');
