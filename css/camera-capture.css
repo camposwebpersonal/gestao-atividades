@@ -33,3 +33,13 @@
 .demand-permanent{display:inline-flex;align-items:center;min-height:30px;padding:0 9px;border:1px solid #99f6e4;border-radius:999px;background:#f0fdfa;color:#0f5f58;font-size:11px;font-weight:850;white-space:nowrap}
 @media(max-width:720px){.field-capture-banner{grid-template-columns:auto 1fr;padding:17px;gap:13px}.field-capture-icon{width:50px;height:50px;font-size:25px}.field-capture-banner>button{grid-column:1/-1;justify-content:center;width:100%}.field-photo-actions>label{flex:1;min-width:138px}.field-photo-actions>b{width:100%;margin:0;text-align:right}.field-photo-preview{grid-template-columns:repeat(3,minmax(0,1fr))}.field-location-bar{align-items:stretch;flex-direction:column}.field-location-actions{display:grid;grid-template-columns:1fr 1fr}.field-location-bar button{width:100%;white-space:normal}}
 @media(max-width:420px){.field-photo-preview{grid-template-columns:repeat(2,minmax(0,1fr))}.field-capture-icon{display:none}.field-capture-banner{grid-template-columns:1fr}}
+/* Atalho do Mapa geral na Visão geral */
+.map-shortcut-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;margin:0 0 18px;padding:18px 22px;border:1px solid #c9dcea;border-radius:22px;background:linear-gradient(135deg,#f3f9ff,#eaf6f0);box-shadow:0 8px 22px rgba(15,45,70,.08);cursor:pointer;min-width:0}
+.map-shortcut-card:hover{border-color:#8fb7d4}.map-shortcut-card:focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+.map-shortcut-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:#fff;border:1px solid #d3e3ee;font-size:30px}
+.map-shortcut-text{min-width:0}
+.map-shortcut-text span{font-size:11px;font-weight:900;letter-spacing:.16em;color:#0b5c46}
+.map-shortcut-text h2{margin:3px 0 4px;font-size:clamp(18px,2.1vw,24px);line-height:1.15;color:#12273a}
+.map-shortcut-text p{margin:0;font-size:13px;line-height:1.5;color:#33475a}.map-shortcut-text p b{color:#9a2a1f}
+.map-shortcut-card>button{min-height:48px;padding:0 20px;border:0;border-radius:13px;background:#0b4f8a;color:#fff;font-size:15px;font-weight:800;white-space:nowrap;cursor:pointer}
+@media(max-width:720px){.map-shortcut-card{grid-template-columns:auto 1fr;padding:16px;gap:13px}.map-shortcut-icon{width:50px;height:50px;font-size:25px}.map-shortcut-card>button{grid-column:1/-1;width:100%}}

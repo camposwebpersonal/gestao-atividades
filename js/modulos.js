@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
 import {supabase} from '../supabase_compat.js?v=11';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=15';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=16';
 import './perfuracao-pocos.js?v=103';
 import './controle-extintores.js?v=5';
 import './controle-licitacoes.js?v=8';
@@ -69,6 +69,12 @@ window.userCanDemandSecretaria=function(secretariaId,action='acesso'){
 // Secretaria visível para o usuário: permissão na secretaria inteira OU em pelo menos um grupo dela.
 // Usado no menu lateral, na tela de escolha da secretaria e no atalho da câmera — nunca mostrar
 // secretarias em que a pessoa não tem nenhum grupo liberado.
+// Atalho do Mapa geral na Visão geral (entre "Atalho de campo" e "Acesso direto").
+function _mapShortcutCard(){
+ const sum=window.geoPointsSummary?.()||{points:0,groups:0,vencidos:0};
+ const info=sum.points?`${sum.points} ponto${sum.points===1?'':'s'} em ${sum.groups} grupo${sum.groups===1?'':'s'}`:'Nenhum ponto marcado ainda';
+ return `<section class="map-shortcut-card" onclick="setView('map')" role="link" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();setView('map')}" aria-label="Abrir o Mapa geral de demandas"><div class="map-shortcut-icon" aria-hidden="true">🗺️</div><div class="map-shortcut-text"><span>MAPA GERAL</span><h2>Veja as demandas no mapa</h2><p>${info}${sum.vencidos?` · <b>⚠️ ${sum.vencidos} pipa${sum.vencidos===1?'':'s'} vencida${sum.vencidos===1?'':'s'}</b>`:''}</p></div><button type="button" tabindex="-1">Abrir mapa <b>›</b></button></section>`;
+}
 window.userCanSeeSecretaria=function(secretariaId,action='acesso'){
  if(window.S?.isAdmin)return true;
  if(!window.userCan('atendimentos',action))return false;
@@ -598,6 +604,7 @@ window.renderModulos=function(){
   _md.setC(`<section class="dashboard-shell productivity-dashboard" aria-labelledby="dashboard-title">
     <header class="productivity-heading"><div><span class="workspace-kicker">Painel de gestão</span><h1 id="dashboard-title">Gestão na Palma da Mão</h1><p>Mais organização. Mais agilidade. Uma cidade bem cuidada.</p></div><button type="button" class="dashboard-new-demand" onclick="openFieldCapture()" ${secretaries.length?'':'disabled'}><b>＋</b> Nova demanda</button></header>
     <div class="dashboard-field-focus">${fieldCaptureDashboardCard()}</div>
+    ${_mapShortcutCard()}
     <section class="secretary-launch-section"><header><div><span class="workspace-kicker">Acesso direto</span><h2>Demandas por secretaria</h2><p>Acesse rapidamente as áreas de atuação do município.</p></div><div class="secretary-launch-tools"><label><span>⌕</span><input type="search" aria-label="Buscar secretaria" placeholder="Buscar secretaria..." oninput="filterDashboardSecretaries(this.value)"></label><div class="secretary-view-toggle" role="group" aria-label="Formato de visualização"><button type="button" data-dashboard-view="grid" class="${_dashboardSecretaryView==='grid'?'active':''}" aria-pressed="${_dashboardSecretaryView==='grid'}" onclick="setDashboardSecretaryView('grid')" title="Grade">▦</button><button type="button" data-dashboard-view="list" class="${_dashboardSecretaryView==='list'?'active':''}" aria-pressed="${_dashboardSecretaryView==='list'}" onclick="setDashboardSecretaryView('list')" title="Lista">☷</button></div></div></header><div class="secretary-launch-summary"><span id="dashboard-secretary-count">${secretaries.length} secretaria${secretaries.length===1?'':'s'}</span></div><div class="secretary-launch-grid ${_dashboardSecretaryView==='list'?'is-list':''}">${cards||'<div class="empty">Nenhuma secretaria de demandas está liberada para o seu perfil.</div>'}</div></section>
   </section>`);
 };

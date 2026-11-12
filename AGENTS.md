@@ -162,3 +162,10 @@
   5 caracteres do SHA-1 saem do aparelho). Vale em criar usuário, alterar senha e "Esqueci minha
   senha" (também conferido na função `password-reset`). Se a consulta falhar, NÃO bloqueia.
   Teste: `tests/pwned-password.browser.cjs` e `tests/password-reset.browser.cjs`.
+
+## Mapas no celular (regra permanente)
+
+- Todo mapa Leaflet chama `cooperativeGestures(map, host)` (js/geolocation.js): em tela de toque,
+  um dedo rola a página e o mapa fica parado; dois dedos movem e dão zoom. Aviso fixo no mapa
+  ("Use dois dedos…") e aviso grande ao tentar arrastar com um dedo. No computador nada muda.
+  Teste: `tests/map-gestures.browser.cjs`.

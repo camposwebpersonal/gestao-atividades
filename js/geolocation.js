@@ -30,6 +30,28 @@ export function groupExternalGeolocationDefault(group){
  return extraOf(group).default_external_geolocation===true;
 }
 
+// Celular/tablet: um dedo rola a PÁGINA (o mapa não se mexe); dois dedos movem e dão zoom
+// no mapa. Um aviso fixo no canto explica, e um aviso maior aparece se a pessoa tentar
+// arrastar o mapa com um dedo. No computador nada muda (mouse arrasta normalmente).
+export function isTouchDevice(){
+ try{return window.matchMedia('(pointer: coarse)').matches||(navigator.maxTouchPoints>0&&'ontouchstart' in window);}catch{return false;}
+}
+export function cooperativeGestures(map,host){
+ if(!map||!host||!isTouchDevice()||host.__coop)return;
+ host.__coop=true;
+ map.dragging.disable();
+ host.classList.add('geo-coop');
+ const badge=document.createElement('div');badge.className='geo-coop-badge';badge.innerHTML='<span aria-hidden="true">✌️</span> Use <b>dois dedos</b> para mover e dar zoom';host.appendChild(badge);
+ const hint=document.createElement('div');hint.className='geo-coop-hint';hint.setAttribute('role','status');hint.innerHTML='<span aria-hidden="true">✌️</span>Use dois dedos para mover o mapa';host.appendChild(hint);
+ let timer=null;
+ host.addEventListener('touchmove',event=>{
+  if(event.touches.length===1){hint.classList.add('is-on');clearTimeout(timer);timer=setTimeout(()=>hint.classList.remove('is-on'),1300);}
+  else hint.classList.remove('is-on');
+ },{passive:true});
+ host.addEventListener('touchend',()=>{clearTimeout(timer);timer=setTimeout(()=>hint.classList.remove('is-on'),700);},{passive:true});
+}
+window.cooperativeGestures=cooperativeGestures;
+
 export function locationOf(record){
  const value=extraOf(record).geo_location||record?.geo_location||(record?.latitude!=null&&record?.longitude!=null?{latitude:record.latitude,longitude:record.longitude,accuracy:record.accuracy_meters,captured_at:record.captured_at,maps_url:record.maps_url}:null);
  const latitude=Number(value?.latitude),longitude=Number(value?.longitude);
@@ -114,7 +136,7 @@ async function initLocationPickerMap(){
  const host=document.getElementById('geo-picker-map');if(!host||!locationPickerState)return;
  if(!window.L){host.innerHTML='<div class="geo-picker-map-error">O mapa não carregou. Verifique a internet e tente novamente.</div>';return;}
  const initial=locationPickerState.selected,center=initial?[initial.latitude,initial.longitude]:DEFAULT_MAP_POINT;
- const map=window.L.map(host,{zoomControl:true}).setView(center,initial?16:13);locationPickerState.map=map;
+ const map=window.L.map(host,{zoomControl:true}).setView(center,initial?16:13);locationPickerState.map=map;cooperativeGestures(map,host);
  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
  map.on('click',event=>setPickerPoint(manualLocation(event.latlng.lat,event.latlng.lng)));
  if(initial)setPickerPoint(initial,{pan:false});setTimeout(()=>map.invalidateSize(),80);
@@ -364,7 +386,7 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
  if(selSec||selGroup)setTimeout(refreshScope,0);
  const create=()=>{
   const host=document.getElementById(id);if(!host||!window.L)return;
-  map=window.L.map(host,{zoomControl:true});window.__geoMap=map;layer=window.L.layerGroup().addTo(map);
+  map=window.L.map(host,{zoomControl:true});window.__geoMap=map;cooperativeGestures(map,host);layer=window.L.layerGroup().addTo(map);
   window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}).addTo(map);
   draw();
   if(focus&&markers.has(focus)){const marker=markers.get(focus);map.setView(marker.getLatLng(),17);setTimeout(()=>{marker.openPopup();document.querySelector(`.geo-map-list article[data-geo-key="${CSS.escape(focus)}"]`)?.scrollIntoView({block:'nearest'});},120);}
@@ -432,6 +454,7 @@ window.captureRecordLocation=async(table,id)=>{
  openLocationPicker({initial:locationOf(entry.record),onConfirm:async location=>{const extra={...extraOf(entry.record),geo_location:location};await window.updateDoc(window.doc(window.db,collectionFor[table],id),{extra_fields:extra,updated_at:window.serverTimestamp()});await window.loadData();window.refreshAuditUI?.();}});
 };
 window.renderGeneralGeoMap=()=>renderMapPage();
+window.geoPointsSummary=()=>{try{const p=mapRecords();return {points:p.length,groups:new Set(p.map(x=>String(x.group.id))).size,vencidos:p.filter(x=>x.refill?.state==='vencido').length};}catch{return {points:0,groups:0,vencidos:0};}};
 // Link #mapa/<tabela>/<id>: mapa geral já no ponto, com o quadro aberto.
 window.openGeoMapFocus=(table,id)=>{window.rememberWorkspace?.({kind:'view',id:'map'},true);renderMapPage({focus:table+':'+id});};
 window.openGroupGeoMap=(groupId,filter='todos')=>{const group=window.S?.secs?.find(item=>String(item.id)===String(groupId));renderMapPage({groupId,filter,title:`Mapa · ${group?.name||'Grupo'}`,back:`openActivity('${String(groupId).replace(/'/g,"\\'")}')`});};
