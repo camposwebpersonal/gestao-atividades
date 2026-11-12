@@ -21,6 +21,15 @@ export function createClient(){return {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.route('**/esm.sh/**', r => r.fulfill({contentType: 'application/javascript', body: FAKE}));
   await page.goto('http://127.0.0.1:8090/login.html');
+  // Olho no campo de senha: mostra e oculta
+  await page.fill('#senha', 'segredo123');
+  assert.equal(await page.getAttribute('#senha', 'type'), 'password');
+  await page.click('#eye');
+  assert.equal(await page.getAttribute('#senha', 'type'), 'text');
+  assert.equal(await page.getAttribute('#eye', 'aria-label'), 'Ocultar senha');
+  await page.screenshot({path: os.tmpdir() + `/login-eye-${W}.png`});
+  await page.click('#eye');
+  assert.equal(await page.getAttribute('#senha', 'type'), 'password');
   await page.click('text=Esqueci minha senha');
   await page.fill('#f-usuario', 'claudiaif');
   await page.click('#f-btn');
