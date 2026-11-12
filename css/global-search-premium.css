@@ -87,3 +87,10 @@ body.global-search-open .global-search-wrap,body.global-search-open .global-sear
  .search-group>header button{width:100%}
  .search-sec-head{padding:12px 14px}
 }
+/* Celular: "Sair" discreto, só o texto, no topo (sempre à mão para fazer logoff) */
+@media(max-width:640px){
+ #navbar #logout-btn{display:inline-flex!important;align-items:center;flex:0 0 auto;min-width:0!important;min-height:40px;padding:0 4px 0 8px!important;margin-left:2px;background:none!important;border:0!important;box-shadow:none!important;font-size:0!important;color:#eaf6ff!important;cursor:pointer}
+ #navbar #logout-btn span{display:inline!important;font-size:13px!important;font-weight:750;letter-spacing:.01em;text-decoration:underline;text-decoration-color:rgba(234,246,255,.45);text-underline-offset:4px}
+ #navbar #logout-btn:hover span,#navbar #logout-btn:focus-visible span{text-decoration-color:#fff}
+ #navbar #logout-btn:focus-visible{outline:2px solid #93c5fd;outline-offset:2px;border-radius:6px}
+}

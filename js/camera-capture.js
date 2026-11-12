@@ -12,7 +12,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&
 
 function allowedSecretarias(){
   return (window.S?.secretarias||[])
-    .filter(secretaria=>window.S.isAdmin||window.userCanDemandSecretaria?.(secretaria.id,'editar'))
+    .filter(secretaria=>window.S.isAdmin||window.userCanDemandSecretaria?.(secretaria.id,'editar')||allowedGroups(secretaria.id).length>0)
     .sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));
 }
 

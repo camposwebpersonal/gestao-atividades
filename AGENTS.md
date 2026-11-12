@@ -122,3 +122,10 @@
   para `users.email_contato`, para `login.html#redefinir-senha/<token>`. Não existe "criar acesso".
 - SMTP em `mail_settings` (admin); a senha do e-mail fica só no Vault (`pms_set_smtp_password`),
   lida apenas pela função (`pms_smtp_password`, service_role). Nunca versionar ou imprimir.
+
+## Visibilidade por permissão (regra permanente)
+
+- Nenhuma tela, menu ou atalho mostra secretaria, grupo ou área que o usuário não pode acessar.
+  Secretaria visível = permissão na secretaria inteira OU em pelo menos um grupo dela
+  (`window.userCanSeeSecretaria`). Usar isso no menu lateral, na tela de escolha, no atalho da
+  câmera e em qualquer lista nova. Teste: `tests/restricted-user.browser.cjs`.

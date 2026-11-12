@@ -1,7 +1,7 @@
 import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
 import {supabase} from '../supabase_compat.js?v=11';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=14';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=15';
 import './perfuracao-pocos.js?v=103';
 import './controle-extintores.js?v=5';
 import './controle-licitacoes.js?v=8';
@@ -65,6 +65,15 @@ window.userCanGroup=function(group,action='acesso'){
 window.userCanDemandSecretaria=function(secretariaId,action='acesso'){
  if(window.S?.isAdmin)return true;
  return demandSecretaryPermission(_myPerms(),secretariaId,action);
+};
+// Secretaria visível para o usuário: permissão na secretaria inteira OU em pelo menos um grupo dela.
+// Usado no menu lateral, na tela de escolha da secretaria e no atalho da câmera — nunca mostrar
+// secretarias em que a pessoa não tem nenhum grupo liberado.
+window.userCanSeeSecretaria=function(secretariaId,action='acesso'){
+ if(window.S?.isAdmin)return true;
+ if(!window.userCan('atendimentos',action))return false;
+ if(window.userCanDemandSecretaria(secretariaId,action))return true;
+ return (window.S?.secs||[]).some(group=>String(group.demanda_secretaria_id||'')===String(secretariaId)&&_md.modFor(group)==='atendimentos'&&window.userCanGroup(group,action));
 };
 window.userCanCreateGroups=function(){
  if(window.S?.isAdmin)return true;
@@ -466,9 +475,10 @@ function _specialModulesForSecretary(secretary,visible=_visibleModules()){
 }
 function _secretaryDestinations(secretary){
   const visible=_visibleModules(),demand=visible.find(mod=>mod.id==='atendimentos'),name=_normalizedSecretaryName(secretary?.name),destinations=[];
-  if(demand)destinations.push({id:'demands',icon:'▤',title:'Controle de Demandas',description:'Grupos, itens, subitens e demandas desta secretaria.',open:()=>window.openDemandSecretaria(secretary.id)});
-  if(name==='DEFESA CIVIL')destinations.push({id:'questionarios_icm',icon:'📋',title:'AUDITORIA',description:'Questionários TCE-PE · ICM 2026 — levantamento de Proteção e Defesa Civil: diagnóstico de riscos e estrutura operacional.',open:()=>window.openDefesaQuestionarios?.()});
-  if(demand&&name.includes('AGRICULTURA'))destinations.push({id:'water_points',icon:'💧',title:'Locais de Captação de Água',description:'Pontos para caminhões-pipa, fotos, referências, mapa e rotas.',open:()=>window.renderWaterCollectionPoints()});
+  const canSee=Boolean(demand)&&window.userCanSeeSecretaria(secretary?.id);
+  if(canSee)destinations.push({id:'demands',icon:'▤',title:'Controle de Demandas',description:'Grupos, itens, subitens e demandas desta secretaria.',open:()=>window.openDemandSecretaria(secretary.id)});
+  if(name==='DEFESA CIVIL'&&canSee)destinations.push({id:'questionarios_icm',icon:'📋',title:'AUDITORIA',description:'Questionários TCE-PE · ICM 2026 — levantamento de Proteção e Defesa Civil: diagnóstico de riscos e estrutura operacional.',open:()=>window.openDefesaQuestionarios?.()});
+  if(canSee&&name.includes('AGRICULTURA'))destinations.push({id:'water_points',icon:'💧',title:'Locais de Captação de Água',description:'Pontos para caminhões-pipa, fotos, referências, mapa e rotas.',open:()=>window.renderWaterCollectionPoints()});
   for(const mod of _specialModulesForSecretary(secretary,visible))destinations.push({id:mod.id,icon:mod.icon,title:mod.label,description:mod.desc,open:()=>window.renderModulo(mod.id)});
   return destinations;
 }
@@ -494,7 +504,7 @@ function _renderSidebarModules(activeId=''){
   const secretaryRows=secretaries.map(secretary=>{
     const sid=_normalizedSecretaryName(secretary.name),mods=assigned(secretary),isAgriculture=sid.includes('AGRICULTURA');
     const own=demandNumbers.grupos.filter(group=>group.demanda_secretaria_id===secretary.id);
-    if(!allowedDemand&&!mods.length)return'';
+    if(!(allowedDemand&&window.userCanSeeSecretaria(secretary.id))&&!mods.length)return'';
     const count=Number(Boolean(allowedDemand))+Number(Boolean(isAgriculture&&allowedDemand))+mods.length;
     return `<button type="button" class="sidebar-secretary-link ${activeId===`secretary:${secretary.id}`?'active':''}" onclick="openSecretaryWorkspace(${_md.arg(secretary.id)})"><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><i>›</i></button>`;
   }).join('');
