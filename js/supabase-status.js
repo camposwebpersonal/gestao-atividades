@@ -210,12 +210,66 @@ export async function refreshSupabaseStatus(force=false){
     const {data,error}=await supabase.rpc('get_supabase_status');
     if(error)throw new Error(error.message||'Falha ao consultar o Supabase.');
     const snapshot=typeof data==='string'?JSON.parse(data):data;
-    writeCache(snapshot);renderSnapshot(snapshot);loadEgressUsage(force).catch(()=>{});return snapshot;
+    writeCache(snapshot);renderSnapshot(snapshot);loadEgressUsage(force).catch(()=>{});if(force)refreshGithubStatus(true).catch(()=>{});return snapshot;
   })().catch(error=>{renderFailure(error,readCache());throw error;}).finally(()=>{
     refreshPromise=null;if(button){button.disabled=false;button.classList.remove('loading');}
   });
   return refreshPromise;
 }
+
+// ── GitHub (onde ficam o código e o site publicado) ──
+// Dados públicos da API do GitHub (sem chave). Guardados por 10 min para não gastar o limite
+// de consultas sem login (60 por hora). Limites oficiais: repositório e site publicado até 1 GB
+// (recomendado), arquivo até 100 MB, tráfego do site ~100 GB/mês e ~10 publicações por hora.
+const GH_REPO='camposwebpersonal/gestao-atividades';
+const GH_CACHE='gestao-github-status-v1';
+const GH_LIMITS={repo:1e9,file:100e6,bandwidthGB:100,buildsPerHour:10};
+const ago=iso=>{const m=Math.max(0,Math.round((Date.now()-Date.parse(iso))/60000));return m<1?'agora':m<60?`há ${m} min`:m<1440?`há ${Math.round(m/60)} h`:`há ${Math.round(m/1440)} dia(s)`;};
+function renderGithub(d,{cached=false}={}){
+  const host=document.getElementById('github-status-body');if(!host)return;
+  const used=(Number(d.size_kb)||0)*1024,percent=pct(used,GH_LIMITS.repo),tone=level(percent);
+  const run=d.ci,deploy=d.pages;
+  const runTxt=!run?'Sem registro':run.status!=='completed'?'⏳ Rodando agora':run.conclusion==='success'?'✅ Passaram':'❌ Falharam';
+  const depTxt=!deploy?'Sem registro':deploy.status!=='completed'?'⏳ Publicando agora':deploy.conclusion==='success'?'✅ No ar':'❌ Falhou';
+  const builds=Number(d.builds_last_hour)||0,buildTone=builds>=GH_LIMITS.buildsPerHour?'danger':builds>=7?'warning':'healthy';
+  host.innerHTML=`<header class="gh-head"><span aria-hidden="true">🐙</span><div><small>CÓDIGO E SITE PUBLICADO</small><h2>GitHub</h2></div><a href="https://github.com/${GH_REPO}" target="_blank" rel="noopener">Abrir no GitHub ↗</a></header>
+    ${percent>=70?`<div class="supa-alert ${tone}"><b>⚠ Repositório crescendo</b><span>O GitHub recomenda até 1 GB. Evite subir fotos ou arquivos grandes no código (elas devem ficar no Supabase).</span></div>`:''}
+    <div class="supa-metrics-grid">
+      ${gaugeCard({icon:'⌂',title:'Espaço do repositório (código + histórico)',used,limit:GH_LIMITS.repo,detail:'Limite recomendado de 1 GB, que também vale para o site publicado. Fotos dos lançamentos ficam no Supabase e não contam aqui.'})}
+      <article class="supa-metric-card ${buildTone}"><header><span>⇪</span><div><small>ÚLTIMA HORA</small><h2>Publicações do site</h2></div><b>${builds}/${GH_LIMITS.buildsPerHour}</b></header><div class="supa-meter"><i style="width:${pct(builds,GH_LIMITS.buildsPerHour)}%"></i></div><div class="supa-values"><strong>${builds} publicação(ões)</strong><span>limite flexível de ${GH_LIMITS.buildsPerHour}/hora</span></div><p>Acima disso o GitHub pode atrasar a próxima publicação, mas nada é perdido.</p></article>
+    </div>
+    <div class="gh-facts">
+      <div><small>Testes automáticos</small><b>${runTxt}</b><span>${run?ago(run.updated_at):''}</span></div>
+      <div><small>Site publicado</small><b>${depTxt}</b><span>${deploy?ago(deploy.updated_at):''}</span></div>
+      <div><small>Tráfego do site</small><b>~100 GB/mês</b><span>O GitHub não mostra o consumo; o sistema usa uma fração mínima disso.</span></div>
+      <div><small>Tamanho por arquivo</small><b>até 100 MB</b><span>Maior arquivo do sistema hoje: bem abaixo disso.</span></div>
+    </div>
+    <p class="gh-stamp">${cached?'Última leitura salva · ':''}Atualizado ${ago(d.at)} · consulta pública do GitHub, renovada a cada 10 minutos.</p>`;
+}
+export async function refreshGithubStatus(force=false){
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(GH_CACHE)||'null');}catch(_){}
+  if(cached&&!force&&Date.now()-Date.parse(cached.at)<10*60000){renderGithub(cached);return cached;}
+  if(cached)renderGithub(cached,{cached:true});
+  else{const host=document.getElementById('github-status-body');if(host)host.innerHTML='<div class="supa-status-loading"><i></i><i></i><i></i><p>Consultando o GitHub…</p></div>';}
+  try{
+    const api=path=>fetch(`https://api.github.com/repos/${GH_REPO}${path}`,{headers:{Accept:'application/vnd.github+json'}}).then(r=>{if(!r.ok)throw new Error('GitHub '+r.status);return r.json();});
+    const [repo,runs]=await Promise.all([api(''),api('/actions/runs?per_page=30')]);
+    const list=runs.workflow_runs||[];
+    const pages=list.filter(r=>/pages/i.test(r.name||''));
+    const hourAgo=Date.now()-3600000;
+    const d={at:new Date().toISOString(),size_kb:repo.size,
+      ci:list.find(r=>!/pages/i.test(r.name||''))||null,pages:pages[0]||null,
+      builds_last_hour:pages.filter(r=>Date.parse(r.created_at)>hourAgo).length};
+    d.ci=d.ci&&{status:d.ci.status,conclusion:d.ci.conclusion,updated_at:d.ci.updated_at};
+    d.pages=d.pages&&{status:d.pages.status,conclusion:d.pages.conclusion,updated_at:d.pages.updated_at};
+    try{localStorage.setItem(GH_CACHE,JSON.stringify(d));}catch(_){}
+    renderGithub(d);return d;
+  }catch(error){
+    if(!cached){const host=document.getElementById('github-status-body');if(host)host.innerHTML=`<div class="supa-alert warning"><b>◷ GitHub indisponível agora</b><span>${esc(error.message||'Sem conexão')}. Tente de novo em alguns minutos.</span></div>`;}
+    throw error;
+  }
+}
+window.refreshGithubStatus=refreshGithubStatus;
 
 export function stopSupabaseStatusAutoRefresh(){clearInterval(refreshTimer);refreshTimer=0;}
 
@@ -225,8 +279,9 @@ export function renderSupabaseStatus(){
     document.getElementById('content').innerHTML='<div class="empty">Seu usuário não possui permissão para visualizar o status do Supabase.</div>';
     return;
   }
-  document.getElementById('content').innerHTML=`<section class="supa-status-page"><header class="supa-status-hero"><div><small>CADASTROS E SISTEMA</small><h1>Status do Supabase</h1><p>Capacidade, armazenamento e saúde técnica acompanhados em um só lugar.</p></div><div class="supa-status-actions"><span id="supabase-status-stamp">Consultando…</span><button id="supabase-status-refresh" type="button" onclick="refreshSupabaseStatus(true).catch(()=>{})">↻ Atualizar agora</button></div></header><div id="supabase-status-body"><div class="supa-status-loading"><i></i><i></i><i></i><p>Consultando métricas protegidas…</p></div></div></section>`;
+  document.getElementById('content').innerHTML=`<section class="supa-status-page"><header class="supa-status-hero"><div><small>CADASTROS E SISTEMA</small><h1>Status do Supabase</h1><p>Capacidade, armazenamento e saúde técnica acompanhados em um só lugar.</p></div><div class="supa-status-actions"><span id="supabase-status-stamp">Consultando…</span><button id="supabase-status-refresh" type="button" onclick="refreshSupabaseStatus(true).catch(()=>{})">↻ Atualizar agora</button></div></header><div id="supabase-status-body"><div class="supa-status-loading"><i></i><i></i><i></i><p>Consultando métricas protegidas…</p></div></div><div id="github-status-body" class="gh-status"></div></section>`;
   refreshSupabaseStatus().catch(()=>{});
+  refreshGithubStatus().catch(()=>{});
   refreshTimer=setInterval(()=>{if(window.__currentView==='supabase-status'&&navigator.onLine)refreshSupabaseStatus().catch(()=>{});},30000);
 }
 
