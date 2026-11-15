@@ -1,10 +1,10 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=8';
-import {supabase} from '../supabase_compat.js?v=11';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=c3dfe62a';
+import {supabase} from '../supabase_compat.js?v=56d4e7d3';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=17';
-import './perfuracao-pocos.js?v=103';
-import './controle-extintores.js?v=5';
-import './controle-licitacoes.js?v=8';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=4818b807';
+import './perfuracao-pocos.js?v=aa97874d';
+import './controle-extintores.js?v=f2b49171';
+import './controle-licitacoes.js?v=b2b2832f';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [

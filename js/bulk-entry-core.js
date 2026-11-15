@@ -1,5 +1,5 @@
 import {recordSecretary} from './record-context.js';
-import {isAttendanceSection} from './atendimento-fluxo.js?v=2';
+import {isAttendanceSection} from './atendimento-fluxo.js?v=dd69144a';
 
 function templateOptions(template){
  const raw=template?.options;

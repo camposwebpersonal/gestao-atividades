@@ -1,8 +1,8 @@
-import {isSystemKey, isBlankValue} from './record-fields.js?v=2';
+import {isSystemKey, isBlankValue} from './record-fields.js?v=62cf0102';
 // Organização e exibição dos resultados da busca global.
 // Lançamentos aparecem agrupados por Secretaria → Grupo, com o termo destacado e a
 // indicação do campo onde ele foi encontrado (ex.: "Assunto: PIPA D'ÁGUA").
-import {highlightSearchText, normalizeSearchText, searchText, searchTokens} from './search-engine.js?v=1';
+import {highlightSearchText, normalizeSearchText, searchText, searchTokens} from './search-engine.js?v=b4129240';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 

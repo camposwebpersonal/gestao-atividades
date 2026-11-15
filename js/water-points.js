@@ -1,6 +1,6 @@
-import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=11';
-import {locationEditorHtml,readLocationEditor,optimizePhoto,shareLocation} from './geolocation.js?v=13';
-import {uploadDurableImage} from './image-storage.js?v=1';
+import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=56d4e7d3';
+import {locationEditorHtml,readLocationEditor,optimizePhoto,shareLocation} from './geolocation.js?v=6cc96b42';
+import {uploadDurableImage} from './image-storage.js?v=cc738610';
 
 const state={rows:[],photos:[],query:'',focus:''};
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));

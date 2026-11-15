@@ -15,3 +15,7 @@ pbatransportes/
 
 # Estado local do Supabase CLI
 supabase/.temp/
+
+# Ferramentas de teste (instaladas no CI)
+node_modules/
+package-lock.json

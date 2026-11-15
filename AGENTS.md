@@ -170,3 +170,14 @@
   ("Use dois dedos…") e aviso grande ao tentar arrastar com um dedo. No computador a rodinha do
   mouse rola a página; zoom só com Ctrl/⌘ + rodinha (ou + e −) e clicar-arrastar move o mapa.
   Teste: `tests/map-gestures.browser.cjs`.
+
+## Versões automáticas e testes no GitHub (regra permanente)
+
+- Não editar `?v=` nem `CACHE_NAME` à mão. Antes de cada commit rodar
+  `node tools/stamp-versions.mjs`: ele calcula a versão de cada arquivo pelo conteúdo (e pelo
+  que ele importa) e sobe o `gestao-pms-vN` do `sw.js` quando algo guardado offline mudou.
+  Testes não fixam números de versão (usar regex `\?v=[0-9a-f]+` e `gestao-pms-v\d+`).
+- `.github/workflows/ci.yml` roda a cada push: confere as versões (`--check`), contraste,
+  todos os testes de unidade e as telas principais no navegador (390 e 1366). Não bloqueia a
+  publicação do Pages; se falhar, aparece ❌ no commit e o GitHub avisa por e-mail — corrigir já.
+  Teste novo de tela entra na lista "Telas principais" do workflow.

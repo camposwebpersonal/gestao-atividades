@@ -1,0 +1,82 @@
+# Conferência automática a cada publicação no main (e em pull requests).
+# Não interfere na publicação do site (GitHub Pages continua igual): se algo quebrar,
+# aparece um ❌ no commit e o GitHub avisa por e-mail.
+name: Testes automáticos
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rapidos:
+    name: Versões, legibilidade e testes rápidos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Versões dos arquivos (?v=) em dia
+        run: node tools/stamp-versions.mjs --check
+      - name: Contraste no código-fonte
+        run: node tests/contrast-source.test.cjs
+      - name: Testes de unidade
+        run: |
+          set -e
+          fails=""
+          for f in tests/*.test.cjs tests/*.test.mjs; do
+            echo "::group::$f"
+            if ! node "$f"; then fails="$fails $f"; fi
+            echo "::endgroup::"
+          done
+          if [ -n "$fails" ]; then echo "::error::Falharam:$fails"; exit 1; fi
+
+  navegador:
+    name: Telas no navegador (celular e computador)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ferramentas de teste
+        run: |
+          npm install --no-save --no-audit --no-fund playwright jspdf jspdf-autotable leaflet
+          npx playwright install --with-deps chromium
+      - name: Servidores locais
+        run: |
+          python3 -m http.server 8090 >/dev/null 2>&1 &
+          python3 -m http.server 8080 >/dev/null 2>&1 &
+          sleep 2
+      - name: Auditoria de contraste (390 e 1366)
+        env:
+          LIBS: ${{ github.workspace }}/node_modules/
+        run: |
+          node tests/contrast/run.cjs
+          W=1366 node tests/contrast/run.cjs
+      - name: Telas principais
+        env:
+          LIBS: ${{ github.workspace }}/node_modules/
+        run: |
+          set -e
+          fails=""
+          run() { echo "::group::$*"; if ! timeout 180 env "$@"; then fails="$fails [$*]"; fi; echo "::endgroup::"; }
+          for w in 390 1366; do
+            run W=$w node tests/nav-trail.browser.cjs
+            run W=$w node tests/quantitativo.browser.cjs
+            run W=$w node tests/restricted-user.browser.cjs
+            run W=$w node tests/user-modal.browser.cjs
+            run W=$w node tests/password-reset.browser.cjs
+          done
+          for t in map-gestures pwned-password map-focus completed-pdf-pick whatsapp-avisos reports-fields modal-context mobile-parity trash-rls incremental-sync access-permissions; do
+            run W=390 node tests/$t.browser.cjs
+          done
+          if [ -n "$fails" ]; then echo "::error::Falharam:$fails"; exit 1; fi

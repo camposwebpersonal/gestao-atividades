@@ -2,13 +2,13 @@
 // This is a pragmatic first pass; not all Firebase features are covered.
 
 import {rememberRecords} from './js/autoria.js';
-import {hasLocalImage} from './js/image-storage.js?v=1';
+import {hasLocalImage} from './js/image-storage.js?v=cc738610';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.0?bundle';
 import {
   setOfflineUser, cacheRows, getCachedRows, getCachedRow, putCachedRow,
   deleteCachedRow, enqueueMutation, listMutations, removeMutation, pendingCount,
   applyLocalConstraints, isOfflineFailure, currentOfflineUser
-} from './js/offline-store.js?v=4';
+} from './js/offline-store.js?v=0bf84428';
 
 export const SUPABASE_URL = 'https://xwlmpxypjheuhbxyfplo.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3bG1weHlwamhldWhieHlmcGxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQ1OTEsImV4cCI6MjA5OTU0MDU5MX0.ugbn_guMLqk_I9I9OElI_VKAA8pDpW3trVWr1lT9oQU';

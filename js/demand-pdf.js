@@ -1,8 +1,8 @@
 // PDF "Relatório de demandas": um bloco por lançamento, com situação e campos na mesma área.
-import {buildDemandRecords, fmtDay} from './demand-report.js?v=3';
-import {drawRecordsTable, drawKpis, drawCommonBox, pdfSafe, safePdf} from './pdf-records.js?v=2';
-import {commonValues} from './record-fields.js?v=2';
-import {askDemandReportOptions} from './report-options.js?v=2';
+import {buildDemandRecords, fmtDay} from './demand-report.js?v=49e7bfce';
+import {drawRecordsTable, drawKpis, drawCommonBox, pdfSafe, safePdf} from './pdf-records.js?v=3a5d6328';
+import {commonValues} from './record-fields.js?v=62cf0102';
+import {askDemandReportOptions} from './report-options.js?v=9bc1b759';
 import {recordExtra} from './atendimento-meta.js';
 
 const fileName = name => ('RELATORIO-' + (name || 'DEMANDAS')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase();

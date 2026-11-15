@@ -1,5 +1,5 @@
-import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=3';
-import {parseGoogleLocation,shortLinkIn,googleMapsPickUrl} from './google-location.js?v=1';
+import {isRefillGroup,recordRefillStatus,refillMarkerHtml,REFILL_STATES} from './pipa-refill.js?v=bdf11a1f';
+import {parseGoogleLocation,shortLinkIn,googleMapsPickUrl} from './google-location.js?v=c2d0f56f';
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const supportedTables=new Set(['atividades','items','subitems']);
 const collectionFor={atividades:'secretariats',items:'items',subitems:'subitems'};
@@ -205,7 +205,7 @@ async function resolveGoogleText(text,reference){
  const direct=parseGoogleLocation(text,reference);if(direct)return direct;
  const short=shortLinkIn(text);if(!short)return null;
  if(navigator.onLine===false)throw new Error('Sem internet para abrir o link curto do Google Maps. Copie as coordenadas do ponto.');
- const {supabase}=await import('../supabase_compat.js?v=11');
+ const {supabase}=await import('../supabase_compat.js?v=56d4e7d3');
  const {data,error}=await supabase.functions.invoke('resolve-maps-link',{body:{url:short}});
  if(error){let message='';try{message=(await error.context?.json?.())?.error||'';}catch(_){}throw new Error(message||'Não foi possível ler esse link do Google Maps. Copie as coordenadas do ponto.');}
  return data&&Number.isFinite(Number(data.latitude))?{latitude:Number(data.latitude),longitude:Number(data.longitude),source:'google-link'}:null;

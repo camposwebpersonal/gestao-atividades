@@ -21,5 +21,5 @@ assert.match(capture, /const primary=fieldLocation\|\|/, 'a demanda salva a loca
 const html = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 assert.match(html, /id="gal-stamp-location" type="checkbox" checked/);
 assert.match(html, /id="photo-stamp-\$\{type\}-\$\{id\}" checked/);
-assert.match(html, /css\/contrast-guard\.css\?v=\d+">/, 'folha de legibilidade carregada');
+assert.match(html, /css\/contrast-guard\.css\?v=[0-9a-f]+">/, 'folha de legibilidade carregada');
 console.log('photo-location: ok');
