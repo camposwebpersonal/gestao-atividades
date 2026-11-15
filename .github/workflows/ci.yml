@@ -19,8 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Versões dos arquivos (?v=) em dia
@@ -43,13 +43,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Ferramentas de teste
         run: |
-          npm install --no-save --no-audit --no-fund playwright jspdf jspdf-autotable leaflet
+          npm install --no-save --no-audit --no-fund playwright jspdf@2.5.1 jspdf-autotable@3.8.2 leaflet@1.9.4  # mesmas versões que o site carrega
           npx playwright install --with-deps chromium
       - name: Servidores locais
         run: |
