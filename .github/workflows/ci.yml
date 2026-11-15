@@ -51,6 +51,7 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright jspdf@2.5.1 jspdf-autotable@3.8.2 leaflet@1.9.4  # mesmas versões que o site carrega
           npx playwright install --with-deps chromium
+          sudo apt-get install -y -qq poppler-utils   # pdftotext, usado nos testes de PDF
       - name: Servidores locais
         run: |
           python3 -m http.server 8090 >/dev/null 2>&1 &
