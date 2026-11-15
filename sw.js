@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gestao-pms-v199';
-// assets-hash: 1cf588da09c0 (gerado por tools/stamp-versions.mjs — não editar)
+const CACHE_NAME = 'gestao-pms-v200';
+// assets-hash: 4141698395fd (gerado por tools/stamp-versions.mjs — não editar)
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -162,7 +162,7 @@ self.addEventListener('fetch', event => {
   if(request.method !== 'GET') return;
   const url = new URL(request.url);
   // Consulta de senhas vazadas: sempre direto na rede, nunca em cache.
-  if(url.hostname === 'api.pwnedpasswords.com') return;
+  if(url.hostname === 'api.pwnedpasswords.com' || url.hostname === 'api.github.com') return;
 
   // Firebase Firestore/API e Supabase: network-first, sem cache
   if(url.hostname.includes('googleapis.com') || url.hostname.includes('firebase') || url.hostname.includes('supabase.co')){
