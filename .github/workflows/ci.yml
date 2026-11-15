@@ -69,7 +69,7 @@ jobs:
         run: |
           set -e
           fails=""
-          run() { echo "::group::$*"; if ! timeout 180 env "$@"; then fails="$fails [$*]"; fi; echo "::endgroup::"; }
+          run() { echo "::group::$*"; if ! timeout 180 env "$@" > /tmp/out.txt 2>&1; then fails="$fails [$*]"; echo "::error title=$*::$(grep -v '^ *at ' /tmp/out.txt | head -c 900 | tr '\n' ' ')"; fi; cat /tmp/out.txt; echo "::endgroup::"; }
           for w in 390 1366; do
             run W=$w node tests/nav-trail.browser.cjs
             run W=$w node tests/quantitativo.browser.cjs
