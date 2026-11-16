@@ -184,3 +184,4 @@
 - Publicação: `.github/workflows/publicar.yml` publica o site só depois que "Testes automáticos"
   passar (requer Settings → Pages → Source = "GitHub Actions"; enquanto for o branch, não faz
   nada). Com isso, teste falhando = site antigo continua no ar até a correção.
+  Origem trocada para "GitHub Actions" pelo usuário em 15/11/2026.
