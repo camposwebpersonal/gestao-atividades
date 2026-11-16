@@ -21,6 +21,15 @@ function monthInfo(record,parent){
 export function activityLane(groupId){return modes.get(groupId)||'active';}
 export function selectCompletedArchiveMonth(groupId,monthKey){selectedMonths.set(groupId,monthKey);}
 export function clearCompletedArchiveMonth(groupId){selectedMonths.delete(groupId);}
+if(typeof window!=='undefined'){
+ window.getActivityLane=groupId=>activityLane(groupId);
+ // Busca do topo: abre a aba Concluídos no mês do lançamento, sem filtro de texto e com o card aberto.
+ window.revealCompletedRecord=function(groupId,record,parent){
+  const info=monthInfo(record,parent);modes.set(groupId,'completed');selectedMonths.set(groupId,info.key);
+  const key=groupId+'|'+info.key,cleared=Boolean((monthFilters.get(key)||'').trim());monthFilters.delete(key);openRows.add(record.id);
+  window.openActivity(groupId);return cleared;
+ };
+}
 if(typeof window!=='undefined')window.setActivityLane=function(groupId,lane){modes.set(groupId,lane==='completed'?'completed':'active');window.openActivity(groupId);};
 if(typeof window!=='undefined'){
  window.setCompletedArchiveMonth=function(groupId,monthKey){selectCompletedArchiveMonth(groupId,monthKey);window.openActivity(groupId);requestAnimationFrame(()=>document.querySelector('.completed-month-screen')?.scrollIntoView({block:'start'}));};

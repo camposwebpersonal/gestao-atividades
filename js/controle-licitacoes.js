@@ -148,6 +148,18 @@ import {supabase,collection,doc,addDoc,updateDoc,deleteDoc,serverTimestamp} from
   window.licitacaoSearch=v=>{state.search=v||'';renderGroups(currentSec());requestAnimationFrame(()=>{const el=document.getElementById('lic-search');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}});};
   window.openLicitacaoTable=id=>{state.groupId=String(id);state.search='';window.renderLicitacoes(state.secId);};
   window.backLicitacaoGroups=()=>{state.groupId='';window.renderLicitacoes(state.secId);};
+  // Busca do topo: posiciona ano/grupo e limpa a busca interna para o registro clicado aparecer.
+  window.licitacaoReveal=function(secId,id){
+    state.secId=secId;
+    const rec=[...window.S.items,...window.S.subitems].find(x=>String(x.id)===String(id)&&x.atividade_id===secId);if(!rec)return null;
+    const cleared=Boolean(state.search);state.search='';
+    const scopeOf=g=>{const y=groupYear(g);return y?String(val(y,'ano')):'sem-ano';};
+    if(type(rec)===YEAR){state.scope=String(val(rec,'ano'));state.groupId='';}
+    else if(type(rec)===GROUP){state.scope=scopeOf(rec);state.groupId='';}
+    else if(type(rec)===ROW){const g=findGroup(val(rec,'parent_id'));if(!g)return null;state.scope=scopeOf(g);state.groupId=String(g.id);}
+    else return null;
+    return cleared;
+  };
 
   window.openLicitacaoYearModal=function(){
     window.openModal('📅 Novo exercício','Crie um ano independente para receber seus próprios grupos e lançamentos.',`<form onsubmit="event.preventDefault();saveLicitacaoYear()"><div class="form-group"><label>Ano *</label><input id="lic-year" type="number" min="2000" max="2200" value="${new Date().getFullYear()}" inputmode="numeric" required></div><div class="modal-actions"><button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" type="submit">Criar ano</button></div></form>`);

@@ -535,10 +535,22 @@
   function drillerCard(d,editable){
     const ws=allWells(state.secId).filter(p=>p.item_id===d.id),pd=ws.filter(p=>V(p,'status_pagamento')==='pago'),pn=ws.filter(paymentPending);
     const showValue=valuesEnabledForDriller(d.id);
-    return `<div class="pw-company"><div style="display:flex;gap:10px"><div style="font-size:28px">${V(d,'tipo_pessoa')==='empresa'?'🏢':'👷'}</div><div style="flex:1"><h3>${esc(d.description)}</h3><div class="pw-company-meta">${esc(V(d,'documento')||'Documento não informado')}<br>${esc(V(d,'telefone')||'Telefone não informado')}${V(d,'contato')?` · ${esc(V(d,'contato'))}`:''}<br><span style="color:${showValue?'#6ee7b7':'#fbbf24'}">${showValue?'Valores visíveis':'Valores ocultos'}</span></div></div></div><div class="pw-company-totals"><div><b>${ws.length}</b>Serviços</div><div><b style="color:#6ee7b7">${pd.length}</b>Pagos</div><div><b style="color:#fcd34d">${pn.length}</b>Pendentes</div></div>${showValue?`<div style="font-size:11px;color:#94a3b8">A receber: <b style="color:#fbbf24">${money(pn.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0))}</b></div>`:''}${editable?`<div class="pw-card-actions" style="margin:12px -15px -15px"><button class="pw-mini" onclick="openPerfuradorModal('${d.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePerfurador('${d.id}')">🗑️ Excluir</button></div>`:''}</div>`;
+    return `<div class="pw-company" data-driller-id="${esc(d.id)}"><div style="display:flex;gap:10px"><div style="font-size:28px">${V(d,'tipo_pessoa')==='empresa'?'🏢':'👷'}</div><div style="flex:1"><h3>${esc(d.description)}</h3><div class="pw-company-meta">${esc(V(d,'documento')||'Documento não informado')}<br>${esc(V(d,'telefone')||'Telefone não informado')}${V(d,'contato')?` · ${esc(V(d,'contato'))}`:''}<br><span style="color:${showValue?'#6ee7b7':'#fbbf24'}">${showValue?'Valores visíveis':'Valores ocultos'}</span></div></div></div><div class="pw-company-totals"><div><b>${ws.length}</b>Serviços</div><div><b style="color:#6ee7b7">${pd.length}</b>Pagos</div><div><b style="color:#fcd34d">${pn.length}</b>Pendentes</div></div>${showValue?`<div style="font-size:11px;color:#94a3b8">A receber: <b style="color:#fbbf24">${money(pn.reduce((a,p)=>a+Number(V(p,'valor',0)||0),0))}</b></div>`:''}${editable?`<div class="pw-card-actions" style="margin:12px -15px -15px"><button class="pw-mini" onclick="openPerfuradorModal('${d.id}')">✏️ Editar</button><button class="pw-mini" style="color:#fca5a5" onclick="deletePerfurador('${d.id}')">🗑️ Excluir</button></div>`:''}</div>`;
   }
 
   window.pocoSetTab=function(tab){state.tab=tab;saveUiState();window.renderPocos(state.secId);};
+  // Busca do topo: garante que o lançamento clicado apareça. Se um filtro salvo o esconde, limpa os filtros.
+  // Devolve true quando precisou limpar filtros, false quando não precisou e null se o registro não é daqui.
+  window.pocoReveal=function(secId,id){
+    const well=allWells(secId).find(x=>String(x.id)===String(id)),driller=!well&&allDrillers(secId).find(x=>String(x.id)===String(id));
+    if(!well&&!driller)return null;
+    state.secId=secId;let cleared=false;
+    if(well){
+      state.tab='pocos';
+      if(!filteredWells().some(x=>String(x.id)===String(id))){Object.assign(state,{status:'todos',execucao:'todos',imagens:'ambos',perfurador:'todos',busca:''});cleared=true;}
+    }else state.tab='perfuradores';
+    saveUiState();return cleared;
+  };
   function persistPocoDisplayOrder(value){
     const secId=state.secId,choice=++displayOrderChoice,sec=window.S.secs.find(s=>s.id===secId);
     if(!sec||!canEdit()){window.toast('A ordem ficou neste aparelho, mas seu usuário não tem permissão para alterar a preferência geral.','info',5000);return Promise.resolve(false);}

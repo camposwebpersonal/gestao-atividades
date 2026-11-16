@@ -196,3 +196,13 @@
   aviso de possível duplicado (mesmo nome ou telefone). Exemplo: CADASTRO RESERVA DE SOLICITAÇÃO
   DE ÁGUA DE PIPA (Gabinete) → SOLICITAÇÃO DE ÁGUA DE PIPA. Grupo de reserva usa
   `refill_control:false`. Teste: `tests/group-extras.browser.cjs` (390 e 1366).
+
+## Busca do topo sempre mostra o resultado (regra permanente)
+
+- Clicar em um resultado (lista instantânea ou "ver todos os resultados") chama
+  `revealRecord(tabela, id)` (`js/search-reveal.js`): abre o grupo e, se filtro salvo, busca
+  interna, aba Em andamento/Concluídos, mês do arquivo ou item recolhido esconder o lançamento,
+  limpa/ajusta, destaca o card e avisa "filtros limpos". Se o filtro não atrapalha, não mexe nele.
+- Módulo com filtros próprios expõe um gancho (`pocoReveal`, `licitacaoReveal`,
+  `revealCompletedRecord`) e marca o card com o id (`data-well-id`, `data-driller-id`, `data-cr`…).
+  Tela nova com filtro salvo precisa do seu gancho. Teste: `tests/search-reveal.browser.cjs`.

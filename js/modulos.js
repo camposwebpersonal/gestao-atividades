@@ -2,9 +2,9 @@ import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.
 import {supabase} from '../supabase_compat.js?v=56d4e7d3';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=ecdfd651';
-import './perfuracao-pocos.js?v=aa97874d';
+import './perfuracao-pocos.js?v=95688106';
 import './controle-extintores.js?v=f2b49171';
-import './controle-licitacoes.js?v=b2b2832f';
+import './controle-licitacoes.js?v=557e9f1c';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [

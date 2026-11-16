@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=56d4e7d3">
-<link rel="modulepreload" href="js/modulos.js?v=cc85fb81">
+<link rel="modulepreload" href="js/modulos.js?v=4bcc52a2">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -431,7 +431,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/productivity-redesign.css?v=60e651d2">
 <link rel="stylesheet" href="css/geolocation.css?v=abf5d6ea">
 <link rel="stylesheet" href="css/nav-trail.css?v=75860575">
-<link rel="stylesheet" href="css/group-extras.css?v=43ca5521">
+<link rel="stylesheet" href="css/group-extras.css?v=72543723">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -524,7 +524,7 @@ import {uploadDurableImage} from './js/image-storage.js?v=cc738610';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=bdf11a1f';
 import './js/multi-nest.js?v=c1b0b758';
 import './js/defesa-civil-questionarios.js?v=43ed5a1a';
-import './js/modulos.js?v=cc85fb81';
+import './js/modulos.js?v=4bcc52a2';
 import './js/water-points.js?v=865c5bdf';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -537,13 +537,14 @@ import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=3a5d6328';
 import './js/modal-context.js?v=9b63701c';
 import './js/nav-trail.js?v=061fde48';
 import './js/group-extras.js?v=0461764f';
+import './js/search-reveal.js?v=2feea5b6';
 import './js/mail-settings.js?v=f0518b64';
 import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=7a48c83a';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=6462159a';
-import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=da2a1a8d';
-import './js/pdf-picker.js?v=4869cd9f';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=4d15835f';
+import './js/pdf-picker.js?v=2ac451b2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=befd2bf1';
@@ -657,12 +658,12 @@ function _renderGlobalSearch(query){
 }
 window.pesquisarGlobal=function(value){clearTimeout(_globalSearchTimer);_globalSearchTimer=setTimeout(()=>_renderGlobalSearch(value),70);};
 window.selecionarResultadoBuscaGlobal=function(index){_globalSearchActive=index;document.querySelectorAll('.global-search-result').forEach((button,i)=>{button.classList.toggle('active',i===index);button.setAttribute('aria-selected',String(i===index));});};
-function _focusSearchTarget(id){setTimeout(()=>{const target=document.querySelector(`[data-audit-id="${CSS.escape(String(id))}"]`);if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.add('search-arrival');setTimeout(()=>target.classList.remove('search-arrival'),2400);}},260);}
+function _focusSearchTarget(id){window.revealRow?.(id);}
 window.ativarResultadoBuscaGlobal=function(index){
  const entry=_globalSearchResults[index];if(!entry)return;
  window.fecharBuscaGlobal();
  if(entry.type==='module')window.renderModulo(entry.data.id);
- else if(['group','item','subitem'].includes(entry.type)){window.openActivity(entry.type==='group'?entry.data.id:entry.group.id);if(entry.type!=='group')_focusSearchTarget(entry.data.id);}
+ else if(['group','item','subitem'].includes(entry.type)){if(entry.type==='group')window.openActivity(entry.data.id);else window.revealRecord(entry.type==='subitem'?'subitems':'items',entry.data.id);}
  else if(entry.type==='contact'){window.setView('cont');_focusSearchTarget(entry.data.id);}
  else if(entry.type==='responsible'){window.setView('resp');_focusSearchTarget(entry.data.id);}
  else if(entry.type==='secretary'){window.setView('secr');_focusSearchTarget(entry.data.id);}
@@ -910,7 +911,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=fd36867e';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=4e7c01e9';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }

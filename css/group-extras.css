@@ -22,3 +22,5 @@
 .reserve-send-button:hover{background:#d4efdf}
 .toast-action{margin-left:8px;font:inherit;font-weight:800;font-size:13px;border:1px solid currentColor;background:#fff;color:inherit;border-radius:8px;padding:3px 10px;cursor:pointer}
 @media (max-width:600px){.group-extra-bar button{flex:1 1 auto}.reserve-bar-actions button{flex:1 1 140px}}
+/* destaque do lançamento aberto pela busca do topo */
+.search-arrival{outline:3px solid #f59e0b!important;outline-offset:2px;border-radius:12px;scroll-margin-top:calc(var(--nav-trail-h,56px) + 90px)}
