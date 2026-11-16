@@ -218,3 +218,28 @@
   secretaria dos itens e mexeria em câmera/avisos); tela nova nunca lê `demanda_secretaria_id`
   direto para exibir secretaria. Mudou a casa de uma área? Alterar só `_homeSecretaryNameForModule`.
   Teste: `tests/home-secretary.browser.cjs` (390 e 1366).
+
+## Cadastro reserva herda a permissão do destino (regra permanente)
+
+- Quem pode no grupo de destino (`reserva_destino`) pode o mesmo na reserva dele, sem cadastro
+  extra: `window.userCanGroup` (js/modulos.js) e `pms_my_group_ids()` no banco (migração
+  20261116213000). Regra geral do usuário: acesso que é consequência óbvia de outro já concedido
+  deve ser dado automaticamente, por regra no código + banco, sem perguntar.
+
+## PDF do módulo e padrão dos relatórios (regra permanente)
+
+- `gerarRelatorioModulo` (js/modulos.js): resumo no topo (grupos, lançamentos, concluídos, em
+  andamento, atrasados + barra), bloco por grupo com andamento, colunas SÓ quando têm conteúdo
+  (prazo, responsável, itens e até 3 campos personalizados mais preenchidos, lidos com `_efv`),
+  situação colorida, grupos vazios juntos no fim e "Página X de Y". Todo relatório novo segue
+  esse padrão: resumo antes do detalhe, nada de coluna vazia, atrasados em destaque, total de
+  páginas. Teste: `tests/module-pdf.browser.cjs` (precisa de LIBS com jspdf).
+
+## Limpezas no banco (procedimento)
+
+- Só com autorização explícita do usuário. Sempre em transação com
+  `set local pms.whatsapp_off = 'on'`, conferindo antes o que há dentro (items, subitems,
+  field_templates, contas, estoque, requisicoes, chamados, galeria) e com `not exists` no próprio
+  DELETE para não apagar nada que tenha ganhado conteúdo. Em 16/11/2026 foram removidos 9 grupos
+  de sobra ("Novo Eventos" ×3, "Novo Frota e Veículos", "Novo Controle de Contas", 3 modelos vazios
+  de estoque da Saúde, "TESTE") e a secretaria duplicada "SECMULHER".

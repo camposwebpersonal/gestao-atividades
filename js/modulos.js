@@ -60,7 +60,11 @@ window.userCan = function(modId, action='acesso'){
 window.userCanGroup=function(group,action='acesso'){
  if(window.S?.isAdmin)return true;
  if(!group)return false;
- return groupPermission(_myPerms(),_md.modFor(group),group,action);
+ if(groupPermission(_myPerms(),_md.modFor(group),group,action))return true;
+ // Cadastro reserva herda a permissão do grupo de destino (quem lança as solicitações também cadastra na reserva).
+ // O banco aplica a mesma regra em pms_my_group_ids (migração 20261116213000).
+ const destId=_md.extra(group).reserva_destino,dest=destId&&(window.S?.secs||[]).find(g=>String(g.id)===String(destId));
+ return Boolean(dest&&groupPermission(_myPerms(),_md.modFor(dest),dest,action));
 };
 window.userCanDemandSecretaria=function(secretariaId,action='acesso'){
  if(window.S?.isAdmin)return true;
@@ -357,55 +361,20 @@ window.criarGrupoModulo = async function(modId,secretariaId=null){
   }
 };
 
+// PDF do módulo: resumo no topo, um bloco por grupo com andamento, só colunas que têm conteúdo
+// (prazo, responsável e até 3 campos personalizados mais preenchidos), atrasados em destaque,
+// grupos vazios juntos no fim e "Página X de Y".
 window.gerarRelatorioModulo = async function(modId){
-  const mod = MODULOS.find(x=>x.id===modId); if(!mod){ toast('Módulo não encontrado','error'); return; }
-  if(!window.jspdf || !window.jspdf.jsPDF){ toast('jsPDF não carregado','error'); return; }
-  toast('Gerando PDF do módulo…','info',8000);
-  const {jsPDF} = window.jspdf;
-  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'a4'}); (window.safePdf||(d=>d))(doc);
-  const W = 210, mx = 14;
-  const now = new Date().toLocaleString('pt-BR');
-  doc.setFillColor(15,23,42); doc.rect(0,0,W,30,'F');
-  doc.setTextColor(226,232,240); doc.setFontSize(18); doc.text(`${mod.icon} ${mod.label}`, mx, 18);
-  doc.setTextColor(148,163,184); doc.setFontSize(10); doc.text(`Prefeitura de Sertania - PE • ${now}`, mx, 25);
-  let y = 38;
-  const grupos = _md.grupos(mod);
-  for(const g of grupos){
-    if(y > 260){ doc.addPage(); y = 20; }
-    doc.setTextColor(226,232,240); doc.setFontSize(13); doc.text(_md.esc(g.name||'Sem nome'), mx, y); y += 7;
-    const items = ((window.S && S.items) || []).filter(i=>i.atividade_id===g.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-    if(items.length){
-      const rows = items.map((it, idx)=>{
-        const subs = ((window.S && S.subitems) || []).filter(s=>s.item_id===it.id && s.parent_type!=='subitem');
-        const done = subs.length ? subs.every(s=>s.concluded==1) : it.concluded==1;
-        return [String(idx+1), _md.esc(it.description||''), done ? 'Concluído' : 'Pendente', _md.fmtD(it.deadline_date)];
-      });
-      doc.autoTable({startY:y, head:[['#','Descrição','Situação','Prazo']], body:rows,
-        margin:{left:mx, right:mx}, styles:{fontSize:9, textColor:226232240, fillColor:[15,23,42]},
-        headStyles:{fillColor:[59,130,246], textColor:255}, theme:'grid'});
-      y = doc.lastAutoTable.finalY + 10;
-    } else {
-      doc.setTextColor(100,116,139); doc.setFontSize(9); doc.text('Nenhum lançamento neste grupo.', mx, y); y += 8;
-    }
-  }
-  if(!grupos.length){
-    doc.setTextColor(100,116,139); doc.setFontSize(11); doc.text('Nenhum grupo cadastrado neste módulo.', mx, y);
-  }
-  doc.save(`relatorio-${mod.id}-${new Date().toISOString().slice(0,10)}.pdf`);
-  toast('PDF do módulo gerado!','success');
-};
-
-/* Relatório institucional padronizado pelo modelo de Perfuração de Poços. */
-window.gerarRelatorioModulo = async function(modId){
-  const mod=MODULOS.find(x=>x.id===modId);
+  const mod=_configuredModules(true).find(x=>x.id===modId)||MODULOS.find(x=>x.id===modId);
   if(!mod){toast('Módulo não encontrado','error');return;}
   if(!window.jspdf?.jsPDF){toast('jsPDF não carregado','error');return;}
   toast('Gerando relatório institucional…','info',8000);
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); (window.safePdf||(d=>d))(doc);
-  const W=210,H=297,mx=14;
+  const W=210,H=297,mx=14,S=window.S||{};
   let logo=null;
   try{logo=await window.loadB64?.('img/logo_sertania.png','png',120);}catch(e){}
+  const home=_homeSecretaryNameForModule(mod.id)&&(S.secretarias||[]).find(s=>_normalizedSecretaryName(s.name)===_homeSecretaryNameForModule(mod.id));
   const header=()=>{
     doc.setFillColor(247,250,248);doc.rect(0,0,W,31,'F');
     doc.setFillColor(33,135,82);doc.rect(0,0,4,31,'F');
@@ -414,46 +383,83 @@ window.gerarRelatorioModulo = async function(modId){
     doc.setTextColor(15,53,43);doc.setFont('helvetica','bold');doc.setFontSize(16);
     doc.text(`RELATÓRIO - ${String(mod.label).toUpperCase()}`,mx,14);
     doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(78,105,96);
-    doc.text(`Prefeitura Municipal de Sertânia - Emitido em ${new Date().toLocaleString('pt-BR')}`,mx,21);
+    doc.text(`Prefeitura Municipal de Sertânia${home?' · '+home.name:''} · Emitido em ${new Date().toLocaleString('pt-BR')}`,mx,21);
   };
-  const footer=()=>{
-    const pg=doc.internal.getCurrentPageInfo().pageNumber;
+  const today=new Date().toISOString().slice(0,10);
+  const efv=(r,f)=>{const v=window._efv?window._efv(r,f):r?.extra_fields?.[f];return v==null||typeof v==='object'?'':String(v).trim();};
+  const grupos=_md.grupos(mod).map(g=>{
+    const items=(S.items||[]).filter(i=>i.atividade_id===g.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0)).map(it=>{
+      const subs=(S.subitems||[]).filter(x=>x.item_id===it.id&&x.parent_type!=='subitem');
+      const done=subs.length?subs.every(x=>x.concluded==1):it.concluded==1;
+      const prazo=String(it.deadline_date||it.end_date||'').slice(0,10);
+      return {it,subs,done,prazo,late:!done&&prazo&&prazo<today};
+    });
+    return {g,items,done:items.filter(r=>r.done).length,late:items.filter(r=>r.late).length};
+  });
+  const cheios=grupos.filter(x=>x.items.length),vazios=grupos.filter(x=>!x.items.length);
+  const tot={grupos:grupos.length,itens:cheios.reduce((n,x)=>n+x.items.length,0),done:cheios.reduce((n,x)=>n+x.done,0),late:cheios.reduce((n,x)=>n+x.late,0)};
+  header();
+  // ── resumo ──
+  let y=38;
+  const cards=[['GRUPOS',tot.grupos,[24,98,61]],['LANÇAMENTOS',tot.itens,[15,53,43]],['CONCLUÍDOS',tot.done,[22,128,74]],['EM ANDAMENTO',tot.itens-tot.done,[29,78,137]],['ATRASADOS',tot.late,tot.late?[176,58,22]:[104,122,115]]];
+  const cw=(W-mx*2-4*3)/5;
+  cards.forEach(([label,value,color],i)=>{
+    const x=mx+i*(cw+3);
+    doc.setFillColor(247,250,248);doc.setDrawColor(218,228,224);doc.setLineWidth(.2);doc.roundedRect(x,y,cw,17,1.5,1.5,'FD');
+    doc.setTextColor(...color);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(String(value),x+cw/2,y+8.5,{align:'center'});
+    doc.setFontSize(6.5);doc.setTextColor(78,105,96);doc.text(label,x+cw/2,y+13.8,{align:'center'});
+  });
+  y+=21;
+  if(tot.itens){
+    const pct=Math.round(tot.done/tot.itens*100),bw=W-mx*2-24;
+    doc.setFillColor(226,235,231);doc.roundedRect(mx,y,bw,3,1.5,1.5,'F');
+    if(pct>0){doc.setFillColor(33,135,82);doc.roundedRect(mx,y,Math.max(3,bw*pct/100),3,1.5,1.5,'F');}
+    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(`${pct}% concluído`,W-mx,y+2.7,{align:'right'});
+    y+=10;
+  }else y+=3;
+  // ── grupos ──
+  for(const {g,items,done,late} of cheios){
+    if(y>245){doc.addPage();header();y=40;}
+    doc.setFillColor(231,244,235);doc.roundedRect(mx,y-5,W-mx*2,9,1.5,1.5,'F');
+    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(10);
+    const info=`${items.length} lançamento${items.length===1?'':'s'} · ${done} concluído${done===1?'':'s'}${late?` · ${late} atrasado${late===1?'':'s'}`:''}`;
+    doc.setFontSize(7.5);const iw=doc.getTextWidth(info);doc.setFontSize(10);
+    doc.text(doc.splitTextToSize(String(g.name||'Sem nome'),W-mx*2-iw-10)[0],mx+3,y+1);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(late?176:78,late?58:105,late?22:96);doc.text(info,W-mx-3,y+1,{align:'right'});
+    y+=8;
+    // colunas só quando há conteúdo
+    const hasPrazo=items.some(r=>r.prazo),hasResp=items.some(r=>String(r.it.responsaveis||'').trim()),hasSubs=items.some(r=>r.subs.length);
+    const fields=(S.fieldTemplates||[]).filter(t=>t.atividade_id===g.id&&t.scope!=='subitem'&&!['image','file','geo'].includes(t.field_type))
+      .map(t=>({name:t.field_name,n:items.filter(r=>efv(r.it,t.field_name)).length})).filter(f=>f.n).sort((a,b)=>b.n-a.n).slice(0,3);
+    const head=['#','Descrição',...fields.map(f=>f.name),...(hasResp?['Responsável']:[]),...(hasSubs?['Itens']:[]),'Situação',...(hasPrazo?['Prazo']:[])];
+    const sitCol=head.indexOf('Situação');
+    const rows=items.map((r,idx)=>[String(idx+1),String(r.it.description||''),...fields.map(f=>efv(r.it,f.name)||'—'),...(hasResp?[String(r.it.responsaveis||'—')]:[]),
+      ...(hasSubs?[r.subs.length?`${r.subs.filter(x=>x.concluded==1).length}/${r.subs.length}`:'—']:[]),r.done?'Concluído':r.late?'Atrasado':'Em andamento',...(hasPrazo?[r.prazo?_md.fmtD(r.prazo):'—']:[])]);
+    doc.autoTable({startY:y,head:[head],body:rows,
+      margin:{left:mx,right:mx,top:38,bottom:20},theme:'grid',
+      styles:{fontSize:8,textColor:[33,52,63],lineColor:[218,228,224],lineWidth:.2,cellPadding:2.2,overflow:'linebreak'},
+      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[247,250,248]},
+      columnStyles:{0:{cellWidth:9,halign:'center'},[sitCol]:{cellWidth:26},...(hasPrazo?{[head.length-1]:{cellWidth:22}}:{})},
+      didParseCell:d=>{if(d.section==='body'&&d.column.index===sitCol){const v=d.cell.raw;d.cell.styles.fontStyle='bold';d.cell.styles.textColor=v==='Concluído'?[22,128,74]:v==='Atrasado'?[176,58,22]:[29,78,137];}},
+      didDrawPage:()=>{if(doc.internal.getCurrentPageInfo().pageNumber>1)header();}});
+    y=doc.lastAutoTable.finalY+10;
+  }
+  if(vazios.length){
+    if(y>262){doc.addPage();header();y=40;}
+    doc.setTextColor(78,105,96);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(`Grupos ainda sem lançamentos (${vazios.length})`,mx,y);
+    doc.setFont('helvetica','normal');const lines=doc.splitTextToSize(vazios.map(x=>x.g.name||'Sem nome').join(' · '),W-mx*2);doc.text(lines,mx,y+4.5);y+=6+lines.length*3.6;
+  }
+  if(!grupos.length){doc.setTextColor(78,105,96);doc.setFontSize(9);doc.text('Nenhum grupo cadastrado nesta área.',mx,y);}
+  const pages=doc.internal.getNumberOfPages();
+  for(let p=1;p<=pages;p++){
+    doc.setPage(p);
     doc.setFillColor(12,61,49);doc.rect(0,H-13,W,13,'F');
     doc.setTextColor(225,242,234);doc.setFontSize(7);doc.setFont('helvetica','bold');
     doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES',mx,H-5);
-    doc.text(`Página ${pg}`,W-mx,H-5,{align:'right'});
-  };
-  header();
-  let y=40;
-  const grupos=_md.grupos(mod);
-  for(const g of grupos){
-    if(y>253){footer();doc.addPage();header();y=40;}
-    doc.setFillColor(231,244,235);doc.roundedRect(mx,y-5,W-mx*2,9,1.5,1.5,'F');
-    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(10);
-    doc.text(String(g.name||'Sem nome'),mx+3,y+1);y+=8;
-    const items=((window.S&&S.items)||[]).filter(i=>i.atividade_id===g.id).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
-    if(items.length){
-      const rows=items.map((it,idx)=>{
-        const subs=((window.S&&S.subitems)||[]).filter(s=>s.item_id===it.id&&s.parent_type!=='subitem');
-        const done=subs.length?subs.every(s=>s.concluded==1):it.concluded==1;
-        return[String(idx+1),String(it.description||''),done?'Concluído':'Em andamento',_md.fmtD(it.deadline_date)];
-      });
-      doc.autoTable({startY:y,head:[['#','Descrição','Situação','Prazo']],body:rows,
-        margin:{left:mx,right:mx,top:38,bottom:20},theme:'grid',
-        styles:{fontSize:8,textColor:[33,52,63],lineColor:[218,228,224],lineWidth:.2,cellPadding:2.2},
-        headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontStyle:'bold'},
-        alternateRowStyles:{fillColor:[247,250,248]},
-        didDrawPage:()=>{if(doc.internal.getCurrentPageInfo().pageNumber>1)header();}});
-      y=doc.lastAutoTable.finalY+10;
-    }else{
-      doc.setTextColor(104,122,115);doc.setFontSize(8);
-      doc.text('Nenhum lançamento neste grupo.',mx,y);y+=8;
-    }
+    doc.text(`Página ${p} de ${pages}`,W-mx,H-5,{align:'right'});
   }
-  if(!grupos.length){doc.setTextColor(104,122,115);doc.text('Nenhum grupo cadastrado neste módulo.',mx,y);}
-  const pages=doc.internal.getNumberOfPages();
-  for(let p=1;p<=pages;p++){doc.setPage(p);footer();}
-  doc.save(`RELATORIO-${String(mod.id).toUpperCase()}-${new Date().toISOString().slice(0,10)}.pdf`);
+  doc.save(`RELATORIO-${String(mod.label||mod.id).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'-').replace(/^-|-$/g,'')}-${new Date().toISOString().slice(0,10)}.pdf`);
   toast('PDF do módulo gerado!','success');
 };
 
