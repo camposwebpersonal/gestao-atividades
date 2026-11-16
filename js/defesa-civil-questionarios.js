@@ -304,7 +304,7 @@ if (typeof window !== 'undefined') {
     const v = (state.answers[qid] ||= {})[pid] ||= {arquivos: [], nota: ''};
     W().toast?.(`Enviando ${files.length} foto(s)…`, 'info', 3000);
     try {
-      const {optimizePhoto} = await import('./geolocation.js?v=6cc96b42');
+      const {optimizePhoto} = await import('./geolocation.js?v=9d243a61');
       for (const file of files) {
         const raw = await W().readFileAsDataUrl(file);
         const url = await W().imgbbUp(await optimizePhoto(raw, {maxDimension: 1600, maxBytes: 600000}));

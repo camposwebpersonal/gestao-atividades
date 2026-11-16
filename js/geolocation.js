@@ -374,7 +374,8 @@ function renderMapPage({secretariaId='',groupId='',title='Mapa geral de demandas
   const popupWidth=Math.max(200,Math.min(290,(document.getElementById(id)?.clientWidth||400)-70));
   visible().forEach(point=>{
    const {record,group,secretary,location,refill}=point;const latlng=[location.latitude,location.longitude];bounds.push(latlng);
-   const options=refill?{icon:window.L.divIcon({className:'pipa-pin-wrap',html:refillMarkerHtml(refill.state),iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-38]}),zIndexOffset:refill.state==='vencido'?900:refill.state==='alerta'?600:0,title:`${record.description||'Lançamento'} · ${(REFILL_STATES[refill.state]||{}).label||''}`}:{};
+   const pinEmoji=extraOf(group).map_emoji||group?.map_emoji;
+   const options=!refill&&pinEmoji?{icon:emojiPinIcon(pinEmoji),title:record.description||'Local'}:refill?{icon:window.L.divIcon({className:'pipa-pin-wrap',html:refillMarkerHtml(refill.state),iconSize:[34,44],iconAnchor:[17,42],popupAnchor:[0,-38]}),zIndexOffset:refill.state==='vencido'?900:refill.state==='alerta'?600:0,title:`${record.description||'Lançamento'} · ${(REFILL_STATES[refill.state]||{}).label||''}`}:{};
    const marker=window.L.marker(latlng,options).addTo(layer).bindPopup(`<div class="geo-popup">${pointTitleHtml(point)}${pointContextHtml(point)}${refillPopupLine(point)}<div class="geo-popup-actions">${point.table==='galeria'?'':focusButton(point)}<a href="${esc(location.maps_url)}" target="_blank" rel="noopener">Abrir no Google Maps</a><a class="geo-route" href="${esc(directionsUrl(location))}" target="_blank" rel="noopener">🧭 Como chegar</a><button type="button" class="geo-share" onclick="shareGeoLocation('${esc(location.maps_url)}','${jsArg(record.description||'Localização da demanda')}')">Compartilhar</button></div></div>`,{maxWidth:popupWidth,minWidth:Math.min(220,popupWidth),autoPanPaddingTopLeft:[12,72],autoPanPaddingBottomRight:[12,24]});
    marker.on('popupopen',()=>markListCard(keyOf(point)));
    markers.set(keyOf(point),marker);
@@ -475,6 +476,10 @@ window.captureRecordLocation=async(table,id)=>{
  openLocationPicker({initial:locationOf(entry.record),onConfirm:async location=>{const extra={...extraOf(entry.record),geo_location:location};await window.updateDoc(window.doc(window.db,collectionFor[table],id),{extra_fields:extra,updated_at:window.serverTimestamp()});await window.loadData();window.refreshAuditUI?.();}});
 };
 window.renderGeneralGeoMap=()=>renderMapPage();
+window.groupMapPoints=groupId=>{try{return mapRecords('',groupId);}catch{return [];}};
+// Pino com emoji para grupos que definem extra_fields.map_emoji (ex.: 🐂 Locais de pega de boi).
+export function emojiPinIcon(emoji){return window.L.divIcon({className:'emoji-pin-wrap',html:`<span class="emoji-pin"><b>${esc(emoji)}</b></span>`,iconSize:[38,46],iconAnchor:[19,44],popupAnchor:[0,-40]});}
+window.emojiPinIcon=emojiPinIcon;
 window.geoPointsSummary=()=>{try{const p=mapRecords();return {points:p.length,groups:new Set(p.map(x=>String(x.group.id))).size,vencidos:p.filter(x=>x.refill?.state==='vencido').length};}catch{return {points:0,groups:0,vencidos:0};}};
 // Link #mapa/<tabela>/<id>: mapa geral já no ponto, com o quadro aberto.
 window.openGeoMapFocus=(table,id)=>{window.rememberWorkspace?.({kind:'view',id:'map'},true);renderMapPage({focus:table+':'+id});};

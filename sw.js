@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gestao-pms-v201';
-// assets-hash: ab36fd7ac077 (gerado por tools/stamp-versions.mjs — não editar)
+const CACHE_NAME = 'gestao-pms-v203';
+// assets-hash: e27cd835db0d (gerado por tools/stamp-versions.mjs — não editar)
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -65,6 +65,8 @@ const STATIC_ASSETS = [
   'js/pipa-refill.js',
   'js/search-results.js',
   'js/nav-trail.js',
+  'js/group-extras.js',
+  'css/group-extras.css',
   'js/mail-settings.js',
   'js/pwned-check.js',
   'css/nav-trail.css',

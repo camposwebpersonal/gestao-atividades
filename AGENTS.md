@@ -185,3 +185,14 @@
   passar (requer Settings → Pages → Source = "GitHub Actions"; enquanto for o branch, não faz
   nada). Com isso, teste falhando = site antigo continua no ar até a correção.
   Origem trocada para "GitHub Actions" pelo usuário em 15/11/2026.
+
+## Recursos por grupo (extra_fields) — regra permanente
+
+- `map_inline: true` mostra o mapa dos locais dentro da tela do grupo (`js/group-extras.js`);
+  `map_emoji` troca o pino (ex.: 🐂 em LOCAIS DE PEGA DE BOI, Cultura). Também vale no mapa grande.
+- `reserva_destino: <id do grupo>` transforma o grupo em CADASTRO RESERVA: os lançamentos ficam
+  fora do relatório do destino até serem enviados (botão "➡ Enviar p/ Solicitações" no card ou
+  "Enviar selecionados"), via RPC `move_attendance_record` (subitens vão junto), com Desfazer e
+  aviso de possível duplicado (mesmo nome ou telefone). Exemplo: CADASTRO RESERVA DE SOLICITAÇÃO
+  DE ÁGUA DE PIPA (Gabinete) → SOLICITAÇÃO DE ÁGUA DE PIPA. Grupo de reserva usa
+  `refill_control:false`. Teste: `tests/group-extras.browser.cjs` (390 e 1366).

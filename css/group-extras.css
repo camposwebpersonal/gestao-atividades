@@ -1,0 +1,24 @@
+/* Barras extras do grupo: mapa embutido e cadastro reserva (tema claro, contraste AA) */
+.group-extra-bar{background:#fff;border:1px solid #d6e2ec;border-radius:14px;padding:12px 14px;margin:0 0 12px;color:#14273a;min-width:0;box-shadow:0 4px 14px rgba(4,24,40,.05)}
+.group-extra-bar small{display:block;font-size:12px;color:#3f5566;line-height:1.35;margin-top:2px}
+.group-extra-bar button{font:inherit;font-size:13px;font-weight:700;border-radius:10px;padding:8px 12px;cursor:pointer;border:1px solid #b9cddd;background:#f4f8fb;color:#123047;min-height:38px}
+.group-extra-bar button:hover{background:#e8f0f6}
+.group-extra-bar button:disabled{cursor:not-allowed;opacity:1;background:#eef2f5;color:#5b6b78;border-color:#d3dce3}
+.group-inline-map header,.reserve-bar-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.group-inline-map header>span,.reserve-bar-title>span{font-size:24px;line-height:1}
+.group-inline-map header>div,.reserve-bar-title>div{flex:1 1 180px;min-width:0}
+.group-inline-map header strong,.reserve-bar-title strong{font-size:15px;color:#0f2638}
+.group-inline-map-canvas{height:clamp(240px,42vh,420px);border-radius:12px;margin-top:10px;border:1px solid #d6e2ec;overflow:hidden;position:relative;z-index:0}
+.group-inline-map-empty{margin:10px 0 0;padding:12px;border-radius:10px;background:#f6f9fb;color:#2f4558;font-size:13px}
+.reserve-bar{border-color:#f3c98b;background:#fffaf2}
+.reserve-bar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.reserve-bar-actions .reserve-send-selected:not(:disabled){background:#0f6b3a;border-color:#0f6b3a;color:#fff}
+.reserve-bar-actions .reserve-send-selected:not(:disabled):hover{background:#0b5630}
+.reserve-dup{margin:8px 0 0;font-size:13px;color:#8a3b00;background:#fff1e0;border-radius:8px;padding:6px 10px}
+.reserve-chip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f2f8ff;border-color:#bfd6f1;font-size:14px;color:#123047}
+.reserve-chip>span:first-child{font-size:20px}
+.reserve-chip>span:nth-child(2){flex:1 1 180px;min-width:0}
+.reserve-send-button{font:inherit;font-size:12px;font-weight:700;border-radius:8px;padding:5px 10px;cursor:pointer;border:1px solid #0f6b3a;background:#e9f7ef;color:#0b5630;min-height:32px}
+.reserve-send-button:hover{background:#d4efdf}
+.toast-action{margin-left:8px;font:inherit;font-weight:800;font-size:13px;border:1px solid currentColor;background:#fff;color:inherit;border-radius:8px;padding:3px 10px;cursor:pointer}
+@media (max-width:600px){.group-extra-bar button{flex:1 1 auto}.reserve-bar-actions button{flex:1 1 140px}}

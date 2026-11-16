@@ -96,3 +96,7 @@
 .geo-coop-hint{position:absolute;inset:0;z-index:1001;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(10,30,45,.62);color:#fff;font:800 17px/1.3 system-ui,sans-serif;text-align:center;padding:20px;opacity:0;transition:opacity .2s;pointer-events:none}
 .geo-coop-hint span{font-size:40px}
 .geo-coop-hint.is-on{opacity:1}
+/* Pino com emoji (grupos com map_emoji, ex.: 🐂) */
+.emoji-pin-wrap{background:none;border:0}
+.emoji-pin{position:relative;display:grid;place-items:center;width:38px;height:38px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#fff;border:3px solid #b45309;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.emoji-pin b{transform:rotate(45deg);font-size:19px;line-height:1}

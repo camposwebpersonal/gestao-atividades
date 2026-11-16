@@ -117,6 +117,9 @@ export function initAuditUI(){
      const button=document.createElement('button');button.type='button';button.className='attendance-move-button';button.textContent=fieldDemand?'Redirecionar':'Mover';button.title=fieldDemand?'Encaminhar esta demanda de campo ao grupo correto':'Mover atendimento para outro grupo';button.onclick=event=>{event.stopPropagation();window.openMoveAttendance(record.id,table);};target.append(button);
      if(moveTarget!==target)moveTarget.classList.contains('completed-row-actions')?moveTarget.prepend(button):moveTarget.insertBefore(button,moveTarget.querySelector(':scope > .completed-row-actions'));
     }
+    if(window.isReserveGroup?.(group)&&table==='items'&&!host.classList.contains('completed-row')&&window.userCanGroup?.(group,'editar')&&!host.querySelector('.reserve-send-button')){
+     const send=document.createElement('button');send.type='button';send.className='reserve-send-button';send.textContent='➡ Enviar p/ Solicitações';send.title='Tirar da reserva e enviar para o grupo de solicitações (entra no relatório)';send.onclick=event=>{event.stopPropagation();window.sendReserveRecords([{id:record.id,table}]);};target.append(send);
+    }
    }
   }
  };
@@ -136,7 +139,7 @@ export function initAuditUI(){
   panel.innerHTML=`<summary><span aria-hidden="true">ⓘ</span><strong>Informações do registro</strong><small>Criação e última edição</small></summary><div class="editor-audit-content record-audit">${auditLabel(entry.record)}</div>`;
   const actions=root.querySelector('.modal-actions');if(actions)actions.before(panel);else root.append(panel);
  };
- new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta')&&!n.closest('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
+ new MutationObserver(mutations=>{if(mutations.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&!n.matches('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.reserve-send-button,.attendance-inline-meta')&&!n.closest('.record-audit,.geo-quick-actions,.pipa-refill-badge,.attendance-record-meta,.attendance-move-button,.reserve-send-button,.attendance-inline-meta'))))schedule();}).observe(document.getElementById('content'),{childList:true,subtree:true});
  window.refreshAuditUI=schedule;
  window.openAuthorship=function(){
   window.openModal('Autoria dos registros','Quem criou e quem editou por último.',`<label class="audit-search-label" for="audit-search">Buscar registro</label><input id="audit-search" type="search" placeholder="Nome do registro ou usuário" oninput="filterAuthorship()"><div id="audit-records"></div>`);window.filterAuthorship();
