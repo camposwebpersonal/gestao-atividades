@@ -1,0 +1,54 @@
+# Publica o site SOMENTE depois que os "Testes automáticos" passarem.
+# Vale quando Settings → Pages → Source = "GitHub Actions". Enquanto a origem ainda for o
+# branch main, este fluxo apenas confere e não faz nada (o GitHub publica como antes).
+name: Publicar site
+
+on:
+  workflow_run:
+    workflows: ["Testes automáticos"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Publicar no GitHub Pages
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Origem do Pages
+        id: origem
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tipo=$(gh api "repos/${{ github.repository }}/pages" --jq .build_type 2>/dev/null || echo desconhecido)
+          echo "tipo=$tipo" >> "$GITHUB_OUTPUT"
+          if [ "$tipo" != "workflow" ]; then
+            echo "::notice::O Pages ainda publica direto do branch (origem: $tipo). Nada a fazer aqui."
+          fi
+      - uses: actions/checkout@v5
+        if: steps.origem.outputs.tipo == 'workflow'
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/configure-pages@v5
+        if: steps.origem.outputs.tipo == 'workflow'
+      - uses: actions/upload-pages-artifact@v4
+        if: steps.origem.outputs.tipo == 'workflow'
+        with:
+          path: .
+      - id: deploy
+        if: steps.origem.outputs.tipo == 'workflow'
+        uses: actions/deploy-pages@v4

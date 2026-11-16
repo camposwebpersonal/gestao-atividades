@@ -181,3 +181,6 @@
   todos os testes de unidade e as telas principais no navegador (390 e 1366). Não bloqueia a
   publicação do Pages; se falhar, aparece ❌ no commit e o GitHub avisa por e-mail — corrigir já.
   Teste novo de tela entra na lista "Telas principais" do workflow.
+- Publicação: `.github/workflows/publicar.yml` publica o site só depois que "Testes automáticos"
+  passar (requer Settings → Pages → Source = "GitHub Actions"; enquanto for o branch, não faz
+  nada). Com isso, teste falhando = site antigo continua no ar até a correção.

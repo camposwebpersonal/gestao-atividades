@@ -255,10 +255,10 @@ export async function refreshGithubStatus(force=false){
     const api=path=>fetch(`https://api.github.com/repos/${GH_REPO}${path}`,{headers:{Accept:'application/vnd.github+json'}}).then(r=>{if(!r.ok)throw new Error('GitHub '+r.status);return r.json();});
     const [repo,runs]=await Promise.all([api(''),api('/actions/runs?per_page=30')]);
     const list=runs.workflow_runs||[];
-    const pages=list.filter(r=>/pages/i.test(r.name||''));
+    const pages=list.filter(r=>/pages|publicar/i.test(r.name||'')&&r.conclusion!=='skipped');
     const hourAgo=Date.now()-3600000;
     const d={at:new Date().toISOString(),size_kb:repo.size,
-      ci:list.find(r=>!/pages/i.test(r.name||''))||null,pages:pages[0]||null,
+      ci:list.find(r=>/testes/i.test(r.name||''))||null,pages:pages[0]||null,
       builds_last_hour:pages.filter(r=>Date.parse(r.created_at)>hourAgo).length};
     d.ci=d.ci&&{status:d.ci.status,conclusion:d.ci.conclusion,updated_at:d.ci.updated_at};
     d.pages=d.pages&&{status:d.pages.status,conclusion:d.pages.conclusion,updated_at:d.pages.updated_at};
