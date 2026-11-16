@@ -850,7 +850,7 @@ function trashContext(table, row, options = {}) {
   const parentSubitem = state.subitems?.find(item => item.id === row.parent_id);
   const activityId = options.activityId || row.atividade_id || parentItem?.atividade_id || parentSubitem?.atividade_id || (table === 'atividades' ? row.id : null);
   const activity = state.secs?.find(item => item.id === activityId);
-  const secretariaId = options.secretariaId || row.secretaria_id || row.demanda_secretaria_id || activity?.demanda_secretaria_id || (table === 'secretarias' ? row.id : null);
+  const secretariaId = options.secretariaId || row.secretaria_id || row.demanda_secretaria_id || activity?.demanda_secretaria_id || globalThis.groupHomeSecretary?.(activity)?.id || (table === 'secretarias' ? row.id : null);
   const secretaria = state.secretarias?.find(item => item.id === secretariaId);
   return {
     source_label: options.label || row.description || row.name || row.nome || row.titulo || row.field_name || row.inventory_code || row.numero || 'Registro sem título',

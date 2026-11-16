@@ -1,5 +1,5 @@
 /* Central de licitações: anos, grupos independentes e planilhas editáveis/offline. */
-import {supabase,collection,doc,addDoc,updateDoc,deleteDoc,serverTimestamp} from '../supabase_compat.js?v=56d4e7d3';
+import {supabase,collection,doc,addDoc,updateDoc,deleteDoc,serverTimestamp} from '../supabase_compat.js?v=2b03d282';
 
 (function(){
   'use strict';

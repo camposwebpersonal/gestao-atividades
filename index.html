@@ -15,8 +15,8 @@
 <link rel="preload" href="img/logo_sertania-header.webp" as="image" type="image/webp" fetchpriority="high">
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
-<link rel="modulepreload" href="supabase_compat.js?v=56d4e7d3">
-<link rel="modulepreload" href="js/modulos.js?v=4bcc52a2">
+<link rel="modulepreload" href="supabase_compat.js?v=2b03d282">
+<link rel="modulepreload" href="js/modulos.js?v=15d2f3df">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -517,15 +517,15 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="toast"></div>
 
 <script type="module">
-import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=56d4e7d3";
-import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=56d4e7d3";
-import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=e433d8a5';
+import{initializeApp,getAuth,onAuthStateChanged,signOut,createUserAdminSession,createUserAdmin,editUserAdminSession,moveAttendanceRecord,updateRecordAuditAdmin,updateUserPassword,sendPasswordResetEmail,restoreTrashItem,permanentDeleteDoc}from"./supabase_compat.js?v=2b03d282";
+import{getFirestore,collection,doc,addDoc,updateDoc,deleteDoc,getDocs,getDocsFromCache,getDoc,query,where,orderBy,serverTimestamp,writeBatch,setDoc,registerOfflineImageUploader,syncOfflineNow,getOfflineStatus,subscribeToRealtimeChanges}from"./supabase_compat.js?v=2b03d282";
+import{canViewSupabaseStatus,updateSupabaseStatusAccessUI,renderSupabaseStatus,refreshSupabaseStatus,stopSupabaseStatusAutoRefresh,configureSupabaseUsage}from'./js/supabase-status.js?v=60c1085c';
 import {uploadDurableImage} from './js/image-storage.js?v=cc738610';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=bdf11a1f';
 import './js/multi-nest.js?v=c1b0b758';
-import './js/defesa-civil-questionarios.js?v=43ed5a1a';
-import './js/modulos.js?v=4bcc52a2';
-import './js/water-points.js?v=865c5bdf';
+import './js/defesa-civil-questionarios.js?v=0006b82a';
+import './js/modulos.js?v=15d2f3df';
+import './js/water-points.js?v=5ba1eb99';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=dd69144a';
@@ -534,21 +534,21 @@ import {generateDemandPdf} from './js/demand-pdf.js?v=b65cf639';
 import {reportDateTime} from './js/demand-report.js?v=49e7bfce';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=62cf0102';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=3a5d6328';
-import './js/modal-context.js?v=9b63701c';
+import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=061fde48';
 import './js/group-extras.js?v=0461764f';
 import './js/search-reveal.js?v=2feea5b6';
-import './js/mail-settings.js?v=f0518b64';
+import './js/mail-settings.js?v=10cc98a9';
 import './js/pwned-check.js?v=e0db86b9';
-import './js/whatsapp-avisos.js?v=7a48c83a';
+import './js/whatsapp-avisos.js?v=23b54455';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=6462159a';
+import './js/bulk-entry.js?v=3fd240e8';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=4d15835f';
 import './js/pdf-picker.js?v=2ac451b2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=befd2bf1';
-import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=9d243a61';
+import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=6db9841c';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
 initSmartCamera();
@@ -632,13 +632,14 @@ function _globalSearchEntries(){
  const entries=[],groups=new Map((S.secs||[]).filter(group=>window.userCanGroup?.(group,'acesso')!==false).map(group=>[group.id,group]));
  for(const module of window.visibleSystemModules?.()||window.MODULOS||[]){if(window.userCan?.(module.id,'acesso')!==false)entries.push({type:'module',icon:module.icon||'▦',title:module.label,context:'Área do sistema',data:module,search:[module.label,module.id,module.desc]});}
  const secretaryById=new Map((S.secretarias||[]).map(secretary=>[String(secretary.id),secretary]));
- const secretaryOf=(group,record)=>secretaryById.get(String(group?.demanda_secretaria_id||''))||secretaryById.get(String(record?.secretaria_id||''))||null;
- const _domSec=new Map();for(const item of S.items||[]){const g=groups.get(item.atividade_id);if(!g||g.demanda_secretaria_id||!item.secretaria_id)continue;const m=_domSec.get(g.id)||new Map();m.set(String(item.secretaria_id),(m.get(String(item.secretaria_id))||0)+1);_domSec.set(g.id,m);}
+ const secretaryOf=(group,record)=>window.groupHomeSecretary?.(group,record)||secretaryById.get(String(group?.demanda_secretaria_id||''))||secretaryById.get(String(record?.secretaria_id||''))||null;
+ const areaOf=group=>window.groupHomeArea?.(group)||'';
+ const _domSec=new Map();for(const item of S.items||[]){const g=groups.get(item.atividade_id);if(!g||secretaryOf(g)||!item.secretaria_id)continue;const m=_domSec.get(g.id)||new Map();m.set(String(item.secretaria_id),(m.get(String(item.secretaria_id))||0)+1);_domSec.set(g.id,m);}
  const groupSecretary=group=>secretaryOf(group)||secretaryById.get([...(_domSec.get(group.id)||new Map()).entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'')||null;
- for(const group of groups.values()){const secretary=groupSecretary(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
- for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(!group)continue;const secretary=secretaryOf(group,item);entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo'],secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(item),data:item,group,search:[item,group.name,secretary?.name]});}
+ for(const group of groups.values()){const secretary=groupSecretary(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria',areaOf(group)].filter(Boolean),secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
+ for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(!group)continue;const secretary=secretaryOf(group,item)||groupSecretary(group);entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',crumbs:[secretary?.name||'Sem secretaria',areaOf(group),group.name||'Grupo'].filter(Boolean),secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(item),data:item,group,search:[item,group.name,secretary?.name]});}
  const itemById=new Map((S.items||[]).map(item=>[item.id,item]));
- for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(!group)continue;const secretary=secretaryOf(group,subitem);entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),crumbs:[secretary?.name||'Sem secretaria',group.name||'Grupo',parent?.description].filter(Boolean),parentTitle:parent?.description||'',secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(subitem,{parent}),data:subitem,group,search:[subitem,parent?.description,group.name,secretary?.name]});}
+ for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(!group)continue;const secretary=secretaryOf(group,subitem)||groupSecretary(group);entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),crumbs:[secretary?.name||'Sem secretaria',areaOf(group),group.name||'Grupo',parent?.description].filter(Boolean),parentTitle:parent?.description||'',secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(subitem,{parent}),data:subitem,group,search:[subitem,parent?.description,group.name,secretary?.name]});}
  for(const contact of S.contatos||[])entries.push({type:'contact',icon:'☏',title:contact.nome||'Contato',context:[contact.cargo,contact.setor,contact.telefone].filter(Boolean).join(' · ')||'Contato',data:contact,search:contact});
  for(const responsible of S.responsaveis||[])entries.push({type:'responsible',icon:'♙',title:responsible.name||responsible.nome||'Responsável',context:[responsible.cargo,responsible.setor,responsible.telefone].filter(Boolean).join(' · ')||'Responsável',data:responsible,search:responsible});
  for(const secretary of S.secretarias||[])entries.push({type:'secretary',icon:'▦',title:secretary.name||secretary.nome||'Secretaria',context:'Secretaria municipal',data:secretary,search:secretary});

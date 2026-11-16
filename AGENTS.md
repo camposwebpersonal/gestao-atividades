@@ -206,3 +206,15 @@
 - Módulo com filtros próprios expõe um gancho (`pocoReveal`, `licitacaoReveal`,
   `revealCompletedRecord`) e marca o card com o id (`data-well-id`, `data-driller-id`, `data-cr`…).
   Tela nova com filtro salvo precisa do seu gancho. Teste: `tests/search-reveal.browser.cjs`.
+
+## Nada fica "sem secretaria" (regra permanente)
+
+- `window.groupHomeSecretary(grupo, registro)` (js/modulos.js) é a ÚNICA regra de "em qual
+  secretaria isto fica": 1) secretaria do próprio grupo (Controle de Demandas); 2) secretaria onde
+  a área do grupo mora na navegação (`_homeSecretaryNameForModule`: Extintores → DEFESA CIVIL,
+  Frota → TRANSPORTES, demais áreas → ADMINISTRAÇÃO); 3) secretaria marcada no lançamento.
+  Busca (caminho "Secretaria › Área › Grupo"), mapa, contexto das janelas e lixeira usam essa
+  função. Não gravar `demanda_secretaria_id` em grupo que não é de Demandas (isso travaria a
+  secretaria dos itens e mexeria em câmera/avisos); tela nova nunca lê `demanda_secretaria_id`
+  direto para exibir secretaria. Mudou a casa de uma área? Alterar só `_homeSecretaryNameForModule`.
+  Teste: `tests/home-secretary.browser.cjs` (390 e 1366).

@@ -205,7 +205,7 @@ async function resolveGoogleText(text,reference){
  const direct=parseGoogleLocation(text,reference);if(direct)return direct;
  const short=shortLinkIn(text);if(!short)return null;
  if(navigator.onLine===false)throw new Error('Sem internet para abrir o link curto do Google Maps. Copie as coordenadas do ponto.');
- const {supabase}=await import('../supabase_compat.js?v=56d4e7d3');
+ const {supabase}=await import('../supabase_compat.js?v=2b03d282');
  const {data,error}=await supabase.functions.invoke('resolve-maps-link',{body:{url:short}});
  if(error){let message='';try{message=(await error.context?.json?.())?.error||'';}catch(_){}throw new Error(message||'Não foi possível ler esse link do Google Maps. Copie as coordenadas do ponto.');}
  return data&&Number.isFinite(Number(data.latitude))?{latitude:Number(data.latitude),longitude:Number(data.longitude),source:'google-link'}:null;
@@ -305,8 +305,10 @@ export async function optimizePhoto(dataUrl,{location=null,stamp=false,maxDimens
  return result;
 }
 
+// Secretaria onde o grupo fica (regra única em js/modulos.js: groupHomeSecretary).
+const homeSec=(group,record)=>window.groupHomeSecretary?.(group,record)||window.S?.secretarias?.find(item=>item.id===group?.demanda_secretaria_id)||window.S?.secretarias?.find(item=>item.id===record?.secretaria_id)||null;
 function mapRecords(secretariaId='',groupId=''){
- const groups=(window.S?.secs||[]).filter(group=>window.userCanGroup?.(group,'acesso')&&(secretariaId?group.demanda_secretaria_id===secretariaId:true)&&(groupId?String(group.id)===String(groupId):true));
+ const groups=(window.S?.secs||[]).filter(group=>window.userCanGroup?.(group,'acesso')&&(secretariaId?(homeSec(group)?.id||group.demanda_secretaria_id)===secretariaId:true)&&(groupId?String(group.id)===String(groupId):true));
  const groupById=new Map(groups.map(group=>[group.id,group]));
  const itemById=new Map((window.S?.items||[]).map(item=>[item.id,item]));
  const points=[];
@@ -314,13 +316,13 @@ function mapRecords(secretariaId='',groupId=''){
  for(const record of [...(window.S?.items||[]),...(window.S?.subitems||[])]){
   const group=groupById.get(record.atividade_id||itemById.get(record.item_id)?.atividade_id);if(!group)continue;
   const location=locationOf(record);if(!location)continue;
-  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id)||window.S?.secretarias?.find(item=>item.id===record.secretaria_id);
+  const secretary=homeSec(group,record);
   const table=subIds.has(record.id)&&!itemById.has(record.id)?'subitems':'items';
   points.push({record,group,secretary,location,table,parent:table==='subitems'?itemById.get(record.item_id):null,refill:isRefillGroup(group)?recordRefillStatus(record):null});
  }
  for(const record of window.S?.galeria||[]){
   const group=groupById.get(record.atividade_id);if(!group)continue;const location=locationOf(record);if(!location)continue;
-  const secretary=window.S?.secretarias?.find(item=>item.id===group.demanda_secretaria_id);points.push({record:{...record,description:record.titulo||'Foto de campo'},group,secretary,location,table:'galeria'});
+  const secretary=homeSec(group);points.push({record:{...record,description:record.titulo||'Foto de campo'},group,secretary,location,table:'galeria'});
  }
  return points;
 }

@@ -1,10 +1,10 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=c3dfe62a';
-import {supabase} from '../supabase_compat.js?v=56d4e7d3';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=e3560962';
+import {supabase} from '../supabase_compat.js?v=2b03d282';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
-import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=ecdfd651';
+import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=afa31b74';
 import './perfuracao-pocos.js?v=95688106';
-import './controle-extintores.js?v=f2b49171';
-import './controle-licitacoes.js?v=557e9f1c';
+import './controle-extintores.js?v=2645ca07';
+import './controle-licitacoes.js?v=1cfb842c';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
@@ -475,10 +475,28 @@ function _moduleNumbers(mod){
 }
 
 function _normalizedSecretaryName(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();}
+// REGRA ÚNICA: em qual secretaria cada área (módulo) fica na navegação. Tudo que não é Controle de
+// Demandas mora em uma secretaria fixa: Extintores → DEFESA CIVIL, Frota → TRANSPORTES, o resto → ADMINISTRAÇÃO.
+function _homeSecretaryNameForModule(moduleId){return !moduleId||moduleId==='atendimentos'?'':moduleId==='extintores'?'DEFESA CIVIL':moduleId==='frota'?'TRANSPORTES':'ADMINISTRACAO';}
 function _specialModulesForSecretary(secretary,visible=_visibleModules()){
   const name=_normalizedSecretaryName(secretary?.name);
-  return visible.filter(mod=>mod.id!=='atendimentos').filter(mod=>name==='DEFESA CIVIL'?mod.id==='extintores':name==='TRANSPORTES'?mod.id==='frota':name==='ADMINISTRACAO'?!['extintores','frota'].includes(mod.id):false);
+  return visible.filter(mod=>mod.id!=='atendimentos'&&_homeSecretaryNameForModule(mod.id)===name);
 }
+// Secretaria "de casa" de um grupo/lançamento: nunca fica "sem secretaria" se o grupo tem lugar na navegação.
+// 1) secretaria do próprio grupo (Controle de Demandas); 2) secretaria onde a área dele fica;
+// 3) secretaria marcada no lançamento. Usar em busca, mapa, relatórios, lixeira e qualquer tela nova.
+window.groupHomeSecretary=function(group,record){
+  const list=window.S?.secretarias||[],byId=id=>id?list.find(s=>String(s.id)===String(id))||null:null;
+  if(!group)return byId(record?.secretaria_id);
+  const own=byId(group.demanda_secretaria_id);if(own)return own;
+  const want=_homeSecretaryNameForModule(_md.modFor(group));
+  return (want&&list.find(s=>_normalizedSecretaryName(s.name)===want))||byId(record?.secretaria_id);
+};
+// Nome da área (módulo) do grupo quando ele não é do Controle de Demandas — para o caminho "Secretaria › Área › Grupo".
+window.groupHomeArea=function(group){
+  const id=group?_md.modFor(group):'';if(!id||id==='atendimentos')return '';
+  return (_configuredModules(true).find(m=>m.id===id)||MODULOS.find(m=>m.id===id))?.label||'';
+};
 function _secretaryDestinations(secretary){
   const visible=_visibleModules(),demand=visible.find(mod=>mod.id==='atendimentos'),name=_normalizedSecretaryName(secretary?.name),destinations=[];
   const canSee=Boolean(demand)&&window.userCanSeeSecretaria(secretary?.id);

@@ -23,7 +23,7 @@ function currentGroupFromHash() {
 /** Crumbs padrão a partir de um grupo: Secretaria › Grupo. */
 export function groupCrumbs(group, secretariaId) {
   if (!group) return [];
-  const secId = secretariaId || group.demanda_secretaria_id;
+  const secId = secretariaId || group.demanda_secretaria_id || window.groupHomeSecretary?.(group)?.id;
   const sec = (window.S?.secretarias || []).find(s => s.id === secId);
   return [sec && {icon: '🏛️', label: sec.name, kind: 'sec'}, {icon: '📁', label: group.name, kind: 'group'}].filter(Boolean);
 }

@@ -16,9 +16,9 @@ test('Enter abre página completa e busca também está no menu lateral',()=>{
 
 test('módulos operacionais ficam organizados dentro das secretarias',()=>{
   assert.match(modules,/label:'Secretarias'/);
-  assert.match(modules,/DEFESA CIVIL'.*extintores/);
-  assert.match(modules,/TRANSPORTES'.*frota/);
-  assert.match(modules,/ADMINISTRACAO'.*!\['extintores','frota'\]/);
+  // regra única da casa de cada área (também usada por groupHomeSecretary: busca, mapa, lixeira)
+  assert.match(modules,/'extintores'\?'DEFESA CIVIL':moduleId==='frota'\?'TRANSPORTES':'ADMINISTRACAO'/);
+  assert.match(modules,/window\.groupHomeSecretary=/);
   assert.match(modules,/Locais de Captação de Água/);
 });
 
