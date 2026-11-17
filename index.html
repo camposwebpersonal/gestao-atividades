@@ -432,6 +432,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/geolocation.css?v=abf5d6ea">
 <link rel="stylesheet" href="css/nav-trail.css?v=75860575">
 <link rel="stylesheet" href="css/group-extras.css?v=72543723">
+<link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -528,7 +529,7 @@ import './js/modulos.js?v=72ba9232';
 import './js/water-points.js?v=5ba1eb99';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
-import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=dd69144a';
+import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=79fa857e';
 import {generateDemandPdf} from './js/demand-pdf.js?v=b65cf639';
 import {reportDateTime} from './js/demand-report.js?v=49e7bfce';
@@ -542,7 +543,7 @@ import './js/mail-settings.js?v=10cc98a9';
 import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=23b54455';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=3fd240e8';
+import './js/bulk-entry.js?v=ca17c435';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=4d15835f';
 import './js/pdf-picker.js?v=2ac451b2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -912,7 +913,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=4e7c01e9';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=82280877';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -2200,7 +2201,7 @@ window.excluirSelecionados=async function(secId){
 // ── MODAL ──
 window.openModal=function(title,sub,html,ctx){
   releaseSaveButtons();
-  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');
+  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box');
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-sub').hidden=!sub;
@@ -2210,7 +2211,7 @@ window.openModal=function(title,sub,html,ctx){
   document.getElementById('modal-ov').style.display='flex';
   const box=document.querySelector('#modal-ov .modal-box');if(box)box.scrollTop=0;
 }
-window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box');_pRT={};};
+window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box');_pRT={};};
 
 // ── RESPONSÁVEIS HELPERS ──
 function _respOptions(selectedName){

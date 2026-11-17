@@ -1,4 +1,5 @@
 import {attendanceFields,readAttendance,attendanceBadges,recordExtra} from './atendimento-meta.js';
+import {groupPickerHtml,bindGroupPicker,rememberDestination} from './group-picker.js';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function isAttendanceSection(section){return !!section&&(window.modForSec?.(section)==='atendimentos'||recordExtra(section).modulo==='atendimentos'||section.controle_pocos==1||recordExtra(section).controle_pocos==1);}
 export function initAttendanceUI(moveRecord){
@@ -11,10 +12,12 @@ export function initAttendanceUI(moveRecord){
   window.__movingAttendance={id,table,record};
   const fieldDemand=window.isFieldDemandGroup?.(source)===true;
   const targets=window.S.secs.filter(isAttendanceSection).filter(s=>s.id!==record.atividade_id&&window.userCanGroup?.(s,'editar'));
-  window.openModal(fieldDemand?'Redirecionar demanda de campo':'Mover atendimento',record.description||'',`<p class="attendance-move-hint">${fieldDemand?'Confira a observação e encaminhe para o grupo correto. Fotos, dados e autoria serão preservados.':'O lançamento será transferido mantendo seus dados e autoria. Escolha o grupo e confira o destino.'}</p><div class="form-group"><label for="move-group">Grupo de destino</label><select id="move-group" onchange="updateMoveAttendanceTarget()"><option value="">Selecione o grupo</option>${targets.map(s=>`<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}</select></div><div id="move-target-fields"></div><div class="modal-actions"><button type="button" class="users-button" onclick="closeModal()">Cancelar</button><button id="move-attendance-submit" type="button" class="users-button users-button-primary" onclick="confirmMoveAttendance()">${fieldDemand?'Redirecionar demanda':'Mover atendimento'}</button></div>`);
+  window.openModal(fieldDemand?'Redirecionar demanda de campo':'Mover atendimento',record.description||'',`<p class="attendance-move-hint">${fieldDemand?'Confira a observação e encaminhe para o grupo correto. Fotos, dados e autoria serão preservados.':'O lançamento será transferido mantendo seus dados e autoria. Escolha o grupo e confira o destino.'}</p><div class="form-group full"><label>Secretaria e grupo de destino</label>${targets.length?groupPickerHtml({targets,source,inputId:'move-group'}):'<p class="gp-empty">Nenhum outro grupo disponível para o seu usuário.</p>'}</div><div id="move-target-fields"></div><div class="modal-actions"><button type="button" class="users-button" onclick="closeModal()">Cancelar</button><button id="move-attendance-submit" type="button" class="users-button users-button-primary" onclick="confirmMoveAttendance()" disabled>${fieldDemand?'Redirecionar demanda':'Mover atendimento'}</button></div>`);
+  document.querySelector('#modal-ov .modal-box')?.classList.add('gp-modal-box');
+  bindGroupPicker('move-group',id=>{window.updateMoveAttendanceTarget();const b=document.getElementById('move-attendance-submit');if(b)b.disabled=!id;});
  };
  window.updateMoveAttendanceTarget=function(){
-  const section=window.S.secs.find(s=>s.id===document.getElementById('move-group').value);const record=window.__movingAttendance.record;
+  const section=window.S.secs.find(s=>s.id===document.getElementById('move-group')?.value);const record=window.__movingAttendance.record;
   if(!section){document.getElementById('move-target-fields').innerHTML='';return;}
   const well=section.controle_pocos==1||recordExtra(section).controle_pocos==1;
   const parents=window.S.items.filter(item=>item.atividade_id===section.id&&(!well||item.registro_tipo==='perfurador'||recordExtra(item).registro_tipo==='perfurador'));
@@ -22,7 +25,7 @@ export function initAttendanceUI(moveRecord){
  };
  window.confirmMoveAttendance=async function(){
   if(window.__attendanceMoveBusy)return;
-  const moving=window.__movingAttendance;const target=document.getElementById('move-group').value;if(!target){window.toast('Escolha o grupo de destino.','error');return;}
+  const moving=window.__movingAttendance;const target=document.getElementById('move-group')?.value;if(!target){window.toast('Escolha o grupo de destino.','error');return;}
   const section=window.S.secs.find(s=>s.id===target);const well=section.controle_pocos==1||recordExtra(section).controle_pocos==1;
   const source=window.S.secs.find(s=>s.id===moving.record.atividade_id);
   if(!window.userCanGroup?.(source,'editar')||!window.userCanGroup?.(section,'editar')){window.toast('Você não pode gerenciar um dos grupos desta transferência.','error');return;}
@@ -32,7 +35,7 @@ export function initAttendanceUI(moveRecord){
   window.__attendanceMoveBusy=true;const button=document.getElementById('move-attendance-submit');button.disabled=true;button.textContent=fieldDemand?'Redirecionando…':'Movendo…';
   try{
    await moveRecord({source_id:moving.id,source_table:moving.table,target_group:target,target_parent:document.getElementById('move-parent')?.value||null,well_local:local||null,well_date:date||null,well_execution:document.getElementById('move-execution')?.value||'solicitada'});
-   await window.loadData();window.closeModal();window.toast(fieldDemand?'Demanda redirecionada com fotos e observação!':'Atendimento transferido!');window.openActivity(target);
+   rememberDestination(target);await window.loadData();window.closeModal();window.toast(fieldDemand?'Demanda redirecionada com fotos e observação!':'Atendimento transferido!');window.openActivity(target);
   }catch(error){window.toast('Erro ao mover: '+error.message,'error',8000);}finally{window.__attendanceMoveBusy=false;if(button.isConnected){button.disabled=false;button.textContent=fieldDemand?'Redirecionar demanda':'Mover atendimento';}}
  };
 }

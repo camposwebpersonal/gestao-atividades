@@ -243,3 +243,15 @@
   DELETE para não apagar nada que tenha ganhado conteúdo. Em 16/11/2026 foram removidos 9 grupos
   de sobra ("Novo Eventos" ×3, "Novo Frota e Veículos", "Novo Controle de Contas", 3 modelos vazios
   de estoque da Saúde, "TESTE") e a secretaria duplicada "SECMULHER".
+
+## Mover / Redirecionar lançamento: destino por secretaria (regra permanente)
+
+- A janela "Mover atendimento"/"Redirecionar demanda" usa `js/group-picker.js` (+ `css/group-picker.css`):
+  grupos agrupados por secretaria (origem primeiro, depois ordem alfabética), cada grupo mostra a
+  secretaria pai (via `groupHomeSecretary`) e quantos lançamentos tem em aberto; nomes repetidos
+  (ex.: "Demandas Gerais de Campo") nunca aparecem sem a secretaria. Busca por secretaria e/ou
+  grupo, sem acento, com destaque; Enter escolhe o 1º; setas navegam; cartão "Destino:
+  SECRETARIA › Grupo" com "Trocar"; "Usados recentemente" (localStorage `gestao-move-recentes-v1`).
+  Botão de confirmar fica desativado até escolher. Qualquer outra tela que peça "grupo de destino"
+  deve reutilizar `groupPickerHtml`/`bindGroupPicker`, nunca um `<select>` solto.
+  Teste: `tests/group-picker.browser.cjs` (390 e 1366).

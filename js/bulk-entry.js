@@ -1,5 +1,5 @@
 import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=2b03d282';
-import {bulkColumns,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=c2df6e0a';
+import {bulkColumns,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=a5364378';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=36f81519';
 
 export {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads};
