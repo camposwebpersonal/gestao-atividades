@@ -274,3 +274,12 @@
   concluded/status/conclusion_date. A função do banco `submit_bulk_entry_draft` grava conclusion_date
   pela migração 20261117140000 (se ainda não aplicada, o site completa a data logo após o envio).
   Teste: `tests/bulk-conclusion.browser.cjs` (390 e 1366).
+
+## Seleção em massa na tela do grupo (regra permanente)
+
+- `js/mass-select.js` (+ `css/mass-select.css`), chamado no openActivity (`decorateMassSelect`): barra
+  acima da lista/cards com "Selecionar todos (N)" (só os visíveis), contagem, Shift + clique para
+  intervalo, "✓ Concluir N" e "↺ Reabrir N" (só com Controle de Conclusão), "🗑 Excluir" e "Limpar".
+  Com seleção, a barra gruda no topo ao rolar. Concluir pede a data (hoje por padrão, pode ir sem data),
+  conclui junto os subitens abertos do item (auto_concluded, igual ao ✓ do card) e oferece Desfazer.
+  Usa as caixinhas `.mass-sel` já existentes. Teste: `tests/mass-select.browser.cjs` (390 e 1366).

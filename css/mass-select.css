@@ -1,0 +1,19 @@
+/* Barra de seleção em massa da tela do grupo (tema claro, AA, fixa ao rolar quando há seleção) */
+.mass-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 10px;padding:8px 12px;border:1px solid #d6e2ec;border-radius:12px;background:#fff;color:#14273a;min-width:0}
+.mass-bar.has-selection{position:sticky;top:calc(var(--nav-trail-top,0px) + var(--nav-trail-h,52px) + 6px);z-index:30;border-color:#0f766e;background:#effaf6;box-shadow:0 8px 22px rgba(4,40,32,.14)}
+.mass-all{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:#0f2638;font-size:13.5px;min-height:34px}
+.mass-all input{width:18px;height:18px;accent-color:#0f766e;cursor:pointer}
+.mass-hint{flex:1 1 220px;min-width:0;font-size:12px;color:#3f5566}
+.mass-actions{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto}
+.mass-actions button{font:inherit;font-size:13px;font-weight:700;min-height:36px;padding:6px 12px;border-radius:9px;border:1px solid #b9cddd;background:#fff;color:#123047;cursor:pointer}
+.mass-actions button b{display:inline-block;min-width:18px;margin-left:2px;padding:0 6px;border-radius:999px;background:rgba(255,255,255,.25)}
+.mass-actions .mass-conclude{background:#0f6b3a;border-color:#0f6b3a;color:#fff}
+.mass-actions .mass-conclude:hover{background:#0b5630}
+.mass-actions .mass-reopen{background:#eef4ff;border-color:#9db8e6;color:#1e3a72}
+.mass-actions .mass-delete{background:#fff1f1;border-color:#f0b4b4;color:#9b1c1c}
+.mass-bar [hidden]{display:none!important}
+#content .mass-sel{accent-color:#0f766e!important}
+.mass-modal-list{margin:0 0 12px;padding:10px 12px 10px 28px;border-radius:10px;background:#f6f9fb;color:#14273a;font-size:13px}
+.mass-modal-check{display:flex;align-items:center;gap:8px;margin-bottom:10px;color:#14273a;font-size:13.5px}
+.mass-modal-note{font-size:12px;color:#3f5566;margin:8px 0 0}
+@media(max-width:600px){.mass-hint{display:none}.mass-actions{margin-left:0;width:100%}.mass-actions button{flex:1 1 auto}}

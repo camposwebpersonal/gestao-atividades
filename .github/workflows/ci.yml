@@ -77,7 +77,7 @@ jobs:
             run W=$w node tests/user-modal.browser.cjs
             run W=$w node tests/password-reset.browser.cjs
           done
-          for t in github-status map-gestures group-extras search-reveal home-secretary module-pdf group-picker bulk-columns bulk-conclusion pwned-password map-focus completed-pdf-pick whatsapp-avisos reports-fields modal-context mobile-parity trash-rls incremental-sync access-permissions; do
+          for t in github-status map-gestures group-extras search-reveal home-secretary module-pdf group-picker bulk-columns bulk-conclusion mass-select pwned-password map-focus completed-pdf-pick whatsapp-avisos reports-fields modal-context mobile-parity trash-rls incremental-sync access-permissions; do
             run W=390 node tests/$t.browser.cjs
           done
           if [ -n "$fails" ]; then echo "::error::Falharam:$fails"; exit 1; fi
