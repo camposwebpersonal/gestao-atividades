@@ -1,5 +1,5 @@
-import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=2b03d282';
-import {locationEditorHtml,readLocationEditor,optimizePhoto,shareLocation} from './geolocation.js?v=6db9841c';
+import {supabase,collection,doc,getDocs,setDoc,deleteDoc,query,orderBy} from '../supabase_compat.js?v=7a75381f';
+import {locationEditorHtml,readLocationEditor,optimizePhoto,shareLocation} from './geolocation.js?v=57348f45';
 import {uploadDurableImage} from './image-storage.js?v=cc738610';
 
 const state={rows:[],photos:[],query:'',focus:''};

@@ -1,7 +1,7 @@
 // Configuração do e-mail usado no "Esqueci minha senha" (somente administradores).
 // Servidor, usuário e remetente ficam em mail_settings; a senha do e-mail vai direto para o
 // Vault do Supabase (pms_set_smtp_password) e nunca volta para o navegador.
-import {supabase} from '../supabase_compat.js?v=2b03d282';
+import {supabase} from '../supabase_compat.js?v=7a75381f';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const toast = (m, t = 'info', ms) => window.toast?.(m, t, ms);

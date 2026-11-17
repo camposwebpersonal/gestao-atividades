@@ -2,7 +2,7 @@
 // Área especial da Defesa Civil (fora de Controle de Demandas) com os dois questionários,
 // as mesmas perguntas e opções do formulário do TCE, salvamento com nome, data e hora de quem
 // preencheu, histórico, rascunho automático no aparelho e impressão no formato do formulário.
-import {supabase} from '../supabase_compat.js?v=2b03d282';
+import {supabase} from '../supabase_compat.js?v=7a75381f';
 
 const TABLE = 'defesa_civil_questionarios';
 const ANO = 2026;
@@ -304,7 +304,7 @@ if (typeof window !== 'undefined') {
     const v = (state.answers[qid] ||= {})[pid] ||= {arquivos: [], nota: ''};
     W().toast?.(`Enviando ${files.length} foto(s)…`, 'info', 3000);
     try {
-      const {optimizePhoto} = await import('./geolocation.js?v=6db9841c');
+      const {optimizePhoto} = await import('./geolocation.js?v=57348f45');
       for (const file of files) {
         const raw = await W().readFileAsDataUrl(file);
         const url = await W().imgbbUp(await optimizePhoto(raw, {maxDimension: 1600, maxBytes: 600000}));

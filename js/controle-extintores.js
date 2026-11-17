@@ -1,5 +1,5 @@
 /* Controle de extintores: inventário independente, com datas e relatório institucional. */
-import { supabase, collection, doc, getDocs, query, orderBy, addDoc, setDoc, deleteDoc } from '../supabase_compat.js?v=2b03d282';
+import { supabase, collection, doc, getDocs, query, orderBy, addDoc, setDoc, deleteDoc } from '../supabase_compat.js?v=7a75381f';
 import { searchRecord } from './search-engine.js';
 
 (function(){

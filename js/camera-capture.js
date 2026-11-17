@@ -1,6 +1,6 @@
-import {supabase} from '../supabase_compat.js?v=2b03d282';
+import {supabase} from '../supabase_compat.js?v=7a75381f';
 import {FIELD_GROUP_KEY,isFieldDemandGroup,fieldDemandTitle,cameraInputAttributes} from './camera-capture-core.js?v=78ae2b11';
-import {capturePosition,optimizePhoto,readPhotoLocation,googlePasteHtml} from './geolocation.js?v=6db9841c';
+import {capturePosition,optimizePhoto,readPhotoLocation,googlePasteHtml} from './geolocation.js?v=57348f45';
 
 export {FIELD_GROUP_KEY,isFieldDemandGroup,cameraInputAttributes};
 const MAX_FIELD_PHOTOS=20;

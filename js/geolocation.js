@@ -205,7 +205,7 @@ async function resolveGoogleText(text,reference){
  const direct=parseGoogleLocation(text,reference);if(direct)return direct;
  const short=shortLinkIn(text);if(!short)return null;
  if(navigator.onLine===false)throw new Error('Sem internet para abrir o link curto do Google Maps. Copie as coordenadas do ponto.');
- const {supabase}=await import('../supabase_compat.js?v=2b03d282');
+ const {supabase}=await import('../supabase_compat.js?v=7a75381f');
  const {data,error}=await supabase.functions.invoke('resolve-maps-link',{body:{url:short}});
  if(error){let message='';try{message=(await error.context?.json?.())?.error||'';}catch(_){}throw new Error(message||'Não foi possível ler esse link do Google Maps. Copie as coordenadas do ponto.');}
  return data&&Number.isFinite(Number(data.latitude))?{latitude:Number(data.latitude),longitude:Number(data.longitude),source:'google-link'}:null;

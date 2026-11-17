@@ -6,7 +6,7 @@ const monthFilters=new Map();
 const MONTHS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const MONTH_ABBR=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 
-function dateValue(value){if(!value)return null;const raw=typeof value==='object'&&value.seconds?new Date(value.seconds*1000):new Date(String(value).length===10?String(value)+'T12:00:00':value);return Number.isNaN(raw.valueOf())?null:raw;}
+function dateValue(value){if(!value)return null;if(typeof value==='string'&&globalThis.calendarDate)value=globalThis.calendarDate(value);const raw=typeof value==='object'&&value.seconds?new Date(value.seconds*1000):new Date(String(value).length===10?String(value)+'T12:00:00':value);return Number.isNaN(raw.valueOf())?null:raw;}
 function firstValidDate(...values){for(const value of values){const date=dateValue(value);if(date)return date;}return null;}
 function dateLabel(value){const date=dateValue(value);return date?date.toLocaleDateString('pt-BR'):'—';}
 export function recordIsCompleted(record){

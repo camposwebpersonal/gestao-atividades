@@ -229,8 +229,16 @@ function cleanPayload(payload) {
   return payload;
 }
 
+// Datas "de calendário" (conclusão, prazo, início, fim) são gravadas como o dia à meia-noite UTC.
+// Em Recife (UTC-3) isso viraria 21h do dia ANTERIOR em qualquer new Date()/toLocaleDateString,
+// por isso entram no site como meio-dia local do mesmo dia: o dia nunca muda, em nenhuma tela.
+const CALENDAR_DATE_KEYS = ['conclusion_date', 'deadline_date', 'start_date', 'end_date'];
+const UTC_MIDNIGHT = /^(\d{4}-\d{2}-\d{2})[T ]00:00(?::00(?:\.0+)?)?(?:Z|[+-]00(?::?00)?)$/;
+export function calendarDate(value) { const m = typeof value === 'string' && value.match(UTC_MIDNIGHT); return m ? `${m[1]}T12:00:00` : value; }
+globalThis.calendarDate = calendarDate;
+function fixCalendarDates(row) { for (const key of CALENDAR_DATE_KEYS) if (typeof row[key] === 'string') row[key] = calendarDate(row[key]); return row; }
 function mergeExtraFields(row) {
-  if (row) { row = {...row, ...(row.display_name != null ? {displayName:row.display_name} : {}), ...(row.is_admin != null ? {isAdmin:row.is_admin} : {})}; delete row.sync_at; }
+  if (row) { row = fixCalendarDates({...row, ...(row.display_name != null ? {displayName:row.display_name} : {}), ...(row.is_admin != null ? {isAdmin:row.is_admin} : {})}); delete row.sync_at; }
   if (!row || !row.extra_fields) return row;
   try {
     const extra = typeof row.extra_fields === 'string' ? JSON.parse(row.extra_fields) : row.extra_fields;

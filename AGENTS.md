@@ -286,3 +286,14 @@
 - Ligar/desligar o "📋 Controle de Conclusão" de um tipo de lançamento é configuração do grupo: fica só
   dentro de "✏️ Editar" (caixa `#s-ctrl-pend`), não como botão na barra da tela do grupo (pedido do
   usuário em 17/11/2026).
+
+## Datas: o dia digitado é o dia mostrado, sempre (regra permanente do usuário, 17/11/2026)
+
+- "A data que eu colocar e que estiver aparecendo na tela é a data que vai aparecer em tudo." Fuso
+  horário NUNCA pode mudar o dia de uma data de calendário (conclusão, prazo, início, fim).
+- No banco essas datas ficam como o dia à meia-noite UTC (convenção de todos os registros). Ao carregar,
+  `calendarDate` (supabase_compat.js, em `mergeExtraFields`) converte para meio-dia local do mesmo dia, e
+  `fmtD`/`dateLabel` também passam por ela; assim new Date()/toLocaleDateString e agrupamento por mês
+  nunca voltam um dia em Recife (UTC-3). Gravar sempre só "AAAA-MM-DD" (sem hora/fuso) nesses campos.
+  Tela/relatório novo que mostra data de calendário: usar fmtD/fmtDay ou `calendarDate` antes de `new Date`.
+  Teste (navegador em America/Recife): `tests/calendar-dates.browser.cjs`.

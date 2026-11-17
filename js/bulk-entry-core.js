@@ -17,7 +17,7 @@ const todayIso=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.get
 export function bulkConclusion(row,group){
  if(!hasConclusionControl(group))return {concluded:0,status:'pendente'};
  const date=normalizeBulkDate(row.conclusion_date),done=Boolean(row.concluido)||Boolean(date);
- return done?{concluded:1,status:'concluido',conclusion_date:`${date||todayIso()}T12:00:00-03:00`}:{concluded:0,status:'pendente'};
+ return done?{concluded:1,status:'concluido',conclusion_date:date||todayIso()}:{concluded:0,status:'pendente'};
 }
 
 export function bulkColumns(group,templates=[],{scope='item'}={}){

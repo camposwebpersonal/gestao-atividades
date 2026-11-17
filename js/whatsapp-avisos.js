@@ -1,6 +1,6 @@
 // Painel "Avisos por WhatsApp" (somente administradores).
 // Destinatários por Secretaria/Grupo, ativação da CallMeBot, teste, prévia da mensagem e histórico.
-import {supabase} from '../supabase_compat.js?v=2b03d282';
+import {supabase} from '../supabase_compat.js?v=7a75381f';
 
 const BOT_PHONE = '34684728023'; // número do bot na página oficial da CallMeBot (pode mudar)
 const BOT_PAGE = 'https://www.callmebot.com/blog/free-api-whatsapp-messages/';
