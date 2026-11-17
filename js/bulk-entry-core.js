@@ -11,6 +11,15 @@ function templateOptions(template){
  return [];
 }
 
+export const hasConclusionControl=group=>group?.controle_pendencias===1||group?.controle_pendencias===true||group?.controle_pendencias==='1';
+const todayIso=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
+// Concluído na planilha: marcado OU com data de conclusão preenchida. Sem data, usa a data de hoje.
+export function bulkConclusion(row,group){
+ if(!hasConclusionControl(group))return {concluded:0,status:'pendente'};
+ const date=normalizeBulkDate(row.conclusion_date),done=Boolean(row.concluido)||Boolean(date);
+ return done?{concluded:1,status:'concluido',conclusion_date:`${date||todayIso()}T12:00:00-03:00`}:{concluded:0,status:'pendente'};
+}
+
 export function bulkColumns(group,templates=[],{scope='item'}={}){
  const columns=[
   {key:'description',label:'Nome / descrição *',type:'text',width:250,required:true},
@@ -22,8 +31,13 @@ export function bulkColumns(group,templates=[],{scope='item'}={}){
   {key:'urgencia',label:'Urgência',type:'select',width:145,extra:true,options:[['verde','Pode aguardar'],['amarelo','Atenção'],['vermelho','Urgente']]},
   {key:'prioritario',label:'Prioritário',type:'checkbox',width:100,extra:true}
  );
+ columns.push({key:'deadline_date',label:'Prazo',type:'date',width:145});
+ // Controle de Conclusão ligado no grupo: dá para lançar já concluído (marcar e, se quiser, informar a data).
+ if(hasConclusionControl(group))columns.push(
+  {key:'concluido',label:'Concluído',type:'checkbox',width:100},
+  {key:'conclusion_date',label:'Data da conclusão',type:'date',width:150}
+ );
  columns.push(
-  {key:'deadline_date',label:'Prazo',type:'date',width:145},
   {key:'observacao',label:'Observação',type:'text',width:260}
  );
  templates.filter(template=>template.scope===(scope==='subitem'?'subitem':'item')).sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>{
@@ -55,7 +69,7 @@ export function bulkPayloads(rows,group,startOrder=0,now=new Date().toISOString(
   Object.entries(row).forEach(([key,value])=>{if(key.startsWith('ef:')&&value!=='')extra[key.slice(3)]=value;});
   ['solicitante','urgencia'].forEach(key=>{if(row[key])extra[key]=row[key];});
   if(row.prioritario)extra.prioritario=true;
-  return {id:crypto.randomUUID(),atividade_id:group.id,description:row.description.trim(),observacao:row.observacao||'',responsaveis:row.responsaveis||'',secretaria_id:fixedSecretary,start_date:normalizeBulkDate(row.start_date),deadline_date:normalizeBulkDate(row.deadline_date),item_icon:'📋',item_color:'#3B82F6',concluded:0,status:'pendente',order_num:startOrder+index,extra_fields:extra,created_at:now,updated_at:now};
+  return {id:crypto.randomUUID(),atividade_id:group.id,description:row.description.trim(),observacao:row.observacao||'',responsaveis:row.responsaveis||'',secretaria_id:fixedSecretary,start_date:normalizeBulkDate(row.start_date),deadline_date:normalizeBulkDate(row.deadline_date),item_icon:'📋',item_color:'#3B82F6',...bulkConclusion(row,group),order_num:startOrder+index,extra_fields:extra,created_at:now,updated_at:now};
  });
 }
 

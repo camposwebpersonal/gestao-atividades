@@ -264,3 +264,13 @@
   usuário pode gerenciar o grupo) e sempre no aparelho (`bulk-col-order:<uid>:<grupo>:<tipo>`, que tem
   prioridade). Valores do lote são guardados pela chave da coluna: reordenar nunca embaralha dados.
   Campo novo entra ao lado da vizinha natural. Teste: `tests/bulk-columns.browser.cjs` (390 e 1366).
+
+## Lote em grupo com Controle de Conclusão (regra permanente)
+
+- Se o grupo tem "📋 Controle de Conclusão" (`controle_pendencias`), a planilha de lote ganha as colunas
+  "Concluído" e "Data da conclusão" e o botão "✓ Concluir selecionadas" (marca/desmarca as linhas
+  selecionadas; sem seleção de várias linhas, todas as preenchidas). Preencher a data marca concluído
+  sozinho; concluído sem data usa a data de hoje. `bulkConclusion` (js/bulk-entry-core.js) monta
+  concluded/status/conclusion_date. A função do banco `submit_bulk_entry_draft` grava conclusion_date
+  pela migração 20261117140000 (se ainda não aplicada, o site completa a data logo após o envio).
+  Teste: `tests/bulk-conclusion.browser.cjs` (390 e 1366).
