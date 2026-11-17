@@ -60,6 +60,13 @@ const row = o => ({order_num: 0, created_at: now, updated_at: now, status: 'pend
   assert.deepEqual(await db('m0'), {c: 0, s: 'pendente', d: null});
   assert.deepEqual(await db('mx'), {c: 0, s: 'pendente', d: null});
 
+  // Controle de Conclusão: não fica mais como botão na barra do grupo, só dentro de Editar
+  assert.equal(await page.$('#content .completion-toggle'), null, 'botão de conclusão saiu da barra');
+  await page.evaluate(() => window.openSecModal('gc'));
+  await page.waitForSelector('#s-ctrl-pend');
+  assert.equal(await page.isChecked('#s-ctrl-pend'), true);
+  await page.evaluate(() => window.closeModal());
+
   // grupo sem controle, em cards: seleção existe, mas sem concluir
   await page.evaluate(() => window.openActivity('gs'));
   await page.waitForSelector('#mass-bar');

@@ -283,3 +283,6 @@
   Com seleção, a barra gruda no topo ao rolar. Concluir pede a data (hoje por padrão, pode ir sem data),
   conclui junto os subitens abertos do item (auto_concluded, igual ao ✓ do card) e oferece Desfazer.
   Usa as caixinhas `.mass-sel` já existentes. Teste: `tests/mass-select.browser.cjs` (390 e 1366).
+- Ligar/desligar o "📋 Controle de Conclusão" de um tipo de lançamento é configuração do grupo: fica só
+  dentro de "✏️ Editar" (caixa `#s-ctrl-pend`), não como botão na barra da tela do grupo (pedido do
+  usuário em 17/11/2026).
