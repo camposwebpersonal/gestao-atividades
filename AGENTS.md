@@ -255,3 +255,12 @@
   Botão de confirmar fica desativado até escolher. Qualquer outra tela que peça "grupo de destino"
   deve reutilizar `groupPickerHtml`/`bindGroupPicker`, nunca um `<select>` solto.
   Teste: `tests/group-picker.browser.cjs` (390 e 1366).
+
+## Planilha de lançamentos em lote: ordem das colunas (regra permanente)
+
+- O usuário escolhe a ordem das colunas arrastando o título (⠿), com Alt + ← / → no título ou pelo
+  painel "⇄ Colunas" (↑ ↓ e "↺ Ordem padrão"; é o caminho no celular). A ordem fica salva por grupo e
+  por tipo (itens/subitens) em `extra_fields.bulk_column_order` do grupo (vale para todos, quando o
+  usuário pode gerenciar o grupo) e sempre no aparelho (`bulk-col-order:<uid>:<grupo>:<tipo>`, que tem
+  prioridade). Valores do lote são guardados pela chave da coluna: reordenar nunca embaralha dados.
+  Campo novo entra ao lado da vizinha natural. Teste: `tests/bulk-columns.browser.cjs` (390 e 1366).

@@ -44,7 +44,88 @@ function columnSignature(){return state.columns.map(column=>column.key);}
 // Destino do lote: itens do grupo (padrão) ou subitens dentro de um item escolhido.
 function groupItems(){return (window.S?.items||[]).filter(item=>item.atividade_id===state.group?.id).sort((a,b)=>(Number(a.order_num)||0)-(Number(b.order_num)||0));}
 function targetOf(draft){const id=draft?.grid_data?.target_item_id;return id?(window.S?.items||[]).find(item=>item.id===id)||null:null;}
-function buildColumns(target){state.target=target||null;state.columns=bulkColumns(state.group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id),{scope:target?'subitem':'item'});}
+function buildColumns(target){state.target=target||null;state.columns=applyColumnOrder(bulkColumns(state.group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id),{scope:target?'subitem':'item'}),savedColumnOrder());}
+// ── Ordem das colunas (arrastar o título, setas ou painel "⇄ Colunas") ──
+// Fica salva por grupo e por tipo (itens/subitens): no grupo (extra_fields.bulk_column_order, vale para todos)
+// quando o usuário pode gerenciar o grupo, e sempre neste aparelho. Os valores são guardados pela chave da
+// coluna, então reordenar nunca embaralha o que já foi digitado.
+const orderScope=()=>state.target?'subitem':'item';
+const orderLocalKey=()=>`bulk-col-order:${window.S?.user?.uid||'anon'}:${state.group?.id}:${orderScope()}`;
+const groupExtra=group=>{let e=group?.extra_fields;if(typeof e==='string'){try{e=JSON.parse(e);}catch{e={};}}return e&&typeof e==='object'?e:{};};
+function savedColumnOrder(){
+ try{const local=JSON.parse(localStorage.getItem(orderLocalKey())||'null');if(Array.isArray(local)&&local.length)return local;}catch{}
+ const shared=groupExtra(state.group).bulk_column_order?.[orderScope()];return Array.isArray(shared)?shared:[];
+}
+function applyColumnOrder(columns,order){
+ if(!order?.length)return columns;
+ const rank=new Map(order.map((key,index)=>[key,index]));
+ // colunas novas (campo criado depois) ficam logo depois da vizinha natural anterior
+ const known=columns.filter(c=>rank.has(c.key)).sort((a,b)=>rank.get(a.key)-rank.get(b.key));
+ columns.forEach((c,i)=>{if(rank.has(c.key))return;const prev=columns.slice(0,i).reverse().find(x=>known.includes(x));known.splice(prev?known.indexOf(prev)+1:0,0,c);});
+ return known;
+}
+function headHtml(){return `<th>#</th>${state.columns.map((column,index)=>`<th style="min-width:${column.width}px" data-col-key="${esc(column.key)}" tabindex="0" title="Arraste para mudar a posição (ou Alt + ← →)"><span class="bulk-col-head"><span class="bulk-col-grip" aria-hidden="true">⠿</span><span>${esc(column.label)}</span></span></th>`).join('')}`;}
+function columnPanelHtml(){return `<div class="bulk-col-panel-head"><strong>Ordem das colunas</strong><span>Vale para os próximos lançamentos deste grupo.</span></div><ol>${state.columns.map((column,index)=>`<li><span>${index+1}. ${esc(column.label)}</span><button type="button" onclick="bulkMoveColumn(${index},${index-1})" ${index?'':'disabled'} aria-label="Subir ${esc(column.label)}">↑</button><button type="button" onclick="bulkMoveColumn(${index},${index+1})" ${index<state.columns.length-1?'':'disabled'} aria-label="Descer ${esc(column.label)}">↓</button></li>`).join('')}</ol><div class="bulk-col-panel-foot"><button type="button" onclick="bulkResetColumns()">↺ Ordem padrão</button><button type="button" class="bulk-col-done" onclick="bulkToggleColumnPanel(false)">Pronto</button></div>`;}
+function rerenderGrid(){
+ const rows=gridRows(),count=Math.max(rows.length,1),wrap=document.querySelector('.bulk-grid-wrap'),scroll=[wrap?.scrollTop||0,wrap?.scrollLeft||0];
+ const head=document.getElementById('bulk-grid-head'),body=document.getElementById('bulk-grid-body');if(!head||!body)return;
+ head.innerHTML=headHtml();body.innerHTML='';addRows(count);
+ rows.forEach((values,row)=>state.columns.forEach((column,col)=>{if(Object.prototype.hasOwnProperty.call(values||{},column.key))setCell(cellAt(row,col),values[column.key]);}));
+ const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden)panel.innerHTML=columnPanelHtml();
+ if(wrap){wrap.scrollTop=scroll[0];wrap.scrollLeft=scroll[1];}updateCount();
+}
+let orderTimer=0;
+function persistColumnOrder(){
+ const keys=state.columns.map(c=>c.key),scope=orderScope(),group=state.group;
+ try{localStorage.setItem(orderLocalKey(),JSON.stringify(keys));}catch{}
+ clearTimeout(orderTimer);
+ if(!window.userCanGroup?.(group,'editar'))return;
+ orderTimer=setTimeout(async()=>{
+  const extra=groupExtra(group),bulk_column_order={...(extra.bulk_column_order||{}),[scope]:keys};
+  try{await updateDoc(doc(window.db,'secretariats',group.id),{extra_fields:{...extra,bulk_column_order}});group.extra_fields={...extra,bulk_column_order};}
+  catch(error){console.warn('Ordem das colunas salva só neste aparelho',error);}
+ },700);
+}
+window.bulkMoveColumn=function(from,to,silent=false){
+ if(to<0||to>=state.columns.length||from===to)return;
+ const [column]=state.columns.splice(from,1);state.columns.splice(to,0,column);
+ rerenderGrid();persistColumnOrder();markDirty();
+ if(!silent)window.toast?.(`“${column.label}” agora é a coluna ${to+1}. Ordem salva para os próximos lançamentos.`,'success',2600);
+ document.querySelector(`#bulk-grid-head [data-col-key="${CSS.escape(column.key)}"]`)?.classList.add('bulk-col-moved');
+};
+window.bulkResetColumns=function(){
+ try{localStorage.removeItem(orderLocalKey());}catch{}
+ state.columns=bulkColumns(state.group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id),{scope:orderScope()});
+ rerenderGrid();persistColumnOrder();markDirty();window.toast?.('Colunas de volta à ordem padrão.','success',2200);
+};
+window.bulkToggleColumnPanel=function(show){
+ const panel=document.getElementById('bulk-col-panel');if(!panel)return;
+ const open=show??panel.hidden;panel.hidden=!open;if(open)panel.innerHTML=columnPanelHtml();
+ document.getElementById('bulk-col-toggle')?.setAttribute('aria-expanded',String(open));
+};
+function bindColumnDrag(){
+ const head=document.getElementById('bulk-grid-head');if(!head||head.dataset.bound)return;head.dataset.bound='1';
+ let drag=null;
+ const ths=()=>[...head.querySelectorAll('[data-col-key]')];
+ const clearMarks=()=>ths().forEach(th=>th.classList.remove('bulk-drop-before','bulk-drop-after','bulk-col-dragging'));
+ const targetIndex=x=>{const list=ths();for(let i=0;i<list.length;i++){const r=list[i].getBoundingClientRect();if(x<r.left+r.width/2)return i;}return list.length;};
+ head.addEventListener('pointerdown',event=>{const th=event.target.closest('[data-col-key]');if(!th||event.button>0)return;drag={th,from:ths().indexOf(th),x:event.clientX,active:false,id:event.pointerId};});
+ head.addEventListener('pointermove',event=>{
+  if(!drag||event.pointerId!==drag.id)return;
+  if(!drag.active){if(Math.abs(event.clientX-drag.x)<8)return;drag.active=true;head.setPointerCapture(event.pointerId);drag.th.classList.add('bulk-col-dragging');}
+  event.preventDefault();clearMarks();drag.th.classList.add('bulk-col-dragging');
+  const index=targetIndex(event.clientX),list=ths();drag.to=index;
+  if(index<list.length)list[index].classList.add('bulk-drop-before');else list[list.length-1].classList.add('bulk-drop-after');
+  const wrap=document.querySelector('.bulk-grid-wrap'),r=wrap?.getBoundingClientRect();if(r){if(event.clientX>r.right-40)wrap.scrollLeft+=18;else if(event.clientX<r.left+40)wrap.scrollLeft-=18;}
+ });
+ const end=()=>{if(drag?.active){clearMarks();const to=drag.to>drag.from?drag.to-1:drag.to;window.bulkMoveColumn(drag.from,Math.max(0,Math.min(state.columns.length-1,to)));}drag=null;};
+ head.addEventListener('pointerup',end);head.addEventListener('pointercancel',()=>{clearMarks();drag=null;});
+ head.addEventListener('keydown',event=>{
+  const th=event.target.closest('[data-col-key]');if(!th||!event.altKey||!['ArrowLeft','ArrowRight'].includes(event.key))return;
+  event.preventDefault();const from=ths().indexOf(th),to=from+(event.key==='ArrowLeft'?-1:1);window.bulkMoveColumn(from,to,true);
+  head.querySelector(`[data-col-key="${CSS.escape(th.dataset.colKey)}"]`)?.focus();
+ });
+}
 function targetOptions(selected=''){return `<option value="">📋 Itens deste grupo</option>${groupItems().map((item,index)=>`<option value="${esc(item.id)}" ${item.id===selected?'selected':''}>↳ Subitens dentro de: ${index+1}. ${esc(item.description||'Sem nome')}</option>`).join('')}`;}
 function targetBanner(){return `<div class="bulk-target ${state.target?'is-sub':''}"><label for="bulk-target-select"><span>Onde estes lançamentos vão entrar?</span><select id="bulk-target-select" onchange="bulkChangeTarget(this.value)">${targetOptions(state.target?.id||'')}</select></label><p>${state.target?`Cada linha vira um <b>subitem</b> dentro de “${esc(state.target.description||'item')}”.`:'Cada linha vira um <b>item</b> do grupo.'}</p></div>`;}
 
@@ -192,8 +273,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function renderEditor(draft){
  buildColumns(targetOf(draft));
  state.draft=draft;state.editor=true;state.busy=false;state.dirty=false;state.selection=null;
- window.openModal('▦ Planilha de lançamentos',state.group.name,`<div class="bulk-draft-head"><button type="button" class="btn-action" onclick="bulkBackToDrafts()">← Meus lotes</button><label><span>Título deste lote</span><input id="bulk-draft-title" maxlength="180" value="${esc(draft.title)}" oninput="bulkDraftChanged()"></label><span id="bulk-save-status" data-tone="saved">Salvo no Supabase</span></div>${targetBanner()}<div class="bulk-intro"><div><strong>Planilha inteligente</strong><span>Selecione células arrastando ou com Shift + setas. Funciona como no Excel.</span></div><div class="bulk-shortcuts"><kbd>Ctrl C</kbd> copiar <kbd>Ctrl V</kbd> colar <kbd>Ctrl D</kbd> repetir de cima</div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><label class="bulk-quantity"><span>Adicionar</span><input id="bulk-add-count" type="number" min="1" max="500" value="50" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkAddCustomRows()}"><button type="button" onclick="bulkAddCustomRows()">＋ linhas</button></label><label class="bulk-quantity"><span>Total</span><input id="bulk-total-count" type="number" min="1" max="500" value="12" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkSetRowCount()}"><button type="button" onclick="bulkSetRowCount()">Definir</button></label><button type="button" class="btn-action" onclick="bulkCopySelection()">Copiar</button><button type="button" class="btn-action" onclick="bulkPasteSelection()">Colar</button><button type="button" class="btn-action bulk-fill-button" onclick="bulkFillDown()">Repetir ↓</button><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar</button><span id="bulk-selection-count">Selecione células</span><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr><th>#</th>${state.columns.map(column=>`<th style="min-width:${column.width}px">${esc(column.label)}</th>`).join('')}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Salvamento automático ativo. O lote só vira cadastro quando você enviar.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="bulkSaveAndClose()">Salvar e fechar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">${state.target?'Enviar subitens':'Enviar lançamentos'}</button></div></div>`);
- document.querySelector('#modal-ov .modal-box')?.classList.add('bulk-modal-box');restoreGrid(draft);bindGrid();window.bulkModalClosing=()=>{const saving=saveDraftNow(true);state.editor=false;return saving;};
+ window.openModal('▦ Planilha de lançamentos',state.group.name,`<div class="bulk-draft-head"><button type="button" class="btn-action" onclick="bulkBackToDrafts()">← Meus lotes</button><label><span>Título deste lote</span><input id="bulk-draft-title" maxlength="180" value="${esc(draft.title)}" oninput="bulkDraftChanged()"></label><span id="bulk-save-status" data-tone="saved">Salvo no Supabase</span></div>${targetBanner()}<div class="bulk-intro"><div><strong>Planilha inteligente</strong><span>Selecione células arrastando ou com Shift + setas. Funciona como no Excel.</span></div><div class="bulk-shortcuts"><kbd>Ctrl C</kbd> copiar <kbd>Ctrl V</kbd> colar <kbd>Ctrl D</kbd> repetir de cima <span class="bulk-col-tip">· arraste o título de uma coluna para mudar a ordem</span></div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><label class="bulk-quantity"><span>Adicionar</span><input id="bulk-add-count" type="number" min="1" max="500" value="50" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkAddCustomRows()}"><button type="button" onclick="bulkAddCustomRows()">＋ linhas</button></label><label class="bulk-quantity"><span>Total</span><input id="bulk-total-count" type="number" min="1" max="500" value="12" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkSetRowCount()}"><button type="button" onclick="bulkSetRowCount()">Definir</button></label><button type="button" class="btn-action" onclick="bulkCopySelection()">Copiar</button><button type="button" class="btn-action" onclick="bulkPasteSelection()">Colar</button><button type="button" class="btn-action bulk-fill-button" onclick="bulkFillDown()">Repetir ↓</button><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar</button><button type="button" class="btn-action bulk-col-toggle" id="bulk-col-toggle" aria-expanded="false" onclick="bulkToggleColumnPanel()" title="Mudar a ordem das colunas">⇄ Colunas</button><span id="bulk-selection-count">Selecione células</span><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div id="bulk-col-panel" class="bulk-col-panel" hidden></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr id="bulk-grid-head">${headHtml()}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Salvamento automático ativo. O lote só vira cadastro quando você enviar.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="bulkSaveAndClose()">Salvar e fechar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">${state.target?'Enviar subitens':'Enviar lançamentos'}</button></div></div>`);
+ document.querySelector('#modal-ov .modal-box')?.classList.add('bulk-modal-box');restoreGrid(draft);bindGrid();bindColumnDrag();window.bulkModalClosing=()=>{const saving=saveDraftNow(true);state.editor=false;return saving;};
 }
 
 function renderManager(){
