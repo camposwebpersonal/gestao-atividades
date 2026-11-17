@@ -297,3 +297,18 @@
   nunca voltam um dia em Recife (UTC-3). Gravar sempre só "AAAA-MM-DD" (sem hora/fuso) nesses campos.
   Tela/relatório novo que mostra data de calendário: usar fmtD/fmtDay ou `calendarDate` antes de `new Date`.
   Teste (navegador em America/Recife): `tests/calendar-dates.browser.cjs`.
+
+## Linhas finas e Concluídos por dia (regra permanente, 17/11/2026)
+
+- Máximo de informação por tela: linhas de lançamento o mais finas possível em todo o site
+  (`css/completed-compact.css`, carregado por último): item-row ~44px no computador, selo de pipa
+  ("💧 Sem data de abastecimento") na mesma linha do nome (autoria.js põe dentro de `.item-name`).
+  Nada de linha extra só para um selo; espaço lateral sobrando = colocar a informação na linha.
+- Concluídos (mês aberto): linhas finas agrupadas pelo DIA da conclusão, mais recente primeiro, com
+  cabeçalho "📅 04/11/2026 · QUA" + quantidade e rodapé "Total do dia … N lançamentos"; a data não se
+  repete em cada linha. A busca do mês esconde dias vazios e mostra "X de N".
+- Barra do mês em destaque (verde escuro, fixa ao rolar no computador), botão "← Meses" amarelo e
+  grande. Breadcrumbs: Grupo › ✓ Concluídos › 📅 NOV-2026, e o Voltar sobe um nível por vez
+  (mês → meses → Em andamento). `setNavLeaf` aceita `crumbs:[...]` (vários níveis) e `parentGo`.
+  Toda sub-tela nova dentro de um grupo deve registrar seus níveis assim; nenhuma tela pai fica de fora.
+  Teste: `tests/completed-days.browser.cjs` (390 e 1366).

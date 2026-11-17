@@ -103,8 +103,11 @@ export function initAuditUI(){
    if(geoMarkup){if(!geo){const holder=document.createElement('div');holder.innerHTML=geoMarkup;geo=holder.firstElementChild;target.append(geo);}else if(geo.outerHTML!==geoMarkup)geo.outerHTML=geoMarkup;}
    else geo?.remove();
    const refillMarkup=window.recordRefillBadge?.(record,table)||'';
-   let refill=target.querySelector(':scope > .pipa-refill-badge');
-   if(refillMarkup){if(!refill){const holder=document.createElement('div');holder.innerHTML=refillMarkup;refill=holder.firstElementChild;target.append(refill);}else if(refill.outerHTML!==refillMarkup)refill.outerHTML=refillMarkup;}
+   // na linha do lançamento o selo vai junto do nome (linha fina), não numa linha a mais
+   const refillHost=host.querySelector(':scope > .item-header .item-name')||target;
+   let refill=refillHost.querySelector(':scope > .pipa-refill-badge')||target.querySelector(':scope > .pipa-refill-badge');
+   if(refill&&refill.parentElement!==refillHost)refillHost.append(refill);
+   if(refillMarkup){if(!refill){const holder=document.createElement('div');holder.innerHTML=refillMarkup;refill=holder.firstElementChild;refillHost.append(refill);}else if(refill.outerHTML!==refillMarkup)refill.outerHTML=refillMarkup;}
    else refill?.remove();
    if(attendance){
     let meta=target.querySelector(':scope > .attendance-record-meta');

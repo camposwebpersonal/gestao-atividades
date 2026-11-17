@@ -1,6 +1,6 @@
 // Escolha de quais lançamentos entram no PDF: todos, só em andamento, só concluídos ou um a um.
 // Na escolha um a um, todos começam DESMARCADOS — o usuário marca o que quer no relatório.
-import {recordIsCompleted} from './completed-archive.js?v=25c4a696';
+import {recordIsCompleted} from './completed-archive.js?v=b6a8b23c';
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];

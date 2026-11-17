@@ -434,6 +434,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-extras.css?v=72543723">
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
+<link rel="stylesheet" href="css/completed-compact.css?v=8513073c">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -531,13 +532,13 @@ import './js/water-points.js?v=cef20c53';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
-import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=79fa857e';
+import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
 import {generateDemandPdf} from './js/demand-pdf.js?v=b65cf639';
 import {reportDateTime} from './js/demand-report.js?v=49e7bfce';
 import {customFields,controlFields,commonValues} from './js/record-fields.js?v=62cf0102';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=3a5d6328';
 import './js/modal-context.js?v=e2d49ca2';
-import './js/nav-trail.js?v=061fde48';
+import './js/nav-trail.js?v=ebb1b069';
 import './js/group-extras.js?v=0461764f';
 import './js/search-reveal.js?v=2feea5b6';
 import './js/mass-select.js?v=aec6c75f';
@@ -546,8 +547,8 @@ import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/bulk-entry.js?v=976a53fe';
-import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=25c4a696';
-import './js/pdf-picker.js?v=b0b2f8dd';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
+import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
 import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=befd2bf1';
@@ -915,7 +916,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=f295d0ee';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=1a5b9ef8';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }

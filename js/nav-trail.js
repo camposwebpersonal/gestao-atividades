@@ -21,7 +21,7 @@ const PAGE_LABELS = {
 };
 
 let leaf = null;
-export function setNavLeaf(value) { leaf = value && value.label ? value : null; schedule(); }
+export function setNavLeaf(value) { leaf = value && (value.label || value.crumbs?.length) ? value : null; schedule(); }
 window.setNavLeaf = setNavLeaf;
 
 const secretaryById = id => (S().secretarias || []).find(s => String(s.id) === String(id)) || null;
@@ -100,7 +100,11 @@ function render() {
   if (!content || !S().user || content.querySelector(':scope > .startup-shell')) return;
   if (leaf && !content.querySelector(leaf.selector)) leaf = null;
   const crumbs = [HOME, ...trailFor(currentRoute())];
-  if (leaf) crumbs.push({icon: leaf.icon || '•', label: leaf.label, go: ''});
+  if (leaf) {
+    if (leaf.parentGo && crumbs.length > 1) crumbs[crumbs.length - 1] = {...crumbs[crumbs.length - 1], go: leaf.parentGo};
+    // folha com vários níveis (ex.: Grupo › Concluídos › NOV-2026): cada nível é clicável, menos o último
+    for (const c of (leaf.crumbs || [{icon: leaf.icon, label: leaf.label}])) crumbs.push({icon: c.icon || '•', label: c.label, go: c.go || ''});
+  }
   const current = crumbs[crumbs.length - 1];
   const parent = crumbs.length > 1 ? crumbs[crumbs.length - 2] : null;
   const backGo = leaf?.back || parent?.go || '';

@@ -58,7 +58,7 @@ export function renderCompletedArchive({group,items,subitems,progress,canEdit}){
  yearList.forEach(([,list])=>list.sort((a,b)=>b.month-a.month));
  const selectedKey=selectedMonths.get(group.id),selected=months.get(selectedKey);
  if(selectedKey&&!selected)selectedMonths.delete(group.id);
- if(!selected)return `<div class="completed-archive">${yearList.map(([year,yearMonths])=>`<section class="completed-year"><header class="completed-year-head"><span>✓</span><div><small>ARQUIVO DE CONCLUÍDOS</small><strong>${esc(year)}</strong></div><b>${yearMonths.reduce((total,month)=>total+month.entries.length,0)} lançamentos</b></header><div class="completed-month-grid">${yearMonths.map(month=>`<button type="button" class="completed-month-card" onclick="setCompletedArchiveMonth('${esc(group.id)}','${esc(month.key)}')"><span class="completed-month-icon">${month.month===99?'—':String(month.month+1).padStart(2,'0')}</span><span class="completed-month-copy"><small>MÊS DA DATA INÍCIO</small><strong>${esc(month.label)}</strong><em>${month.entries.length} lançamento${month.entries.length===1?'':'s'} concluído${month.entries.length===1?'':'s'}</em></span><b>${month.entries.length}</b><i>Abrir mês <span>→</span></i></button>`).join('')}</div></section>`).join('')}</div>`;
+ if(!selected){navLeaf(group,null,null);return `<div class="completed-archive">${yearList.map(([year,yearMonths])=>`<section class="completed-year"><header class="completed-year-head"><span>✓</span><div><small>ARQUIVO DE CONCLUÍDOS</small><strong>${esc(year)}</strong></div><b>${yearMonths.reduce((total,month)=>total+month.entries.length,0)} lançamentos</b></header><div class="completed-month-grid">${yearMonths.map(month=>`<button type="button" class="completed-month-card" onclick="setCompletedArchiveMonth('${esc(group.id)}','${esc(month.key)}')"><span class="completed-month-icon">${month.month===99?'—':String(month.month+1).padStart(2,'0')}</span><span class="completed-month-copy"><small>MÊS DA DATA INÍCIO</small><strong>${esc(month.label)}</strong><em>${month.entries.length} lançamento${month.entries.length===1?'':'s'} concluído${month.entries.length===1?'':'s'}</em></span><b>${month.entries.length}</b><i>Abrir mês <span>→</span></i></button>`).join('')}</div></section>`).join('')}</div>`;}
  const monthTitle=selected.month===99?'SEM-DATA':`${MONTH_ABBR[selected.month]}-${selected.year}`;
  const S=window.S||{};
  const templates=(S.fieldTemplates||[]).filter(t=>t.atividade_id===group.id);
@@ -67,7 +67,9 @@ export function renderCompletedArchive({group,items,subitems,progress,canEdit}){
  const geo=record=>{try{const e=typeof record.extra_fields==='string'?JSON.parse(record.extra_fields):record.extra_fields;const g=e?.geo_location;return g&&Number.isFinite(Number(g.latitude))&&!(Number(g.latitude)===0&&Number(g.longitude)===0)?g:null;}catch{return null;}};
  const filter=(monthFilters.get(group.id+'|'+selected.key)||'').trim();
  const normTxt=v=>String(v??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
- const rows=selected.entries.sort((a,b)=>(monthInfo(b.record,b.parent).date?.valueOf()||0)-(monthInfo(a.record,a.parent).date?.valueOf()||0)).map(entry=>{
+ const dayOf=entry=>{const d=dateValue(entry.record.conclusion_date);return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';};
+ const ordered=selected.entries.slice().sort((a,b)=>(dayOf(b)||'0').localeCompare(dayOf(a)||'0')||(monthInfo(b.record,b.parent).date?.valueOf()||0)-(monthInfo(a.record,a.parent).date?.valueOf()||0));
+ const rowHtml=entry=>{
   const record=entry.record,parent=entry.parent,id=esc(record.id),open=openRows.has(record.id),n=fieldCount(record),loc=geo(record);
   const kids=entry.isSub?[]:subitems.filter(s=>s.item_id===record.id);
   const search=normTxt([record.description,record.responsaveis,record.observacao,parent?.description,...(window.recordCustomFields?.(record,templates)||[]).map(f=>f.label+' '+f.value)].join(' '));
@@ -82,17 +84,29 @@ export function renderCompletedArchive({group,items,subitems,progress,canEdit}){
   return `<article class="completed-row cr-card ${open?'is-open':''}" data-cr="${id}" data-search="${esc(search)}" ${filter&&!search.includes(normTxt(filter))?'hidden':''}>
    <div class="cr-head"><div class="completed-row-check" aria-hidden="true">✓</div>
     <button type="button" class="cr-toggle" aria-expanded="${open}" aria-controls="crd-${id}" onclick="toggleCompletedRow('${id}')" title="Mostrar ou recolher os campos deste lançamento"><span class="cr-caret" aria-hidden="true"></span><span class="cr-name">${entry.isSub?'<small>SUBITEM</small> ':''}${esc(record.description||'Sem descrição')}</span>${n?`<em class="cr-count">${n} campo${n===1?'':'s'}</em>`:''}${loc?'<em class="cr-pin" title="Tem localização">📍</em>':''}</button>
-    <span class="cr-date"><small>Conclusão</small>${dateLabel(record.conclusion_date)}</span>
     ${canEdit?`<div class="completed-row-actions"><button type="button" onclick="openItemModal('${id}','${esc(group.id)}',${entry.isSub},'${esc(entry.isSub?(record.parent_id||record.item_id):'')}','it-name')">Editar</button><button type="button" onclick="toggleConcluidoPendente('${id}',${entry.isSub})">↺ Reabrir</button></div>`:''}
    </div>${details}</article>`;
- }).join('');
+ };
+ // Linhas agrupadas pelo DIA da conclusão: "04/11/2026 · QUA" + total do dia no fim do grupo.
+ const days=[];for(const entry of ordered){const key=dayOf(entry);let day=days[days.length-1];if(!day||day.key!==key){day={key,entries:[]};days.push(day);}day.entries.push(entry);}
+ const WEEK=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+ const dayTitle=key=>{if(!key)return 'SEM DATA DE CONCLUSÃO';const [y,m,d]=key.split('-').map(Number);return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y} · ${WEEK[new Date(y,m-1,d).getDay()]}`;};
+ const rows=days.map(day=>{const n=day.entries.length,shown=day.entries.filter(e=>!filter||normTxt([e.record.description,e.record.responsaveis,e.record.observacao,e.parent?.description,...(window.recordCustomFields?.(e.record,templates)||[]).map(f=>f.label+' '+f.value)].join(' ')).includes(normTxt(filter))).length;
+  return `<section class="cr-day" data-day="${esc(day.key)}" ${shown?'':'hidden'}><header class="cr-day-head"><span class="cr-day-title">📅 ${esc(dayTitle(day.key))}</span><b class="cr-day-badge">${n}</b></header>${day.entries.map(rowHtml).join('')}<footer class="cr-day-foot"><span>Total do dia${day.key?' '+esc(dayTitle(day.key).split(' · ')[0]):''}</span><b data-day-count>${filter?`${shown} de ${n}`:n} lançamento${n===1?'':'s'}</b></footer></section>`;}).join('');
  const anyOpen=selected.entries.some(e=>openRows.has(e.record.id));
+ navLeaf(group,monthTitle,selected.key);
  const shownCount=(rows.match(/<article /g)||[]).length-(rows.match(/<article [^>]* hidden>/g)||[]).length;
- return `<section class="completed-month-screen" data-group="${esc(group.id)}" data-month="${esc(selected.key)}"><header class="completed-month-screen-head"><button type="button" onclick="closeCompletedArchiveMonth('${esc(group.id)}')">← Meses</button><div><small>LANÇAMENTOS CONCLUÍDOS</small><h2>${esc(monthTitle)}</h2></div><b>${selected.entries.length} lançamento${selected.entries.length===1?'':'s'}</b>
+ return `<section class="completed-month-screen" data-group="${esc(group.id)}" data-month="${esc(selected.key)}"><header class="completed-month-screen-head"><button type="button" class="cr-back-months" onclick="closeCompletedArchiveMonth('${esc(group.id)}')" title="Voltar para os meses"><span aria-hidden="true">←</span> Meses</button><div class="cr-month-title"><small>✓ CONCLUÍDOS · ${esc(group.name||'')}</small><h2>📅 ${esc(monthTitle)}</h2></div><b class="cr-month-total">${selected.entries.length} lançamento${selected.entries.length===1?'':'s'}<small>${days.length} dia${days.length===1?'':'s'}</small></b>
   <div class="cr-tools"><input type="search" class="cr-search" placeholder="🔎 Procurar neste mês (nome, campos, responsável…)" value="${esc(filter)}" oninput="filterCompletedMonth('${esc(group.id)}','${esc(selected.key)}',this.value)" aria-label="Procurar neste mês"><button type="button" onclick="toggleAllCompletedRows('${esc(group.id)}',${!anyOpen})">${anyOpen?'▴ Recolher todos':'▾ Expandir todos'}</button></div></header>
   <div class="completed-month-list">${rows}</div><p class="cr-none" ${shownCount?'hidden':''}>Nenhum lançamento encontrado.</p></section>`;
 }
 
+// Breadcrumbs: Grupo › ✓ Concluídos › 📅 NOV-2026 (o Voltar sobe um nível de cada vez).
+function navLeaf(group,monthTitle,monthKey){
+ const id=JSON.stringify(group.id).replace(/"/g,"'");
+ const toActive=`setActivityLane(${id},'active')`,toMonths=`closeCompletedArchiveMonth(${id})`;
+ setTimeout(()=>window.setNavLeaf?.(monthTitle?{selector:'.completed-month-screen',parentGo:toActive,crumbs:[{icon:'✓',label:'Concluídos',go:toMonths},{icon:'📅',label:monthTitle}],back:toMonths}:{selector:'.completed-archive',parentGo:toActive,icon:'✓',label:'Concluídos',back:toActive}),0);
+}
 // Abre/fecha o card sem redesenhar a tela (mantém a rolagem).
 export function toggleCompletedRow(id){
  const card=document.querySelector(`.cr-card[data-cr="${CSS.escape(id)}"]`);
@@ -119,6 +133,7 @@ export function filterCompletedMonth(groupId,monthKey,value){
  const screen=document.querySelector(`.completed-month-screen[data-group="${CSS.escape(groupId)}"]`);if(!screen)return;
  const q=String(value||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
  let shown=0;screen.querySelectorAll('.cr-card').forEach(card=>{const ok=!q||card.dataset.search.includes(q);card.hidden=!ok;if(ok)shown++;});
+ screen.querySelectorAll('.cr-day').forEach(day=>{const cards=[...day.querySelectorAll('.cr-card')],n=cards.filter(c=>!c.hidden).length;day.hidden=!n;const b=day.querySelector('[data-day-count]');if(b)b.textContent=`${q?n+' de ':''}${cards.length} lançamento${cards.length===1?'':'s'}`;});
  const none=screen.querySelector('.cr-none');if(none)none.hidden=shown>0;
 }
 if(typeof window!=='undefined'){window.toggleCompletedRow=toggleCompletedRow;window.toggleAllCompletedRows=toggleAllCompletedRows;window.filterCompletedMonth=filterCompletedMonth;}
