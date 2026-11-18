@@ -57,3 +57,10 @@
 .cc-unlinked-tag{font-size:11px;font-weight:800;color:#8a4b00}
 .cc-cad-link-info{padding:8px 12px;border-radius:10px;background:#e3f4ec;border:1px solid #9fd8bd;color:#0b3d2f;font-size:13px;line-height:1.45}
 .cc-cad-link-info span{display:block;font-size:12px;color:#2f5d4f}
+/* "🔗 Aparece em" / "👤 Ficha no cadastro" (js/cadastro-links.js) — na mesma linha do nome, quebra se faltar espaço */
+.cadl-chips{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;margin-left:6px;vertical-align:middle}
+.cadl-lbl{font-size:11px;font-weight:800;color:#2f5d4f;white-space:nowrap}
+.cadl-chip{border:1px solid #9fd8bd;background:#e3f4ec;color:#0b3d2f;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700;line-height:1.5;cursor:pointer;white-space:nowrap}
+.cadl-chip:hover,.cadl-chip:focus-visible{background:#c8ebda;outline:2px solid #0b5a40;outline-offset:1px}
+.cadl-chip b{font-weight:900}
+.cadl-chip.is-ficha{background:#eef4ff;border-color:#b6c9f2;color:#1d3a78}

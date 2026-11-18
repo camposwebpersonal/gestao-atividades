@@ -24,7 +24,7 @@
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=92387ef1"></script>
 <script src="js/controle-contas.js?v=50b130fe"></script>
-<script src="js/cadastro-links.js?v=ac4ca0bc"></script>
+<script src="js/cadastro-links.js?v=bd6a96d3"></script>
 <script src="js/contas-relatorio.js?v=91b66e46"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
@@ -437,7 +437,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
-<link rel="stylesheet" href="css/contas-relatorio.css?v=587e5e05">
+<link rel="stylesheet" href="css/contas-relatorio.css?v=de651a4e">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -1881,7 +1881,7 @@ window.openActivity=function(secId){
   window._refreshAtivTable=()=>openActivity(secId);
   if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
 };
-{const _openActivityBase=window.openActivity;window.openActivity=function(...args){const result=_openActivityBase.apply(this,args);try{window.decoratePipaGroup?.(args[0]);}catch(error){console.error('[pipa]',error);}try{window.decorateGroupExtras?.(args[0]);}catch(error){console.error('[grupo-extras]',error);}try{window.decorateMassSelect?.(args[0]);}catch(error){console.error('[selecao]',error);}return result;};}
+{const _openActivityBase=window.openActivity;window.openActivity=function(...args){const result=_openActivityBase.apply(this,args);try{window.decoratePipaGroup?.(args[0]);}catch(error){console.error('[pipa]',error);}try{window.decorateGroupExtras?.(args[0]);}catch(error){console.error('[grupo-extras]',error);}try{window.decorateMassSelect?.(args[0]);}catch(error){console.error('[selecao]',error);}try{window.decorateCadastroLinks?.(args[0]);}catch(error){console.error('[cadastro]',error);}return result;};}
 
 window.alternarControleConclusao=async function(secId,ativar){
   try{

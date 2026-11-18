@@ -272,7 +272,7 @@
   selecionadas; sem seleção de várias linhas, todas as preenchidas). Preencher a data marca concluído
   sozinho; concluído sem data usa a data de hoje. `bulkConclusion` (js/bulk-entry-core.js) monta
   concluded/status/conclusion_date. A função do banco `submit_bulk_entry_draft` grava conclusion_date
-  pela migração 20261117140000 (se ainda não aplicada, o site completa a data logo após o envio).
+  pela migração 20261117140000 (aplicada em 18/11/2026; o site ainda completa a data após o envio, por garantia).
   Teste: `tests/bulk-conclusion.browser.cjs` (390 e 1366).
 
 ## Seleção em massa na tela do grupo (regra permanente)
@@ -360,5 +360,14 @@
   cadastro" (só os ainda sem ligação); sem escolha, cria também no cadastro (sem duplicar: mesmo nome ou
   mesma placa reaproveita). Renomear no controle renomeia o cadastro; conta contrato e renovação de apólice
   gravam nos dois. Reconciliação de 18/11/2026: 156 locais + 44 veículos ligados, 0 duplicados criados.
-- Próximo passo combinado: aplicar o mesmo padrão a PESSOAS (RH, vigias, empregos) e a todo cadastro do site.
-  Teste: `tests/contas-relatorio.browser.cjs` (390 e 1366).
+- PESSOAS (`cad-pessoas`, ADMINISTRAÇÃO › Cadastros, 18/11/2026): ficha única ligada a BCCS, CONTROLE DE
+  EMPREGOS / VEREADORES, TAXISTAS, MINHA CASA MINHA VIDA e VIGIAS (registro da lista → `cadastro_id`). Mesma
+  pessoa = mesmo CPF ou, sem CPF, mesmo nome (`pms_nome_chave`: sem acento/parênteses). Na ficha só entram
+  identificação e contato (CPF, RG, NIS, CNH, telefone, endereço, localidade); salário, função, indicação ficam
+  só na lista de origem. `pms_pessoas_sync()` (migração 20261118170000) é idempotente, não dispara WhatsApp e
+  roda todo dia 03:10 (pg_cron `pessoas-sync`): pessoa nova lançada numa lista ganha ficha sozinha. Lista nova de
+  pessoas = acrescentar uma linha em `fontes` da função. Primeira execução: 1887 fichas, 2353 registros ligados.
+- Telas: `decorateCadastroLinks` (no openActivity + MutationObserver) põe na linha do nome "🔗 Aparece em"
+  (grupos onde o cadastro é usado, ×N) nos cadastros e "👤/🏢/🚗 Ficha no cadastro" nos registros ligados;
+  clique usa `revealRecord`. Só mostra grupos que o usuário pode ver (dados do banco já filtrados + userCanGroup).
+- Testes: `tests/contas-relatorio.browser.cjs` e `tests/cadastro-links.browser.cjs` (390 e 1366).

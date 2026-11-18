@@ -1,6 +1,5 @@
 -- Lote: lançamentos podem entrar já concluídos (grupos com Controle de Conclusão) -> grava conclusion_date.
--- PENDENTE de aplicar no banco (17/11/2026: a aplicação pediu confirmação e ficou sem resposta).
--- Enquanto não aplicada, js/bulk-entry.js completa conclusion_date logo após o envio.
+-- Aplicada no banco em 18/11/2026.
 CREATE OR REPLACE FUNCTION public.submit_bulk_entry_draft(p_draft_id uuid, p_items jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
