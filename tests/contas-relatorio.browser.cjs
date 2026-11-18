@@ -25,6 +25,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
     contas: [
       conta('k1', 'l1', '01/2025', 4310.9, true, 'Diversos - 931075020 - 28/01/2025'),
       conta('k2', 'l1', '02/2025', 549.38, true, ''),
+      conta('k2b', 'l1', '02/2025', 37.68, true, 'Diversos - 7027496495 - 11/03/2025'),
       conta('k3', 'l2', '01/2025', 100, false, 'Aguardando empenho'),
       conta('k4', 'l3', '03/2025', 250.5, true, ''),
       conta('k5', 'l3', '03/2024', 999, true, 'ano anterior'),
@@ -39,8 +40,10 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   const edu = page.locator('.ccr-sec').first();
   const locals = await edu.locator('.ccr-local-row').allTextContents();
   assert.match(locals.find(t => /VARGAS/.test(t)) || '', /ESCOLA MUNICIPAL PRESIDENTE VARGAS.*Conta contrato: 22143 - ELO 2106.*Relógio: A20N169698/);
-  assert.deepEqual(await edu.locator('tbody.ccr-local', {hasText: 'PRESIDENTE VARGAS'}).locator('.ccr-mes').allTextContents(), ['JAN/2025', 'FEV/2025']);
-  assert.match(await edu.locator('tfoot').textContent(), /TOTAL EDUCAÇÃO\s*R\$\s*4\.960,28.*Pendente R\$\s*100,00/);
+  assert.deepEqual(await edu.locator('tbody.ccr-local', {hasText: 'PRESIDENTE VARGAS'}).locator('.ccr-mes').allTextContents(), ['JAN/2025', '↳ FEV/2025', '↳ FEV/2025']);
+  assert.match(await edu.locator('tfoot').textContent(), /TOTAL EDUCAÇÃO\s*R\$\s*4\.997,96.*Pendente R\$\s*100,00/);
+  assert.match(await edu.locator('.ccr-month-row').textContent(), /FEV\/2025\s*2 contas no mês/);
+  assert.match(await edu.locator('.ccr-month-total').textContent(), /Total de FEV\/2025 · 2 contas\s*R\$\s*587,06/);
   assert.match(await page.locator('.ccr-sec').nth(1).textContent(), /Sem lançamentos no período: POSTO SEM CONTA/);
   // ano padrão = mais recente (2025): conta de 2024 fica de fora
   assert.doesNotMatch(await page.textContent('.ccr'), /ano anterior/);
@@ -63,9 +66,29 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
     const file = os.tmpdir() + '/ccr-' + W + '.pdf'; fs.writeFileSync(file, Buffer.from(b64, 'base64'));
     const text = execFileSync('pdftotext', ['-layout', file, '-']).toString();
     assert.equal(name, 'RELATORIO-CONTAS-POR-SECRETARIA-LUZ-2025.pdf');
-    for (const piece of ['RELATÓRIO POR SECRETARIA', 'SECRETARIA: EDUCAÇÃO', 'ESCOLA MUNICIPAL PRESIDENTE VARGAS', 'Conta contrato: 22143 - ELO 2106', 'Relógio: A20N169698', 'JAN/2025', 'Diversos - 931075020', 'Total do local', 'TOTAL EDUCAÇÃO', 'SECRETARIA: UNIDADES DE SAÚDE', 'Página 1 de'])
+    for (const piece of ['RELATÓRIO POR SECRETARIA', 'SECRETARIA: EDUCAÇÃO', 'ESCOLA MUNICIPAL PRESIDENTE VARGAS', 'Conta contrato: 22143 - ELO 2106', 'Relógio: A20N169698', 'JAN/2025', 'Diversos - 931075020', 'Total do local', '2 contas no mês', 'Total de FEV/2025 · 2 contas', 'TOTAL EDUCAÇÃO', 'SECRETARIA: UNIDADES DE SAÚDE', 'Página 1 de'])
       assert.ok(text.includes(piece), 'faltou no PDF: ' + piece);
     assert.ok(!text.includes('ano anterior'));
+  }
+  // 🏢 Cadastro dos locais: todos os locais (com e sem conta), conta contrato/relógio e demais dados
+  await page.evaluate(() => window.ccSetModo('ccx', 'cadastro'));
+  await page.waitForSelector('.ccr-cad-table');
+  const cadHead = await page.locator('.ccr-cad-table').first().locator('thead th').allTextContents();
+  assert.deepEqual(cadHead.slice(0, 3), ['Local', 'Conta contrato', 'Relógio / medidor']);
+  const cadText = await page.textContent('.ccr-cadastro');
+  for (const piece of ['ESCOLA MUNICIPAL PRESIDENTE VARGAS', '22143 - ELO 2106', 'A20N169698', 'POSTO SEM CONTA', 'não informado', '3 (última FEV/2025)']) assert.ok(cadText.includes(piece), 'cadastro sem: ' + piece);
+  assert.doesNotMatch(cadText, /item_show|Unidade Vinculada/);
+  assert.deepEqual(await page.evaluate(() => window.__contrastAudit(document.querySelector('.ccr-cadastro'))), []);
+  await page.screenshot({path: os.tmpdir() + `/ccr-cad-${W}.png`, fullPage: true});
+  if (process.env.LIBS) {
+    await page.evaluate(() => { window.__pdf = null; });
+    await page.click('.ccr-cadastro .ccr-pdf');
+    await page.waitForFunction(() => window.__pdf, null, {timeout: 20000});
+    const {b64, name} = await page.evaluate(() => window.__pdf);
+    const file = os.tmpdir() + '/ccr-cad-' + W + '.pdf'; fs.writeFileSync(file, Buffer.from(b64, 'base64'));
+    const text = execFileSync('pdftotext', ['-layout', file, '-']).toString();
+    assert.equal(name, 'CADASTRO-DOS-LOCAIS-CONTROLE-DE-CONTAS.pdf');
+    for (const piece of ['CADASTRO DOS LOCAIS', 'SECRETARIA: EDUCAÇÃO', '22143 - ELO 2106', 'POSTO SEM CONTA', 'Página 1 de']) assert.ok(text.includes(piece), 'PDF cadastro sem: ' + piece);
   }
   assert.deepEqual(errors.filter(e => !/favicon|net::/.test(e)), []);
   console.log(`ok - relatório de contas por secretaria + PDF (${W}px)`);

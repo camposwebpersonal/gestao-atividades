@@ -619,6 +619,7 @@ window.renderControleContas = function(secId,opcoes={}){
     <button class="cc-workspace-tab ${modo==='lancamentos'?'active':''}" onclick="ccSetModo('${secId}','lancamentos')">🧾 Lançamentos <span>${qtdTotal}</span></button>
     <button class="cc-workspace-tab ${modo==='vencimentos'?'active':''}" onclick="ccSetModo('${secId}','vencimentos')">⏰ Vencimentos <span>${linhas.length+vigItens.length}</span></button>
     <button class="cc-workspace-tab ${modo==='relatorio'?'active':''}" onclick="ccSetModo('${secId}','relatorio')">📑 Relatório por secretaria</button>
+    <button class="cc-workspace-tab ${modo==='cadastro'?'active':''}" onclick="ccSetModo('${secId}','cadastro')">🏢 Cadastro dos locais</button>
   </nav>
   <section class="cc-workspace-panel" ${modo==='resumo'?'':'hidden'}>
   ${dashHtml}
@@ -657,6 +658,7 @@ window.renderControleContas = function(secId,opcoes={}){
     </table>
   </div>`:''}
   </section>
+  <section class="cc-workspace-panel cc-cadastro-panel" ${modo==='cadastro'?'':'hidden'}>${modo==='cadastro'?(window.ccCadastroHtml?.(secId)||''):''}</section>
   <section class="cc-workspace-panel cc-relatorio-panel" ${modo==='relatorio'?'':'hidden'}>${modo==='relatorio'?(window.ccRelatorioHtml?.(secId)||''):''}</section>
   <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
   <section class="cc-workspace-panel cc-month-workspace" ${modo==='lancamentos'?'':'hidden'}>

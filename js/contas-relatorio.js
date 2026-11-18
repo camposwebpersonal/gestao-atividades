@@ -81,11 +81,14 @@
 
   const headCells = cols => ['Mês/Ano', ...(cols.tipo ? ['Tipo'] : []), ...(cols.leitura ? ['Leitura'] : []), ...(cols.consumo ? ['Consumo (kWh)'] : []), ...(cols.venc ? ['Vencimento'] : []), ...(cols.pag ? ['Pagamento'] : []), 'Valor', 'Situação', ...(cols.obs ? ['Observações'] : [])];
   const rowCells = (r, cols) => [mesLabel(r), ...(cols.tipo ? [r.tipo || '—'] : []), ...(cols.leitura ? [r.leitura_relogio || '—'] : []), ...(cols.consumo ? [r.consumo_kwh || '—'] : []), ...(cols.venc ? [day(r.data_vencimento) || '—'] : []), ...(cols.pag ? [day(r.data_pagamento) || '—'] : []), money(r.valor), isPago(r) ? 'Pago' : 'Pendente', ...(cols.obs ? [r.observacao || ''] : [])];
+  // Contas do mesmo mês ficam sob uma linha pai do mês, com o total do mês embaixo.
+  const byMonth = rows => { const out = []; for (const r of rows) { const k = mesLabel(r); const last = out[out.length - 1]; if (last && last.key === k) last.rows.push(r); else out.push({key: k, rows: [r]}); } return out; };
   const idLine = l => [l.contrato && `Conta contrato: <b>${esc(l.contrato)}</b>`, l.relogio && `Relógio: <b>${esc(l.relogio)}</b>`, l.lugar && esc(l.lugar)].filter(Boolean).join(' · ');
 
   window.ccRelatorioHtml = function (secId) {
     const d = build(secId), {cols} = d, head = headCells(cols), n = head.length;
     const valorIdx = head.indexOf('Valor'), sitIdx = head.indexOf('Situação');
+    const rowHtml = (r, nested) => `<tr class="ccr-row${nested ? ' is-nested' : ''}">${rowCells(r, cols).map((v, i) => `<td class="${i === 0 ? 'ccr-mes' : ''} ${i === valorIdx ? 'num' : ''} ${i === sitIdx ? (v === 'Pago' ? 'ok' : 'bad') : ''} ${head[i] === 'Observações' ? 'obs' : ''}">${esc(i === 0 && nested ? '↳ ' + v : v)}</td>`).join('')}</tr>`;
     const opt = (v, label, sel) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(label)}</option>`;
     const controls = `<div class="ccr-controls">
       <label>Ano<select onchange="ccRelatorioSet('${secId}','ano',this.value)">${opt('', 'Todos os anos', d.anoSel)}${d.anos.map(a => opt(a, a, d.anoSel)).join('')}</select></label>
@@ -97,12 +100,78 @@
       <header class="ccr-sec-head"><div><small>SECRETARIA</small><h3>🏛️ ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${money(g.total)}</b><small>${g.com.length} local(is) · ${g.qtd} lançamento(s)</small></div></header>
       ${g.com.length ? `<div class="ccr-table-wrap"><table class="ccr-table"><thead><tr>${head.map((h, i) => `<th class="${i === valorIdx ? 'num' : ''}">${h}</th>`).join('')}</tr></thead>
       ${g.com.map(l => `<tbody class="ccr-local"><tr class="ccr-local-row"><td colspan="${n}"><div><strong>📍 ${esc(l.local.description || 'Local')}</strong><span>${idLine(l) || '<i>Sem conta contrato / relógio cadastrados</i>'}</span></div></td></tr>
-        ${l.rows.map(r => `<tr class="ccr-row">${rowCells(r, cols).map((v, i) => `<td class="${i === 0 ? 'ccr-mes' : ''} ${i === valorIdx ? 'num' : ''} ${i === sitIdx ? (v === 'Pago' ? 'ok' : 'bad') : ''} ${head[i] === 'Observações' ? 'obs' : ''}">${esc(v)}</td>`).join('')}</tr>`).join('')}
+        ${byMonth(l.rows).map(m => m.rows.length === 1 ? rowHtml(m.rows[0], false) : `<tr class="ccr-month-row"><td colspan="${n}">🗓️ ${esc(m.key)} <span>${m.rows.length} contas no mês</span></td></tr>${m.rows.map(r => rowHtml(r, true)).join('')}<tr class="ccr-month-total"><td colspan="${valorIdx}">Total de ${esc(m.key)} · ${m.rows.length} contas</td><td class="num">${money(m.rows.reduce((s, r) => s + (Number(r.valor) || 0), 0))}</td><td colspan="${n - valorIdx - 1}"></td></tr>`).join('')}
         <tr class="ccr-local-total"><td colspan="${valorIdx}">Total do local · ${l.rows.length} lançamento(s)</td><td class="num">${money(l.total)}</td><td colspan="${n - valorIdx - 1}">${l.total - l.pago > 0.004 ? `<span class="bad">Pendente ${money(l.total - l.pago)}</span>` : '<span class="ok">Tudo pago</span>'}</td></tr></tbody>`).join('')}
       <tfoot><tr><td colspan="${valorIdx}">TOTAL ${esc(g.name)}</td><td class="num">${money(g.total)}</td><td colspan="${n - valorIdx - 1}">Pago ${money(g.pago)}${g.total - g.pago > 0.004 ? ` · Pendente ${money(g.total - g.pago)}` : ''}</td></tr></tfoot></table></div>` : ''}
       ${g.sem.length ? `<p class="ccr-empty-locals">Sem lançamentos no período: ${g.sem.map(l => esc(l.local.description)).join(' · ')}</p>` : ''}
     </section>`).join('');
     return `<div class="ccr">${controls}${sum}${body || '<div class="empty">Nenhuma conta encontrada para os filtros escolhidos.</div>'}</div>`;
+  };
+  // ── 🏢 Cadastro dos locais: um local por linha, com conta contrato, relógio e todos os demais dados ──
+  const HIDDEN_KEYS = ['ITEM SHOW', 'SHOW CONCLUSION', 'UNIDADE VINCULADA', 'NOME DA ESCOLA', 'CADASTRO ID', 'CADASTRO_ID'];
+  const KEY_ALIASES = [['Conta contrato', ['CONTA CONTRATO', 'CONTRATO']], ['Relógio / medidor', ['RELOGIO', 'MEDIDOR']], ['Endereço', ['ENDERECO']], ['Distrito / povoado', ['DISTRITO', 'POVOADO']], ['Prédio do município', ['PREDIO']], ['Responsável', ['RESPONSAVEL']], ['WhatsApp do responsável', ['WHATSAPP']]];
+  const canonKey = k => { const n = norm(k); for (const [label, frags] of KEY_ALIASES) if (frags.some(f => n.includes(f)) && !(label === 'Responsável' && n.includes('WHATSAPP'))) return label; return String(k).trim(); };
+  function cadastroData(secId) {
+    const base = build(secId);
+    // todos os locais, inclusive sem conta no período
+    const groups = base.list.map(g => {
+      const locais = g.locais.map(l => {
+        const vals = {};
+        for (const [k, v] of Object.entries(ef(l.local))) {
+          if (HIDDEN_KEYS.some(h => norm(k).includes(norm(h))) || v == null || typeof v === 'object' || !String(v).trim()) continue;
+          const key = canonKey(k); if (!vals[key]) vals[key] = String(v).trim();
+        }
+        const contas = (S().contas || []).filter(c => c.subitem_id === l.local.id);
+        const last = contas.slice().sort((a, b) => (ano(b) + String(mesNum(b)).padStart(2, '0')).localeCompare(ano(a) + String(mesNum(a)).padStart(2, '0')))[0];
+        vals['Contas lançadas'] = contas.length ? `${contas.length} (última ${mesLabel(last)})` : 'Nenhuma';
+        return {local: l.local, cat: l.cat, vals};
+      });
+      return {name: g.name, cats: g.cats, locais};
+    });
+    const keys = [...new Set(groups.flatMap(g => g.locais.flatMap(l => Object.keys(l.vals))))];
+    const order = [...KEY_ALIASES.map(a => a[0]), 'Contas lançadas'];
+    keys.sort((a, b) => (order.indexOf(a) < 0 ? 99 : order.indexOf(a)) - (order.indexOf(b) < 0 ? 99 : order.indexOf(b)) || a.localeCompare(b, 'pt-BR'));
+    const missing = groups.flatMap(g => g.locais).filter(l => !l.vals['Conta contrato']).length;
+    return {...base, groups, keys, missing, total: groups.reduce((s, g) => s + g.locais.length, 0)};
+  }
+  window.ccCadastroHtml = function (secId) {
+    const d = cadastroData(secId), cols = ['Local', ...d.keys];
+    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>🏢 Cadastro dos locais</b><span>Cada estabelecimento com conta contrato, relógio e os demais dados cadastrados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
+      <div class="ccr-summary"><div><b>${d.groups.length}</b><small>secretarias</small></div><div><b>${d.total}</b><small>locais</small></div><div class="${d.missing ? 'is-bad' : 'is-ok'}"><b>${d.total - d.missing}</b><small>com conta contrato</small></div></div>
+      ${d.groups.map(g => `<section class="ccr-sec"><header class="ccr-sec-head"><div><small>SECRETARIA</small><h3>🏛️ ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${g.locais.length}</b><small>local(is)</small></div></header>
+        <div class="ccr-table-wrap"><table class="ccr-table ccr-cad-table"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
+        ${g.locais.map(l => `<tr class="ccr-row"><td class="ccr-cad-name">📍 ${esc(l.local.description || 'Local')}</td>${d.keys.map(k => `<td class="${k === 'Conta contrato' && !l.vals[k] ? 'bad' : ''}">${esc(l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))}</td>`).join('')}</tr>`).join('')}
+        </tbody></table></div></section>`).join('') || '<div class="empty">Nenhum local cadastrado.</div>'}</div>`;
+  };
+  window.ccCadastroPdf = async function (secId) {
+    if (!window.jspdf?.jsPDF) { window.toast?.('jsPDF não carregado', 'error'); return; }
+    const sec = (S().secs || []).find(s => s.id === secId), d = cadastroData(secId), cols = ['Local', ...d.keys];
+    const doc = new window.jspdf.jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'}); (window.safePdf || (x => x))(doc);
+    const W = 297, H = 210, mx = 10;
+    let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
+    const header = () => {
+      doc.setFillColor(247, 250, 248); doc.rect(0, 0, W, 24, 'F'); doc.setFillColor(33, 135, 82); doc.rect(0, 0, 4, 24, 'F');
+      if (logo?.d) doc.addImage(logo.d, 'PNG', W - 24, 3, 13, 17, undefined, 'FAST');
+      doc.setTextColor(15, 53, 43); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(`CADASTRO DOS LOCAIS · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, mx, 11);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(78, 105, 96);
+      doc.text(`Prefeitura Municipal de Sertânia · ${d.total} locais em ${d.groups.length} secretarias · ${d.total - d.missing} com conta contrato · Emitido em ${new Date().toLocaleString('pt-BR')}`, mx, 18);
+    };
+    header(); let y = 30;
+    for (const g of d.groups) {
+      if (y > H - 40) { doc.addPage(); header(); y = 30; }
+      doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 10, 1.5, 1.5, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(`SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
+      doc.setFontSize(9); doc.text(`${g.locais.length} local(is)`, W - mx - 3, y + 6.6, {align: 'right'}); y += 12;
+      doc.autoTable({startY: y, head: [cols], body: g.locais.map(l => [l.local.description || 'Local', ...d.keys.map(k => l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))]), theme: 'grid',
+        margin: {left: mx, right: mx, top: 30, bottom: 16}, styles: {fontSize: 7.6, cellPadding: 1.6, textColor: [33, 52, 63], lineColor: [218, 228, 224], lineWidth: .15, overflow: 'linebreak'},
+        headStyles: {fillColor: [22, 104, 70], textColor: [255, 255, 255], fontStyle: 'bold'}, alternateRowStyles: {fillColor: [247, 250, 248]}, columnStyles: {0: {fontStyle: 'bold', cellWidth: 60, textColor: [15, 53, 43]}},
+        didParseCell: c => { if (c.section === 'body' && c.cell.raw === 'não informado') { c.cell.styles.textColor = [176, 58, 22]; c.cell.styles.fontStyle = 'bold'; } },
+        didDrawPage: () => { if (doc.internal.getCurrentPageInfo().pageNumber > 1) header(); }});
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    const pages = doc.internal.getNumberOfPages();
+    for (let p = 1; p <= pages; p++) { doc.setPage(p); doc.setFillColor(12, 61, 49); doc.rect(0, H - 10, W, 10, 'F'); doc.setTextColor(225, 242, 234); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CADASTRO DOS LOCAIS', mx, H - 4); doc.text(`Página ${p} de ${pages}`, W - mx, H - 4, {align: 'right'}); }
+    doc.save('CADASTRO-DOS-LOCAIS-CONTROLE-DE-CONTAS.pdf'); window.toast?.('PDF do cadastro gerado!', 'success');
   };
   window.ccRelatorioSet = function (secId, key, value) {
     state.set(secId, {...(state.get(secId) || {}), [key]: value});
@@ -151,7 +220,12 @@
       for (const l of g.com) {
         const ident = [l.contrato && `Conta contrato: ${l.contrato}`, l.relogio && `Relógio: ${l.relogio}`, l.lugar].filter(Boolean).join('   ·   ') || 'Sem conta contrato / relógio cadastrados';
         body.push([{content: `${l.local.description || 'Local'}`, colSpan: Math.max(1, Math.ceil(n / 2)), styles: {fontStyle: 'bold', fontSize: 9, textColor: [15, 53, 43], fillColor: [230, 244, 238]}}, {content: ident, colSpan: n - Math.max(1, Math.ceil(n / 2)), styles: {fontSize: 7.5, textColor: [47, 69, 88], fillColor: [230, 244, 238], halign: 'right'}}]);
-        for (const r of l.rows) body.push(rowCells(r, cols).map((v, i) => i === 0 ? {content: '    ' + v} : v));
+        for (const m of byMonth(l.rows)) {
+          if (m.rows.length === 1) { body.push(rowCells(m.rows[0], cols).map((v, i) => i === 0 ? {content: '    ' + v} : v)); continue; }
+          body.push([{content: `    ${m.key}  ·  ${m.rows.length} contas no mês`, colSpan: n, styles: {fontStyle: 'bold', textColor: [29, 78, 137], fillColor: [238, 244, 255]}}]);
+          for (const r of m.rows) body.push(rowCells(r, cols).map((v, i) => i === 0 ? {content: '          ' + v, styles: {fontStyle: 'normal'}} : v));
+          body.push([{content: `Total de ${m.key} · ${m.rows.length} contas`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', textColor: [29, 78, 137], fillColor: [246, 249, 255]}}, {content: money(m.rows.reduce((s, r) => s + (Number(r.valor) || 0), 0)), styles: {fontStyle: 'bold', halign: 'right', textColor: [29, 78, 137], fillColor: [246, 249, 255]}}, {content: '', colSpan: n - valorIdx - 1, styles: {fillColor: [246, 249, 255]}}]);
+        }
         body.push([{content: `Total do local · ${l.rows.length} lançamento(s)`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', textColor: [47, 69, 88], fillColor: [246, 250, 248]}}, {content: money(l.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [246, 250, 248], textColor: [15, 53, 43]}}, {content: l.total - l.pago > 0.004 ? `Pendente ${money(l.total - l.pago)}` : 'Tudo pago', colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [246, 250, 248], textColor: l.total - l.pago > 0.004 ? [176, 58, 22] : [22, 128, 74]}}]);
       }
       body.push([{content: `TOTAL ${g.name}`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}, {content: money(g.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}, {content: `Pago ${money(g.pago)}${g.total - g.pago > 0.004 ? ` · Pendente ${money(g.total - g.pago)}` : ''}`, colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}]);

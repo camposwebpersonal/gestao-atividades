@@ -334,3 +334,8 @@
   Filtros na própria aba: Ano (padrão = mais recente), Tipo (padrão Luz), Secretaria; respeita a busca e
   Pago/Pendente do topo. "📄 Gerar PDF deste relatório" gera o PDF paisagem com a MESMA estrutura,
   cabeçalho com logo, "Página X de Y". Teste: `tests/contas-relatorio.browser.cjs` (390 e 1366).
+- Mês com várias contas no mesmo local: linha pai "🗓️ FEV/2025 · N contas no mês", contas recuadas (↳) e
+  "Total de FEV/2025" embaixo (tela e PDF). Aba "🏢 Cadastro dos locais": um local por linha agrupado por
+  secretaria, com Conta contrato, Relógio/medidor, Endereço, Distrito, Prédio do município e demais
+  campos (grafias diferentes do mesmo campo unificadas; flags internas ocultas), "não informado" em
+  vermelho quando falta conta contrato, contas lançadas (quantidade + última) e PDF com a mesma estrutura.

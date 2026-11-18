@@ -40,3 +40,15 @@
 .ccr-table tfoot td:first-child{text-align:right}
 .ccr-empty-locals{margin:0;padding:8px 14px;font-size:12.5px;color:#3f5566;background:#f6f9fb;border-top:1px solid #e1eae6}
 @media(max-width:600px){.ccr-pdf{margin-left:0;width:100%}.ccr-controls label{flex:1 1 140px}.ccr-sec-head h3{font-size:17px}}
+/* mês com várias contas: linha pai + contas recuadas + total do mês */
+.ccr-month-row td{background:#eef4ff;color:#1d4e89;font-weight:800;padding:5px 8px 5px 30px;border-top:1px solid #d3e0f5}
+.ccr-month-row span{margin-left:8px;font-size:12px;font-weight:700;color:#2f4558}
+.ccr-row.is-nested td.ccr-mes{padding-left:48px;font-weight:600;color:#2f4558}
+.ccr-month-total td{background:#f6f9ff;color:#1d4e89;font-weight:800;font-size:12.5px;padding:4px 8px;border-bottom:1px solid #d3e0f5}
+.ccr-month-total td:first-child{text-align:right}
+/* 🏢 Cadastro dos locais */
+.ccr-cad-intro{display:flex;flex-direction:column;gap:2px;flex:1 1 260px;min-width:min(260px,100%)}
+.ccr-cad-intro b{font-size:15px;color:#0f3a2c}.ccr-cad-intro span{font-size:12.5px;color:#2f4558}.ccr-cad-intro em{color:#b03a16;font-style:normal;font-weight:800}
+.ccr-cad-table td{padding:6px 8px;border-bottom:1px solid #edf3f0;vertical-align:top;font-size:12.5px;color:#14273a}
+.ccr-cad-table td.ccr-cad-name{font-weight:800;color:#0b3d2f;min-width:240px}
+.ccr-cad-table td.bad{color:#b03a16;font-weight:800}
