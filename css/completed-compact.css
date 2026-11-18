@@ -1,7 +1,13 @@
 /* Linhas de lançamento finas em todo o site (máximo de informação por tela). */
 #content .item-row{margin-bottom:5px!important;border-radius:10px!important;box-shadow:0 1px 4px rgba(25,89,73,.08)!important}
 #content .item-header{padding:4px 10px!important;gap:6px!important;align-items:center!important;min-height:38px}
-#content .item-header .item-info{min-width:0}
+/* NUNCA espremer texto: o nome tem largura mínima garantida; sem espaço, os botões descem para a linha de baixo. */
+#content .item-header{flex-wrap:wrap!important}
+#content .item-header .item-info{flex:1 1 260px!important;min-width:min(260px,100%)!important}
+#content .item-header > .attendance-inline-meta{flex:0 1 auto!important;min-width:0!important;max-width:min(460px,100%)}
+#content .item-header .item-info .item-meta{flex:0 0 auto;white-space:nowrap}
+#content .sub-row .sub-info,#content .sub-row .item-info{flex:1 1 200px!important;min-width:min(200px,100%)!important}
+#content .item-name,#content .sub-name,#content .cr-name{word-break:normal!important;overflow-wrap:break-word!important}
 #content .item-header .item-name{line-height:1.3}
 #content .item-header .item-meta{margin-top:0!important;line-height:1.25}
 #content .item-name > .pipa-refill-badge{margin:0 0 0 6px!important;padding:0 8px!important;font-size:11.5px!important;border-left-width:3px!important;vertical-align:middle;line-height:20px!important;white-space:nowrap}

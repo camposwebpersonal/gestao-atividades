@@ -312,3 +312,14 @@
   (mês → meses → Em andamento). `setNavLeaf` aceita `crumbs:[...]` (vários níveis) e `parentGo`.
   Toda sub-tela nova dentro de um grupo deve registrar seus níveis assim; nenhuma tela pai fica de fora.
   Teste: `tests/completed-days.browser.cjs` (390 e 1366).
+
+## NUNCA espremer texto (regra permanente e absoluta, 18/11/2026)
+
+- Texto nunca pode virar uma coluna fininha com letras empilhadas, em nenhuma largura (celular,
+  tablet, notebook, monitor grande). Todo bloco de texto dentro de uma linha flex precisa de largura
+  mínima garantida (`flex:1 1 260px; min-width:min(260px,100%)` no nome do lançamento) e a linha
+  precisa de `flex-wrap:wrap`: sem espaço, os BOTÕES descem para a linha de baixo, o texto nunca encolhe.
+  Nunca usar `min-width:0` sozinho em bloco de texto que divide a linha com botões/selos.
+- Teste obrigatório: `tests/text-squeeze.browser.cjs` varre 12 larguras (360 a 1600px) em lista, cards,
+  atendimento e concluídos e falha se algum texto tiver <70px com mais de 2 linhas ou nome <140px.
+  Qualquer mudança de layout de linhas/cards deve passar nele.
