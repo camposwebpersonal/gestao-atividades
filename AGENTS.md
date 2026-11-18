@@ -370,4 +370,6 @@
 - Telas: `decorateCadastroLinks` (no openActivity + MutationObserver) põe na linha do nome "🔗 Aparece em"
   (grupos onde o cadastro é usado, ×N) nos cadastros e "👤/🏢/🚗 Ficha no cadastro" nos registros ligados;
   clique usa `revealRecord`. Só mostra grupos que o usuário pode ver (dados do banco já filtrados + userCanGroup).
+- NÃO ligar solicitantes de demandas (água de pipa, saneamento, retro etc.) ao cadastro de PESSOAS: o
+  usuário recusou explicitamente em 18/11/2026. O cadastro de pessoas vale só para as listas de pessoas.
 - Testes: `tests/contas-relatorio.browser.cjs` e `tests/cadastro-links.browser.cjs` (390 e 1366).
