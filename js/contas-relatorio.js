@@ -10,7 +10,13 @@
   const money = v => 'R$ ' + (Number(v) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
   const state = new Map();
-  const ef = r => { let e = r?.extra_fields; if (typeof e === 'string') { try { e = JSON.parse(e); } catch { e = {}; } } return e && typeof e === 'object' ? e : {}; };
+  // Campos do local = os do cadastro oficial (ADMINISTRAÇÃO › Cadastros) + os próprios do controle.
+  const ef = r => { if (window.cadastroLinks && r && r.extra_fields !== undefined) return window.cadastroLinks.fields(r); let e = r?.extra_fields; if (typeof e === 'string') { try { e = JSON.parse(e); } catch { e = {}; } } return e && typeof e === 'object' ? e : {}; };
+  const SEM_CAD = 'CONTAS SEM ESTABELECIMENTO CADASTRADO';
+  const semCad = l => !window.cadastroLinks?.cad(l);
+  const secLabel = name => name === SEM_CAD ? 'RESUMOS E CONTAS AINDA SEM CADASTRO' : 'SECRETARIA';
+  const secIcon = name => name === SEM_CAD ? '📦' : '🏛️';
+  const linkTag = l => window.cadastroLinks?.cad(l) ? ' <em class="ccr-linked" title="Nome e dados vindos de ADMINISTRAÇÃO › Cadastros">🔗 cadastro</em>' : '';
   const field = (rec, ...frags) => { const e = ef(rec); for (const frag of frags) { const k = Object.keys(e).find(key => norm(key).includes(norm(frag)) && String(e[key] ?? '').trim()); if (k) return String(e[k]).trim(); } return ''; };
   const day = v => { if (!v) return ''; const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : (window.fmtD ? window.fmtD(v) : String(v)); };
   const ano = c => String(c.mes_ano || '').split('/')[1] || '';
@@ -50,7 +56,7 @@
         endereco: field(local, 'ENDERECO'),
         lugar: field(local, 'DISTRITO', 'POVOADO'),
       };
-      const secName = (field(local, 'UNIDADE VINCULADA', 'SECRETARIA') || cat.description || 'SEM SECRETARIA').toUpperCase();
+      const secName = semCad(local) ? SEM_CAD : (field(local, 'UNIDADE VINCULADA', 'SECRETARIA') || cat.description || 'SEM SECRETARIA').toUpperCase();
       if (busca.length) {
         const hay = norm([secName, cat.description, local.description, info.contrato, info.relogio, info.endereco, info.lugar, ...rows.map(r => r.observacao)].join(' '));
         if (!busca.every(t => hay.includes(t))) continue;
@@ -58,7 +64,7 @@
       if (!groups.has(secName)) groups.set(secName, {name: secName, cats: new Set(), locais: []});
       const g = groups.get(secName); g.cats.add(cat.description || ''); g.locais.push(info);
     }
-    let list = [...groups.values()].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    let list = [...groups.values()].sort((a, b) => (a.name === SEM_CAD) - (b.name === SEM_CAD) || a.name.localeCompare(b.name, 'pt-BR'));
     const secNames = list.map(g => g.name);
     if (st.sec && secNames.includes(st.sec)) list = list.filter(g => g.name === st.sec);
     for (const g of list) {
@@ -97,9 +103,9 @@
       <button type="button" class="ccr-pdf" onclick="ccRelatorioPdf('${secId}')">📄 Gerar PDF deste relatório</button></div>`;
     const sum = `<div class="ccr-summary"><div><b>${d.list.length}</b><small>secretaria${d.list.length === 1 ? '' : 's'}</small></div><div><b>${d.tot.locais}</b><small>locais com conta</small></div><div><b>${d.tot.qtd}</b><small>lançamentos</small></div><div><b>${money(d.tot.total)}</b><small>total${d.anoSel ? ' em ' + d.anoSel : ''}</small></div><div class="is-ok"><b>${money(d.tot.pago)}</b><small>pago</small></div><div class="${d.tot.total - d.tot.pago > 0.004 ? 'is-bad' : ''}"><b>${money(d.tot.total - d.tot.pago)}</b><small>pendente</small></div></div>`;
     const body = d.list.map(g => `<section class="ccr-sec">
-      <header class="ccr-sec-head"><div><small>SECRETARIA</small><h3>🏛️ ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${money(g.total)}</b><small>${g.com.length} local(is) · ${g.qtd} lançamento(s)</small></div></header>
+      <header class="ccr-sec-head"><div><small>${secLabel(g.name)}</small><h3>${secIcon(g.name)} ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${money(g.total)}</b><small>${g.com.length} local(is) · ${g.qtd} lançamento(s)</small></div></header>
       ${g.com.length ? `<div class="ccr-table-wrap"><table class="ccr-table"><thead><tr>${head.map((h, i) => `<th class="${i === valorIdx ? 'num' : ''}">${h}</th>`).join('')}</tr></thead>
-      ${g.com.map(l => `<tbody class="ccr-local"><tr class="ccr-local-row"><td colspan="${n}"><div><strong>📍 ${esc(l.local.description || 'Local')}</strong><span>${idLine(l) || '<i>Sem conta contrato / relógio cadastrados</i>'}</span></div></td></tr>
+      ${g.com.map(l => `<tbody class="ccr-local"><tr class="ccr-local-row"><td colspan="${n}"><div><strong>📍 ${esc(l.local.description || 'Local')}${linkTag(l.local)}</strong><span>${idLine(l) || '<i>Sem conta contrato / relógio cadastrados</i>'}</span></div></td></tr>
         ${byMonth(l.rows).map(m => m.rows.length === 1 ? rowHtml(m.rows[0], false) : `<tr class="ccr-month-row"><td colspan="${n}">🗓️ ${esc(m.key)} <span>${m.rows.length} contas no mês</span></td></tr>${m.rows.map(r => rowHtml(r, true)).join('')}<tr class="ccr-month-total"><td colspan="${valorIdx}">Total de ${esc(m.key)} · ${m.rows.length} contas</td><td class="num">${money(m.rows.reduce((s, r) => s + (Number(r.valor) || 0), 0))}</td><td colspan="${n - valorIdx - 1}"></td></tr>`).join('')}
         <tr class="ccr-local-total"><td colspan="${valorIdx}">Total do local · ${l.rows.length} lançamento(s)</td><td class="num">${money(l.total)}</td><td colspan="${n - valorIdx - 1}">${l.total - l.pago > 0.004 ? `<span class="bad">Pendente ${money(l.total - l.pago)}</span>` : '<span class="ok">Tudo pago</span>'}</td></tr></tbody>`).join('')}
       <tfoot><tr><td colspan="${valorIdx}">TOTAL ${esc(g.name)}</td><td class="num">${money(g.total)}</td><td colspan="${n - valorIdx - 1}">Pago ${money(g.pago)}${g.total - g.pago > 0.004 ? ` · Pendente ${money(g.total - g.pago)}` : ''}</td></tr></tfoot></table></div>` : ''}
@@ -108,7 +114,7 @@
     return `<div class="ccr">${controls}${sum}${body || '<div class="empty">Nenhuma conta encontrada para os filtros escolhidos.</div>'}</div>`;
   };
   // ── 🏢 Cadastro dos locais: um local por linha, com conta contrato, relógio e todos os demais dados ──
-  const HIDDEN_KEYS = ['ITEM SHOW', 'SHOW CONCLUSION', 'UNIDADE VINCULADA', 'NOME DA ESCOLA', 'CADASTRO ID', 'CADASTRO_ID'];
+  const HIDDEN_KEYS = ['ITEM SHOW', 'SHOW CONCLUSION', 'UNIDADE VINCULADA', 'NOME DA ESCOLA', 'CADASTRO ID', 'CADASTRO_ID', 'CADASTRO_GRUPO', 'CONTAS_LOCAL', 'SEGURO_LOCAL', 'AGRUPADOR', 'ORIGEM', 'SHOW_TABLE'];
   const KEY_ALIASES = [['Conta contrato', ['CONTA CONTRATO', 'CONTRATO']], ['Relógio / medidor', ['RELOGIO', 'MEDIDOR']], ['Endereço', ['ENDERECO']], ['Distrito / povoado', ['DISTRITO', 'POVOADO']], ['Prédio do município', ['PREDIO']], ['Responsável', ['RESPONSAVEL']], ['WhatsApp do responsável', ['WHATSAPP']]];
   const canonKey = k => { const n = norm(k); for (const [label, frags] of KEY_ALIASES) if (frags.some(f => n.includes(f)) && !(label === 'Responsável' && n.includes('WHATSAPP'))) return label; return String(k).trim(); };
   function cadastroData(secId) {
@@ -121,6 +127,7 @@
           if (HIDDEN_KEYS.some(h => norm(k).includes(norm(h))) || v == null || typeof v === 'object' || !String(v).trim()) continue;
           const key = canonKey(k); if (!vals[key]) vals[key] = String(v).trim();
         }
+        if (!vals['Outro nome'] && window.cadastroLinks?.ownName(l.local) && norm(window.cadastroLinks?.ownName(l.local)) !== norm(l.local.description)) vals['Outro nome'] = window.cadastroLinks?.ownName(l.local);
         const contas = (S().contas || []).filter(c => c.subitem_id === l.local.id);
         const last = contas.slice().sort((a, b) => (ano(b) + String(mesNum(b)).padStart(2, '0')).localeCompare(ano(a) + String(mesNum(a)).padStart(2, '0')))[0];
         vals['Contas lançadas'] = contas.length ? `${contas.length} (última ${mesLabel(last)})` : 'Nenhuma';
@@ -137,10 +144,10 @@
   window.ccCadastroHtml = function (secId) {
     const d = cadastroData(secId), cols = ['Local', ...d.keys];
     return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>🏢 Cadastro dos locais</b><span>Cada estabelecimento com conta contrato, relógio e os demais dados cadastrados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
-      <div class="ccr-summary"><div><b>${d.groups.length}</b><small>secretarias</small></div><div><b>${d.total}</b><small>locais</small></div><div class="${d.missing ? 'is-bad' : 'is-ok'}"><b>${d.total - d.missing}</b><small>com conta contrato</small></div></div>
-      ${d.groups.map(g => `<section class="ccr-sec"><header class="ccr-sec-head"><div><small>SECRETARIA</small><h3>🏛️ ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${g.locais.length}</b><small>local(is)</small></div></header>
+      <div class="ccr-summary"><div><b>${d.groups.length}</b><small>secretarias</small></div><div><b>${d.total}</b><small>locais</small></div><div class="${d.missing ? 'is-bad' : 'is-ok'}"><b>${d.total - d.missing}</b><small>com conta contrato</small></div><div class="is-ok"><b>${d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length}</b><small>🔗 ligados ao cadastro</small></div></div>
+      ${d.groups.map(g => `<section class="ccr-sec"><header class="ccr-sec-head"><div><small>${secLabel(g.name)}</small><h3>${secIcon(g.name)} ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${g.locais.length}</b><small>local(is)</small></div></header>
         <div class="ccr-table-wrap"><table class="ccr-table ccr-cad-table"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
-        ${g.locais.map(l => `<tr class="ccr-row"><td class="ccr-cad-name">📍 ${esc(l.local.description || 'Local')}</td>${d.keys.map(k => `<td class="${k === 'Conta contrato' && !l.vals[k] ? 'bad' : ''}">${esc(l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))}</td>`).join('')}</tr>`).join('')}
+        ${g.locais.map(l => `<tr class="ccr-row"><td class="ccr-cad-name">📍 ${esc(l.local.description || 'Local')}${linkTag(l.local)}</td>${d.keys.map(k => `<td class="${k === 'Conta contrato' && !l.vals[k] ? 'bad' : ''}">${esc(l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))}</td>`).join('')}</tr>`).join('')}
         </tbody></table></div></section>`).join('') || '<div class="empty">Nenhum local cadastrado.</div>'}</div>`;
   };
   window.ccCadastroPdf = async function (secId) {
@@ -160,7 +167,7 @@
     for (const g of d.groups) {
       if (y > H - 40) { doc.addPage(); header(); y = 30; }
       doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 10, 1.5, 1.5, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(`SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
       doc.setFontSize(9); doc.text(`${g.locais.length} local(is)`, W - mx - 3, y + 6.6, {align: 'right'}); y += 12;
       doc.autoTable({startY: y, head: [cols], body: g.locais.map(l => [l.local.description || 'Local', ...d.keys.map(k => l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))]), theme: 'grid',
         margin: {left: mx, right: mx, top: 30, bottom: 16}, styles: {fontSize: 7.6, cellPadding: 1.6, textColor: [33, 52, 63], lineColor: [218, 228, 224], lineWidth: .15, overflow: 'linebreak'},
@@ -213,7 +220,7 @@
       if (y > H - 40) { doc.addPage(); header(); y = 30; }
       // faixa da secretaria
       doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 10, 1.5, 1.5, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(`SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
       doc.setFontSize(9); doc.text(`${money(g.total)}  ·  ${g.com.length} local(is)  ·  ${g.qtd} lançamento(s)`, W - mx - 3, y + 6.6, {align: 'right'});
       y += 12;
       const body = [];

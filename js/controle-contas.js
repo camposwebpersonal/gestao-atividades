@@ -22,11 +22,15 @@ function _ccLocalExtraFields(local){
   };
 }
 
+// Locais ligados ao cadastro oficial primeiro; resumos/sem cadastro (📦) no fim de cada categoria.
+const _ccSemCadastro = local => !window.cadastroLinks?.cad(local);
+const _ccOrdemLocal = (a,b) => (_ccSemCadastro(a)-_ccSemCadastro(b)) || ((a.order_num||0)-(b.order_num||0));
+const _ccNomeLocal = local => (_ccSemCadastro(local)?'📦 ':'')+(local?.description||'Local');
 function _ccLocalMatchesBusca(item, local, buscaTokens, localContas){
   if(!buscaTokens || !buscaTokens.length) return true;
   const efLocal = (local && local.extra_fields) || {};
   const obsTodas = (localContas || []).map(c=>c.observacao||'');
-  const partesBusca = [item?.description, local?.description, ...Object.values(efLocal), ...obsTodas];
+  const partesBusca = [item?.description, local?.description, window.cadastroLinks?.ownName(local), ...Object.values(efLocal), ...Object.values((window.cadastroLinks?.cad(local)?.extra_fields)||{}).filter(v=>typeof v!=='object'), ...obsTodas];
   const searchable = _ccNorm(partesBusca.filter(Boolean).join(' '));
   const rawQuery=buscaTokens.join(' ');
   return window.smartSearchText?window.smartSearchText(partesBusca,rawQuery).matched:buscaTokens.every(tok => searchable.includes(tok));
@@ -165,7 +169,7 @@ window.renderControleContas = function(secId,opcoes={}){
   const setoresNavegaveis=items.filter(item=>contasSetor(item).length||(!tipoFiltro&&!anoFiltro&&!pagoFiltro&&(!buscaTokens.length||locaisElegiveis(item).length)));
   if(!setoresNavegaveis.some(i=>i.id===nav.setor))nav.setor=setoresNavegaveis[0]?.id||'';
   const setorAtivo=items.find(i=>i.id===nav.setor);
-  const locaisNavegaveis=(setorAtivo?locaisElegiveis(setorAtivo):[]).filter(local=>!(tipoFiltro||anoFiltro||pagoFiltro)||(contasPorLocal.get(local.id)||[]).some(matchesFiltros)).sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+  const locaisNavegaveis=(setorAtivo?locaisElegiveis(setorAtivo):[]).filter(local=>!(tipoFiltro||anoFiltro||pagoFiltro)||(contasPorLocal.get(local.id)||[]).some(matchesFiltros)).sort(_ccOrdemLocal);
   if(!locaisNavegaveis.some(local=>local.id===nav.local))nav.local=locaisNavegaveis[0]?.id||'';
   const localAtivo=locaisNavegaveis.find(local=>local.id===nav.local);
   const contasAtivas=(contasPorLocal.get(nav.local)||[]).filter(matchesFiltros);
@@ -182,7 +186,7 @@ window.renderControleContas = function(secId,opcoes={}){
   _ccNavegacaoPorSecao.set(secId,nav);
   const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs ${nivel==='local'?'cc-local-grid':''}" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
   const navegacaoHtml=`<div class="cc-drilldown"><div class="cc-drill-label">1 · Setor</div>${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
-  ${locaisNavegaveis.length?`<div class="cc-drill-label">2 · Item / local</div>${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:local.description||'Local'})),nav.local)}`:''}
+  ${locaisNavegaveis.length?`<div class="cc-drill-label">2 · Item / local</div>${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:_ccNomeLocal(local)})),nav.local)}`:''}
   ${tiposNavegaveis.length?`<div class="cc-drill-label">3 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">4 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}
   <div class="cc-drill-label">5 · Mês</div><div class="cc-months" role="group" aria-label="Mês do lançamento">${mesesNavegaveis.map(mes=>{const rows=contasAno.filter(c=>numeroMes(c)===mes.id),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);return `<button type="button" data-cc-level="mes" data-cc-value="${mes.id}" aria-pressed="${mes.id===nav.mes}" class="cc-month ${rows.length?'has-data':''} ${mes.id===nav.mes?'active':''}"><strong>${mes.label}</strong><small>${rows.length?'R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2}):'Sem lançamento'}</small><small>${rows.length?rows.length+' lançamento(s)':''}</small></button>`;}).join('')}</div>
   <div class="cc-path">${esc(setorAtivo?.description||'')} › ${esc(localAtivo?.description||'')} › ${esc(nav.tipo)} › ${esc(nav.ano)} › ${mesesNavegaveis.find(m=>m.id===nav.mes)?.label||''}</div>`:'<div class="empty">Nenhum lançamento neste item/local para os filtros selecionados.</div>'}</div>`;
@@ -199,7 +203,7 @@ window.renderControleContas = function(secId,opcoes={}){
   const locaisResumo = [];
 
   const categoriasHtml = items.map((item, idx)=>{
-    const locais = [...(locaisPorCategoria.get(item.id)||[])].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
+    const locais = [...(locaisPorCategoria.get(item.id)||[])].sort(_ccOrdemLocal);
     let locaisHtml = '',resumoLocalHtml = '';
     let catTotal = 0, catPago = 0, catPendente = 0, catQtd = 0, catQPago = 0, catQPendente = 0;
     locais.forEach((local, li)=>{
@@ -246,7 +250,7 @@ window.renderControleContas = function(secId,opcoes={}){
       qtdTotal += locRows.length; qtdPago += locRows.filter(c=>c.pago).length; qtdPendente += locRows.filter(c=>!c.pago).length;
       catTotal += locTotal; catPago += locPago; catPendente += locPendente; catQtd += locRows.length;
       catQPago += locRows.filter(c=>c.pago).length; catQPendente += locRows.filter(c=>!c.pago).length;
-      const efAll = (local && local.extra_fields) || {};
+      const efAll = window.cadastroLinks ? window.cadastroLinks.fields(local) : ((local && local.extra_fields) || {});
       const headMeta = Object.entries(efAll).filter(([k,v])=>String(v||'').trim()).map(([k,v])=>k+': '+v);
       const headMetaStr = headMeta.join(' • ') || 'Clique em editar para preencher dados do local';
       const contaContrato = _ccLocalExtraFields(local).conta_contrato;
@@ -304,7 +308,7 @@ window.renderControleContas = function(secId,opcoes={}){
       if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
-            <div class="cc-local-name">${_ccHighlight(local.description||'Local', buscaTokens)}</div>
+            <div class="cc-local-name">${_ccSemCadastro(local)?'📦 ':''}${_ccHighlight(local.description||'Local', buscaTokens)}${window.cadastroLinks?.cad(local)?' <em class="ccr-linked" title="Nome e dados vindos de ADMINISTRAÇÃO › Cadastros">🔗 cadastro</em>':' <span class="cc-unlinked-tag">sem cadastro</span>'}</div>
             <div class="cc-local-meta">${_ccHighlight(headMetaStr, buscaTokens)}</div>
           </div>
           <div class="cc-local-actions">
@@ -722,7 +726,13 @@ window.ccDeleteCategoria = async function(id, secId){
 
 window.ccOpenLocalModal = function(id, itemId){
   const local = id ? S.subitems.find(s=>s.id===id) : null;
-  const ef = local ? (local.extra_fields||{}) : {};
+  const _intKeys = window.cadastroLinks?.INTERNAL || [];
+  const ef = Object.fromEntries(Object.entries(local ? (local.extra_fields||{}) : {}).filter(([k])=>!_intKeys.includes(k)));
+  const _kind = window.cadastroLinks ? window.cadastroLinks.kindOf(curSecId) : 'locais';
+  const _livres = !id && window.cadastroLinks ? window.cadastroLinks.freeLocais(_kind) : [];
+  const _cadBox = window.cadastroLinks?.cad(local)
+    ? `<div class="form-group full"><div class="cc-cad-link-info">🔗 Ligado ao cadastro <b>${esc(window.cadastroLinks.groupName(window.cadastroLinks?.cad(local).atividade_id)||'Cadastros')}</b> · o nome é o do cadastro e, se mudar aqui, muda lá também. <button type="button" class="btn-action" style="font-size:12px;padding:4px 10px;margin-left:6px" onclick="closeModal();openActivity('${window.cadastroLinks.cad(local).atividade_id}')">Abrir no cadastro ↗</button>${window.cadastroLinks?.ownName(local)&&window.cadastroLinks?.ownName(local)!==local.description?` <span>Outro nome: ${esc(window.cadastroLinks?.ownName(local))}</span>`:''}</div></div>`
+    : (!id ? `<div class="form-group full"><label>${_kind==='veiculos'?'Puxar do cadastro da frota (veículos e máquinas)':'Puxar do cadastro de estabelecimentos'}</label><select id="cc-local-cad" onchange="ccEscolherDoCadastro(this)"><option value="">— ${_kind==='veiculos'?'Veículo novo (será criado também no cadastro da frota da secretaria)':'Novo estabelecimento (será criado também em Cadastros › PRÉDIOS E LOCAIS PÚBLICOS)'} —</option>${_livres.map(i=>`<option value="${esc(i.id)}">${esc(i.description)} · ${esc(window.cadastroLinks.groupName(i.atividade_id))}</option>`).join('')}</select></div>` : '');
   const standardKeys = ['Local','Número do Relógio','Conta Contrato','Endereço','Medidor','RESPONSÁVEL','WHATSAPP DO RESPONSÁVEL'];
   const existingKeysNorm = Object.keys(ef).map(k=>_ccNorm(k));
   const allFields = [];
@@ -738,6 +748,7 @@ window.ccOpenLocalModal = function(id, itemId){
     </div>`).join('');
   openModal(id ? '✏️ Editar Local' : '➕ Novo Local', '',
     `<div class="form-grid">
+      ${_cadBox}
       <div class="form-group full"><label>Nome do Local *</label><input id="cc-local-name" value="${esc(local?.description||'')}"></div>
       <div class="form-group full" style="display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:4px">
         <label>Campos do local</label>
@@ -746,6 +757,11 @@ window.ccOpenLocalModal = function(id, itemId){
       <div class="cc-fields-container" style="display:contents">${fieldsHtml}</div>
     </div>
     <div class="modal-actions">${id?`<button class="btn-cancel" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="ccDeleteLocal('${id}','${itemId}')">🗑️ Excluir</button>`:''}<button class="btn-cancel" onclick="closeModal()">Cancelar</button><button class="btn-save" onclick="ccSaveLocal('${id||''}','${itemId}')">💾 Salvar</button></div>`);
+};
+
+window.ccEscolherDoCadastro = function(sel){
+  const it = S.items.find(i=>i.id===sel.value), input = document.getElementById('cc-local-name');
+  if(it && input) input.value = it.description||'';
 };
 
 window.ccAddLocalField = function(){
@@ -771,9 +787,36 @@ window.ccSaveLocal = async function(id, itemId){
     const v = el.querySelector('.cc-field-val')?.value.trim();
     if(k) newEf[k] = v;
   });
+  // Campos internos de ligação com o cadastro nunca se perdem ao editar.
+  const oldEf = local ? (local.extra_fields||{}) : {};
+  for(const k of (window.cadastroLinks?.INTERNAL||[]).concat(['Outro nome'])) if(oldEf[k]!==undefined && newEf[k]===undefined) newEf[k]=oldEf[k];
   const data = {description:name, item_id:itemId, parent_type: local?.parent_type || 'item', concluded:0, extra_fields:newEf, updated_at:serverTimestamp()};
-  if(id){ await updateDoc(doc(db,'subitems',id),data); }
-  else { data.order_num = S.subitems.filter(s=>s.item_id===itemId).length; data.created_at=serverTimestamp(); await addDoc(collection(db,'subitems'),data); }
+  const cadEf = it => ({...((it&&it.extra_fields)||{})});
+  try{
+    if(id){
+      await updateDoc(doc(db,'subitems',id),data);
+      // Nome igual nos dois lugares: renomear aqui renomeia o cadastro.
+      if(window.cadastroLinks?.cad(local) && window.cadastroLinks?.cad(local).description!==name) await updateDoc(doc(db,'items',window.cadastroLinks?.cad(local).id),{description:name,updated_at:serverTimestamp()});
+    } else {
+      data.order_num = S.subitems.filter(s=>s.item_id===itemId).length; data.created_at=serverTimestamp();
+      let cad = S.items.find(i=>i.id===document.getElementById('cc-local-cad')?.value);
+      if(!cad && window.cadastroLinks){
+        // Local novo no Controle de Contas = estabelecimento novo no cadastro (sem duplicar).
+        const kind = window.cadastroLinks.kindOf(curSecId), cat = S.items.find(i=>i.id===itemId), grupo = window.cadastroLinks.groupForCategory(cat?.description||'', kind);
+        const same = window.cadastroLinks.findDuplicate(kind, name, newEf);
+        if(same) cad = same;
+        else {
+          const efCad = {...Object.fromEntries(Object.entries(newEf).filter(([k])=>!(window.cadastroLinks.INTERNAL).includes(k))), Origem:'Controle de Contas'};
+          if(kind==='locais' && cat?.description && !Object.keys(efCad).some(k=>_ccNorm(k).includes('UNIDADE VINCULADA'))) efCad['Unidade Vinculada']=cat.description;
+          const ref = await addDoc(collection(db,'items'),{atividade_id:grupo,description:name,observacao:'',responsaveis:'',item_icon:kind==='veiculos'?'🚗':'🏢',item_color:'#0f766e',concluded:0,status:'pendente',order_num:S.items.filter(i=>i.atividade_id===grupo).length,extra_fields:efCad,created_at:serverTimestamp(),updated_at:serverTimestamp()});
+          cad = {id:ref.id, atividade_id:grupo, description:name, extra_fields:efCad};
+        }
+      }
+      if(cad){ data.description = name; data.extra_fields = {...newEf, cadastro_id:cad.id, cadastro_grupo:cad.atividade_id}; }
+      const novo = await addDoc(collection(db,'subitems'),data);
+      if(cad && novo?.id) await updateDoc(doc(db,'items',cad.id),{extra_fields:{...cadEf(cad), contas_local_id:novo.id},updated_at:serverTimestamp()});
+    }
+  }catch(e){ toast('Não foi possível salvar o local: '+(e.message||e),'error',8000); return; }
   await loadData(); closeModal(); toast('Salvo!'); renderControleContas(curSecId);
 };
 
@@ -856,6 +899,14 @@ window.ccTogglePago = async function(id, checked){
   await ccSalvarCampo(id,'pago',checked);
 };
 
+// O que muda no controle e também é dado do cadastro (conta contrato, vigência…) é gravado nos dois.
+async function _ccSyncCadastro(loc, patch){
+  const cad = window.cadastroLinks?.cad(loc); if(!cad) return;
+  const ef = {...(cad.extra_fields||{})};
+  for(const [k,v] of Object.entries(patch)){ const key = _ccFindKey(ef, k) || k; ef[key] = v; }
+  try{ await updateDoc(doc(db,'items',cad.id), { extra_fields: ef, updated_at: serverTimestamp() }); }catch(e){ console.warn('Cadastro não atualizado:', e?.message||e); }
+}
+
 // Conta Contrato pertence ao cadastro do LOCAL (compartilhado por todos os
 // lancamentos daquele local), entao a edicao inline salva no subitem.
 window.ccSalvarContaContratoLocal = async function(localId, valor){
@@ -865,6 +916,7 @@ window.ccSalvarContaContratoLocal = async function(localId, valor){
   const chave = _ccFindKey(ef, 'CONTA CONTRATO') || _ccFindKey(ef, 'CONTRATO') || 'Conta Contrato';
   ef[chave] = valor;
   await updateDoc(doc(db,'subitems',localId), { extra_fields: ef, updated_at: serverTimestamp() });
+  await _ccSyncCadastro(local, {'Conta Contrato': valor});
   await loadData();
   renderControleContas(local.atividade_id || curSecId);
   toast('Conta Contrato atualizada','success',1200);
@@ -912,6 +964,7 @@ window.ccSaveRenovacao = async function(subitemId){
   ef[chave] = `${fmt(ini)} a ${fmt(fim)}`;
   if(anterior) ef['VIGÊNCIA ANTERIOR'] = anterior;
   await updateDoc(doc(db,'subitems',subitemId), { extra_fields: ef, updated_at: serverTimestamp() });
+  await _ccSyncCadastro(loc, anterior ? {[chave]: ef[chave], 'VIGÊNCIA ANTERIOR': anterior} : {[chave]: ef[chave]});
   await loadData(); closeModal();
   toast('Apólice renovada! Nova vigência: '+ef[chave],'success',5000);
   renderControleContas(loc.atividade_id||curSecId);

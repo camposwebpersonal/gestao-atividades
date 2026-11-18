@@ -23,8 +23,9 @@
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=92387ef1"></script>
-<script src="js/controle-contas.js?v=9558612d"></script>
-<script src="js/contas-relatorio.js?v=fccc4845"></script>
+<script src="js/controle-contas.js?v=50b130fe"></script>
+<script src="js/cadastro-links.js?v=ac4ca0bc"></script>
+<script src="js/contas-relatorio.js?v=91b66e46"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
 <style>
@@ -436,7 +437,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
-<link rel="stylesheet" href="css/contas-relatorio.css?v=5da3c6a7">
+<link rel="stylesheet" href="css/contas-relatorio.css?v=587e5e05">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -535,9 +536,9 @@ import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
-import {generateDemandPdf} from './js/demand-pdf.js?v=b65cf639';
-import {reportDateTime} from './js/demand-report.js?v=49e7bfce';
-import {customFields,controlFields,commonValues} from './js/record-fields.js?v=62cf0102';
+import {generateDemandPdf} from './js/demand-pdf.js?v=6face68f';
+import {reportDateTime} from './js/demand-report.js?v=b5067016';
+import {customFields,controlFields,commonValues} from './js/record-fields.js?v=7d06bf83';
 import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=3a5d6328';
 import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=ebb1b069';
@@ -553,7 +554,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=befd2bf1';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=670f5d51';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -918,7 +919,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=503cc7e9';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=f556fc90';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1135,7 +1136,7 @@ window.loadData=async function loadData({cacheOnly=false,forceRemote=false}={}){
   S.chamados=[];
   S.galeria=[];
   S.contatos=cont.docs.map(d=>({id:d.id,...d.data()}));
-  S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));
+  S.contas=contas.docs.map(d=>({id:d.id,...d.data()}));window.cadastroLinks?.hydrate(S);
   S.estoque=estq.docs.map(d=>({id:d.id,...d.data()}));
   S.requisicoes=req.docs.map(d=>({id:d.id,...d.data()}));
   S.trashItems=trash.docs.map(d=>({id:d.id,...d.data()}));
@@ -1699,7 +1700,8 @@ window.openActivity=function(secId){
   const fieldLabelByNorm=new Map();
   const hasValue=new Map();
   const isInternal=k=>{
-    if(String(k).startsWith('item_show_')||String(k).startsWith('show_'))return true;
+    if(String(k).startsWith('item_show_')||String(k).startsWith('show_')||String(k).startsWith('_'))return true;
+    if(['cadastro_id','cadastro_grupo','contas_local_id','seguro_local_id','agrupador'].includes(k))return true; // ligação cadastro ↔ controles
     return ['id','extra_fields','description','observacao','responsaveis','secretaria_id','item_icon','item_color','concluded','conclusion_date','status','show_conclusion_date','order_num','created_at','updated_at','atividade_id','item_id','parent_id','parent_type','auto_concluded','cover_url','resp_url','deadline_date','start_date'].includes(k);
   };
   allTpls.forEach(t=>{

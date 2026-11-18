@@ -12,6 +12,8 @@ const SYSTEM_KEYS = new Set([
   'urgencia', 'prioritario', 'solicitante', 'registro_tipo', 'modulo', 'controle_pocos', 'transfer_history',
   'status_list', 'status_options', 'table_columns', 'exibir_valores', 'imagens', 'contatos_responsavel', 'poco_order',
   'licitacao_group_id', 'fornecedor_numero',
+  // ligação cadastro ↔ controles (js/cadastro-links.js)
+  'cadastro_id', 'cadastro_grupo', 'contas_local_id', 'seguro_local_id', 'agrupador',
 ]);
 const SYSTEM_PREFIXES = ['item_show_', 'import_', 'pipa_', 'geo_', '_'];
 

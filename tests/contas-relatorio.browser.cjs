@@ -14,13 +14,20 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
 (async () => {
   const browser = await chromium.launch();
   const seed = {
-    atividades: [row({id: 'ccx', name: 'CONTROLE DE CONTAS', controle_contas: 1, extra_fields: {}})],
-    items: [row({id: 'cat-esc', atividade_id: 'ccx', description: 'ESCOLAS', order_num: 0}), row({id: 'cat-sau', atividade_id: 'ccx', description: 'UNIDADES DE SAÚDE', order_num: 1})],
+    atividades: [row({id: 'ccx', name: 'CONTROLE DE CONTAS', controle_contas: 1, extra_fields: {}}),
+      row({id: 'cad-predios-locais-publicos', name: 'PRÉDIOS E LOCAIS PÚBLICOS', extra_fields: {modulo: 'cadastros'}}),
+      row({id: '221b896f-9012-4c97-80b9-0bd5cd294c86', name: 'EQUIPAMENTOS DA EDUCAÇÃO', extra_fields: {modulo: 'cadastros'}})],
+    items: [row({id: 'cat-esc', atividade_id: 'ccx', description: 'ESCOLAS', order_num: 0}), row({id: 'cat-sau', atividade_id: 'ccx', description: 'UNIDADES DE SAÚDE', order_num: 1}),
+      // Cadastro oficial (ADMINISTRAÇÃO › Cadastros): nome e dados valem no Controle de Contas
+      row({id: 'cad1', atividade_id: '221b896f-9012-4c97-80b9-0bd5cd294c86', description: 'ESCOLA MUNICIPAL PRESIDENTE VARGAS', extra_fields: {contas_local_id: 'l1', 'Unidade Vinculada': 'EDUCAÇÃO', 'ENDEREÇO': 'RUA DO CADASTRO, 10'}}),
+      row({id: 'cad2', atividade_id: '221b896f-9012-4c97-80b9-0bd5cd294c86', description: 'CRECHE MUNICIPAL BARTOLOMEU', extra_fields: {contas_local_id: 'l2', 'Unidade Vinculada': 'EDUCAÇÃO'}}),
+      row({id: 'cad3', atividade_id: 'cad-predios-locais-publicos', description: 'CAPS', extra_fields: {contas_local_id: 'l3'}}),
+      row({id: 'cad4', atividade_id: 'cad-predios-locais-publicos', description: 'PRAÇA AINDA SEM CONTA', extra_fields: {}})],
     subitems: [
-      row({id: 'l1', item_id: 'cat-esc', atividade_id: 'ccx', parent_type: 'item', description: 'ESCOLA MUNICIPAL PRESIDENTE VARGAS', extra_fields: {'Conta Contrato': '22143 - ELO 2106', 'Unidade Vinculada': 'EDUCAÇÃO', 'Número Do Relógio Da Neoenergia': 'A20N169698'}}),
-      row({id: 'l2', item_id: 'cat-esc', atividade_id: 'ccx', parent_type: 'item', description: 'CRECHE BARTOLOMEU', extra_fields: {'Conta Contrato': '3160024541', 'Unidade Vinculada': 'EDUCAÇÃO'}}),
-      row({id: 'l3', item_id: 'cat-sau', atividade_id: 'ccx', parent_type: 'item', description: 'CAPS', extra_fields: {}}),
-      row({id: 'l4', item_id: 'cat-sau', atividade_id: 'ccx', parent_type: 'item', description: 'POSTO SEM CONTA', extra_fields: {}}),
+      row({id: 'l1', item_id: 'cat-esc', atividade_id: 'ccx', parent_type: 'item', description: 'ESCOLA MUNICIPAL PRESIDENTE VARGAS', extra_fields: {cadastro_id: 'cad1', 'Conta Contrato': '22143 - ELO 2106', 'Unidade Vinculada': 'EDUCAÇÃO', 'Número Do Relógio Da Neoenergia': 'A20N169698'}}),
+      row({id: 'l2', item_id: 'cat-esc', atividade_id: 'ccx', parent_type: 'item', description: 'CRECHE BARTOLOMEU', extra_fields: {cadastro_id: 'cad2', 'Conta Contrato': '3160024541'}}),
+      row({id: 'l3', item_id: 'cat-sau', atividade_id: 'ccx', parent_type: 'item', description: 'CAPS', extra_fields: {cadastro_id: 'cad3'}}),
+      row({id: 'l4', item_id: 'cat-sau', atividade_id: 'ccx', parent_type: 'item', description: 'POSTO SEM CONTA', extra_fields: {agrupador: true}}),
     ],
     contas: [
       conta('k1', 'l1', '01/2025', 4310.9, true, 'Diversos - 931075020 - 28/01/2025'),
@@ -34,9 +41,14 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   const {page, errors} = await boot(browser, {width: W, seed, tz: 'America/Recife'});
   page.setDefaultTimeout(9000);
   await page.evaluate(() => { window.renderControleContas('ccx'); window.ccSetModo('ccx', 'relatorio'); });
-  await page.waitForFunction(() => document.querySelectorAll('.ccr-sec-head h3').length >= 2);
+  await page.waitForFunction(() => document.querySelectorAll('.ccr-sec-head h3').length >= 3);
   const secs = await page.$$eval('.ccr-sec-head h3', h => h.map(x => x.textContent.replace(/^\S+\s*/, '')));
-  assert.deepEqual(secs, ['EDUCAÇÃO', 'UNIDADES DE SAÚDE']);
+  // locais ligados ao cadastro por secretaria; resumos/sem cadastro num bloco 📦 no fim
+  assert.deepEqual(secs, ['EDUCAÇÃO', 'UNIDADES DE SAÚDE', 'CONTAS SEM ESTABELECIMENTO CADASTRADO']);
+  assert.ok((await page.locator('.ccr-sec').nth(2).textContent()).includes('RESUMOS E CONTAS AINDA SEM CADASTRO'));
+  // nome do cadastro vale (CRECHE BARTOLOMEU → CRECHE MUNICIPAL BARTOLOMEU) e o selo 🔗 aparece
+  assert.match(await page.textContent('.ccr'), /CRECHE MUNICIPAL BARTOLOMEU/);
+  assert.equal(await page.locator('.ccr-sec').first().locator('.ccr-linked').count(), 2);
   const edu = page.locator('.ccr-sec').first();
   const locals = await edu.locator('.ccr-local-row').allTextContents();
   assert.match(locals.find(t => /VARGAS/.test(t)) || '', /ESCOLA MUNICIPAL PRESIDENTE VARGAS.*Conta contrato: 22143 - ELO 2106.*Relógio: A20N169698/);
@@ -44,7 +56,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   assert.match(await edu.locator('tfoot').textContent(), /TOTAL EDUCAÇÃO\s*R\$\s*4\.997,96.*Pendente R\$\s*100,00/);
   assert.match(await edu.locator('.ccr-month-row').textContent(), /FEV\/2025\s*2 contas no mês/);
   assert.match(await edu.locator('.ccr-month-total').textContent(), /Total de FEV\/2025 · 2 contas\s*R\$\s*587,06/);
-  assert.match(await page.locator('.ccr-sec').nth(1).textContent(), /Sem lançamentos no período: POSTO SEM CONTA/);
+  assert.match(await page.locator('.ccr-sec').nth(2).textContent(), /Sem lançamentos no período: POSTO SEM CONTA/);
   // ano padrão = mais recente (2025): conta de 2024 fica de fora
   assert.doesNotMatch(await page.textContent('.ccr'), /ano anterior/);
   // colunas vazias (leitura/consumo) não aparecem
@@ -56,7 +68,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   await page.selectOption('.ccr-controls label:nth-child(3) select', 'UNIDADES DE SAÚDE');
   await page.waitForFunction(() => document.querySelectorAll('.ccr-sec').length === 1);
   await page.selectOption('.ccr-controls label:nth-child(3) select', '');
-  await page.waitForFunction(() => document.querySelectorAll('.ccr-sec').length === 2);
+  await page.waitForFunction(() => document.querySelectorAll('.ccr-sec').length === 3);
   // PDF
   if (process.env.LIBS) {
     await page.evaluate(() => { window.__pdf = null; window.jspdf.jsPDF.API.save = function (name) { window.__pdf = {name, b64: this.output('datauristring').split(',')[1]}; }; });
@@ -76,8 +88,8 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   const cadHead = await page.locator('.ccr-cad-table').first().locator('thead th').allTextContents();
   assert.deepEqual(cadHead.slice(0, 3), ['Local', 'Conta contrato', 'Relógio / medidor']);
   const cadText = await page.textContent('.ccr-cadastro');
-  for (const piece of ['ESCOLA MUNICIPAL PRESIDENTE VARGAS', '22143 - ELO 2106', 'A20N169698', 'POSTO SEM CONTA', 'não informado', '3 (última FEV/2025)']) assert.ok(cadText.includes(piece), 'cadastro sem: ' + piece);
-  assert.doesNotMatch(cadText, /item_show|Unidade Vinculada/);
+  for (const piece of ['ESCOLA MUNICIPAL PRESIDENTE VARGAS', '22143 - ELO 2106', 'A20N169698', 'POSTO SEM CONTA', 'não informado', '3 (última FEV/2025)', 'RUA DO CADASTRO, 10', 'CRECHE BARTOLOMEU', '🔗 ligados ao cadastro']) assert.ok(cadText.includes(piece), 'cadastro sem: ' + piece);
+  assert.doesNotMatch(cadText, /item_show|Unidade Vinculada|cadastro_id|contas_local_id|agrupador|cad1/);
   assert.deepEqual(await page.evaluate(() => window.__contrastAudit(document.querySelector('.ccr-cadastro'))), []);
   await page.screenshot({path: os.tmpdir() + `/ccr-cad-${W}.png`, fullPage: true});
   if (process.env.LIBS) {
@@ -90,6 +102,26 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
     assert.equal(name, 'CADASTRO-DOS-LOCAIS-CONTROLE-DE-CONTAS.pdf');
     for (const piece of ['CADASTRO DOS LOCAIS', 'SECRETARIA: EDUCAÇÃO', '22143 - ELO 2106', 'POSTO SEM CONTA', 'Página 1 de']) assert.ok(text.includes(piece), 'PDF cadastro sem: ' + piece);
   }
+  // Tela principal: 📦 resumo no fim, selo 🔗 nos ligados; "Novo local" oferece puxar do cadastro (sem duplicar)
+  await page.evaluate(() => window.ccSetModo('ccx', 'resumo'));
+  await page.evaluate(() => { window.curSecId = 'ccx'; window.ccOpenLocalModal('', 'cat-sau'); });
+  await page.waitForSelector('#cc-local-cad');
+  const opts = await page.$$eval('#cc-local-cad option', o => o.map(x => x.textContent));
+  assert.ok(opts.some(t => t.includes('PRAÇA AINDA SEM CONTA')), 'cadastro livre não oferecido');
+  assert.ok(!opts.some(t => t.includes('CAPS')), 'local já ligado não pode ser oferecido de novo');
+  await page.selectOption('#cc-local-cad', 'cad4');
+  assert.equal(await page.inputValue('#cc-local-name'), 'PRAÇA AINDA SEM CONTA');
+  await page.evaluate(() => window.closeModal());
+  // Veículos (Seguros ↔ frota): nome do cadastro + placa, campos do seguro mais recentes valem, cadastro completa
+  const veic = await page.evaluate(() => {
+    const S = {items: [{id: 'v1', atividade_id: 'e1963945-b131-4949-acfe-424dad296715', description: 'ÔNIBUS', extra_fields: {PLACA: 'PGG-7965', ANO: '2013', 'Vigência': '01/01/2024 a 01/01/2025'}}],
+      subitems: [{id: 's1', description: '15.190 EOD - PGG7965', extra_fields: {cadastro_id: 'v1', 'Vigência': '29/07/2025 a 29/07/2026'}}]};
+    window.cadastroLinks.hydrate(S);
+    const f = window.cadastroLinks.fields(S.subitems[0]);
+    return {name: S.subitems[0].description, own: window.cadastroLinks.ownName(S.subitems[0]), vig: f['Vigência'], ano: f.ANO, plate: window.cadastroLinks.plate(S.items[0]), keys: Object.keys(f).join(','),
+      kind: window.cadastroLinks.groupForCategory('FROTA EDUCAÇÃO - MAPFRE', 'veiculos')};
+  });
+  assert.deepEqual(veic, {name: 'ÔNIBUS - PGG7965', own: '15.190 EOD - PGG7965', vig: '29/07/2025 a 29/07/2026', ano: '2013', plate: 'PGG7965', keys: 'Vigência,PLACA,ANO', kind: 'e1963945-b131-4949-acfe-424dad296715'});
   assert.deepEqual(errors.filter(e => !/favicon|net::/.test(e)), []);
   console.log(`ok - relatório de contas por secretaria + PDF (${W}px)`);
   await browser.close();

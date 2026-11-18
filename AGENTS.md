@@ -339,3 +339,26 @@
   secretaria, com Conta contrato, Relógio/medidor, Endereço, Distrito, Prédio do município e demais
   campos (grafias diferentes do mesmo campo unificadas; flags internas ocultas), "não informado" em
   vermelho quando falta conta contrato, contas lançadas (quantidade + última) e PDF com a mesma estrutura.
+
+## Cadastro único ↔ lançamentos (regra permanente, 18/11/2026)
+
+- "Tudo que for cadastro fica num local de cadastros; lançamentos e relatórios ficam em outro local,
+  puxando desses cadastros." Estabelecimentos: ADMINISTRAÇÃO › Cadastros (PRÉDIOS E LOCAIS PÚBLICOS
+  `cad-predios-locais-publicos`, EQUIPAMENTOS DA EDUCAÇÃO, EQUIPAMENTOS DE SAÚDE, CEMITÉRIOS). Veículos e
+  máquinas: grupos da Frota por secretaria (VEÍCULOS DA EDUCAÇÃO, DA ASSISTÊNCIA SOCIAL, DA ADMINISTRAÇÃO,
+  DA SAÚDE `cad-veiculos-saude`, DA AGRICULTURA, GABINETE, MULHER, INFRAESTRUTURA, CEDOCA).
+- Ligação nos dois sentidos em `extra_fields`: registro do controle (local do Controle de Contas, veículo do
+  SEGUROS) → `cadastro_id` + `cadastro_grupo` (+ "Outro nome" = nome antigo); item do cadastro →
+  `contas_local_id`. Resumos sem estabelecimento (OUTROS, ILUMINAÇÃO PÚBLICA, POÇOS…) → `agrupador: true`.
+  Essas chaves são internas: nunca aparecem em tabela/card/PDF (`record-fields.js`, `isInternal` do index).
+- `js/cadastro-links.js`: `hydrate(S)` roda no `loadData`; o nome exibido no controle é o do cadastro
+  (veículo: "ÔNIBUS - PGG7965"); `fields(rec)` = campos do próprio controle (mais recentes: vigência
+  renovada, conta contrato) + todos os do cadastro. Ligações ficam em WeakMap (`cad`, `linked`, `ownName`),
+  nunca como propriedade do registro (viraria coluna nas tabelas).
+- Controle de Contas/Seguros: ligados com selo "🔗 cadastro"; não ligados/resumos com 📦 no fim e, no
+  relatório, no bloco "📦 CONTAS SEM ESTABELECIMENTO CADASTRADO". "Novo local/veículo" oferece "Puxar do
+  cadastro" (só os ainda sem ligação); sem escolha, cria também no cadastro (sem duplicar: mesmo nome ou
+  mesma placa reaproveita). Renomear no controle renomeia o cadastro; conta contrato e renovação de apólice
+  gravam nos dois. Reconciliação de 18/11/2026: 156 locais + 44 veículos ligados, 0 duplicados criados.
+- Próximo passo combinado: aplicar o mesmo padrão a PESSOAS (RH, vigias, empregos) e a todo cadastro do site.
+  Teste: `tests/contas-relatorio.browser.cjs` (390 e 1366).
