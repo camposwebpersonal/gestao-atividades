@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gestao-pms-v222';
-// assets-hash: 702986a2c20a (gerado por tools/stamp-versions.mjs — não editar)
+const CACHE_NAME = 'gestao-pms-v224';
+// assets-hash: 235b973e5595 (gerado por tools/stamp-versions.mjs — não editar)
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -71,6 +71,8 @@ const STATIC_ASSETS = [
   'js/mass-select.js',
   'css/mass-select.css',
   'css/completed-compact.css',
+  'js/contas-relatorio.js',
+  'css/contas-relatorio.css',
   'css/group-picker.css',
   'css/group-extras.css',
   'js/mail-settings.js',

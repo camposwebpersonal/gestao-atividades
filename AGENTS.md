@@ -323,3 +323,14 @@
 - Teste obrigatório: `tests/text-squeeze.browser.cjs` varre 12 larguras (360 a 1600px) em lista, cards,
   atendimento e concluídos e falha se algum texto tiver <70px com mais de 2 linhas ou nome <140px.
   Qualquer mudança de layout de linhas/cards deve passar nele.
+
+## Controle de Contas › Relatório por secretaria (regra permanente, 18/11/2026)
+
+- Aba "📑 Relatório por secretaria" (`js/contas-relatorio.js` + `css/contas-relatorio.css`): faixa da
+  SECRETARIA (campo "Unidade Vinculada" do local; sem ele, o nome da categoria) › linha título do LOCAL
+  com Conta contrato, Relógio e distrito › linhas recuadas por mês (Mês/Ano, tipo/leitura/consumo só se
+  houver dado, vencimento, pagamento, valor, situação colorida, observações) › total do local › total da
+  secretaria; resumo geral no topo; locais sem conta no período listados no fim de cada secretaria.
+  Filtros na própria aba: Ano (padrão = mais recente), Tipo (padrão Luz), Secretaria; respeita a busca e
+  Pago/Pendente do topo. "📄 Gerar PDF deste relatório" gera o PDF paisagem com a MESMA estrutura,
+  cabeçalho com logo, "Página X de Y". Teste: `tests/contas-relatorio.browser.cjs` (390 e 1366).

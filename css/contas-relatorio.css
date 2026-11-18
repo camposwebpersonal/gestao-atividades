@@ -1,0 +1,42 @@
+/* Controle de Contas › Relatório por secretaria (tema claro, AA, recuo por nível) */
+.ccr{display:flex;flex-direction:column;gap:14px;color:#14273a}
+.ccr-controls{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:12px;border:1px solid #d6e2ec;border-radius:12px;background:#fff}
+.ccr-controls label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:#2f4558;min-width:150px}
+.ccr-controls select{min-height:38px;border:1px solid #b9cddd;border-radius:9px;padding:6px 10px;font-size:14px;background:#fff;color:#0f2638}
+.ccr-pdf{margin-left:auto;min-height:40px;padding:8px 16px;border-radius:10px;border:0;background:#0f6b52;color:#fff;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.ccr-pdf:hover{background:#0b5642}
+.ccr-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.ccr-summary>div{border:1px solid #d6e2ec;border-radius:12px;background:#fff;padding:10px 12px;display:flex;flex-direction:column}
+.ccr-summary b{font-size:18px;color:#0f3a2c;line-height:1.15}
+.ccr-summary small{font-size:11.5px;color:#3f5566;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.ccr-summary .is-ok b{color:#14743f}.ccr-summary .is-bad b{color:#b03a16}
+.ccr-sec{border-radius:14px;border:1px solid #cfe0d8;background:#fff;overflow:hidden}
+.ccr-sec-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;padding:10px 14px;background:#0b4d3b;color:#fff}
+.ccr-sec-head>div:first-child{flex:1 1 260px;min-width:min(260px,100%)}
+.ccr-sec-head small{display:block;font-size:11px;font-weight:800;letter-spacing:.1em;color:#c9f2e1}
+.ccr-sec-head h3{margin:0;font-size:19px;font-weight:900;color:#fff}
+.ccr-sec-head span{font-size:12px;color:#d6f5e8}
+.ccr-sec-tot{text-align:right}
+.ccr-sec-tot b{display:block;font-size:18px;color:#fff}
+.ccr-sec-tot small{letter-spacing:0;font-weight:700;color:#e6fbf2}
+.ccr-table-wrap{overflow-x:auto}
+.ccr-table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px}
+.ccr-table thead th{position:sticky;top:0;background:#166846;color:#fff;font-size:12px;font-weight:800;text-align:left;padding:6px 8px;white-space:nowrap}
+.ccr-table th.num,.ccr-table td.num{text-align:right;white-space:nowrap}
+.ccr-local-row td{background:#e6f4ee;border-top:2px solid #9fcfb8;padding:6px 10px}
+.ccr-local-row td>div{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.ccr-local-row strong{font-size:14px;color:#0b3d2f}
+.ccr-local-row span{font-size:12.5px;color:#2f4558}
+.ccr-local-row b{color:#0f2638}
+.ccr-row td{padding:4px 8px;border-bottom:1px solid #edf3f0;color:#14273a;vertical-align:top}
+.ccr-row td.ccr-mes{padding-left:30px;font-weight:800;white-space:nowrap;color:#0f3a2c}
+.ccr-row:hover td{background:#f7fbf9}
+.ccr-row td.ok,.ccr-local-total .ok{color:#14743f;font-weight:800}
+.ccr-row td.bad,.ccr-local-total .bad{color:#b03a16;font-weight:800}
+.ccr-row td.obs{min-width:220px;color:#2f4558;font-size:12.5px}
+.ccr-local-total td{background:#f6faf8;padding:5px 8px;font-weight:800;color:#2f4558;font-size:12.5px;border-bottom:1px solid #dbe8e2}
+.ccr-local-total td:first-child{text-align:right}
+.ccr-table tfoot td{background:#0f3a2c;color:#fff;font-weight:900;padding:7px 8px}
+.ccr-table tfoot td:first-child{text-align:right}
+.ccr-empty-locals{margin:0;padding:8px 14px;font-size:12.5px;color:#3f5566;background:#f6f9fb;border-top:1px solid #e1eae6}
+@media(max-width:600px){.ccr-pdf{margin-left:0;width:100%}.ccr-controls label{flex:1 1 140px}.ccr-sec-head h3{font-size:17px}}
