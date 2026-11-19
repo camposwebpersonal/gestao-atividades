@@ -308,6 +308,27 @@
   `isSystemKey` de js/record-fields.js). Verba / Origem da verba / Documentação / Licitação aparecem só com esses
   nomes e SÓ quando estão marcados na edição do grupo (`controlFields`); desmarcados = nunca aparecem, nem "0".
 
+## Controle de Multas (Frota e Veículos, regra permanente, 19/11/2026)
+
+- Grupo `controle-multas` (TRANSPORTES › Frota e Veículos, `extra_fields: {modulo:'frota', controle_multas:1}`),
+  tela própria `js/controle-multas.js` + `css/controle-multas.css` (openActivity → `renderControleMultas`).
+- O veículo vem SEMPRE do cadastro da frota (itens dos grupos de veículos; sem placa/0 km → identificado pelo
+  chassi) e a SECRETARIA vem do cadastro do veículo ("Unidade Vinculada"/"Secretaria" ou o nome do grupo:
+  VEÍCULOS DA EDUCAÇÃO → EDUCAÇÃO). Cada multa é um item do grupo: cadastro_id/cadastro_grupo do veículo, Placa,
+  Veículo, Secretaria, Data da ocorrência, Hora, Vencimento (= deadline_date), Auto de infração, Órgão autuador,
+  Infração, Gravidade, Pontos, Valor, Local, Condutor, Situação (Em aberto, Indicação de condutor, Em recurso,
+  Paga, Cancelada), Data do pagamento, Valor pago, Observações. Paga/Cancelada = concluída (conclusion_date).
+- Tela: fichas compactas (Em aberto, Vencidas, Vencem em 7 dias, Pagas no ano, Pontos no ano — clicáveis como
+  filtro), busca (placa sem hífen, veículo, infração, auto, condutor), filtros por secretaria/situação/ano, abas
+  📋 Multas · 🚗 Por veículo (ranking) · 🏛️ Por secretaria; linha fina com placa estilizada, selo da secretaria,
+  "🚗 Ficha" (abre o cadastro), valor, prazo colorido (vencida/vence hoje/em N dias), ✓ Paga, ✏️, 🗑️ (lixeira).
+- Lançar: escolher o veículo digitando placa/modelo/secretaria (mostra os dados do cadastro, a secretaria
+  automática e o histórico de multas do veículo); infração da lista sugere gravidade, pontos e valor do CTB;
+  mostra o valor com desconto (−20% até o vencimento, −40% pelo SNE); avisa auto de infração repetido; condutor
+  com sugestões do cadastro de PESSOAS. No cadastro do veículo aparece "🔗 Aparece em CONTROLE DE MULTAS ×N".
+- PDF paisagem, cabeçalho compacto, por secretaria com subtotal e total, vencidas em vermelho, colunas vazias
+  saem. Busca do topo: gancho `multasReveal` + `data-multa-id`. Teste: `tests/controle-multas.browser.cjs`.
+
 ## Datas: o dia digitado é o dia mostrado, sempre (regra permanente do usuário, 17/11/2026)
 
 - "A data que eu colocar e que estiver aparecendo na tela é a data que vai aparecer em tudo." Fuso
@@ -394,7 +415,7 @@
   usuário, 19/11/2026: "as pessoas normais na cidade não entram em cadastro"). Fonte = `pms_pessoas_fontes()`:
   CONTROLE DE EMPREGOS / VEREADORES › itens "FOLHA OFICIAL - …" com Vínculo = 1 (efetivos e cargos CC/AP) e
   vigias com vínculo EFETIVO/COMISSIONADO. BCCS, contratados por secretaria, taxistas e beneficiários NÃO entram.
-  Migração 20261118180000 refaz a carga com essa regra (Vínculo 2 = a confirmar com o usuário). Mesma
+  Migração 20261118180000 aplicada em 19/11/2026: 1.374 fichas, 1.400 registros ligados (Vínculo 2 = a confirmar com o usuário). Mesma
   pessoa = mesmo CPF ou, sem CPF, mesmo nome (`pms_nome_chave`: sem acento/parênteses). Na ficha só entram
   identificação e contato (CPF, RG, NIS, CNH, telefone, endereço, localidade); salário, função, indicação ficam
   só na lista de origem. `pms_pessoas_sync()` (migração 20261118170000) é idempotente, não dispara WhatsApp e
