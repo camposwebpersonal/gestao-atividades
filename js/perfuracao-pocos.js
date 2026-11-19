@@ -765,7 +765,7 @@
     const requested=wells.filter(p=>drillingStatus(p)==='solicitada'),executed=wells.filter(p=>drillingStatus(p)==='executada');
     const cards=[['SOLICITADAS',String(requested.length),[217,119,6]],['EXECUTADAS',String(executed.length),[16,185,129]],['PAGAMENTOS PENDENTES',String(pending.length),[194,65,12]]];
     if(showValues)cards.push(['VALOR PENDENTE',money(pendVal),[220,120,20]]);
-    const cw=(W-mx*2-3*(cards.length-1))/cards.length;cards.forEach((c,i)=>{const x=mx+i*(cw+3);doc.setFillColor(248,250,252);doc.setDrawColor(210,225,215);doc.roundedRect(x,top,cw,17,2,2,'FD');doc.setFillColor(...c[2]);doc.rect(x,top,cw,2,'F');sf(11,true,c[2]);doc.text(c[1],x+cw/2,top+9,{align:'center'});sf(6,false,[100,116,139]);doc.text(c[0],x+cw/2,top+14,{align:'center'});});
+    const cw=(W-mx*2-3*(cards.length-1))/cards.length;cards.forEach((c,i)=>{const x=mx+i*(cw+3);doc.setFillColor(248,250,252);doc.setDrawColor(210,225,215);doc.roundedRect(x,top,cw,8,1.2,1.2,'FD');doc.setFillColor(...c[2]);doc.rect(x,top,0.9,8,'F');sf(9.5,true,c[2]);doc.text(c[1],x+2.6,top+5.4);sf(5.8,false,[100,116,139]);doc.text(c[0],x+cw-2,top+5.2,{align:'right'});});
     const meaningfulDriller=p=>{const name=drillerName(p.item_id);return name&&normalizedLabel(name)!=='NAO INFORMADO';};
     const showDriller=wells.some(meaningfulDriller),showPaymentDate=wells.some(p=>Boolean(V(p,'data_pagamento')));
     const columns=[
@@ -784,7 +784,7 @@
     const tableHead=columns.map(column=>column.label),body=wells.map(p=>columns.map(column=>column.value(p)));
     const statusColumn=columns.findIndex(column=>column.key==='payment'),totalWeight=columns.reduce((sum,column)=>sum+column.weight,0);
     const columnStyles=Object.fromEntries(columns.map((column,index)=>[index,{cellWidth:253*column.weight/totalWeight,...(column.align?{halign:column.align}:{})}]));
-    doc.autoTable({startY:top+22,tableWidth:253,head:[tableHead],body,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:7,cellPadding:1.8,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[248,252,248]},columnStyles,didParseCell:d=>{if(d.section==='body'&&d.column.index===statusColumn){const paid=String(d.cell.raw)==='PAGO';d.cell.styles.textColor=paid?[5,150,105]:[217,119,6];d.cell.styles.fontStyle='bold';}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
+    doc.autoTable({startY:top+11,tableWidth:253,head:[tableHead],body,margin:{left:mx,right:mx,top,bottom:H-(bottom-1)},styles:{fontSize:7,cellPadding:1.8,overflow:'linebreak',textColor:[30,41,59],lineColor:[203,213,225],lineWidth:.1},headStyles:{fillColor:[13,34,64],textColor:[255,255,255],fontStyle:'bold',fontSize:7},alternateRowStyles:{fillColor:[248,252,248]},columnStyles,didParseCell:d=>{if(d.section==='body'&&d.column.index===statusColumn){const paid=String(d.cell.raw)==='PAGO';d.cell.styles.textColor=paid?[5,150,105]:[217,119,6];d.cell.styles.fontStyle='bold';}},didDrawPage:d=>{if(d.pageNumber>1)header();footer();}});
     let y=doc.lastAutoTable.finalY+5;
     if(showDriller){
       if(y+24>bottom){doc.addPage();header();footer();y=top;}

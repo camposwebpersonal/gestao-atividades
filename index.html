@@ -16,16 +16,17 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=7a75381f">
-<link rel="modulepreload" href="js/modulos.js?v=27e1b644">
+<link rel="modulepreload" href="js/modulos.js?v=cce3d9ae">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=92387ef1"></script>
-<script src="js/controle-contas.js?v=50b130fe"></script>
-<script src="js/cadastro-links.js?v=bd6a96d3"></script>
-<script src="js/contas-relatorio.js?v=91b66e46"></script>
+<script src="js/controle-contas.js?v=2a9e925b"></script>
+<script src="js/pdf-layout.js?v=1bbcee81"></script>
+<script src="js/cadastro-links.js?v=f71171ad"></script>
+<script src="js/contas-relatorio.js?v=86116671"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
 <style>
@@ -437,7 +438,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
-<link rel="stylesheet" href="css/contas-relatorio.css?v=de651a4e">
+<link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
+<link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
@@ -530,16 +532,16 @@ import {uploadDurableImage} from './js/image-storage.js?v=cc738610';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=bdf11a1f';
 import './js/multi-nest.js?v=c1b0b758';
 import './js/defesa-civil-questionarios.js?v=71b92b8e';
-import './js/modulos.js?v=27e1b644';
+import './js/modulos.js?v=cce3d9ae';
 import './js/water-points.js?v=cef20c53';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
-import {generateDemandPdf} from './js/demand-pdf.js?v=6face68f';
-import {reportDateTime} from './js/demand-report.js?v=b5067016';
-import {customFields,controlFields,commonValues} from './js/record-fields.js?v=7d06bf83';
-import {drawRecordsTable,drawCommonBox} from './js/pdf-records.js?v=3a5d6328';
+import {generateDemandPdf} from './js/demand-pdf.js?v=4ca7d14d';
+import {reportDateTime} from './js/demand-report.js?v=6dd9af8a';
+import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=0272fbfa';
+import {drawRecordsTable,drawCommonBox,drawCompactHeader} from './js/pdf-records.js?v=eeeb503f';
 import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=ebb1b069';
 import './js/group-extras.js?v=0461764f';
@@ -554,7 +556,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=670f5d51';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=e33c0d12';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -919,7 +921,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=f556fc90';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=2e7ae647';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1701,7 +1703,9 @@ window.openActivity=function(secId){
   const hasValue=new Map();
   const isInternal=k=>{
     if(String(k).startsWith('item_show_')||String(k).startsWith('show_')||String(k).startsWith('_'))return true;
-    if(['cadastro_id','cadastro_grupo','contas_local_id','seguro_local_id','agrupador'].includes(k))return true; // ligação cadastro ↔ controles
+    // Dados internos (autoria, auditoria, sincronização, marcações de verba/doc/licitação, ligações):
+    // nunca viram coluna. Verba/Documentação/Licitação só entram pelas colunas próprias do grupo.
+    if(isSystemKey(k))return true;
     return ['id','extra_fields','description','observacao','responsaveis','secretaria_id','item_icon','item_color','concluded','conclusion_date','status','show_conclusion_date','order_num','created_at','updated_at','atividade_id','item_id','parent_id','parent_type','auto_concluded','cover_url','resp_url','deadline_date','start_date'].includes(k);
   };
   allTpls.forEach(t=>{
@@ -1724,7 +1728,12 @@ window.openActivity=function(secId){
   });
   // Helper para ler o valor de um campo em qualquer entidade (item/subitem),
   // tolerando variações de espaço/acentuação/maiúsculas na chave salva.
+  // Verba / Origem da verba / Documentação / Licitação: colunas com nome legível, só quando o grupo
+  // (ou o próprio lançamento) as habilita e há valor — nunca "item_show_…" nem "0".
+  const _CTRL_COLS={'Verba':'verba','Origem da verba':'origem_verba','Documentação':'documentacao','Licitação':'licitacao'};
+  const _ctrlVal=(ent,fn)=>{const k=_CTRL_COLS[fn];if(!k)return undefined;const isSub=!!ent.item_id;return (controlFields(ent,sec,isSub).find(f=>f.key===k)||{}).value||'';};
   const _tblFieldVal=(ent,fn)=>{
+    if(_CTRL_COLS[fn])return _ctrlVal(ent,fn);
     const ef=ent.extra_fields||{};
     if(ef[fn]!=null)return ef[fn];
     if(ent[fn]!=null)return ent[fn];
@@ -1734,6 +1743,7 @@ window.openActivity=function(secId){
     return undefined;
   };
   const tableFields=[...fieldLabelByNorm.entries()].filter(([nk])=>hasValue.get(nk)).map(([,label])=>label);
+  Object.keys(_CTRL_COLS).forEach(lbl=>{if(allEntities.some(e=>_ctrlVal(e,lbl)))tableFields.push(lbl);});
   const useTableAtiv=tableModeAtiv&&(tableFields.length>0||items.length>0);
   const hasResumoField=tableFields.some(f=>_normFieldKey(f)==='mês')&&tableFields.some(f=>_normFieldKey(f)==='remuneração');
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
@@ -3416,9 +3426,11 @@ async function _gerarPdfCore(secId,opts){
   toast('Gerando PDF\u2026','info',8000);
   const{jsPDF}=window.jspdf;
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
-  const useTable=opts.tableMode&&opts.efFields&&opts.efFields.length>0;
+  // Layout escolhido na janela do PDF: Tabela (um campo por coluna) ou Blocos (N por linha, campos corridos ou em N colunas).
+  const layoutMode=opts.layout||(opts.tableMode?'tabela':'blocos');
+  const useTable=layoutMode==='tabela'&&opts.efFields&&opts.efFields.length>0;
   const totalCols=(useTable?5:(_cp?5:2))+(opts.efFields?opts.efFields.length:0);
-  const useLandscape=totalCols>6;
+  const useLandscape=opts.orientation==='landscape'?true:opts.orientation==='portrait'?false:(useTable?totalCols>6:(Number(opts.perRow)||1)>2);
   let doc=new jsPDF({orientation:useLandscape?'landscape':'portrait',unit:'mm',format:'a4'});(window.safePdf||(d=>d))(doc);
   const W=useLandscape?297:210,H=useLandscape?210:297,mx=14,cw=W-mx*2;
   const HDR_H=27,FTR_Y=H-13,FTR_H=13,BODY_TOP=HDR_H+4,BODY_BOT=FTR_Y-3;
@@ -3472,74 +3484,27 @@ async function _gerarPdfCore(secId,opts){
   let actRespD=null;
   if(opts.actResp&&sec.resp_url){try{actRespD=await loadB64(sec.resp_url,'jpeg',120);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
 
-  // ── Title block ──
-  doc.setFillColor(15,23,42);doc.rect(mx,y,cw,1.2,'F');y+=4;
-  sf(17,true,[15,23,42]);doc.text(sec.name||'ATIVIDADE',mx,y+9);
-  let titleBot=y+14;
+  // ── Cabeçalho COMPACTO (regra permanente): título, números e barrinha discreta numa faixa de ~11 mm ──
   if(covD){
-    const covW=58,covMaxH=44,ar=covD.w/covD.h;
-    let iW=covW,iH=covW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}
-    try{doc.addImage(covD.d,'JPEG',W-mx-iW,y-2,iW,iH);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}
-    titleBot=Math.max(titleBot,y-2+iH+2);
+    const covMaxW=30,covMaxH=20,ar=covD.w/covD.h;let iW=covMaxW,iH=covMaxW/ar;if(iH>covMaxH){iH=covMaxH;iW=covMaxH*ar;}
+    try{doc.addImage(covD.d,'JPEG',W-mx-iW,y,iW,iH);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}
   }
-  y=titleBot;
-
-  // ── Responsáveis ──
-  if(sec.responsaveis){
-    chk(12);
-    const rL=doc.splitTextToSize(sec.responsaveis,cw-38);
-    const rH=Math.max(10,rL.length*lhf(10)+5);
-    doc.setFillColor(241,245,249);doc.rect(mx,y,cw,rH,'F');
-    doc.setFillColor(59,130,246);doc.rect(mx,y,2.5,rH,'F');
-    sf(10,true,[15,23,42]);doc.text('Responsáveis:',mx+5,y+6);
-    sf(10,false,[30,41,59]);doc.text(rL,mx+38,y+6);
-    if(actRespD){const rs=Math.min(rH-2,11),rw=rs*(actRespD.w/actRespD.h);try{doc.addImage(actRespD.d,'JPEG',W-mx-rw-2,y+(rH-rs)/2,rw,rs);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
-    y+=rH+3;
-  }
-
-  // ── Observações ──
-  if(sec.observacoes){
-    chk(14);
-    const oL=doc.splitTextToSize(sec.observacoes,cw-8);
-    const oH=Math.max(12,oL.length*lhf(10)+7);
-    doc.setFillColor(248,250,252);doc.setDrawColor(203,213,225);doc.setLineWidth(0.2);doc.rect(mx,y,cw,oH,'FD');
-    doc.setFillColor(245,158,11);doc.rect(mx,y,2.5,oH,'F');
-    sf(10,true,[146,64,14]);doc.text('Observações:',mx+5,y+6);
-    sf(10,false,[71,85,105]);doc.text(oL,mx+5,y+6+lhf(10));
-    y+=oH+3;
-  }
-
-  y+=2;
+  const hdrW=covD?cw-34:cw;
+  const hdrStats=_cp?[{label:'itens',value:totalItems,color:[37,99,235]},{label:'concluídos',value:concludedItems,color:[22,128,74]},{label:'pendentes',value:pendingItems,color:[55,71,89]},overdueCount?{label:'atrasados',value:overdueCount,color:[185,28,28]}:null,subTotal?{label:'subitens ('+subConc+' concl.)',value:subTotal,color:[55,71,89]}:null]:[{label:'itens',value:totalItems,color:[37,99,235]},subTotal?{label:'subitens',value:subTotal,color:[55,71,89]}:null];
+  y=drawCompactHeader(doc,mx,y,hdrW,sec.name||'ATIVIDADE',hdrStats,_cp?pctGeral:null);
+  const txtBox=(label,text,clr)=>{
+    if(!text)return;sf(7.6,false,[30,41,59]);
+    const L=doc.splitTextToSize(text,hdrW-28);const h=Math.max(5,L.length*lhf(7.6)+2);chk(h);
+    doc.setFillColor(...clr);doc.rect(mx,y,0.9,h,'F');sf(7.6,true,[15,23,42]);doc.text(label,mx+2.2,y+3.4);sf(7.6,false,[30,41,59]);doc.text(L,mx+26,y+3.4);
+    if(label==='Responsáveis:'&&actRespD){const rs=Math.min(h,8),rw=rs*(actRespD.w/actRespD.h);try{doc.addImage(actRespD.d,'JPEG',mx+hdrW-rw,y,rw,rs);}catch(e){console.warn('PDF: falha ao preparar imagem',e);}}
+    y+=h+1;
+  };
+  txtBox('Responsáveis:',sec.responsaveis,[59,130,246]);
+  txtBox('Observações:',sec.observacoes,[245,158,11]);
+  if(covD)y=Math.max(y,BODY_TOP+21);
+  y+=1;
 
   if(_cp){
-  // ── Stats boxes ──
-  chk(22);
-  const cw4=(cw-9)/4;
-  [{v:String(totalItems),l:'Total Itens',c:[59,130,246]},{v:String(concludedItems),l:'Concluídos',c:[34,197,94]},{v:String(pendingItems),l:'Pendentes',c:[96,165,250]},{v:String(overdueCount),l:'Atrasados',c:[239,68,68]}].forEach((card,i)=>{
-    const cx=mx+i*(cw4+3);
-    doc.setFillColor(255,255,255);doc.setDrawColor(203,213,225);doc.setLineWidth(0.2);doc.roundedRect(cx,y,cw4,17,2,2,'FD');
-    doc.setFillColor(...card.c);doc.roundedRect(cx,y,cw4,3,1,1,'F');
-    sf(13,true,card.c);doc.text(card.v,cx+cw4/2,y+10,{align:'center'});
-    sf(8,false,[71,85,105]);doc.text(card.l,cx+cw4/2,y+15,{align:'center'});
-  });
-  y+=21;
-
-  // ── Sub-itens ──
-  if(subTotal>0){
-    chk(9);sf(10,true,[40,60,90]);
-    doc.text('Sub-itens: '+subConc+'/'+subTotal+' concluídos ('+Math.round(subConc/subTotal*100)+'%)',mx,y+6);
-    y+=9;
-  }
-
-  // ── Progresso geral ──
-  chk(15);
-  const barClr=pctGeral===100?[34,197,94]:[59,130,246];
-  doc.setFillColor(226,232,240);doc.roundedRect(mx,y,cw,10,2,2,'F');
-  if(pctGeral>0){doc.setFillColor(...barClr);doc.roundedRect(mx,y,cw*pctGeral/100,10,2,2,'F');}
-  const barTxtClr=pctGeral<15?[30,50,90]:[255,255,255];
-  sf(10,true,barTxtClr);doc.text('Progresso Geral: '+pctGeral+'%',W/2,y+7,{align:'center'});
-  y+=15;
-
   // ── Ranking ──
   if(opts.showRanking&&itemProgs.length>0){
     chk(16);
@@ -3564,7 +3529,6 @@ async function _gerarPdfCore(secId,opts){
     y+=3;
   }
 
-  y+=3;
   } // end _cp stats
 
   // ── Resumo por Campos Personalizados ──
@@ -3580,7 +3544,8 @@ async function _gerarPdfCore(secId,opts){
       // Card Separados
       opts.efFields.forEach(fn=>{const sp=calcSum(fn,s=>{const v=_efv(s,opts.sepField);return v&&String(v).trim()===opts.sepVal;});if(sp.count>0)allCards.push({v:'R$ '+sp.total.toLocaleString('pt-BR',{minimumFractionDigits:2}),l:sp.count+' cadastro(s)  •  '+fn,c:[139,92,246],title:opts.sepField.toUpperCase()+': '+opts.sepVal});});
     }
-    if(allCards.length){const cW=allCards.length>0?(cw-(Math.min(allCards.length,2)-1)*3)/Math.min(allCards.length,2):cw;let cardY=y;allCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=19;const cx=mx+col*(cW+3);chk(19);doc.setFillColor(255,255,255);doc.setDrawColor(203,213,225);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cW,17,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cW,3,1,1,'F');sf(13,true,card.c);doc.text(card.v,cx+cW/2,cardY+9,{align:'center'});if(card.title){sf(8.5,true,card.c);doc.text(card.title,cx+cW/2,cardY+13,{align:'center'});sf(7,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+16,{align:'center'});}else{sf(7.5,false,[71,85,105]);doc.text(card.l,cx+cW/2,cardY+14,{align:'center'});}});y=cardY+19+2;}
+    // Totais em fichas compactas (até 3 por linha, 8 mm de altura) — nunca blocos grandes no topo.
+    if(allCards.length){const per=Math.min(allCards.length,3),cW=(cw-(per-1)*2.5)/per;let cardY=y;allCards.forEach((card,i)=>{const col=i%per;if(col===0&&i>0)cardY+=9.5;const cx=mx+col*(cW+2.5);chk(9.5);doc.setFillColor(248,250,252);doc.setDrawColor(214,224,231);doc.setLineWidth(0.15);doc.roundedRect(cx,cardY,cW,8,1.2,1.2,'FD');doc.setFillColor(...card.c);doc.rect(cx,cardY,0.9,8,'F');sf(9,true,card.c);doc.text(card.v,cx+2.6,cardY+5.3);sf(6.4,false,[71,85,105]);const lab=((card.title?card.title+' · ':'')+card.l);const vw=doc.getTextWidth(card.v);doc.text(doc.splitTextToSize(lab,Math.max(20,cW-vw-12))[0]||'',cx+cW-1.6,cardY+5.1,{align:'right'});});y=cardY+9.5+1;}
   }
 
   // Identifica campos numéricos selecionados
@@ -3606,9 +3571,6 @@ async function _gerarPdfCore(secId,opts){
   // ── Tabela de itens ──
   if(!opts.onlySep){
   chk(14);
-  doc.setFillColor(15,23,42);doc.roundedRect(mx,y,cw,11,2,2,'F');
-  sf(12.5,true,[255,255,255]);doc.text('ITENS DA ATIVIDADE',mx+5,y+7.5);
-  y+=14;
 
   let tblH,tblB=[],tblE=[];
   let rowNum=0;
@@ -3721,9 +3683,19 @@ async function _gerarPdfCore(secId,opts){
     const common=commonValues(mainRecs.map(r=>({fields:r.fields})));
     if(common.length){mainRecs.forEach(r=>{r.fields=r.fields.filter(f=>!common.some(c=>c.label===f.label&&c.value===f.value));});chk(10);y=drawCommonBox(doc,mx,y,cw,common,'Comum a todos os itens')+3;}
     const thumbs=await Promise.all(thumbSrc.map(list=>Promise.all(list.map(u=>loadB64(u,'jpeg',140).catch(()=>null))).then(r=>r.filter(Boolean))));
-    drawRecordsTable(doc,recs,{startY:y,width:cw,thumbs,headColor:[15,61,49],head:['Nº',_cp?'ITEM, SITUAÇÃO E INFORMAÇÕES':'ITENS E INFORMAÇÕES'],margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},onPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
+    drawRecordsTable(doc,recs,{startY:y,width:cw,thumbs,perRow:Number(opts.perRow)||1,fieldCols:Number(opts.fieldCols)||0,headColor:[15,61,49],head:['Nº',_cp?'ITEM, SITUAÇÃO E INFORMAÇÕES':'ITENS E INFORMAÇÕES'],margin:{left:mx,right:mx,top:BODY_TOP,bottom:H-FTR_Y+4},onPage:data=>{if(data.pageNumber>1){cabecalho();pageNum=data.pageNumber;}rodape();}});
   }
   if(useTable){
+  // Nunca espremer texto: colunas sem nenhum valor saem; "Item / Descrição" tem largura mínima garantida
+  // e as demais dividem o resto (com mínimo legível).
+  {const cellTxt=c=>String(c&&typeof c==='object'?(c.content??''):(c??'')).trim().replace(/^[\u2014-]$/,'');
+   const isData=r=>{const c0=cellTxt(r[0]);return r.length===tblH[0].length&&!/^[\u2211\u03a3]/.test(c0)&&r.some((c,i)=>i>0&&cellTxt(c));};
+   const dataRows=tblB.filter(isData);
+   const drop=new Set();for(let ci=2;ci<tblH[0].length;ci++){if(!dataRows.some(r=>cellTxt(r[ci])))drop.add(ci);}
+   if(drop.size){tblH=[tblH[0].filter((_,i)=>!drop.has(i))];tblB=tblB.map(r=>r.length===tblH[0].length+drop.size?r.filter((_,i)=>!drop.has(i)):r);}
+   Object.keys(colStyles).forEach(k=>delete colStyles[k]);
+   colStyles[0]={cellWidth:10,halign:'center'};colStyles[1]={cellWidth:Math.min(58,cw*(tblH[0].length>7?0.24:0.32))};
+   for(let ci=2;ci<tblH[0].length;ci++)colStyles[ci]={cellWidth:'auto',minCellWidth:16};}
   const iDims=await Promise.all(tblE.map(async e=>({
     cd:e.cu?await loadB64(e.cu,'jpeg',150).catch(()=>null):null,
     rd:e.ru?await loadB64(e.ru,'jpeg',120).catch(()=>null):null
@@ -3881,13 +3853,11 @@ async function _gerarPdfCore(secId,opts){
   }
 
   // ── Bloco PROGRESSO GERAL final ──
-  y=doc.lastAutoTable?doc.lastAutoTable.finalY+5:y;chk(26);
-  const blkC=pctGeral===100?[34,197,94]:[15,23,42];
-  doc.setFillColor(...blkC);doc.roundedRect(mx,y,cw,18,3,3,'F');
-  doc.setFillColor(59,130,246);doc.rect(mx,y,5,18,'F');
-  sf(11,true,[255,255,255]);doc.text('PROGRESSO GERAL DA ATIVIDADE',mx+9,y+8);
-  sf(9.5,false,[203,213,225]);doc.text(sec.name||'',mx+9,y+14.5);
-  sf(18,true,pctGeral===100?[220,240,255]:[59,130,246]);doc.text(pctGeral+'%',W-mx,y+13,{align:'right'});
+  // Fecho discreto (linha fina), nunca um bloco grande.
+  y=doc.lastAutoTable?doc.lastAutoTable.finalY+3:y;chk(7);
+  doc.setFillColor(226,232,240);doc.roundedRect(mx,y,cw,1.2,0.6,0.6,'F');
+  if(pctGeral>0){doc.setFillColor(...(pctGeral===100?[34,160,94]:[59,130,246]));doc.roundedRect(mx,y,cw*pctGeral/100,1.2,0.6,0.6,'F');}
+  sf(6.5,true,[55,71,89]);doc.text('Progresso geral: '+pctGeral+'%',W-mx,y+4.2,{align:'right'});
   } // end _cp final
 
   // ── Numeração total (X/Y) ──
@@ -4692,7 +4662,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
   let y=BODY_TOP,pageNum=1;
   const chk=n=>{if(y+n>BODY_BOT){rodape();doc.addPage();pageNum++;cabecalho();y=BODY_TOP;}};
   cabecalho();
-  chk(18);doc.setFillColor(13,34,64);doc.roundedRect(mx,y,cw,14,2,2,'F');sf(12,true,[255,255,255]);doc.text(sec.name||'',mx+6,y+6);sf(8,false,[180,210,255]);doc.text('Relatório por: '+fieldName+'  •  '+now,mx+6,y+11.5);y+=18;
+  chk(10);sf(10.5,true,[13,34,64]);doc.text(sec.name||'',mx,y+4.5);sf(7,false,[71,85,105]);doc.text('Relatório por: '+fieldName+'  •  '+now,W-mx,y+4.5,{align:'right'});doc.setFillColor(13,34,64);doc.rect(mx,y+6,cw,0.4,'F');y+=8.5;
   const items=[...S.items.filter(i=>i.atividade_id===secId)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   const tpls=S.fieldTemplates.filter(t=>t.atividade_id===secId&&t.scope==='item');
   const groups=new Map();
@@ -4731,6 +4701,7 @@ window.gerarPdfRelatorio=async function(secId,fieldName){
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-item-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos itens</label>
       <label style="display:flex;align-items:center;gap:9px;font-size:13px;color:#e2e8f0;cursor:pointer"><input type="checkbox" id="popt-sub-resp" checked style="accent-color:#10b981;width:15px;height:15px"> Fotos dos responsáveis dos subitens</label>
     </div>
+    <div class="pl-box"><div class="pl-title">🧩 Layout do PDF</div><div id="popt-layout"></div></div>
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;background:#0a1222;border-radius:10px;border:1px solid #1e3a5f;margin-bottom:16px;flex-shrink:0">
       <div style="font-size:11px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">📋 Campos Personalizados</div>
       <div style="font-size:12px;color:#64748b;margin-bottom:4px">Marque os campos extras para exibir no PDF.</div>
@@ -4822,6 +4793,7 @@ function abrirPdfOpts(secId){
     efList.innerHTML=html?'<div class="popt-ef-tools"><button type="button" onclick="poptEfAll(true)">Marcar todos</button><button type="button" onclick="poptEfAll(false)">Desmarcar todos</button></div>'+html:'<span class="popt-ef-none">Este grupo não tem campos personalizados.</span>';
   }
   ['popt-show-created','popt-show-updated'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  window.pdfLayout?.open(secId);
   window.pdfPicker?.render(document.getElementById('popt-pick'),secId);
   // Popular separação por campo
   const sepField=document.getElementById('popt-sep-field');
@@ -4860,6 +4832,7 @@ function confirmarGerarPdf(){
     showCreated:document.getElementById('popt-show-created')?.checked===true,
     showUpdated:document.getElementById('popt-show-updated')?.checked===true
   };
+  Object.assign(opts,window.pdfLayout?.read()||{});
   const pick=window.pdfPicker?.read(document.getElementById('popt-pick'))||{};
   if(pick.error){(window.toast||toast)(pick.error,'error',6000);document.querySelector('#popt-pick .pdf-pick-list')?.scrollIntoView({block:'nearest'});return;}
   opts.scope=pick.scope||'todos';opts.pickIds=pick.pickIds||null;
@@ -5399,10 +5372,10 @@ async function gerarPdfBusca(){
   (qtFields||[]).forEach(qt=>{const totalCount=Object.values(qt.vals).reduce((a,b)=>a+b,0)+(qt.vazio||0);if(totalCount>0)allStatCards.push({v:String(totalCount),l:'Total cadastros '+qt.field,c:[56,189,248]});});
   const cardW=allStatCards.length>0?(cw-(Math.min(allStatCards.length,2)-1)*3)/Math.min(allStatCards.length,2):cw;
   let cardY=y;
-  allStatCards.forEach((card,i)=>{const row=Math.floor(i/2);const col=i%2;if(col===0&&i>0)cardY+=17;const cx=mx+col*(cardW+3);chk(17);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.2);doc.roundedRect(cx,cardY,cardW,15,2,2,'FD');doc.setFillColor(...card.c);doc.roundedRect(cx,cardY,cardW,2.5,1,1,'F');sf(11,true,card.c);doc.text(card.v,cx+cardW/2,cardY+9,{align:'center'});sf(6.5,false,[100,116,139]);doc.text(card.l,cx+cardW/2,cardY+13,{align:'center'});});
-  y=cardY+17+2;
-  // Table header
-  chk(12);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,9,2,2,'F');sf(10,true,[255,255,255]);doc.text('ITENS E SUBITENS ENCONTRADOS',mx+5,y+6.5);y+=13;
+  allStatCards.forEach((card,i)=>{const col=i%2;if(col===0&&i>0)cardY+=9.5;const cx=mx+col*(cardW+3);chk(9.5);doc.setFillColor(248,250,252);doc.setDrawColor(215,225,235);doc.setLineWidth(0.15);doc.roundedRect(cx,cardY,cardW,8,1.2,1.2,'FD');doc.setFillColor(...card.c);doc.rect(cx,cardY,0.9,8,'F');sf(9.5,true,card.c);doc.text(card.v,cx+2.6,cardY+5.4);sf(6,false,[100,116,139]);doc.text(card.l,cx+cardW-2,cardY+5.2,{align:'right'});});
+  y=allStatCards.length?cardY+9.5+1:y;
+  // Table header (faixa fina)
+  chk(8);doc.setFillColor(20,82,20);doc.roundedRect(mx,y,cw,6,1.2,1.2,'F');sf(8,true,[255,255,255]);doc.text('ITENS E SUBITENS ENCONTRADOS',mx+3,y+4.2);y+=7.5;
   // Build rows
   let tblH,tblB=[],tblE=[],c=1;
   if(useTable){

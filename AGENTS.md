@@ -287,6 +287,27 @@
   dentro de "✏️ Editar" (caixa `#s-ctrl-pend`), não como botão na barra da tela do grupo (pedido do
   usuário em 17/11/2026).
 
+## PDFs: cabeçalho COMPACTO e layout escolhido pelo usuário (regra permanente, 19/11/2026)
+
+- Nenhum PDF gasta meia folha no topo. Título, números (itens, concluídos, pendentes, atrasados…) e
+  percentual ficam numa faixa fina (`drawCompactHeader` em js/pdf-records.js: ~11 mm, fichas baixas,
+  barrinha de 1,2 mm). Cards de resumo têm no máximo ~8 mm de altura (número à esquerda, rótulo à direita):
+  `drawKpis`, modulos.js, contas, licitações, extintores, poços, BCC, relatório por campo. Nada de faixa
+  "ITENS DA ATIVIDADE" nem bloco grande de "Progresso geral" no fim (só uma linha fina). Vale para todo PDF novo.
+- Janela "Opções do PDF" › 🧩 Layout do PDF (`js/pdf-layout.js` + `css/pdf-layout.css`): Orientação
+  (Automática/Retrato/Paisagem), Formato (Blocos / Tabela = um campo por coluna), Blocos por linha (1–4) e
+  Campos dentro do bloco (corridos ou 1–4 colunas), com miniatura da folha que muda na hora; a escolha fica
+  lembrada por grupo (localStorage `pdf-layout:<grupo>`). Motor: `drawRecordsTable` (perRow → `drawRecordsGrid`,
+  fieldCols → `recordLayout`). Na Tabela, colunas vazias saem e "Item / Descrição" tem largura garantida.
+  Teste: `tests/pdf-layout.browser.cjs` (390 e 1366).
+
+## Colunas e campos internos nunca aparecem (regra permanente, 19/11/2026)
+
+- created_by, created_by_name, updated_by, updated_by_name, audit_*, sync_at, item_show_*, show_*, verba,
+  documentacao, licitacao, ligações de cadastro: nunca viram coluna, card ou linha de PDF (a tabela da tela usa
+  `isSystemKey` de js/record-fields.js). Verba / Origem da verba / Documentação / Licitação aparecem só com esses
+  nomes e SÓ quando estão marcados na edição do grupo (`controlFields`); desmarcados = nunca aparecem, nem "0".
+
 ## Datas: o dia digitado é o dia mostrado, sempre (regra permanente do usuário, 17/11/2026)
 
 - "A data que eu colocar e que estiver aparecendo na tela é a data que vai aparecer em tudo." Fuso
@@ -338,7 +359,9 @@
   "Total de FEV/2025" embaixo (tela e PDF). Aba "🏢 Cadastro dos locais": um local por linha agrupado por
   secretaria, com Conta contrato, Relógio/medidor, Endereço, Distrito, Prédio do município e demais
   campos (grafias diferentes do mesmo campo unificadas; flags internas ocultas), "não informado" em
-  vermelho quando falta conta contrato, contas lançadas (quantidade + última) e PDF com a mesma estrutura.
+  vermelho quando falta conta contrato, contas lançadas (quantidade + última) e PDF com a mesma estrutura. Desde 19/11/2026 em BLOCOS COMPACTOS
+  (estilo do PDF dos cadastros): número, nome do local e, embaixo, "RÓTULO: valor" corrido; PDF usa o mesmo
+  motor de blocos e o último layout escolhido.
 
 ## Cadastro único ↔ lançamentos (regra permanente, 18/11/2026)
 
@@ -351,17 +374,27 @@
   SEGUROS) → `cadastro_id` + `cadastro_grupo` (+ "Outro nome" = nome antigo); item do cadastro →
   `contas_local_id`. Resumos sem estabelecimento (OUTROS, ILUMINAÇÃO PÚBLICA, POÇOS…) → `agrupador: true`.
   Essas chaves são internas: nunca aparecem em tabela/card/PDF (`record-fields.js`, `isInternal` do index).
+- O CADASTRO É O CORAÇÃO (regra do usuário, 19/11/2026): todo cadastro (prédio, local, escola, veículo,
+  trator, caminhão, pessoa…) guarda TODAS as informações daquela coisa, sem faltar nada; Controle de Contas,
+  Seguros, multas e qualquer controle PUXAM de lá. Em 19/11/2026 todos os campos preenchidos dos locais e
+  veículos ligados foram copiados para os cadastros (conta contrato, relógio, distrito, prédio do município…)
+  e cada grupo de cadastro ganhou os modelos de campo (field_templates) que faltavam — assim os campos
+  aparecem no formulário, na tabela e na janela do PDF. Salvar um local no controle grava tudo também no
+  cadastro (`_ccSyncCadastro`); a janela do local mostra os dados do cadastro.
 - `js/cadastro-links.js`: `hydrate(S)` roda no `loadData`; o nome exibido no controle é o do cadastro
-  (veículo: "ÔNIBUS - PGG7965"); `fields(rec)` = campos do próprio controle (mais recentes: vigência
-  renovada, conta contrato) + todos os do cadastro. Ligações ficam em WeakMap (`cad`, `linked`, `ownName`),
+  (veículo: "ÔNIBUS - PGG7965"); `fields(rec)` = todos os campos do CADASTRO primeiro + os do controle
+  só no que o cadastro não tiver (renovação de apólice e conta contrato gravam nos dois). Ligações ficam em WeakMap (`cad`, `linked`, `ownName`),
   nunca como propriedade do registro (viraria coluna nas tabelas).
 - Controle de Contas/Seguros: ligados com selo "🔗 cadastro"; não ligados/resumos com 📦 no fim e, no
   relatório, no bloco "📦 CONTAS SEM ESTABELECIMENTO CADASTRADO". "Novo local/veículo" oferece "Puxar do
   cadastro" (só os ainda sem ligação); sem escolha, cria também no cadastro (sem duplicar: mesmo nome ou
   mesma placa reaproveita). Renomear no controle renomeia o cadastro; conta contrato e renovação de apólice
   gravam nos dois. Reconciliação de 18/11/2026: 156 locais + 44 veículos ligados, 0 duplicados criados.
-- PESSOAS (`cad-pessoas`, ADMINISTRAÇÃO › Cadastros, 18/11/2026): ficha única ligada a BCCS, CONTROLE DE
-  EMPREGOS / VEREADORES, TAXISTAS, MINHA CASA MINHA VIDA e VIGIAS (registro da lista → `cadastro_id`). Mesma
+- PESSOAS (`cad-pessoas`, ADMINISTRAÇÃO › Cadastros): SÓ SERVIDORES EFETIVOS E COMISSIONADOS (regra do
+  usuário, 19/11/2026: "as pessoas normais na cidade não entram em cadastro"). Fonte = `pms_pessoas_fontes()`:
+  CONTROLE DE EMPREGOS / VEREADORES › itens "FOLHA OFICIAL - …" com Vínculo = 1 (efetivos e cargos CC/AP) e
+  vigias com vínculo EFETIVO/COMISSIONADO. BCCS, contratados por secretaria, taxistas e beneficiários NÃO entram.
+  Migração 20261118180000 refaz a carga com essa regra (Vínculo 2 = a confirmar com o usuário). Mesma
   pessoa = mesmo CPF ou, sem CPF, mesmo nome (`pms_nome_chave`: sem acento/parênteses). Na ficha só entram
   identificação e contato (CPF, RG, NIS, CNH, telefone, endereço, localidade); salário, função, indicação ficam
   só na lista de origem. `pms_pessoas_sync()` (migração 20261118170000) é idempotente, não dispara WhatsApp e

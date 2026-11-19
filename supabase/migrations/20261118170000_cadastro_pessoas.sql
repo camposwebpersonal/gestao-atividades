@@ -1,6 +1,5 @@
 -- Cadastro único de PESSOAS (ADMINISTRAÇÃO › Cadastros › PESSOAS).
--- As listas que guardam pessoas (BCCS, Controle de Empregos/Vereadores, Taxistas, Minha Casa Minha Vida,
--- Vigias) passam a apontar para uma ficha única da pessoa: registro da lista -> extra_fields.cadastro_id.
+-- Só servidores efetivos e comissionados (folha oficial e vigias efetivos) passam a apontar para uma ficha única da pessoa: registro da lista -> extra_fields.cadastro_id.
 -- Mesma pessoa = mesmo CPF (11 dígitos) ou, sem CPF, mesmo nome (sem acento, sem parênteses).
 -- Na ficha só entram dados de identificação/contato (CPF, RG, NIS, CNH, telefone, endereço, localidade);
 -- salário, função, indicação etc. continuam só na lista de origem (protegidos pela permissão daquele grupo).
@@ -18,6 +17,25 @@ language sql immutable set search_path to '' as $$
     '\(.*?\)|\[.*?\]','','g'),'\s+',' ','g')))
 $$;
 
+-- Quem entra no cadastro de PESSOAS: SÓ servidores EFETIVOS e COMISSIONADOS (regra do usuário, 18/11/2026).
+-- Fonte: CONTROLE DE EMPREGOS / VEREADORES › itens "FOLHA OFICIAL - …" com Vínculo = 1 (efetivos e cargos CC/AP)
+-- e LISTA DE VIGIAS com vínculo EFETIVO/COMISSIONADO. Cidadãos, taxistas, beneficiários, BCC/contratados: não.
+create or replace function public.pms_pessoas_fontes()
+returns table(tb text, id text, description text, ef jsonb, nome_pat text)
+language sql stable set search_path to '' as $$
+  select 'subitems', s.id, s.description, public.pms_jsonobj(s.extra_fields), null::text
+    from public.subitems s join public.items i on i.id = s.item_id
+   where s.atividade_id = 'ZnUVKKdfLI1yGlZpxlWk' and i.description ilike 'FOLHA OFICIAL%'
+     and trim(coalesce(public.pms_jsonobj(s.extra_fields)->>'Vínculo','')) = '1'
+  union all
+  select 'items', i.id, i.description, public.pms_jsonobj(i.extra_fields), '^NOME COMPLETO$'
+    from public.items i
+   where i.atividade_id = '0G0krv3KnKeeYE2mGnU9'
+     and exists (select 1 from jsonb_each_text(public.pms_jsonobj(i.extra_fields)) x
+                  where upper(x.key) in ('VÍNCULO','VINCULO') and upper(x.value) ~ '(EFETIV|COMISSION)')
+$$;
+revoke all on function public.pms_pessoas_fontes() from public, anon, authenticated;
+
 create or replace function public.pms_pessoas_sync() returns jsonb
 language plpgsql set search_path to '' as $$
 declare
@@ -25,18 +43,7 @@ declare
 begin
   perform set_config('pms.whatsapp_off','on',true);
   for r in
-    with fontes(gid, tb, nome_pat, rotulo) as (values
-      ('jgAkugjzICCaH9mvx75f','subitems',null,'BCCS'),
-      ('ZnUVKKdfLI1yGlZpxlWk','subitems',null,'CONTROLE DE EMPREGOS / VEREADORES'),
-      ('321f4f48-5cb0-44a3-ba93-415dd90b9a04','items','^NOME TAXISTA$','TAXISTAS'),
-      ('1a317aaf-8362-48d0-b0e2-1b06b749c993','items','^NOME BENEFICI','MINHA CASA MINHA VIDA'),
-      ('0G0krv3KnKeeYE2mGnU9','items','^NOME COMPLETO$','VIGIAS')),
-    recs as (
-      select f.tb, s.id, s.description, public.pms_jsonobj(s.extra_fields) ef, f.nome_pat
-        from fontes f join public.subitems s on f.tb='subitems' and s.atividade_id=f.gid
-      union all
-      select f.tb, i.id, i.description, public.pms_jsonobj(i.extra_fields) ef, f.nome_pat
-        from fontes f join public.items i on f.tb='items' and i.atividade_id=f.gid)
+    with recs as (select * from public.pms_pessoas_fontes())
     select * from recs where coalesce(ef->>'cadastro_id','')='' order by tb, description
   loop
     v_nome := coalesce((select x.value from jsonb_each_text(r.ef) x where r.nome_pat is not null and upper(x.key) ~ r.nome_pat and trim(x.value)<>'' limit 1), r.description);

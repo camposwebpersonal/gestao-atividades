@@ -727,7 +727,9 @@ window.ccDeleteCategoria = async function(id, secId){
 window.ccOpenLocalModal = function(id, itemId){
   const local = id ? S.subitems.find(s=>s.id===id) : null;
   const _intKeys = window.cadastroLinks?.INTERNAL || [];
-  const ef = Object.fromEntries(Object.entries(local ? (local.extra_fields||{}) : {}).filter(([k])=>!_intKeys.includes(k)));
+  // Local ligado: o formulário mostra TODOS os dados do cadastro (o coração) + os do controle.
+  const _baseEf = local && window.cadastroLinks?.cad(local) ? window.cadastroLinks.fields(local) : (local ? (local.extra_fields||{}) : {});
+  const ef = Object.fromEntries(Object.entries(_baseEf).filter(([k])=>!_intKeys.includes(k) && !/^(item_show_|show_)/.test(k)));
   const _kind = window.cadastroLinks ? window.cadastroLinks.kindOf(curSecId) : 'locais';
   const _livres = !id && window.cadastroLinks ? window.cadastroLinks.freeLocais(_kind) : [];
   const _cadBox = window.cadastroLinks?.cad(local)
@@ -795,6 +797,11 @@ window.ccSaveLocal = async function(id, itemId){
   try{
     if(id){
       await updateDoc(doc(db,'subitems',id),data);
+      // O cadastro é o coração: tudo o que foi preenchido aqui também fica gravado lá.
+      if(window.cadastroLinks?.cad(local)){
+        const toCad = Object.fromEntries(Object.entries(newEf).filter(([k,v])=>!(window.cadastroLinks.INTERNAL||[]).includes(k) && k!=='Outro nome' && !/^(item_show_|show_)/.test(k) && String(v??'').trim()!==''));
+        if(Object.keys(toCad).length) await _ccSyncCadastro(local, toCad);
+      }
       // Nome igual nos dois lugares: renomear aqui renomeia o cadastro.
       if(window.cadastroLinks?.cad(local) && window.cadastroLinks?.cad(local).description!==name) await updateDoc(doc(db,'items',window.cadastroLinks?.cad(local).id),{description:name,updated_at:serverTimestamp()});
     } else {

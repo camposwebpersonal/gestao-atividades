@@ -84,12 +84,14 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   }
   // 🏢 Cadastro dos locais: todos os locais (com e sem conta), conta contrato/relógio e demais dados
   await page.evaluate(() => window.ccSetModo('ccx', 'cadastro'));
-  await page.waitForSelector('.ccr-cad-table');
-  const cadHead = await page.locator('.ccr-cad-table').first().locator('thead th').allTextContents();
-  assert.deepEqual(cadHead.slice(0, 3), ['Local', 'Conta contrato', 'Relógio / medidor']);
+  // blocos compactos: nome do local e, embaixo, "RÓTULO: valor" (Conta contrato primeiro)
+  await page.waitForSelector('.ccc-row');
+  const firstFields = await page.locator('.ccc-row').first().locator('.ccc-fields b').allTextContents();
+  assert.equal(firstFields[0], 'CONTA CONTRATO:');
+  assert.ok(await page.locator('.ccc-fields .bad').count() >= 1, 'falta de conta contrato em vermelho');
   const cadText = await page.textContent('.ccr-cadastro');
   for (const piece of ['ESCOLA MUNICIPAL PRESIDENTE VARGAS', '22143 - ELO 2106', 'A20N169698', 'POSTO SEM CONTA', 'não informado', '3 (última FEV/2025)', 'RUA DO CADASTRO, 10', 'CRECHE BARTOLOMEU', '🔗 ligados ao cadastro']) assert.ok(cadText.includes(piece), 'cadastro sem: ' + piece);
-  assert.doesNotMatch(cadText, /item_show|Unidade Vinculada|cadastro_id|contas_local_id|agrupador|cad1/);
+  assert.doesNotMatch(cadText, /item_show|show_|Unidade Vinculada|cadastro_id|cadastro_grupo|contas_local_id|agrupador|AGRUPADOR|cad1/);
   assert.deepEqual(await page.evaluate(() => window.__contrastAudit(document.querySelector('.ccr-cadastro'))), []);
   await page.screenshot({path: os.tmpdir() + `/ccr-cad-${W}.png`, fullPage: true});
   if (process.env.LIBS) {
@@ -121,7 +123,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
     return {name: S.subitems[0].description, own: window.cadastroLinks.ownName(S.subitems[0]), vig: f['Vigência'], ano: f.ANO, plate: window.cadastroLinks.plate(S.items[0]), keys: Object.keys(f).join(','),
       kind: window.cadastroLinks.groupForCategory('FROTA EDUCAÇÃO - MAPFRE', 'veiculos')};
   });
-  assert.deepEqual(veic, {name: 'ÔNIBUS - PGG7965', own: '15.190 EOD - PGG7965', vig: '29/07/2025 a 29/07/2026', ano: '2013', plate: 'PGG7965', keys: 'Vigência,PLACA,ANO', kind: 'e1963945-b131-4949-acfe-424dad296715'});
+  assert.deepEqual(veic, {name: 'ÔNIBUS - PGG7965', own: '15.190 EOD - PGG7965', vig: '01/01/2024 a 01/01/2025', ano: '2013', plate: 'PGG7965', keys: 'PLACA,ANO,Vigência', kind: 'e1963945-b131-4949-acfe-424dad296715'});
   assert.deepEqual(errors.filter(e => !/favicon|net::/.test(e)), []);
   console.log(`ok - relatório de contas por secretaria + PDF (${W}px)`);
   await browser.close();

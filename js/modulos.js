@@ -2,9 +2,9 @@ import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.
 import {supabase} from '../supabase_compat.js?v=7a75381f';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=6cf633ef';
-import './perfuracao-pocos.js?v=95688106';
-import './controle-extintores.js?v=a859c14d';
-import './controle-licitacoes.js?v=21ed098a';
+import './perfuracao-pocos.js?v=b87e4db0';
+import './controle-extintores.js?v=ecef3c6d';
+import './controle-licitacoes.js?v=5236e15e';
 
 /* ── SISTEMA MODULAR DE LANÇAMENTOS ── */
 const MODULOS = [
@@ -401,21 +401,22 @@ window.gerarRelatorioModulo = async function(modId){
   header();
   // ── resumo ──
   let y=38;
+  // Cabeçalho COMPACTO (regra permanente): números em fichas baixas + barrinha discreta.
   const cards=[['GRUPOS',tot.grupos,[24,98,61]],['LANÇAMENTOS',tot.itens,[15,53,43]],['CONCLUÍDOS',tot.done,[22,128,74]],['EM ANDAMENTO',tot.itens-tot.done,[29,78,137]],['ATRASADOS',tot.late,tot.late?[176,58,22]:[104,122,115]]];
-  const cw=(W-mx*2-4*3)/5;
+  const cw=(W-mx*2-4*2.5)/5;
   cards.forEach(([label,value,color],i)=>{
-    const x=mx+i*(cw+3);
-    doc.setFillColor(247,250,248);doc.setDrawColor(218,228,224);doc.setLineWidth(.2);doc.roundedRect(x,y,cw,17,1.5,1.5,'FD');
-    doc.setTextColor(...color);doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text(String(value),x+cw/2,y+8.5,{align:'center'});
-    doc.setFontSize(6.5);doc.setTextColor(78,105,96);doc.text(label,x+cw/2,y+13.8,{align:'center'});
+    const x=mx+i*(cw+2.5);
+    doc.setFillColor(247,250,248);doc.setDrawColor(218,228,224);doc.setLineWidth(.15);doc.roundedRect(x,y,cw,7.5,1.2,1.2,'FD');
+    doc.setTextColor(...color);doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.text(String(value),x+2.4,y+5.1);
+    doc.setFontSize(6.2);doc.setTextColor(78,105,96);doc.text(label,x+cw-2,y+4.9,{align:'right'});
   });
-  y+=21;
+  y+=9.5;
   if(tot.itens){
     const pct=Math.round(tot.done/tot.itens*100),bw=W-mx*2-24;
-    doc.setFillColor(226,235,231);doc.roundedRect(mx,y,bw,3,1.5,1.5,'F');
-    if(pct>0){doc.setFillColor(33,135,82);doc.roundedRect(mx,y,Math.max(3,bw*pct/100),3,1.5,1.5,'F');}
-    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text(`${pct}% concluído`,W-mx,y+2.7,{align:'right'});
-    y+=10;
+    doc.setFillColor(226,235,231);doc.roundedRect(mx,y,bw,1.2,0.6,0.6,'F');
+    if(pct>0){doc.setFillColor(33,135,82);doc.roundedRect(mx,y,Math.max(1.2,bw*pct/100),1.2,0.6,0.6,'F');}
+    doc.setTextColor(24,98,61);doc.setFont('helvetica','bold');doc.setFontSize(6.5);doc.text(`${pct}% concluído`,W-mx,y+1.4,{align:'right'});
+    y+=7;
   }else y+=3;
   // ── grupos ──
   for(const {g,items,done,late} of cheios){

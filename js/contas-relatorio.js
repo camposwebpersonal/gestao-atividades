@@ -124,7 +124,8 @@
       const locais = g.locais.map(l => {
         const vals = {};
         for (const [k, v] of Object.entries(ef(l.local))) {
-          if (HIDDEN_KEYS.some(h => norm(k).includes(norm(h))) || v == null || typeof v === 'object' || !String(v).trim()) continue;
+          const nk = norm(k).replace(/_/g, ' ');
+          if (/^(ITEM SHOW|SHOW |_)/.test(nk) || HIDDEN_KEYS.some(h => nk.includes(norm(h).replace(/_/g, ' '))) || v == null || typeof v === 'object' || !String(v).trim() || String(v).trim() === '0') continue;
           const key = canonKey(k); if (!vals[key]) vals[key] = String(v).trim();
         }
         if (!vals['Outro nome'] && window.cadastroLinks?.ownName(l.local) && norm(window.cadastroLinks?.ownName(l.local)) !== norm(l.local.description)) vals['Outro nome'] = window.cadastroLinks?.ownName(l.local);
@@ -141,43 +142,46 @@
     const missing = groups.flatMap(g => g.locais).filter(l => !l.vals['Conta contrato']).length;
     return {...base, groups, keys, missing, total: groups.reduce((s, g) => s + g.locais.length, 0)};
   }
+  // Um bloco por local, no mesmo estilo compacto do PDF dos cadastros: nome em destaque e, logo abaixo,
+  // todos os campos preenchidos em fluxo contínuo "RÓTULO: valor". Nada de colunas vazias.
+  const fieldsOf = (l, keys) => keys.filter(k => l.vals[k] || k === 'Conta contrato').map(k => ({label: k, value: l.vals[k] || 'não informado', bad: !l.vals[k]}));
   window.ccCadastroHtml = function (secId) {
-    const d = cadastroData(secId), cols = ['Local', ...d.keys];
-    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>🏢 Cadastro dos locais</b><span>Cada estabelecimento com conta contrato, relógio e os demais dados cadastrados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
+    const d = cadastroData(secId);
+    let n = 0;
+    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>🏢 Cadastro dos locais</b><span>Dados vindos de ADMINISTRAÇÃO › Cadastros (o coração do sistema) + os do controle.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
       <div class="ccr-summary"><div><b>${d.groups.length}</b><small>secretarias</small></div><div><b>${d.total}</b><small>locais</small></div><div class="${d.missing ? 'is-bad' : 'is-ok'}"><b>${d.total - d.missing}</b><small>com conta contrato</small></div><div class="is-ok"><b>${d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length}</b><small>🔗 ligados ao cadastro</small></div></div>
       ${d.groups.map(g => `<section class="ccr-sec"><header class="ccr-sec-head"><div><small>${secLabel(g.name)}</small><h3>${secIcon(g.name)} ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${g.locais.length}</b><small>local(is)</small></div></header>
-        <div class="ccr-table-wrap"><table class="ccr-table ccr-cad-table"><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>
-        ${g.locais.map(l => `<tr class="ccr-row"><td class="ccr-cad-name">📍 ${esc(l.local.description || 'Local')}${linkTag(l.local)}</td>${d.keys.map(k => `<td class="${k === 'Conta contrato' && !l.vals[k] ? 'bad' : ''}">${esc(l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))}</td>`).join('')}</tr>`).join('')}
-        </tbody></table></div></section>`).join('') || '<div class="empty">Nenhum local cadastrado.</div>'}</div>`;
+        <ol class="ccc-list">${g.locais.map(l => `<li class="ccc-row"><span class="ccc-n">${++n}</span><div class="ccc-body"><div class="ccc-title">📍 ${esc(l.local.description || 'Local')}${linkTag(l.local)}</div><div class="ccc-fields">${fieldsOf(l, d.keys).map(f => `<span class="${f.bad ? 'bad' : ''}"><b>${esc(f.label.toUpperCase())}:</b> ${esc(f.value)}</span>`).join('')}</div></div></li>`).join('')}</ol></section>`).join('') || '<div class="empty">Nenhum local cadastrado.</div>'}</div>`;
   };
   window.ccCadastroPdf = async function (secId) {
     if (!window.jspdf?.jsPDF) { window.toast?.('jsPDF não carregado', 'error'); return; }
-    const sec = (S().secs || []).find(s => s.id === secId), d = cadastroData(secId), cols = ['Local', ...d.keys];
-    const doc = new window.jspdf.jsPDF({orientation: 'landscape', unit: 'mm', format: 'a4'}); (window.safePdf || (x => x))(doc);
-    const W = 297, H = 210, mx = 10;
+    const sec = (S().secs || []).find(s => s.id === secId), d = cadastroData(secId);
+    let lay = {}; try { lay = JSON.parse(localStorage.getItem('pdf-layout:geral') || '{}'); } catch { /* padrão */ }
+    const perRow = Number(lay.perRow) || 1, fieldCols = Number(lay.fieldCols) || 0;
+    const land = lay.orientation === 'landscape' || (lay.orientation !== 'portrait' && perRow > 2);
+    const doc = new window.jspdf.jsPDF({orientation: land ? 'landscape' : 'portrait', unit: 'mm', format: 'a4'}); (window.safePdf || (x => x))(doc);
+    const W = land ? 297 : 210, H = land ? 210 : 297, mx = 10;
     let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
     const header = () => {
-      doc.setFillColor(247, 250, 248); doc.rect(0, 0, W, 24, 'F'); doc.setFillColor(33, 135, 82); doc.rect(0, 0, 4, 24, 'F');
-      if (logo?.d) doc.addImage(logo.d, 'PNG', W - 24, 3, 13, 17, undefined, 'FAST');
-      doc.setTextColor(15, 53, 43); doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.text(`CADASTRO DOS LOCAIS · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, mx, 11);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(78, 105, 96);
-      doc.text(`Prefeitura Municipal de Sertânia · ${d.total} locais em ${d.groups.length} secretarias · ${d.total - d.missing} com conta contrato · Emitido em ${new Date().toLocaleString('pt-BR')}`, mx, 18);
+      doc.setFillColor(247, 250, 248); doc.rect(0, 0, W, 16, 'F'); doc.setFillColor(33, 135, 82); doc.rect(0, 0, 3, 16, 'F');
+      if (logo?.d) doc.addImage(logo.d, 'PNG', W - 17, 2, 9, 12, undefined, 'FAST');
+      doc.setTextColor(15, 53, 43); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(`CADASTRO DOS LOCAIS · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, mx, 7.5);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(78, 105, 96);
+      doc.text(`Prefeitura Municipal de Sertânia · ${d.total} locais · ${d.groups.length} secretarias · ${d.total - d.missing} com conta contrato · ${new Date().toLocaleString('pt-BR')}`, mx, 12.5);
     };
-    header(); let y = 30;
+    header(); let y = 20, num = 0;
     for (const g of d.groups) {
-      if (y > H - 40) { doc.addPage(); header(); y = 30; }
-      doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 10, 1.5, 1.5, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
-      doc.setFontSize(9); doc.text(`${g.locais.length} local(is)`, W - mx - 3, y + 6.6, {align: 'right'}); y += 12;
-      doc.autoTable({startY: y, head: [cols], body: g.locais.map(l => [l.local.description || 'Local', ...d.keys.map(k => l.vals[k] || (k === 'Conta contrato' ? 'não informado' : '—'))]), theme: 'grid',
-        margin: {left: mx, right: mx, top: 30, bottom: 16}, styles: {fontSize: 7.6, cellPadding: 1.6, textColor: [33, 52, 63], lineColor: [218, 228, 224], lineWidth: .15, overflow: 'linebreak'},
-        headStyles: {fillColor: [22, 104, 70], textColor: [255, 255, 255], fontStyle: 'bold'}, alternateRowStyles: {fillColor: [247, 250, 248]}, columnStyles: {0: {fontStyle: 'bold', cellWidth: 60, textColor: [15, 53, 43]}},
-        didParseCell: c => { if (c.section === 'body' && c.cell.raw === 'não informado') { c.cell.styles.textColor = [176, 58, 22]; c.cell.styles.fontStyle = 'bold'; } },
-        didDrawPage: () => { if (doc.internal.getCurrentPageInfo().pageNumber > 1) header(); }});
-      y = doc.lastAutoTable.finalY + 8;
+      if (y > H - 30) { doc.addPage(); header(); y = 20; }
+      doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 6.5, 1.2, 1.2, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 2.5, y + 4.5);
+      doc.setFontSize(7.5); doc.text(`${g.locais.length} local(is)`, W - mx - 2.5, y + 4.5, {align: 'right'}); y += 7.5;
+      const recs = g.locais.map(l => ({num: String(++num), level: 0, title: l.local.description || 'Local', badges: window.cadastroLinks?.cad(l.local) ? [] : [{text: 'sem cadastro', tone: 'attention'}],
+        fields: fieldsOf(l, d.keys).map(f => ({label: f.label.toUpperCase(), value: f.value}))}));
+      y = window.drawRecordsTable(doc, recs, {startY: y, width: W - mx * 2, perRow, fieldCols, headColor: [15, 61, 49], margin: {left: mx, right: mx, top: 20, bottom: 14},
+        onPage: data => { if (data.pageNumber > 1) header(); }}) + 4;
     }
     const pages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pages; p++) { doc.setPage(p); doc.setFillColor(12, 61, 49); doc.rect(0, H - 10, W, 10, 'F'); doc.setTextColor(225, 242, 234); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CADASTRO DOS LOCAIS', mx, H - 4); doc.text(`Página ${p} de ${pages}`, W - mx, H - 4, {align: 'right'}); }
+    for (let p = 1; p <= pages; p++) { doc.setPage(p); doc.setFillColor(12, 61, 49); doc.rect(0, H - 9, W, 9, 'F'); doc.setTextColor(225, 242, 234); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CADASTRO DOS LOCAIS', mx, H - 3.5); doc.text(`Página ${p} de ${pages}`, W - mx, H - 3.5, {align: 'right'}); }
     doc.save('CADASTRO-DOS-LOCAIS-CONTROLE-DE-CONTAS.pdf'); window.toast?.('PDF do cadastro gerado!', 'success');
   };
   window.ccRelatorioSet = function (secId, key, value) {
@@ -209,11 +213,11 @@
     const cards = [['SECRETARIAS', String(d.list.length)], ['LOCAIS', String(d.tot.locais)], ['LANÇAMENTOS', String(d.tot.qtd)], ['TOTAL', money(d.tot.total)], ['PAGO', money(d.tot.pago)], ['PENDENTE', money(d.tot.total - d.tot.pago)]];
     const cw = (W - mx * 2 - 5 * 3) / 6; let y = 29;
     cards.forEach(([label, value], i) => {
-      const x = mx + i * (cw + 3); doc.setFillColor(247, 250, 248); doc.setDrawColor(218, 228, 224); doc.roundedRect(x, y, cw, 14, 1.5, 1.5, 'FD');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.setTextColor(...(label === 'PENDENTE' && d.tot.total - d.tot.pago > 0.004 ? [176, 58, 22] : label === 'PAGO' ? [22, 128, 74] : [15, 53, 43]));
-      doc.text(value, x + cw / 2, y + 6.5, {align: 'center'}); doc.setFontSize(6.5); doc.setTextColor(78, 105, 96); doc.text(label, x + cw / 2, y + 11.2, {align: 'center'});
+      const x = mx + i * (cw + 3); doc.setFillColor(247, 250, 248); doc.setDrawColor(218, 228, 224); doc.roundedRect(x, y, cw, 8, 1.2, 1.2, 'FD');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...(label === 'PENDENTE' && d.tot.total - d.tot.pago > 0.004 ? [176, 58, 22] : label === 'PAGO' ? [22, 128, 74] : [15, 53, 43]));
+      doc.text(value, x + 2.2, y + 5.4); doc.setFontSize(6); doc.setTextColor(78, 105, 96); doc.text(label, x + cw - 1.8, y + 5.2, {align: 'right'});
     });
-    y += 19;
+    y += 10.5;
     const valorIdx = head.indexOf('Valor'), sitIdx = head.indexOf('Situação'), obsIdx = head.indexOf('Observações');
     for (const g of d.list) {
       if (!g.com.length) continue;

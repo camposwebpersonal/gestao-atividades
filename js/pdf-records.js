@@ -138,11 +138,45 @@ export function recordWords(record, {base = 7.4, titleSize = 8.6} = {}) {
 }
 
 /**
+ * Layout de um lançamento dentro de uma largura.
+ * fieldCols = 0 → campos em texto corrido ("Rótulo: valor · Rótulo: valor");
+ * fieldCols = N → campos alinhados em N colunas (cada campo em sua "caixinha" de largura fixa).
+ * @returns {height, draw(x, y)}
+ */
+export function recordLayout(doc, r, width, style, fieldCols = 0) {
+  if (!fieldCols || !(r.fields || []).length) {
+    const L = layoutRich(doc, recordWords(r, style), width);
+    return {height: L.height, draw: (x, y) => drawRich(doc, L, x, y)};
+  }
+  const base = style?.base || 7.4;
+  const head = layoutRich(doc, recordWords({...r, fields: [], note: '', meta: ''}, style), width);
+  const gap = 3, colW = (width - gap * (fieldCols - 1)) / fieldCols;
+  const cells = (r.fields || []).filter(f => pdfSafe(f.value)).map(f => {
+    const val = words(f.value, {size: base, color: [35, 48, 64]}); const first = val.shift();
+    return layoutRich(doc, [{parts: [{text: pdfSafe(f.label) + ': ', bold: true, size: base, color: [13, 79, 120]}, ...(first ? first.parts : [])]}, ...val], colW);
+  });
+  const rows = [];
+  for (let i = 0; i < cells.length; i += fieldCols) rows.push(cells.slice(i, i + fieldCols));
+  const rowsH = rows.map(row => Math.max(...row.map(c => c.height)) + 0.5);
+  const tw = [];
+  if (r.note) { tw.push({newline: true, gap: 0.5}, {parts: [{text: 'Obs.: ', bold: true, italic: true, size: base, color: [90, 70, 20]}]}, ...words(r.note, {italic: true, size: base, color: [72, 60, 30]})); }
+  if (r.meta) { tw.push({newline: true, gap: 0.4}, ...words(r.meta, {size: 5.9, color: [100, 116, 130]})); }
+  const tail = tw.length ? layoutRich(doc, tw, width) : null;
+  const height = head.height + 0.8 + rowsH.reduce((a, b) => a + b, 0) + (tail ? tail.height : 0);
+  return {height, draw: (x, y) => {
+    drawRich(doc, head, x, y); let cy = y + head.height + 0.8;
+    rows.forEach((row, ri) => { row.forEach((c, ci) => drawRich(doc, c, x + ci * (colW + gap), cy)); cy += rowsH[ri]; });
+    if (tail) drawRich(doc, tail, x, cy);
+  }};
+}
+
+/**
  * Desenha a tabela de lançamentos.
  * @param records lista de registros (ver recordWords) + kind:'subtotal'|'total' para linhas de soma
  * @param o {startY, margin:{left,right,top,bottom}, width, head, onPage(data), thumbs: [[{d,w,h}]]}
  */
 export function drawRecordsTable(doc, records, o) {
+  if ((o.perRow || 1) > 1) return drawRecordsGrid(doc, records, o);
   const numW = o.numW || 11, contentW = o.width - numW;
   const pad = {t: 1.7, b: 1.9, r: 2.2};
   const layouts = [];
@@ -165,7 +199,7 @@ export function drawRecordsTable(doc, records, o) {
       const thumbs = o.thumbs?.[data.row.index] || [];
       const thumbW = thumbs.reduce((a, t) => a + 11 * (t.w / t.h) + 1.5, 0);
       const indent = 2 + (r.level || 0) * 3.2;
-      const layout = layoutRich(doc, recordWords(r, o.style), contentW - indent - pad.r - thumbW);
+      const layout = recordLayout(doc, r, contentW - indent - pad.r - thumbW, o.style, o.fieldCols || 0);
       layouts[data.row.index] = {layout, indent, thumbs};
       data.cell.text = [''];
       data.cell.styles.minCellHeight = Math.max(layout.height + pad.t + pad.b, thumbs.length ? 13.5 : 0);
@@ -175,7 +209,7 @@ export function drawRecordsTable(doc, records, o) {
       const L = layouts[data.row.index]; if (!L) return;
       const r = records[data.row.index];
       if (r.level) { doc.setFillColor(...(r.accent || [21, 132, 91])); doc.rect(data.cell.x + L.indent - 1.6, data.cell.y + 1.3, 0.7, data.cell.height - 2.6, 'F'); }
-      drawRich(doc, L.layout, data.cell.x + L.indent, data.cell.y + pad.t);
+      L.layout.draw(data.cell.x + L.indent, data.cell.y + pad.t);
       let tx = data.cell.x + data.cell.width - pad.r;
       for (const t of L.thumbs) { const h = 11, w = h * (t.w / t.h); tx -= w; try { doc.addImage(t.d, 'JPEG', tx, data.cell.y + 1.3, w, h); } catch { /* imagem inválida: ignora */ } tx -= 1.5; }
     },
@@ -184,19 +218,96 @@ export function drawRecordsTable(doc, records, o) {
   return doc.lastAutoTable.finalY;
 }
 
+/**
+ * Vários blocos por linha (2, 3, 4…): cada lançamento vira um cartão com o número no título.
+ * Linhas de subtotal/total ocupam a largura toda.
+ */
+export function drawRecordsGrid(doc, records, o) {
+  const n = Math.max(2, Math.min(6, o.perRow | 0)), pad = {t: 1.7, b: 1.9, l: 2, r: 2};
+  const cellW = o.width / n, body = [], map = [];
+  let row = [], rowMap = [];
+  const flush = () => { if (!row.length) return; while (row.length < n) { row.push({content: '', styles: {fillColor: [255, 255, 255]}}); rowMap.push(null); } body.push(row); map.push(rowMap); row = []; rowMap = []; };
+  records.forEach(r => {
+    if (r.kind) { flush(); body.push([{content: pdfSafe(r.title), colSpan: n, styles: {fontStyle: 'bold', fontSize: r.kind === 'total' ? 8.2 : 7, textColor: r.kind === 'total' ? [255, 255, 255] : [55, 71, 89], fillColor: r.kind === 'total' ? [15, 61, 49] : [234, 240, 244]}}]); map.push([null]); return; }
+    row.push({content: '', styles: {fillColor: r.level ? [246, 249, 251] : [255, 255, 255]}}); rowMap.push({...r, title: (r.num ? r.num + '. ' : '') + (r.title || '')});
+    if (row.length === n) flush();
+  });
+  flush();
+  const layouts = new Map();
+  doc.autoTable({
+    startY: o.startY, head: o.head ? [[{content: o.head[o.head.length - 1], colSpan: n}]] : undefined, body,
+    margin: o.margin, rowPageBreak: 'avoid', showHead: 'everyPage',
+    styles: {fontSize: 7.4, cellPadding: {top: pad.t, bottom: pad.b, left: pad.l, right: pad.r}, overflow: 'linebreak', valign: 'top', textColor: [30, 41, 59], lineColor: [214, 224, 231], lineWidth: 0.15},
+    headStyles: {fillColor: o.headColor || [8, 81, 71], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.6, cellPadding: 2},
+    columnStyles: Object.fromEntries(Array.from({length: n}, (_, i) => [i, {cellWidth: cellW}])),
+    didParseCell: data => {
+      if (data.section !== 'body') return;
+      const r = map[data.row.index]?.[data.column.index]; if (!r) return;
+      const L = recordLayout(doc, r, cellW - pad.l - pad.r - (r.level ? 2 : 0), o.style, o.fieldCols || 0);
+      layouts.set(data.row.index + ':' + data.column.index, L);
+      data.cell.text = [''];
+      data.cell.styles.minCellHeight = L.height + pad.t + pad.b;
+    },
+    didDrawCell: data => {
+      if (data.section !== 'body') return;
+      const L = layouts.get(data.row.index + ':' + data.column.index); if (!L) return;
+      const r = map[data.row.index][data.column.index];
+      if (r.level) { doc.setFillColor(...(r.accent || [21, 132, 91])); doc.rect(data.cell.x + 1.2, data.cell.y + 1.3, 0.7, data.cell.height - 2.6, 'F'); }
+      L.draw(data.cell.x + pad.l + (r.level ? 2 : 0), data.cell.y + pad.t);
+    },
+    didDrawPage: data => o.onPage?.(data),
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+/**
+ * Cabeçalho COMPACTO de relatório (regra permanente): título + números + barrinha discreta em
+ * no máximo ~11 mm. Nunca cards grandes nem barra de progresso larga ocupando meia folha.
+ * stats: [{label, value, color?}] · pct: 0–100 ou null
+ */
+export function drawCompactHeader(doc, x, y, width, title, stats = [], pct = null) {
+  doc.setFontSize(7.4); doc.setFont('helvetica', 'bold');
+  const parts = stats.filter(s => s && s.value !== undefined && s.value !== null && s.value !== '').map(s => ({...s, text: pdfSafe(String(s.value)) + ' ' + pdfSafe(s.label)}));
+  const statsW = parts.reduce((a, p) => a + doc.getTextWidth(p.text) + 4.4, 0);
+  doc.setFontSize(11); doc.setTextColor(10, 37, 58);
+  // título inteiro: se não couber ao lado dos números, os números descem para a linha de baixo
+  const full = pdfSafe(title || '');
+  const sameLine = doc.getTextWidth(full) <= width - statsW - 4;
+  const tl = doc.splitTextToSize(full, sameLine ? width - statsW - 4 : width);
+  doc.text(tl, x, y + 4.2);
+  if (!sameLine) y += tl.length * 4.6;
+  else if (tl.length > 1) y += (tl.length - 1) * 4.6;
+  let sx = x + width; doc.setFontSize(7.4);
+  for (const st of parts.slice().reverse()) {
+    doc.setFont('helvetica', 'bold'); const w = doc.getTextWidth(st.text) + 3.4; sx -= w;
+    doc.setFillColor(241, 246, 249); doc.roundedRect(sx, y + 0.9, w - 1, 4.6, 1, 1, 'F');
+    doc.setTextColor(...(st.color || [8, 81, 71])); doc.text(st.text, sx + 1.2, y + 4.2); sx -= 1;
+  }
+  let yy = y + 6.4;
+  if (pct !== null && pct !== undefined && Number.isFinite(Number(pct))) {
+    const p = Math.max(0, Math.min(100, Number(pct)));
+    doc.setFillColor(226, 232, 240); doc.roundedRect(x, yy, width, 1.2, 0.6, 0.6, 'F');
+    if (p > 0) { doc.setFillColor(...(p === 100 ? [34, 160, 94] : [59, 130, 246])); doc.roundedRect(x, yy, width * p / 100, 1.2, 0.6, 0.6, 'F'); }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.setTextColor(90, 105, 120); doc.text(p + '% concluído', x + width, yy + 3.6, {align: 'right'});
+    yy += 4.6;
+  }
+  return yy + 1.2;
+}
+
 /** Faixa de indicadores (cards) com largura dividida igualmente. */
-export function drawKpis(doc, x, y, width, cards, {h = 14} = {}) {
-  const gap = 2.5, w = (width - gap * (cards.length - 1)) / cards.length;
+export function drawKpis(doc, x, y, width, cards, {h = 7.5} = {}) {
+  // COMPACTO (regra permanente): ficha baixa com número à esquerda e rótulo à direita.
+  const gap = 2, w = (width - gap * (cards.length - 1)) / cards.length;
   cards.forEach((c, i) => {
     const cx = x + i * (w + gap);
-    doc.setFillColor(...(c.fill || [241, 247, 249])); doc.setDrawColor(...(c.border || [210, 224, 232])); doc.setLineWidth(0.2);
-    doc.roundedRect(cx, y, w, h, 1.8, 1.8, 'FD');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(...(c.color || [8, 81, 71]));
-    doc.text(pdfSafe(String(c.value)), cx + 3.2, y + 6.6);
-    doc.setFontSize(6.4); doc.setTextColor(...(c.labelColor || [70, 88, 102]));
-    const lab = doc.splitTextToSize(pdfSafe(c.label).toUpperCase(), w - 5);
-    if (lab.length > 1) { doc.setFontSize(5.6); doc.text(doc.splitTextToSize(pdfSafe(c.label).toUpperCase(), w - 5).slice(0, 2), cx + 3.2, y + 9.9); }
-    else doc.text(lab[0], cx + 3.2, y + 11.2);
+    doc.setFillColor(...(c.fill || [241, 247, 249])); doc.setDrawColor(...(c.border || [210, 224, 232])); doc.setLineWidth(0.15);
+    doc.roundedRect(cx, y, w, h, 1.2, 1.2, 'FD');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...(c.color || [8, 81, 71]));
+    const v = pdfSafe(String(c.value)); doc.text(v, cx + 2.2, y + h / 2 + 1.6);
+    const vw = doc.getTextWidth(v);
+    doc.setFontSize(5.8); doc.setTextColor(...(c.labelColor || [70, 88, 102]));
+    const lab = doc.splitTextToSize(pdfSafe(c.label).toUpperCase(), Math.max(10, w - vw - 6))[0] || '';
+    doc.text(lab, cx + w - 1.8, y + h / 2 + 1.2, {align: 'right'});
   });
   return y + h;
 }
@@ -237,4 +348,4 @@ export function safePdf(doc) {
   return doc;
 }
 
-if (typeof window !== 'undefined') window.safePdf = safePdf;
+if (typeof window !== 'undefined') Object.assign(window, {safePdf, drawRecordsTable, drawRecordsGrid, drawCompactHeader, drawCommonBox, pdfRecordLayout: recordLayout});

@@ -38,13 +38,13 @@
     }
   }
   const plate = rec => { const e = ef(rec); const k = Object.keys(e).find(key => norm(key) === 'PLACA'); const v = k ? String(e[k] ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '') : ''; return /^[A-Z]{3}\d[A-Z0-9]\d{2}$/.test(v) ? v : ''; };
-  /** Campos para exibir: os do próprio controle (mais recentes: vigência renovada, conta contrato…)
-   *  e, completando, todos os do cadastro oficial. */
+  /** Campos para exibir: o CADASTRO é o coração — os dados dele valem; os do controle só completam
+   *  o que o cadastro ainda não tiver. (Tudo que se grava no controle também é gravado no cadastro.) */
   function fields(rec) {
     const out = {}, seen = new Set();
-    const add = (k, v) => { if (INTERNAL.includes(k) || v == null || typeof v === 'object' || !String(v).trim()) return; const n = norm(k); if (seen.has(n)) return; seen.add(n); out[k] = v; };
-    for (const [k, v] of Object.entries(ef(rec))) add(k, v);
+    const add = (k, v) => { if (INTERNAL.includes(k) || /^(item_show_|show_)/.test(k) || v == null || typeof v === 'object' || !String(v).trim()) return; const n = norm(k).replace(/[^A-Z0-9]/g, ''); if (seen.has(n)) return; seen.add(n); out[k] = v; };
     if (cad(rec)) for (const [k, v] of Object.entries(ef(cad(rec)))) add(k, v);
+    for (const [k, v] of Object.entries(ef(rec))) add(k, v);
     return out;
   }
   const isAgrupador = rec => ef(rec).agrupador === true || ef(rec).agrupador === 'true';

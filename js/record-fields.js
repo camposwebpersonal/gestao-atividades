@@ -81,7 +81,9 @@ export function customFields(record, templates = [], scope = null) {
 
 /** Verba, documentação e licitação só aparecem quando o grupo ou o próprio lançamento os habilita. */
 export function controlFields(record, group, isSub = false) {
-  const on = f => !!(group?.['show_' + f] && (!isSub || group?.[f + '_on_subitems'])) || Number(record?.['item_show_' + f]) === 1;
+  // Só aparece quando está MARCADO na edição do grupo (Campo Verba, Origem da Verba, Documentação,
+  // Licitação). Desmarcado no grupo = nunca aparece, nem com marcação antiga no próprio lançamento.
+  const on = f => !!(Number(group?.['show_' + f]) === 1 || group?.['show_' + f] === true) && (!isSub || !!group?.[f + '_on_subitems'] || f === 'origem_verba' && !!group?.verba_on_subitems);
   const out = [];
   if (on('verba') && record?.verba != null && record.verba !== '' && Number(record.verba) > 0) {
     out.push({key: 'verba', label: 'Verba', value: Number(record.verba).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) + (record.verba_obs ? ' · ' + record.verba_obs : '')});
