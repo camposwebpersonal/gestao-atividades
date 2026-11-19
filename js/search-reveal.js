@@ -10,7 +10,7 @@ const done = r => Number(r?.concluded) === 1 || String(r?.status || '').normaliz
 
 export function findRecordElement(id) {
   const v = CSS.escape(String(id)), q = s => document.querySelector(s);
-  return q(`#content [data-well-id="${v}"],#content [data-driller-id="${v}"],#content [data-cr="${v}"],#content [data-sort-id="${v}"],#content #ir-${v},#content [data-audit-id="${v}"],#content [data-lista-id="${v}"],#content tr[data-id="${v}"],#content [data-multa-id="${v}"]`)
+  return q(`#content [data-well-id="${v}"],#content [data-driller-id="${v}"],#content [data-cr="${v}"],#content [data-sort-id="${v}"],#content #ir-${v},#content [data-audit-id="${v}"],#content [data-lista-id="${v}"],#content tr[data-id="${v}"],#content [data-multa-id="${v}"],#content [data-leite-dia="${v}"]`)
     || [...document.querySelectorAll('#content [onclick]')].find(el => (el.getAttribute('onclick') || '').includes(`'${id}'`))?.closest('tr,article,[class*="card"],[class*="row"]') || null;
 }
 /** Abre tudo que estiver recolhido/oculto em volta do elemento. Devolve true se algo estava escondendo. */
@@ -41,7 +41,7 @@ window.revealRecord = async function (table, id) {
   if (!group) { window.toast?.('O grupo deste lançamento não está disponível para seu usuário.', 'error'); return false; }
   let cleared = false;
   // ganchos dos módulos com filtros próprios (ajustam o estado ANTES de desenhar)
-  for (const hook of [window.pocoReveal, window.licitacaoReveal, window.multasReveal]) { try { if (hook?.(groupId, id) === true) cleared = true; } catch (e) { console.error('[busca]', e); } }
+  for (const hook of [window.pocoReveal, window.licitacaoReveal, window.multasReveal, window.leiteReveal]) { try { if (hook?.(groupId, id) === true) cleared = true; } catch (e) { console.error('[busca]', e); } }
   window.openActivity(groupId);
   let el = await waitEl(id);
   const laneNow = window.getActivityLane?.(groupId);

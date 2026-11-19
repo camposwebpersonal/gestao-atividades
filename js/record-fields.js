@@ -14,6 +14,8 @@ const SYSTEM_KEYS = new Set([
   'licitacao_group_id', 'fornecedor_numero',
   // ligação cadastro ↔ controles (js/cadastro-links.js)
   'cadastro_id', 'cadastro_grupo', 'contas_local_id', 'seguro_local_id', 'agrupador',
+  // recebimento de leite (js/controle-leite.js)
+  'leite_entregas', 'leite_precos', 'leite_cotas', 'controle_leite', 'produtores_grupo', 'cadastro_leite',
 ]);
 const SYSTEM_PREFIXES = ['item_show_', 'import_', 'pipa_', 'geo_', '_'];
 

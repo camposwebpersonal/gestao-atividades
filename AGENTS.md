@@ -329,6 +329,23 @@
 - PDF paisagem, cabeçalho compacto, por secretaria com subtotal e total, vencidas em vermelho, colunas vazias
   saem. Busca do topo: gancho `multasReveal` + `data-multa-id`. Teste: `tests/controle-multas.browser.cjs`.
 
+## Recebimento de Leite (CEDOCA, regra permanente, 19/11/2026)
+
+- Grupo `cedoca-recebimento-leite` (CEDOCA, `extra_fields: {modulo:'atendimentos', controle_leite:1, produtores_grupo,
+  leite_precos:{'AAAA-MM-1|2': preço}, leite_cotas:{…}}`), tela `js/controle-leite.js` + `css/controle-leite.css`
+  (openActivity → `renderControleLeite`). Produtores vêm SEMPRE do cadastro PRODUTORES DE LEITE DE CABRA
+  (`e370b0ca-…`, campos Nº, Referência / responsável, Chave PIX, Telefone, Localidade, Tipo de leite, Situação).
+- Cada DIA de coleta é um item: `Data`, `Preço por litro`, `Resfriador (L)`, `leite_entregas {id do produtor: litros}`
+  (chave interna, nunca vira coluna). Importados em 19/11/2026 da planilha "Planilha Recebimento Produtor NOV 2026":
+  54 produtores, 26 dias (16–27/10 a R$ 3,51; novembro a R$ 3,69; 1ª quinz. NOV 16.034,5 L, cota 15.930).
+- Tela: Semana (seg–dom) / Quinzena (1–15, 16–fim) / Mês com ‹ ›; fichas (litros + variação da média diária, valor,
+  produtores que entregaram, média/dia, maior produtor), barra da cota, gráfico por dia; abas 📋 Planilha
+  (produtor × dia; no mês, colunas por semana e por quinzena; clique na célula lança/corrige), 🏆 Por produtor
+  (ranking, dias, média, %, "sem entregar há N dias"), 📅 Por dia, 🧾 Recibos. Lançar: lista dos ativos, Enter passa,
+  total ao vivo, cadastrar produtor novo na hora; mesmo dia = corrige o lançamento existente. ⚙️ preço/cota por quinzena.
+  PDF paisagem com cabeçalho compacto; recibos 2 por folha com PIX e assinaturas; "📋 Resumo" copia texto para WhatsApp.
+  Teste: `tests/controle-leite.browser.cjs` (390 e 1366).
+
 ## Datas: o dia digitado é o dia mostrado, sempre (regra permanente do usuário, 17/11/2026)
 
 - "A data que eu colocar e que estiver aparecendo na tela é a data que vai aparecer em tudo." Fuso

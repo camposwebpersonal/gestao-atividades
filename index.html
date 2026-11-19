@@ -25,6 +25,7 @@
 <script src="js/ordenacao-visual.js?v=92387ef1"></script>
 <script src="js/controle-contas.js?v=2a9e925b"></script>
 <script src="js/controle-multas.js?v=6db2dfe2"></script>
+<script src="js/controle-leite.js?v=bbf9d56f"></script>
 <script src="js/pdf-layout.js?v=1bbcee81"></script>
 <script src="js/cadastro-links.js?v=f71171ad"></script>
 <script src="js/contas-relatorio.js?v=86116671"></script>
@@ -441,6 +442,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
+<link rel="stylesheet" href="css/controle-leite.css?v=39815603">
 <link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
 <link rel="stylesheet" href="css/quantitativo.css?v=b742ca5b">
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
@@ -540,14 +542,14 @@ import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
-import {generateDemandPdf} from './js/demand-pdf.js?v=4ca7d14d';
-import {reportDateTime} from './js/demand-report.js?v=6dd9af8a';
-import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=0272fbfa';
+import {generateDemandPdf} from './js/demand-pdf.js?v=b93655d0';
+import {reportDateTime} from './js/demand-report.js?v=90f1fd43';
+import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=0da8f0c3';
 import {drawRecordsTable,drawCommonBox,drawCompactHeader} from './js/pdf-records.js?v=eeeb503f';
 import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=ebb1b069';
 import './js/group-extras.js?v=0461764f';
-import './js/search-reveal.js?v=af7ea141';
+import './js/search-reveal.js?v=cd881ca9';
 import './js/mass-select.js?v=aec6c75f';
 import './js/mail-settings.js?v=b15f49d8';
 import './js/pwned-check.js?v=e0db86b9';
@@ -558,7 +560,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=e33c0d12';
+import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=e91056b6';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -923,7 +925,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=665b74bb';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=022b267c';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1683,6 +1685,7 @@ window.openActivity=function(secId){
   const _can=S.isAdmin||window.userCanGroup?.(sec,'editar');
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(window.isMultasGroup?.(sec)){window.renderControleMultas(secId);return;}
+  if(window.isLeiteGroup?.(sec)){window.renderControleLeite(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
   if(window.isLicitacaoGroup?.(sec)){window.renderLicitacoes(secId);return;}
