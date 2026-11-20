@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {recordSearchFields, foundIn, snippetHtml, organizeResults, resultsPageHtml, dropdownRowHtml} from '../js/search-results.js';
+import {recordSearchFields, foundIn, snippetHtml, organizeResults, resultsPageHtml, dropdownRowHtml, prioritizeResults, dropdownHtml} from '../js/search-results.js';
 
 const retro = {id: 'g1', name: 'SERVIÇOS DE URGENCIA PARA A RETRO'};
 const pipaGroup = {id: 'g2', name: 'SOLICITAÇÃO DE ÁGUA DE PIPA'};
@@ -62,7 +62,8 @@ test('busca do topo usa a nova organização e a película não cobre mais o cam
     const html = fs.readFileSync('index.html', 'utf8');
     const css = fs.readFileSync('css/global-search-premium.css', 'utf8');
     assert.match(html, /resultsPageHtml\(_globalSearchResults,q\)/);
-    assert.match(html, /dropdownRowHtml\(entry,q,index,index===_globalSearchActive\)/);
+    assert.match(html, /dropdownHtml\(_globalSearchResults,q,_globalSearchActive\)/);
+    assert.match(html, /prioritizeResults\(rankSearch\(/);
     assert.match(html, /secretaryOf=\(group,record\)/);
     assert.match(css, /body\.global-search-open #navbar\{z-index:1601!important\}/);
 });
@@ -84,3 +85,22 @@ test('busca do topo usa a nova organização e a película não cobre mais o cam
     if (!adm.groups[0].groupMatched || adm.count !== 3) throw new Error('grupo deveria ficar em ADMINISTRAÇÃO');
     console.log('ok - grupo sem secretaria não duplica na busca');
 }
+
+test('grupo cujo nome tem o termo vem antes de qualquer lançamento (ex.: "areia")', () => {
+    const areia = {id: 'ga', name: 'PEDIDOS DE AREIA'};
+    const results = [
+        {type: 'item', title: 'AREIA', data: {id: 'i1'}, group: retro, score: 400},
+        {type: 'item', title: 'JOÃO', data: {id: 'i2'}, group: retro, score: 300, foundIn: []},
+        {type: 'group', title: areia.name, data: areia, crumbs: ['INFRAESTRUTURA'], counts: {total: 0, open: 0}, score: 90},
+        {type: 'contact', title: 'Depósito de areia', data: {id: 'c1'}, score: 500},
+    ];
+    const sorted = prioritizeResults(results, 'areia');
+    assert.equal(sorted[0].type, 'group');
+    assert.equal(sorted[1].data.id, 'i1', 'lançamento com o termo no nome vem antes do que casou em outro campo');
+    assert.equal(sorted.at(-1).data.id, 'i2');
+    const html = dropdownHtml(sorted, 'areia', 0);
+    assert.ok(html.indexOf('Grupos de lançamento') < html.indexOf('Lançamentos'), 'seção de grupos primeiro');
+    assert.match(html, /grupo sem lançamentos ainda/);
+    const page = resultsPageHtml(sorted, 'areia').html;
+    assert.ok(page.indexOf('search-group-card') > -1 && page.indexOf('search-group-card') < page.indexOf('search-sec-head', page.indexOf('search-group-cards')), 'cards de grupo no topo da página');
+});

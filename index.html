@@ -439,6 +439,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-extras.css?v=72543723">
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
+<link rel="stylesheet" href="css/group-cmdbar.css?v=87fdd79a">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
@@ -448,7 +449,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/pipa-refill.css?v=500ed52e">
 <link rel="stylesheet" href="css/demandas-premium.css?v=cc6998f1">
 <link rel="stylesheet" href="css/supabase-status.css?v=bcd6284b">
-<link rel="stylesheet" href="css/global-search-premium.css?v=3072a38d">
+<link rel="stylesheet" href="css/global-search-premium.css?v=e8459e4b">
 <link rel="stylesheet" href="css/water-points.css?v=ec87e915">
 <link rel="stylesheet" href="css/layout-safety.css?v=bf9a63ce">
 <link rel="stylesheet" href="css/defesa-civil-questionarios.css?v=88b31553">
@@ -560,7 +561,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=e91056b6';
+import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=02c99ffb';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -649,7 +650,8 @@ function _globalSearchEntries(){
  const areaOf=group=>window.groupHomeArea?.(group)||'';
  const _domSec=new Map();for(const item of S.items||[]){const g=groups.get(item.atividade_id);if(!g||secretaryOf(g)||!item.secretaria_id)continue;const m=_domSec.get(g.id)||new Map();m.set(String(item.secretaria_id),(m.get(String(item.secretaria_id))||0)+1);_domSec.set(g.id,m);}
  const groupSecretary=group=>secretaryOf(group)||secretaryById.get([...(_domSec.get(group.id)||new Map()).entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'')||null;
- for(const group of groups.values()){const secretary=groupSecretary(group);entries.push({type:'group',icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria',areaOf(group)].filter(Boolean),secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
+ const _gCount=new Map();for(const item of S.items||[]){const c=_gCount.get(item.atividade_id)||{total:0,open:0};c.total++;if(item.concluded!=1)c.open++;_gCount.set(item.atividade_id,c);}
+ for(const group of groups.values()){const secretary=groupSecretary(group);entries.push({type:'group',counts:_gCount.get(group.id)||{total:0,open:0},icon:group.icon||'▤',title:group.name||'Grupo sem nome',context:secretary?.name||'Grupo de atividades',crumbs:[secretary?.name||'Sem secretaria',areaOf(group)].filter(Boolean),secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',data:group,search:[group,group.name,group.observacoes,group.assunto]});}
  for(const item of S.items||[]){const group=groups.get(item.atividade_id);if(!group)continue;const secretary=secretaryOf(group,item)||groupSecretary(group);entries.push({type:'item',icon:'•',title:item.description||'Item sem descrição',context:group.name||'Grupo',crumbs:[secretary?.name||'Sem secretaria',areaOf(group),group.name||'Grupo'].filter(Boolean),secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(item),data:item,group,search:[item,group.name,secretary?.name]});}
  const itemById=new Map((S.items||[]).map(item=>[item.id,item]));
  for(const subitem of S.subitems||[]){const parent=itemById.get(subitem.item_id),group=groups.get(subitem.atividade_id||parent?.atividade_id);if(!group)continue;const secretary=secretaryOf(group,subitem)||groupSecretary(group);entries.push({type:'subitem',icon:'↳',title:subitem.description||'Lançamento sem descrição',context:[group.name,parent?.description].filter(Boolean).join(' · '),crumbs:[secretary?.name||'Sem secretaria',areaOf(group),group.name||'Grupo',parent?.description].filter(Boolean),parentTitle:parent?.description||'',secretaryId:secretary?.id||'',secretaryName:secretary?.name||'',fields:recordSearchFields(subitem,{parent}),data:subitem,group,search:[subitem,parent?.description,group.name,secretary?.name]});}
@@ -665,9 +667,9 @@ function _renderGlobalSearch(query){
  const panel=document.getElementById('global-search-panel'),input=document.getElementById('global-search');if(!panel||!input)return;
  const q=String(query||'').trim(),clear=document.querySelector('.global-search-clear');if(clear)clear.hidden=!q;
  if(!q){panel.hidden=true;input.setAttribute('aria-expanded','false');_globalSearchResults=[];return;}
- _globalSearchResults=rankSearch(_globalSearchEntries(),q,entry=>entry.search,400).map(entry=>({...entry.record,score:entry.match.score,foundIn:entry.record.fields?foundIn(entry.record.fields,q,{exclude:['Nome']}):[]}));_globalSearchActive=_globalSearchResults.length?0:-1;
- const summary=_globalSearchResults.length?`${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'} mais relevante${_globalSearchResults.length===1?'':'s'}`:'Nenhum resultado';
- panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>Enter mostra todos · Esc fecha</span></div>${_globalSearchResults.slice(0,12).map((entry,index)=>dropdownRowHtml(entry,q,index,index===_globalSearchActive)).join('')||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}${_globalSearchResults.length?`<button class="global-search-all" type="button" onclick="abrirPaginaBuscaGlobal()">Ver todos os resultados organizados <span>→</span></button>`:''}`;
+ _globalSearchResults=prioritizeResults(rankSearch(_globalSearchEntries(),q,entry=>entry.search,3000).map(entry=>({...entry.record,score:entry.match.score,foundIn:entry.record.fields?foundIn(entry.record.fields,q,{exclude:['Nome']}):[]})),q);_globalSearchActive=_globalSearchResults.length?0:-1;
+ const _gHits=_globalSearchResults.filter(e=>e.type==='group'&&e.tier===0).length;const summary=_globalSearchResults.length?`${_globalSearchResults.length} resultado${_globalSearchResults.length===1?'':'s'}${_gHits?` · ${_gHits} grupo${_gHits===1?'':'s'}`:''}`:'Nenhum resultado';
+ panel.innerHTML=`<div class="global-search-summary"><strong>${summary}</strong><span>Enter mostra todos · Esc fecha</span></div>${dropdownHtml(_globalSearchResults,q,_globalSearchActive)||`<div class="global-search-empty"><b>Nada encontrado para “${_gsEsc(q)}”</b><span>Tente menos palavras, outro termo ou confira a digitação.</span></div>`}${_globalSearchResults.length?`<button class="global-search-all" type="button" onclick="abrirPaginaBuscaGlobal()">Ver todos os resultados organizados <span>→</span></button>`:''}`;
  panel.hidden=false;input.setAttribute('aria-expanded','true');
 }
 window.pesquisarGlobal=function(value){clearTimeout(_globalSearchTimer);_globalSearchTimer=setTimeout(()=>_renderGlobalSearch(value),70);};
@@ -693,7 +695,7 @@ window.abrirPaginaBuscaGlobal=function(value){
 window.ativarResultadoBuscaPorId=function(type,id){if(type==='group'&&!_globalSearchResults.some(entry=>entry.type==='group'&&String(entry.data?.id)===String(id))){window.openActivity(id);return;}const index=_globalSearchResults.findIndex(entry=>entry.type===type&&String(entry.data?.id||'')===String(id));if(index>=0)window.ativarResultadoBuscaGlobal(index);};
 window.navegarBuscaGlobal=function(event){
  if(event.key==='Escape'){event.preventDefault();window.fecharBuscaGlobal();return;}
- if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();if(!_globalSearchResults.length)return;_globalSearchActive=(_globalSearchActive+(event.key==='ArrowDown'?1:-1)+_globalSearchResults.length)%_globalSearchResults.length;window.selecionarResultadoBuscaGlobal(_globalSearchActive);document.querySelector(`[data-search-index="${_globalSearchActive}"]`)?.scrollIntoView({block:'nearest'});return;}
+ if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();const shown=[...document.querySelectorAll('.global-search-result[data-search-index]')].map(b=>Number(b.dataset.searchIndex));if(!shown.length)return;const pos=shown.indexOf(_globalSearchActive);_globalSearchActive=shown[(pos+(event.key==='ArrowDown'?1:-1)+shown.length)%shown.length];window.selecionarResultadoBuscaGlobal(_globalSearchActive);document.querySelector(`[data-search-index="${_globalSearchActive}"]`)?.scrollIntoView({block:'nearest'});return;}
  if(event.key==='Enter'){event.preventDefault();window.abrirPaginaBuscaGlobal(event.currentTarget.value);}
 };
 window.executarBuscaGlobal=function(value){window.abrirPaginaBuscaGlobal(value);};
@@ -1820,20 +1822,20 @@ window.openActivity=function(secId){
     _totHtml=items.length?`<div style="padding:6px 16px;font-size:12px;font-weight:800;color:#60a5fa;border-top:2px solid #1e3a5f;margin-top:4px;text-align:right;background:#060c18;border-radius:0 0 8px 8px">Σ Total: ${items.length} item(ns) · ${_allSubCnt} sub-item(ns)</div>`:'';
   }
   const _ss=sec.show_stats!==0;
-  const expandirHtml=`<div class="activity-expand-tools" style="display:flex;gap:8px;margin-bottom:10px">
-    <button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="expandirTodos()">📂 Expandir Tudo</button>
-    <button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="recolherTodos()">📁 Recolher Tudo</button>
+  const expandirHtml=`<div class="activity-expand-tools gcb-pair">
+    <button type="button" class="gcb-item" onclick="expandirTodos()">📂 Expandir tudo</button>
+    <button type="button" class="gcb-item" onclick="recolherTodos()">📁 Recolher tudo</button>
   </div>`;
   const statsHtml=_cp&&_ss?(()=>{
     const total=allItems.length,conc=allItems.filter(i=>iProg(i).pct===100).length;
     const atras=allItems.filter(i=>{const p=iProg(i);if(p.pct===100)return false;if(p.hasSubs)return p.subs.some(s=>!s.concluded&&s.deadline_date&&new Date(s.deadline_date)<today);return !i.concluded&&i.deadline_date&&new Date(i.deadline_date)<today;}).length;
-    const pend=total-conc-atras;
-    return`<div class="activity-stats" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#10b981">${conc}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Concluídos</div></div>
-      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#3b82f6">${pend}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Pendentes</div></div>
-      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#f87171">${atras}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Atrasados</div></div>
-      <div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#94a3b8">${total}</div><div style="font-size:10px;color:#64748b;margin-top:2px">Total</div></div>
-      ${_showPct?`<div class="activity-stat" style="flex:1;min-width:80px;background:#0a1222;border:1px solid #1e3a5f;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#38bdf8">${total?Math.round((conc/total)*100):0}%</div><div style="font-size:10px;color:#64748b;margin-top:2px">Progresso Geral</div></div>`:''}
+    const pend=total-conc-atras,pct=total?Math.round((conc/total)*100):0;
+    return`<div class="activity-stats gcb-stats" role="group" aria-label="Resumo do grupo">
+      <div class="activity-stat is-ok" title="Concluídos"><b>${conc}</b><span>concluídos</span></div>
+      <div class="activity-stat is-pend" title="Pendentes"><b>${pend}</b><span>pendentes</span></div>
+      <div class="activity-stat ${atras?'is-late':'is-zero'}" title="Atrasados"><b>${atras}</b><span>atrasados</span></div>
+      <div class="activity-stat is-total" title="Total"><b>${total}</b><span>total</span></div>
+      ${_showPct?`<div class="activity-stat is-pct" title="Progresso geral"><b>${pct}%</b><span>progresso</span><i aria-hidden="true"><em style="width:${pct}%"></em></i></div>`:''}
     </div>`;
   })():'';
   const isBccs=sec.name.toUpperCase().includes('BCC');
@@ -1845,22 +1847,31 @@ window.openActivity=function(secId){
   const archiveEntries=_cp?completedArchiveEntries(allItems,groupSubitems,iProg):[];
   const laneTabs=_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
   const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:groupSubitems,progress:iProg,canEdit:_can}):'';
-  setC(`<div class="top-actions-fixed" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar ao início</button>
-    <div style="flex:1;min-width:60px"></div>
-    ${_can&&window.userCanCreateItems?.()?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
-    ${_can&&window.userCanCreateItems?.()?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')">▦ Lançar em lote</button>`:''}
-    ${_can?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-    ${_can&&_cp?`<button class="btn-action ${_showPct?'active':''}" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">${_showPct?'% Percentual visível':'% Mostrar percentual'}</button>`:''}
-    ${_can&&isEmpregos?`<button class="btn-action" style="background:#4c1d95;color:#ede9fe;border:1px solid #7c3aed" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:''}
-    ${_can&&window.userCanDeleteGroups?.()?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir</button>`:''}
-    ${_can&&_cp&&sec.concluded==1?`<button class="btn-action" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Desmarcar</button>`:''}
-    ${_can&&_cp&&sec.concluded!=1?`<button class="btn-action" onclick="markActivityConcluded('${secId}')">✅ Concluir</button>`:''}
-    ${_can&&_cp?`<button class="btn-action" onclick="limparAtividade('${secId}')">🧹 Limpar</button>`:''}
-    ${_can?`<button class="btn-action" style="background:#7f1d1d;color:#fca5a5;border:1px solid #b91c1c" onclick="excluirSelecionados('${secId}')">🗑️ Excluir Sel.</button><button class="btn-action nest-selected-btn" onclick="openNestPicker('${secId}')" title="Transforma os lançamentos marcados em subitens de um item (também dá para arrastar a seleção sobre o item)">↳ Tornar subitens</button>`:''}
-    ${_cp&&lane==='active'?`<button class="btn-action" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
-    <button class="btn-action" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
-    <button class="btn-action" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
+  const _gMenu=[
+    _can?`<button type="button" class="gcb-item" onclick="openSecModal('${secId}')">✏️ Editar grupo<small>nome, campos, controles</small></button>`:'',
+    _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">% ${_showPct?'Ocultar percentual':'Mostrar percentual'}</button>`:'',
+    _can&&_cp&&sec.concluded==1?`<button type="button" class="gcb-item" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Reabrir grupo</button>`:'',
+    _can&&_cp&&sec.concluded!=1?`<button type="button" class="gcb-item" onclick="markActivityConcluded('${secId}')">✅ Concluir grupo</button>`:'',
+    _can&&_cp?`<button type="button" class="gcb-item" onclick="limparAtividade('${secId}')">🧹 Limpar grupo</button>`:'',
+    _can&&isEmpregos?`<button type="button" class="gcb-item" onclick="restaurarEmpregosSalarios('${secId}')">↻ Conferir base salarial BCC</button>`:'',
+  ].filter(Boolean).join('');
+  const _sMenu=_can?`<button type="button" class="gcb-item nest-selected-btn" onclick="openNestPicker('${secId}')" title="Transforma os lançamentos marcados em subitens de um item (também dá para arrastar a seleção sobre o item)">↳ Tornar subitens<small>os marcados viram subitens de um item</small></button><button type="button" class="gcb-item is-danger" onclick="excluirSelecionados('${secId}')">🗑️ Excluir selecionados</button>`:'';
+  const _dMenu=_can&&window.userCanDeleteGroups?.()?`<button type="button" class="gcb-item is-danger" onclick="confirmarExcluirAtividade('${secId}')">🗑️ Excluir este grupo</button>`:'';
+  setC(`<div class="top-actions-fixed group-cmdbar">
+    <div class="gcb-main">
+      ${_can&&window.userCanCreateItems?.()?`<button class="btn-action primary activity-create-primary" onclick="openItemModal(null,'${secId}',false,null)">＋ Criar item</button>`:''}
+      ${_can&&window.userCanCreateItems?.()?`<button class="btn-action bulk-entry-button" onclick="openBulkEntry('${secId}')" title="Lançar vários de uma vez, em planilha">▦ Lançar em lote</button>`:''}
+    </div>
+    <div class="gcb-tools">
+      <button class="btn-action gcb-tool" onclick="abrirBusca('${secId}')">🔍 Buscar</button>
+      <button class="btn-action gcb-tool" onclick="${isAttendanceSection(sec)&&sec.controle_pocos!=1&&recordExtra(sec).controle_pocos!=1?`gerarPdfDemanda('${secId}')`:`abrirPdfOpts('${secId}')`}">📄 PDF</button>
+      ${_cp&&lane==='active'?`<button class="btn-action gcb-tool" onclick="renderCadastros('${secId}')">📋 Lista</button>`:''}
+      ${_gMenu||_sMenu||_dMenu?`<details class="gcb-menu gcb-actions"><summary class="btn-action gcb-tool">⚙️ Mais<i aria-hidden="true"></i></summary><div class="gcb-pop" role="menu">
+        ${_gMenu?`<div class="gcb-sec"><span>Grupo</span>${_gMenu}</div>`:''}
+        ${_sMenu?`<div class="gcb-sec"><span>Lançamentos marcados</span>${_sMenu}</div>`:''}
+        ${_dMenu?`<div class="gcb-sec is-danger-zone">${_dMenu}</div>`:''}
+      </div></details>`:''}
+    </div>
   </div>
   <div class="activity-heading-row" data-audit-skip>
     <div class="activity-page-heading" style="margin-bottom:18px">
@@ -1876,19 +1887,20 @@ window.openActivity=function(secId){
   ${needsEmpregosRestore&&S.isAdmin?`<div style="margin-bottom:14px;padding:12px 14px;border-radius:10px;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.35);color:#ddd6fe;font-size:13px"><strong>Restaurando a base salarial importada…</strong><br><span style="color:#a78bfa">Os 444 colaboradores e suas remunerações serão associados a esta atividade sem criar duplicidades.</span></div>`:''}
   ${lane==='active'?`
   <div class="activity-command-summary-row">
-    <div class="activity-tools-row">
-      <div class="activity-view-options" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
-        ${hasResumoField?`<label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#94a3b8;cursor:pointer;background:#0a1222;padding:6px 12px;border-radius:8px;border:1px solid #1e3a5f"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} style="accent-color:#f59e0b;width:14px;height:14px" onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF Resumo</button>`:''}
-      </div>
-      <div class="activity-layout-switcher" aria-label="Visualização dos lançamentos">
-        <span>Itens</span><button type="button" class="layout-option ${itemsViewMode==='list'?'active':''}" aria-pressed="${itemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','items','list')">☰ Lista</button><button type="button" class="layout-option ${itemsViewMode==='cards'?'active':''}" aria-pressed="${itemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','items','cards')">▦ Cards</button>
-        <span>Subitens</span><button type="button" class="layout-option ${subitemsViewMode==='list'?'active':''}" aria-pressed="${subitemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','subitems','list')">☰ Lista</button><button type="button" class="layout-option ${subitemsViewMode==='cards'?'active':''}" aria-pressed="${subitemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','subitems','cards')">▦ Cards</button>
+    <details class="gcb-menu gcb-view"><summary class="gcb-view-btn">👁 Exibição<small>${tableModeAtiv?'tabela':itemsViewMode==='cards'?'cards':'lista'}</small><i aria-hidden="true"></i></summary><div class="gcb-pop activity-tools-row">
+      <div class="gcb-sec"><span>Formato</span>
+      <div class="activity-view-options">
+        <label class="gcb-check"><input type="checkbox" id="ativ-table-mode" ${tableModeAtiv?'checked':''} onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 🗂️ Formato de tabela</label>
+        ${hasResumoField?`<label class="gcb-check"><input type="checkbox" id="ativ-resumo-mode" ${resumoAtiv?'checked':''} onchange="window._refreshAtivTable&&window._refreshAtivTable()"> 📊 Resumo financeiro</label><button type="button" class="gcb-item" onclick="gerarPdfResumoBCCS('${secId}')">📄 PDF do resumo</button>`:''}
+      </div></div>
+      <div class="gcb-sec activity-layout-switcher" aria-label="Visualização dos lançamentos">
+        <span>Itens</span><div class="gcb-seg"><button type="button" class="layout-option ${itemsViewMode==='list'?'active':''}" aria-pressed="${itemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','items','list')">☰ Lista</button><button type="button" class="layout-option ${itemsViewMode==='cards'?'active':''}" aria-pressed="${itemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','items','cards')">▦ Cards</button></div>
+        <span>Subitens</span><div class="gcb-seg"><button type="button" class="layout-option ${subitemsViewMode==='list'?'active':''}" aria-pressed="${subitemsViewMode==='list'}" onclick="setActivityRecordView('${secId}','subitems','list')">☰ Lista</button><button type="button" class="layout-option ${subitemsViewMode==='cards'?'active':''}" aria-pressed="${subitemsViewMode==='cards'}" onclick="setActivityRecordView('${secId}','subitems','cards')">▦ Cards</button></div>
         ${_can?`<button type="button" class="layout-default" onclick="saveActivityViewDefault('${secId}')">★ Salvar como padrão deste grupo</button>`:''}
         ${_activityViewOverrides.has(secId)?`<button type="button" class="layout-reset" onclick="resetActivityRecordView('${secId}')">↺ Restaurar padrão</button>`:''}
       </div>
-      ${expandirHtml}
-    </div>
+      <div class="gcb-sec"><span>Itens com subitens</span>${expandirHtml}</div>
+    </div></details>
     ${statsHtml}
   </div>
   ${resumoAtiv&&hasResumoField?`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:700;color:#60a5fa;margin-bottom:8px">📊 Resumo Financeiro — Valores por Secretaria e Mês</div>${_renderResumoFinanceiro(secId)}</div>`:''}
@@ -1897,6 +1909,10 @@ window.openActivity=function(secId){
   window._refreshAtivTable=()=>openActivity(secId);
   if(needsEmpregosRestore&&S.isAdmin)setTimeout(()=>window.restaurarEmpregosSalarios(secId,{automatico:true}),250);
 };
+// Menus da barra do grupo (⚙️ Mais / 👁 Exibição): fecham ao clicar fora, ao escolher uma opção ou com Esc; só um aberto por vez.
+document.addEventListener('click',e=>{document.querySelectorAll('details.gcb-menu[open]').forEach(d=>{if(!d.contains(e.target)||(e.target.closest('.gcb-item,.layout-option,.layout-default,.layout-reset')&&!e.target.closest('.gcb-check')))d.open=false;});},true);
+document.addEventListener('toggle',e=>{const d=e.target;if(d?.matches?.('details.gcb-menu')&&d.open)document.querySelectorAll('details.gcb-menu[open]').forEach(o=>{if(o!==d)o.open=false;});},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('details.gcb-menu[open]').forEach(d=>{d.open=false;d.querySelector('summary')?.focus();});});
 {const _openActivityBase=window.openActivity;window.openActivity=function(...args){const result=_openActivityBase.apply(this,args);try{window.decoratePipaGroup?.(args[0]);}catch(error){console.error('[pipa]',error);}try{window.decorateGroupExtras?.(args[0]);}catch(error){console.error('[grupo-extras]',error);}try{window.decorateMassSelect?.(args[0]);}catch(error){console.error('[selecao]',error);}try{window.decorateCadastroLinks?.(args[0]);}catch(error){console.error('[cadastro]',error);}return result;};}
 
 window.alternarControleConclusao=async function(secId,ativar){

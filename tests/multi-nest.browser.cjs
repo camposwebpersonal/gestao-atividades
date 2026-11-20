@@ -13,6 +13,7 @@ const {boot} = require('./contrast/run.cjs');
   // 1) Botão "Tornar subitens": JANDSON e LUCIA viram subitens da UBS NOVA SERTÂNIA (i1)
   await page.evaluate(() => window.openActivity('a1')); await page.waitForSelector('#ir-i6');
   await page.check('.mass-sel[data-id="i6"]'); await page.check('.mass-sel[data-id="i7"]');
+  await page.click('.gcb-actions > summary');
   await page.click('.nest-selected-btn');
   await page.waitForSelector('#nest-picker-list');
   await page.fill('#nest-picker-q', 'nova sert');

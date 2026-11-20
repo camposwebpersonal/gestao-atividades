@@ -128,22 +128,62 @@ function foundInHtml(entry, query) {
     return `<span class="search-found">${hits.map(hit => `<span><b>${esc(hit.label)}:</b> ${hit.html}</span>`).join('')}</span>`;
 }
 
+/**
+ * Ordem da busca do topo (regra do usuário, 20/11/2026): 1º GRUPOS DE LANÇAMENTO cujo nome tem o termo,
+ * depois áreas/secretarias pelo nome, depois LANÇAMENTOS (primeiro os que têm o termo no nome) e,
+ * por último, o que só casou em outros campos. Dentro de cada faixa, a relevância.
+ */
+const TITLE_TIER = {group: 0, module: 1, secretary: 1, item: 2, subitem: 2};
+export function prioritizeResults(results, query) {
+    return results.map((entry, i) => {
+        const t = searchText(entry.title, query);
+        const tier = t.matched ? (TITLE_TIER[entry.type] ?? 2.5) : (entry.type === 'group' ? 2.8 : 3);
+        return {...entry, tier, titleScore: t.matched ? t.score : 0, _order: i};
+    }).sort((a, b) => a.tier - b.tier || b.titleScore - a.titleScore || (b.score || 0) - (a.score || 0) || a._order - b._order);
+}
+
+const DROP_SECTIONS = [
+    ['group', '📁 Grupos de lançamento', 6],
+    ['launch', '📝 Lançamentos', 8],
+    ['place', '🏛️ Áreas e secretarias', 3],
+    ['other', '👤 Contatos e outros', 3],
+];
+const dropKind = type => type === 'group' ? 'group' : type === 'item' || type === 'subitem' ? 'launch' : type === 'module' || type === 'secretary' ? 'place' : 'other';
+
+/** Painel instantâneo organizado em seções (grupos primeiro). `results` já vem de prioritizeResults. */
+export function dropdownHtml(results, query, active) {
+    const buckets = new Map(DROP_SECTIONS.map(([k]) => [k, []]));
+    results.forEach((entry, index) => buckets.get(dropKind(entry.type)).push([entry, index]));
+    return DROP_SECTIONS.map(([k, label, max]) => {
+        const list = buckets.get(k); if (!list.length) return '';
+        return `<div class="global-search-section is-${k}"><span>${label}</span><b>${list.length > max ? `${max} de ${list.length}` : list.length}</b></div>`
+            + list.slice(0, max).map(([entry, index]) => dropdownRowHtml(entry, query, index, index === active)).join('');
+    }).join('');
+}
+
 /** Linha do painel que aparece enquanto digita. */
 export function dropdownRowHtml(entry, query, index, active) {
     const crumbs = (entry.crumbs || [entry.context]).filter(Boolean);
-    return `<button type="button" class="global-search-result${active ? ' active' : ''}" role="option" aria-selected="${active}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})">`
+    return `<button type="button" class="global-search-result${active ? ' active' : ''}${entry.type === 'group' && entry.tier === 0 ? ' is-group-hit' : ''}" role="option" aria-selected="${active}" data-search-index="${index}" onmouseenter="selecionarResultadoBuscaGlobal(${index})" onclick="ativarResultadoBuscaGlobal(${index})">`
         + `<span class="global-search-result-icon">${esc(entry.icon)}</span>`
         + `<span class="global-search-result-copy"><strong>${highlightSearchText(entry.title, query)}</strong>`
         + `<small class="search-crumbs">${crumbs.map(c => highlightSearchText(c, query)).join('<i aria-hidden="true">›</i>')}</small>`
+        + (entry.type === 'group' && entry.counts ? `<small class="search-group-count">${entry.counts.total ? `${plural(entry.counts.total, 'lançamento', 'lançamentos')}${entry.counts.open ? ` · <b>${entry.counts.open} em andamento</b>` : ''}` : 'grupo sem lançamentos ainda'}</small>` : '')
         + foundInHtml({foundIn: (entry.foundIn || []).slice(0, 1)}, query) + `</span>`
         + `<span class="global-search-result-type is-${esc(entry.type)}">${esc(searchTypeLabel(entry.type))}</span><span class="global-search-open">↗</span></button>`;
 }
 
 /** Página completa de resultados. */
 export function resultsPageHtml(results, query) {
-    const {tree, others} = organizeResults(results);
+    const {tree: fullTree, others} = organizeResults(results);
+    // Grupos cujo nome casou ganham a seção do topo; na árvore ficam só os grupos com lançamentos encontrados.
+    const groupHits = results.filter(e => e.type === 'group' && searchText(e.title, query).matched);
+    const tree = fullTree.map(sec => ({...sec, groups: sec.groups.filter(g => g.rows.length)})).filter(sec => sec.groups.length);
     const launchCount = tree.reduce((sum, sec) => sum + sec.count, 0);
+    const groupCards = groupHits.length ? `<section class="search-sec search-sec-groups" id="busca-grupos"><header class="search-sec-head"><span aria-hidden="true">📁</span><div><h2>Grupos de lançamento</h2><small>${plural(groupHits.length, 'grupo encontrado', 'grupos encontrados')} pelo nome</small></div></header>`
+        + `<div class="search-group-cards">${groupHits.map(e => `<button type="button" class="search-group-card" onclick="ativarResultadoBuscaPorId('group',${jsArg(e.data?.id)})"><span class="sgc-icon" aria-hidden="true">${esc(e.icon || '▤')}</span><span class="sgc-copy"><strong>${highlightSearchText(e.title, query)}</strong><small>${(e.crumbs || [e.context]).filter(Boolean).map(c => esc(c)).join(' › ')}</small>${e.counts ? `<em>${e.counts.total ? `${plural(e.counts.total, 'lançamento', 'lançamentos')}${e.counts.open ? ` · ${e.counts.open} em andamento` : ''}` : 'sem lançamentos ainda'}</em>` : ''}</span><span class="sgc-open">Abrir →</span></button>`).join('')}</div></section>` : '';
     const summaryChips = [
+        ...(groupHits.length ? [`<a href="#busca-grupos" class="search-chip is-groups">📁 Grupos <b>${groupHits.length}</b></a>`] : []),
         ...tree.map((sec, i) => `<a href="#busca-sec-${i}" class="search-chip">🏛️ ${esc(sec.name)} <b>${sec.count}</b></a>`),
         ...others.map(([type, rows]) => `<a href="#busca-tipo-${esc(type)}" class="search-chip">${esc(searchTypeLabel(type))} <b>${rows.length}</b></a>`)
     ].join('');
@@ -168,5 +208,5 @@ export function resultsPageHtml(results, query) {
     const otherSections = others.map(([type, rows]) => `<section class="search-sec search-sec-other" id="busca-tipo-${esc(type)}">`
         + `<header class="search-sec-head"><span aria-hidden="true">${esc(rows[0]?.icon || '•')}</span><div><h2>${esc(searchTypeLabel(type))}</h2><small>${plural(rows.length, 'resultado', 'resultados')}</small></div></header>`
         + `<div class="search-group-rows">${rows.map(entry => `<button type="button" class="search-launch" onclick="ativarResultadoBuscaPorId(${jsArg(entry.type)},${jsArg(entry.data?.id)})"><span class="search-launch-type is-${esc(type)}">${esc(searchTypeLabel(type))}</span><span class="search-launch-copy"><strong>${highlightSearchText(entry.title, query)}</strong>${entry.context ? `<small class="search-parent">${highlightSearchText(entry.context, query)}</small>` : ''}</span><span class="search-launch-open" aria-hidden="true">→</span></button>`).join('')}</div></section>`).join('');
-    return {html: (summaryChips ? `<nav class="search-chips" aria-label="Resumo dos resultados">${summaryChips}</nav>` : '') + secSections + otherSections, launchCount, secretaryCount: tree.length};
+    return {html: (summaryChips ? `<nav class="search-chips" aria-label="Resumo dos resultados">${summaryChips}</nav>` : '') + groupCards + secSections + otherSections, launchCount, secretaryCount: tree.length};
 }

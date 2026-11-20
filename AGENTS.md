@@ -207,6 +207,28 @@
   `revealCompletedRecord`) e marca o card com o id (`data-well-id`, `data-driller-id`, `data-cr`…).
   Tela nova com filtro salvo precisa do seu gancho. Teste: `tests/search-reveal.browser.cjs`.
 
+## Busca do topo: GRUPOS primeiro (regra do usuário, 20/11/2026)
+
+- Ordem: 1º grupos de lançamento cujo NOME tem o termo; 2º áreas/secretarias pelo nome; 3º lançamentos (primeiro os
+  que têm o termo no nome); por último o que só casou em outros campos. `prioritizeResults` (js/search-results.js),
+  aplicado sobre `rankSearch` (limite 3000, para nenhum grupo ficar de fora). Painel instantâneo em seções
+  (`dropdownHtml`): 📁 Grupos de lançamento (até 6, com "N lançamentos · X em andamento" ou "sem lançamentos ainda"),
+  📝 Lançamentos (até 8), 🏛️ Áreas e secretarias, 👤 Contatos e outros; setas navegam só no que está à vista.
+  Página "ver todos": cards dos grupos encontrados no topo, depois Secretaria › Grupo › lançamentos.
+  Motivo: "areia" não mostrava o grupo PEDIDOS DE AREIA (sem lançamentos) porque lançamentos pontuavam mais.
+  Teste: `tests/search-results.test.mjs`.
+
+## Barra de comandos da tela do grupo (regra do usuário, 20/11/2026)
+
+- `css/group-cmdbar.css` + openActivity (index.html): à vista só o principal — "＋ Criar item" (verde) e "▦ Lançar em
+  lote" à esquerda; "🔍 Buscar", "📄 PDF", "📋 Lista" e "⚙️ Mais ▾" à direita. O menu "Mais" (details/summary) tem
+  seções: Grupo (Editar grupo, percentual, Concluir/Reabrir, Limpar, BCC), Lançamentos marcados (Tornar subitens,
+  Excluir selecionados) e, separado em vermelho, Excluir este grupo. Abaixo do título: "👁 Exibição ▾" (formato de
+  tabela, Itens/Subitens Lista|Cards, salvar padrão, expandir/recolher) + resumo em fichas finas (concluídos,
+  pendentes, atrasados, total, progresso). Menus fecham ao clicar fora/escolher/Esc; um aberto por vez.
+  No celular: Criar + Lote numa linha, ferramentas na outra, nada escondido (tudo continua no menu).
+  Atenção: `#content :is([class*="row"]…)` põe max-width:100% — o popover usa `max-width:none!important`.
+
 ## Nada fica "sem secretaria" (regra permanente)
 
 - `window.groupHomeSecretary(grupo, registro)` (js/modulos.js) é a ÚNICA regra de "em qual
