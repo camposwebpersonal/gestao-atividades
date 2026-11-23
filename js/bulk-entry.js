@@ -1,5 +1,5 @@
 import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=7a75381f';
-import {bulkColumns,hasConclusionControl,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=074c70a6';
+import {bulkColumns,hasConclusionControl,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=07fbc031';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=36f81519';
 
 export {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads};
@@ -69,21 +69,84 @@ function applyColumnOrder(columns,order){
  return known;
 }
 function headHtml(){const can=canManage();return `<th>#</th>${state.columns.map((column,index)=>`<th style="min-width:${column.width}px" data-col-key="${esc(column.key)}" tabindex="0" title="Arraste para mudar a posição (ou Alt + ← →)${can?' · clique duas vezes no nome para renomear':''}"><span class="bulk-col-head"><span class="bulk-col-grip" aria-hidden="true">⠿</span><span class="bulk-col-name" ${can?`ondblclick="bulkRenameColumn('${esc(column.key)}')"`:''}>${esc(column.label)}</span>${can?`<button type="button" class="bulk-col-rename" onclick="bulkRenameColumn('${esc(column.key)}')" aria-label="Renomear a coluna ${esc(column.label)}" title="Renomear coluna">✏️</button>`:''}</span></th>`).join('')}`;}
+// ── Tipo do campo e exclusão (regra do usuário, 23/11/2026) ──
+const TYPE_CHOICES=[['text','Texto'],['number','Número'],['date','Data'],['textarea','Texto longo'],['combobox','Lista (escolher 1)'],['radio','Escolha única (botões)'],['checkboxes','Múltipla escolha (caixinhas)']];
+const LIST_TYPES=['combobox','radio','checkboxes'];
+const REMOVABLE=['start_date','responsaveis','solicitante','urgencia','prioritario','deadline_date','observacao'],CONVERTIBLE=['start_date','deadline_date','responsaveis','observacao','solicitante'];
+const builtinDefaultType=key=>['start_date','deadline_date'].includes(key)?'date':key==='observacao'?'textarea':'text';
+function fieldEditBox(column){
+ const fixed=!column.custom,key=column.key,scope=orderScope(),name=fixed?column.label.replace(/\s*\*$/,''):column.label;
+ const filled=window.fieldFilledCount?.(state.group.id,key,scope)||0;
+ const filledTxt=filled?`<b>${filled}</b> lançamento(s) já têm valor neste campo`:'Nenhum lançamento tem valor neste campo ainda';
+ if(fixed&&!REMOVABLE.includes(key))return `<div class="bce-box"><p class="bce-note">🔒 “${esc(name)}” é usado pelo sistema${column.required?' (obrigatório)':' (Controle de Conclusão)'}: dá para renomear e mudar de posição, mas não trocar o tipo nem excluir.</p></div>`;
+ const cur=fixed?builtinDefaultType(key):column.fieldType||'text';
+ const tpl=fixed?null:groupTemplates().find(t=>t.id===column.templateId);
+ const opts=(tpl&&Array.isArray(tpl.options)&&tpl.options.length?tpl.options:window.fieldDistinctValues?.(state.group.id,fixed?key:key.slice(3),scope)||[]).join('\n');
+ const typeSel=`<label><span>${fixed?'Transformar em campo do tipo':'Tipo do campo'}</span><select id="bce-type" onchange="bulkFieldTypePreview()">${TYPE_CHOICES.map(([v,l])=>`<option value="${v}" ${v===cur?'selected':''}>${l}${v===cur&&!fixed?' — atual':''}</option>`).join('')}</select></label>`;
+ const optsBox=`<label id="bce-opts-wrap" ${LIST_TYPES.includes(cur)?'':'hidden'}><span>Opções (uma por linha)${opts&&!(tpl?.options||[]).length?' — sugeridas a partir do que já foi lançado':''}</span><textarea id="bce-opts" rows="4">${esc(opts)}</textarea></label>`;
+ const conv=fixed?(CONVERTIBLE.includes(key)?`<div class="bce-row"><label><span>Nome do novo campo</span><input id="bce-name" maxlength="80" value="${esc(name)}"></label>${typeSel}${optsBox}<button type="button" class="bce-apply" onclick="bulkConvertBuiltin('${esc(key)}')">🔁 Transformar</button></div><p class="bce-note">O campo fixo vira um campo personalizado do tipo escolhido e os valores já lançados são copiados para ele (datas viram dd/mm/aaaa em texto, listas aproveitam o que já foi escrito). O campo fixo sai do grupo — dá para restaurar depois.</p>`:''):
+  `<div class="bce-row">${typeSel}${optsBox}<button type="button" class="bce-apply" onclick="bulkChangeType('${esc(key)}')">🔁 Trocar tipo</button></div><p class="bce-note">${filledTxt}. Os valores são convertidos para o tipo novo (ex.: “20/11/2026” vira data; “A, B” vira 2 caixinhas marcadas) e guardamos uma cópia: dá para desfazer.</p>`;
+ return `<div class="bce-box">${conv}<div class="bce-danger"><button type="button" class="bce-delete" onclick="bulkDeleteField('${esc(key)}')">🗑 Excluir este campo do grupo</button><small>${fixed?'Some da planilha, do formulário, da tabela e do PDF deste grupo. O que já foi gravado fica guardado e volta se você restaurar.':filledTxt+'. Ele sai de todos os lançamentos do grupo, com cópia guardada para restaurar.'}</small></div></div>`;
+}
+window.bulkFieldEdit=key=>{state.fieldEditKey=state.fieldEditKey===key?null:key;refreshPanel();setTimeout(()=>document.querySelector(`#bulk-col-panel li[data-panel-key="${CSS.escape(key)}"] .bce-box`)?.scrollIntoView({block:'nearest'}),30);};
+window.bulkFieldTypePreview=()=>{const t=document.getElementById('bce-type')?.value,w=document.getElementById('bce-opts-wrap');if(w)w.hidden=!LIST_TYPES.includes(t);};
+const readOpts=()=>[...new Set((document.getElementById('bce-opts')?.value||'').split('\n').map(v=>v.trim()).filter(Boolean))];
+function afterFieldChange(rows,message){state.fieldEditKey=null;refreshColumns(rows);refreshPanel();markDirty();status('Salvo','saved');if(message)window.toast?.(message,'success',5200);}
+async function runFieldOp(fn){status('Aplicando…','pending');try{await fn();}catch(error){status('Não aplicado','error');window.toast?.(error.message||String(error),'error',7000);refreshPanel();}}
+window.bulkChangeType=key=>runFieldOp(async()=>{
+ const column=allColumns().find(c=>c.key===key);if(!column)return;const type=document.getElementById('bce-type').value,options=readOpts();
+ if(type===column.fieldType&&!LIST_TYPES.includes(type)){window.toast?.('Esse já é o tipo do campo.','error');status('','saved');return;}
+ if(LIST_TYPES.includes(type)&&!options.length){window.toast?.('Escreva as opções da lista, uma por linha.','error');status('','saved');return;}
+ const rows=gridRows(),res=await window.changeGroupFieldType(state.group.id,key.slice(3),orderScope(),type,options);
+ afterFieldChange(rows,`“${column.label}” agora é ${TYPE_CHOICES.find(t=>t[0]===type)[1].toLowerCase()}${res.records?` — ${res.records} lançamento(s) convertido(s)`:''}. Dá para desfazer em “Campos excluídos e alterações”.`);
+});
+window.bulkConvertBuiltin=key=>runFieldOp(async()=>{
+ const column=allColumns().find(c=>c.key===key);if(!column)return;const type=document.getElementById('bce-type').value,options=readOpts(),name=document.getElementById('bce-name').value.replace(/\s+/g,' ').trim();
+ if(!name){window.toast?.('Dê um nome ao campo.','error');status('','saved');return;}
+ if(LIST_TYPES.includes(type)&&!options.length){window.toast?.('Escreva as opções da lista, uma por linha.','error');status('','saved');return;}
+ const rows=remapRows(gridRows(),key,'ef:'+name),res=await window.convertBuiltinField(state.group.id,key,name,type,options,orderScope());
+ const order=state.columns.map(c=>c.key===key?'ef:'+name:c.key);state.columns=state.columns.map(c=>c.key===key?{...c,key:'ef:'+name}:c);remapLocalOrder(key,'ef:'+name);
+ afterFieldChange(rows,`“${column.label.replace(/\s*\*$/,'')}” virou o campo “${name}” (${TYPE_CHOICES.find(t=>t[0]===type)[1].toLowerCase()})${res.records?` com ${res.records} valor(es) copiado(s)`:''}.`);persistColumnOrder();void order;
+});
+window.bulkDeleteField=key=>{
+ const column=allColumns().find(c=>c.key===key);if(!column)return;const name=column.label.replace(/\s*\*$/,''),filled=window.fieldFilledCount?.(state.group.id,key,orderScope())||0;
+ const ok=window.confirm(`Excluir o campo “${name}” deste grupo?\n\n${column.custom?(filled?`${filled} lançamento(s) têm valor nele: os valores saem dos lançamentos, mas ficam guardados para restaurar.`:'Nenhum lançamento tem valor nele.'):'Ele some da planilha, do formulário, da tabela e do PDF. O que já foi gravado continua guardado.'}\n\nVocê pode restaurar depois em “Campos excluídos e alterações”.`);
+ if(!ok)return;
+ runFieldOp(async()=>{
+  const rows=gridRows().map(r=>{const c={...r};delete c[key];return c;});
+  if(column.custom)await window.deleteGroupField(state.group.id,key.slice(3),orderScope());else await window.setBuiltinRemoved(state.group.id,key,true);
+  afterFieldChange(rows,`Campo “${name}” excluído deste grupo. Para trazer de volta: ⚙️ Colunas e campos › Campos excluídos e alterações.`);
+ });
+};
+window.bulkRestoreBuiltin=key=>runFieldOp(async()=>{const rows=gridRows();await window.setBuiltinRemoved(state.group.id,key,false);const order=[...state.columns.map(c=>c.key)];const all=allColumns().map(c=>c.key),i=all.indexOf(key);if(!order.includes(key))order.splice(Math.max(0,i),0,key);state.columns=applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope:orderScope()}),order);afterFieldChange(rows,'Campo restaurado ✓');persistColumnOrder();});
+window.bulkRestoreHistory=id=>runFieldOp(async()=>{const rows=gridRows(),res=await window.restoreFieldHistory(id,state.group.id);afterFieldChange(rows,`“${res.field}” restaurado${res.records?` — ${res.records} lançamento(s) com os valores de antes`:''} ✓`);});
+const fmtWhen=v=>{try{return new Date(v).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch{return '';}};
+async function loadFieldHistory(){
+ const box=document.getElementById('bulk-col-history');if(!box)return;
+ const removed=(window.removedFields?.(state.group)||[]),hist=await window.fieldHistory?.(state.group.id)||[];
+ const typeName=t=>(TYPE_CHOICES.find(x=>x[0]===t)||[0,t||'texto'])[1].toLowerCase();
+ const items=[...removed.map(k=>`<li><span>🗑 <b>${esc(window.fieldLabel?.(state.group,k)||k)}</b> <small>campo fixo excluído</small></span><button type="button" onclick="bulkRestoreBuiltin('${esc(k)}')">↺ Restaurar</button></li>`),
+  ...hist.map(h=>`<li><span>${h.action==='excluir'?`🗑 <b>${esc(h.field_name)}</b> <small>excluído`:`🔁 <b>${esc(h.field_name)}</b> <small>${esc(typeName(h.template?.field_type))} → ${esc(typeName(h.new_type))}`}${h.created_by_name?` por ${esc(h.created_by_name)}`:''} · ${fmtWhen(h.created_at)}${h.scope==='subitem'?' · subitens':''}</small></span><button type="button" onclick="bulkRestoreHistory('${esc(h.id)}')">${h.action==='excluir'?'↺ Restaurar':'↺ Desfazer'}</button></li>`)];
+ box.innerHTML=items.length?`<details ${state.historyOpen?'open':''} ontoggle="window.__bulkHistOpen=this.open"><summary>🗂 Campos excluídos e alterações (${items.length})</summary><ul>${items.join('')}</ul></details>`:'';
+}
 const TYPE_NAMES={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista',select:'Lista',checkboxes:'Múltipla escolha',radio:'Escolha única',checkbox:'Sim / não'};
 function columnPanelHtml(){
  const can=canManage(),cols=allColumns(),visible=state.columns.map(c=>c.key);
  const rows=cols.map(column=>{const index=visible.indexOf(column.key),hidden=index<0,fixed=!column.custom;
-  return `<li class="${hidden?'is-hidden':''}" data-panel-key="${esc(column.key)}"><span class="bulk-col-pos">${hidden?'—':index+1}</span>
+  const open=state.fieldEditKey===column.key;
+  return `<li class="${hidden?'is-hidden':''}${open?' is-open':''}" data-panel-key="${esc(column.key)}"><span class="bulk-col-pos">${hidden?'—':index+1}</span>
    ${can?`<input class="bulk-col-label" value="${esc(fixed?window.customFieldLabel?.(state.group,column.key)||column.baseLabel:column.label)}" placeholder="${esc(column.baseLabel)}" aria-label="Nome da coluna ${esc(column.label)}" data-key="${esc(column.key)}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}else if(event.key==='Escape'){this.value=this.defaultValue;this.blur()}" onchange="bulkRenameColumn('${esc(column.key)}',this.value)">`:`<span class="bulk-col-label-ro">${esc(column.label)}</span>`}
    <small class="bulk-col-type ${fixed?'is-fixed':''}">${fixed?'fixo':esc(TYPE_NAMES[column.fieldType]||column.fieldType||'Texto')}${column.required?' · obrigatório':''}</small>
    ${hidden?'':`<button type="button" onclick="bulkMoveColumn(${index},${index-1})" ${index?'':'disabled'} aria-label="Subir ${esc(column.label)}">↑</button><button type="button" onclick="bulkMoveColumn(${index},${index+1})" ${index<visible.length-1?'':'disabled'} aria-label="Descer ${esc(column.label)}">↓</button>`}
-   ${can&&!column.required?`<button type="button" class="bulk-col-eye" onclick="bulkToggleHidden('${esc(column.key)}',${hidden?'false':'true'})" aria-label="${hidden?'Mostrar':'Ocultar'} ${esc(column.label)}" title="${hidden?'Mostrar esta coluna':'Ocultar esta coluna da planilha (os dados continuam guardados)'}">${hidden?'🚫':'👁'}</button>`:''}</li>`;}).join('');
+   ${can&&!column.required?`<button type="button" class="bulk-col-eye" onclick="bulkToggleHidden('${esc(column.key)}',${hidden?'false':'true'})" aria-label="${hidden?'Mostrar':'Ocultar'} ${esc(column.label)}" title="${hidden?'Mostrar esta coluna':'Ocultar esta coluna da planilha (os dados continuam guardados)'}">${hidden?'🚫':'👁'}</button>`:''}
+   ${can?`<button type="button" class="bulk-col-more ${open?'on':''}" onclick="bulkFieldEdit('${esc(column.key)}')" aria-expanded="${open}" aria-label="Tipo e exclusão de ${esc(column.label)}" title="Trocar o tipo ou excluir este campo">⋯</button>`:''}
+   ${open?fieldEditBox(column):''}</li>`;}).join('');
  const add=can?`<details class="bulk-col-new"><summary>＋ Criar novo campo neste grupo</summary><div class="bulk-col-new-form">
    <label><span>Nome do campo</span><input id="bulk-new-field-name" maxlength="80" placeholder="Ex.: Comunidade, Quantidade, Nº do pedido…" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkCreateField()}"></label>
    <label><span>Tipo</span><select id="bulk-new-field-type" onchange="document.getElementById('bulk-new-field-opts-wrap').hidden=!['combobox','checkboxes','radio'].includes(this.value)">${Object.entries({text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (escolher 1)',radio:'Escolha única (botões)',checkboxes:'Múltipla escolha'}).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>
    <label id="bulk-new-field-opts-wrap" hidden><span>Opções (uma por linha)</span><textarea id="bulk-new-field-opts" rows="3" placeholder="Sítio&#10;Povoado&#10;Zona urbana"></textarea></label>
    <button type="button" class="bulk-col-create" onclick="bulkCreateField()">Criar campo</button></div></details>`:'';
- return `<div class="bulk-col-panel-head"><strong>⚙️ Colunas e campos deste grupo</strong><span>${can?'Troque o nome de qualquer coluna (vale no formulário, na tabela e no PDF), mude a ordem, oculte o que não usa e crie campos novos. Apagar o nome de uma coluna fixa volta ao padrão.':'Só quem gerencia o grupo pode renomear ou criar campos.'}</span></div><ol>${rows}</ol>${add}<div class="bulk-col-panel-foot"><button type="button" onclick="bulkResetColumns()">↺ Ordem padrão</button><button type="button" class="bulk-col-done" onclick="bulkToggleColumnPanel(false)">Pronto</button></div>`;
+ return `<div class="bulk-col-panel-head"><strong>⚙️ Colunas e campos deste grupo</strong><span>${can?'Troque o nome de qualquer coluna (vale no formulário, na tabela e no PDF), mude a ordem, oculte o que não usa e crie campos novos. Apagar o nome de uma coluna fixa volta ao padrão.':'Só quem gerencia o grupo pode renomear ou criar campos.'}</span></div><ol>${rows}</ol>${add}${can?'<div id="bulk-col-history" class="bulk-col-history" aria-live="polite"></div>':''}<div class="bulk-col-panel-foot"><button type="button" onclick="bulkResetColumns()">↺ Ordem padrão</button><button type="button" class="bulk-col-done" onclick="bulkToggleColumnPanel(false)">Pronto</button></div>`;
 }
 function rerenderGrid(rowsOverride){
  const rows=rowsOverride||gridRows(),count=Math.max(rows.length,1),wrap=document.querySelector('.bulk-grid-wrap'),scroll=[wrap?.scrollTop||0,wrap?.scrollLeft||0];
@@ -91,7 +154,7 @@ function rerenderGrid(rowsOverride){
  head.innerHTML=headHtml();body.innerHTML='';addRows(count);
  rows.forEach((values,row)=>state.columns.forEach((column,col)=>{if(Object.prototype.hasOwnProperty.call(values||{},column.key))setCell(cellAt(row,col),values[column.key]);}));
  stashHidden(rows);
- const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden)panel.innerHTML=columnPanelHtml();
+ const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden){panel.innerHTML=columnPanelHtml();loadFieldHistory();}
  if(wrap){wrap.scrollTop=scroll[0];wrap.scrollLeft=scroll[1];}updateCount();
 }
 let orderTimer=0;
@@ -149,7 +212,7 @@ window.bulkRenameColumn=async function(key,value){
   refreshColumns(finalRows);refreshPanel();markDirty();status('Salvo','saved');
  }catch(error){status('Não renomeado','error');window.toast?.(error.message||String(error),'error',7000);refreshPanel();}
 };
-function refreshPanel(){const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden){const open=panel.querySelector('.bulk-col-new')?.open;panel.innerHTML=columnPanelHtml();if(open)panel.querySelector('.bulk-col-new').open=true;}}
+function refreshPanel(){const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden){const open=panel.querySelector('.bulk-col-new')?.open;state.historyOpen=window.__bulkHistOpen;panel.innerHTML=columnPanelHtml();if(open)panel.querySelector('.bulk-col-new').open=true;loadFieldHistory();}}
 window.bulkToggleHidden=async function(key,hide){
  const rows=gridRows(),column=allColumns().find(c=>c.key===key);
  try{await window.setBulkColumnHidden(state.group.id,key,hide,orderScope());}catch(error){window.toast?.('Não foi possível salvar: '+(error.message||error),'error',6000);return;}
@@ -178,7 +241,7 @@ window.bulkResetColumns=function(){
 };
 window.bulkToggleColumnPanel=function(show){
  const panel=document.getElementById('bulk-col-panel');if(!panel)return;
- const open=show??panel.hidden;panel.hidden=!open;if(open)panel.innerHTML=columnPanelHtml();
+ const open=show??panel.hidden;panel.hidden=!open;if(open){panel.innerHTML=columnPanelHtml();loadFieldHistory();}
  document.getElementById('bulk-col-toggle')?.setAttribute('aria-expanded',String(open));
 };
 function bindColumnDrag(){

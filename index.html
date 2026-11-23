@@ -424,7 +424,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=2e995a7d">
 <link rel="stylesheet" href="css/module-groups.css?v=2d7d37e2">
 <link rel="stylesheet" href="css/access-permissions.css?v=b692d554">
-<link rel="stylesheet" href="css/bulk-archive.css?v=23603e4d">
+<link rel="stylesheet" href="css/bulk-archive.css?v=823effc8">
 <link rel="stylesheet" href="css/date-br.css?v=328f26c7">
 <script src="js/date-br.js?v=5598f433"></script>
 <link rel="stylesheet" href="css/completed-details.css?v=cabef5ee">
@@ -558,8 +558,8 @@ import './js/mail-settings.js?v=b15f49d8';
 import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/field-labels.js?v=3a2b0671';
-import './js/bulk-entry.js?v=479d8f1a';
+import './js/field-labels.js?v=b924ccca';
+import './js/bulk-entry.js?v=22f42926';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -1761,7 +1761,7 @@ window.openActivity=function(secId){
   let itemsHtml,_totHtml;
   if(useTableAtiv){
     const th=['#','Item',window.fieldLabel?.(sec,'description')||'Nome / Descrição',window.customFieldLabel?.(sec,'responsaveis')||'Responsáveis',window.fieldLabel?.(sec,'observacao')||'Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){if(_showPct)th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
-    let tbl='<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table">';
+    let tbl=`<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table${window.removedFieldClasses?.(sec)||''}">`;
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
     const _tblAct=(id,isSub,parentEdit,concluded)=>_can?`<div style="display:flex;gap:4px;flex-wrap:nowrap;justify-content:flex-end"><button class="card-btn" style="font-size:10px;padding:3px 6px;background:${concluded?'#f59e0b':'#10b981'};color:#fff" onclick="event.stopPropagation();toggleConcluidoPendente('${id}',${isSub})" title="${concluded?'Desmarcar conclusão':'Marcar como concluído'}">${concluded?'↺':'✅'}</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal('${id}','${secId}',${isSub},'${parentEdit||''}','it-name')" title="Editar">✏️</button>${window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',false,null)" title="+ Item">+ Item</button><button class="card-btn" style="font-size:10px;padding:3px 6px" onclick="openItemModal(null,'${secId}',true,'${id}')" title="+ Sub">+ Sub</button><button class="card-btn" style="font-size:10px;padding:3px 6px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${id}',${isSub},'${secId}')" title="Duplicar">📋</button>`:''}${window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;padding:3px 6px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${id}',${isSub})" title="Excluir">🗑️</button>`:''}</div>`:'';
@@ -3717,7 +3717,8 @@ async function _gerarPdfCore(secId,opts){
   {const cellTxt=c=>String(c&&typeof c==='object'?(c.content??''):(c??'')).trim().replace(/^[\u2014-]$/,'');
    const isData=r=>{const c0=cellTxt(r[0]);return r.length===tblH[0].length&&!/^[\u2211\u03a3]/.test(c0)&&r.some((c,i)=>i>0&&cellTxt(c));};
    const dataRows=tblB.filter(isData);
-   const drop=new Set();for(let ci=2;ci<tblH[0].length;ci++){if(!dataRows.some(r=>cellTxt(r[ci])))drop.add(ci);}
+   const _rmL=new Set(window.removedFieldLabels?.(sec)||[]);
+   const drop=new Set();for(let ci=2;ci<tblH[0].length;ci++){if(_rmL.has(String(tblH[0][ci]))||!dataRows.some(r=>cellTxt(r[ci])))drop.add(ci);}
    if(drop.size){tblH=[tblH[0].filter((_,i)=>!drop.has(i))];tblB=tblB.map(r=>r.length===tblH[0].length+drop.size?r.filter((_,i)=>!drop.has(i)):r);}
    Object.keys(colStyles).forEach(k=>delete colStyles[k]);
    colStyles[0]={cellWidth:10,halign:'center'};colStyles[1]={cellWidth:Math.min(58,cw*(tblH[0].length>7?0.24:0.32))};

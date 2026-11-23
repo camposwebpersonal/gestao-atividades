@@ -13,6 +13,11 @@ export const BUILTIN_LABELS = {
 export const groupExtra = group => { let e = group?.extra_fields; if (typeof e === 'string') { try { e = JSON.parse(e); } catch { e = {}; } } return e && typeof e === 'object' ? e : {}; };
 export function customLabel(group, key) { const l = groupExtra(group).field_labels?.[key]; return typeof l === 'string' && l.trim() ? l.trim() : ''; }
 export function fieldLabel(group, key, fallback) { return customLabel(group, key) || fallback || BUILTIN_LABELS[key] || key; }
+// Campos fixos que podem ser excluídos do grupo (Nome/descrição é obrigatório; Concluído/Data da conclusão vêm do
+// Controle de Conclusão) e os que podem virar campo personalizado com outro tipo.
+export const REMOVABLE_BUILTINS = ['start_date', 'responsaveis', 'solicitante', 'urgencia', 'prioritario', 'deadline_date', 'observacao'];
+export const CONVERTIBLE_BUILTINS = ['start_date', 'deadline_date', 'responsaveis', 'observacao', 'solicitante'];
+export function removedFields(group) { const r = groupExtra(group).removed_fields; return Array.isArray(r) ? r.filter(k => REMOVABLE_BUILTINS.includes(k)) : []; }
 export function hiddenColumns(group, scope = 'item') { const h = groupExtra(group).bulk_hidden_columns?.[scope]; return Array.isArray(h) ? h : []; }
 
 if (typeof window !== 'undefined') {
@@ -45,6 +50,64 @@ if (typeof window !== 'undefined') {
     await saveGroupExtra(group, {field_labels: labels});
     return {name: name || BUILTIN_LABELS[key]};
   };
+  window.removedFields = removedFields;
+  const rpc = async (fn, args) => { const {data, error} = await window.db.rpc(fn, args); if (error) throw new Error(window.friendlyDbError?.(error) || error.message); return data || {}; };
+  const guard = groupId => { const group = groupById(groupId); if (!group) throw new Error('Grupo não encontrado.'); if (!canEditGroup(group)) throw new Error('Você não tem permissão para mudar os campos deste grupo.'); return group; };
+  // Recarrega e confere os modelos de campo do grupo direto no banco (o cache local pode estar atrasado).
+  const syncTemplates = async groupId => {
+    try {
+      const {data, error} = await window.db.from('field_templates').select('*').eq('atividade_id', groupId);
+      if (error || !Array.isArray(data) || !window.S) return;
+      const list = window.S.fieldTemplates || (window.S.fieldTemplates = []);
+      for (let i = list.length - 1; i >= 0; i--) if (list[i].atividade_id === groupId) list.splice(i, 1);
+      list.push(...data);
+    } catch { /* sem rede: fica o que veio do loadData */ }
+  };
+  const reload = async groupId => { await window.loadData?.(); if (groupId) await syncTemplates(groupId); };
+  /** Exclui um campo fixo do grupo (os valores continuam guardados; dá para restaurar). */
+  window.setBuiltinRemoved = async function (groupId, key, removed) {
+    const group = guard(groupId); if (!REMOVABLE_BUILTINS.includes(key)) throw new Error('Este campo não pode ser excluído.');
+    const list = new Set(removedFields(group)); removed ? list.add(key) : list.delete(key);
+    await saveGroupExtra(group, {removed_fields: [...list]});
+  };
+  /** Exclui um campo personalizado: some de todos os lançamentos do grupo, com cópia para desfazer. */
+  window.deleteGroupField = async function (groupId, name, scope = 'item') {
+    guard(groupId); const res = await rpc('pms_delete_field', {p_group: groupId, p_name: name, p_scope: scope});
+    const drop = () => { const list = window.S.fieldTemplates || []; for (let i = list.length - 1; i >= 0; i--) if (list[i].atividade_id === groupId && list[i].scope === scope && list[i].field_name === name) list.splice(i, 1); };
+    drop(); await reload(groupId); drop(); return res; // o cache local pode trazer o campo antigo até sincronizar
+  };
+  /** Troca o tipo de um campo personalizado, convertendo os valores já gravados (com cópia para desfazer). */
+  window.changeGroupFieldType = async function (groupId, name, scope, type, options = []) {
+    guard(groupId); const res = await rpc('pms_change_field_type', {p_group: groupId, p_name: name, p_scope: scope, p_type: type, p_options: options});
+    const patch = () => (window.S.fieldTemplates || []).forEach(t => { if (t.atividade_id === groupId && t.scope === scope && t.field_name === name) { t.field_type = type; t.options = ['combobox', 'radio', 'checkboxes'].includes(type) ? options : []; } });
+    patch(); await reload(groupId); patch(); return res;
+  };
+  /** Campo fixo → campo personalizado do tipo escolhido (copia os valores; o fixo sai do grupo). */
+  window.convertBuiltinField = async function (groupId, key, name, type, options = [], scope = 'item') {
+    const group = guard(groupId); const res = await rpc('pms_convert_builtin_field', {p_group: groupId, p_key: key, p_name: name, p_type: type, p_options: options, p_scope: scope});
+    const mark = () => { const g = groupById(groupId) || group; if (!removedFields(g).includes(key)) g.extra_fields = {...groupExtra(g), removed_fields: [...removedFields(g), key]}; };
+    mark(); await reload(groupId); mark(); return res;
+  };
+  window.restoreFieldHistory = async function (id, groupId) { const res = await rpc('pms_restore_field', {p_history: id}); await reload(groupId); return res; };
+  window.fieldHistory = async function (groupId) {
+    try { const {data, error} = await window.db.from('field_history').select('id,scope,field_name,action,new_type,template,created_by_name,created_at,restored_at').eq('group_id', groupId).is('restored_at', null).order('created_at', {ascending: false}).limit(30); return error ? [] : (data || []); } catch { return []; }
+  };
+  /** Valores diferentes já gravados num campo (para sugerir as opções ao virar lista). */
+  window.fieldDistinctValues = function (groupId, name, scope = 'item') {
+    const rows = scope === 'subitem' ? (window.S.subitems || []).filter(r => r.atividade_id === groupId) : (window.S.items || []).filter(r => r.atividade_id === groupId);
+    const out = new Map();
+    rows.forEach(r => { const v = window._efv ? window._efv(r, name) : (r.extra_fields || {})[name]; (Array.isArray(v) ? v : String(v ?? '').split(/\s*[,;]\s*/)).map(x => String(x).trim()).filter(Boolean).forEach(x => out.set(x.toLowerCase(), out.has(x.toLowerCase()) ? out.get(x.toLowerCase()) : x)); });
+    return [...out.values()].slice(0, 40);
+  };
+  window.fieldFilledCount = function (groupId, key, scope = 'item') {
+    const rows = scope === 'subitem' ? (window.S.subitems || []).filter(r => r.atividade_id === groupId) : (window.S.items || []).filter(r => r.atividade_id === groupId);
+    const val = r => key.startsWith('ef:') ? (window._efv ? window._efv(r, key.slice(3)) : (r.extra_fields || {})[key.slice(3)]) : key === 'solicitante' ? (r.extra_fields || {}).solicitante ?? r.solicitante : r[key];
+    return rows.filter(r => { const v = val(r); return Array.isArray(v) ? v.length : v != null && String(v).trim() !== ''; }).length;
+  };
+  // Tabela da tela do grupo: colunas fixas excluídas somem (4ª = Responsáveis, 5ª = Observação)
+  window.removedFieldClasses = group => removedFields(group).filter(k => k === 'responsaveis' || k === 'observacao').map(k => ' rm-' + k).join('');
+  // PDF: rótulos das colunas fixas excluídas (saem da tabela do PDF)
+  window.removedFieldLabels = group => removedFields(group).flatMap(k => [fieldLabel(group, k), BUILTIN_LABELS[k], k === 'responsaveis' ? 'Responsáveis' : '', k === 'observacao' ? 'Observação' : '', k === 'deadline_date' ? 'Prazo' : ''].filter(Boolean));
   window.setBulkColumnHidden = async function (groupId, key, hidden, scope = 'item') {
     const group = groupById(groupId); if (!group || key === 'description') return;
     const all = {...(groupExtra(group).bulk_hidden_columns || {})}, list = new Set(all[scope] || []);
@@ -62,11 +125,22 @@ if (typeof window !== 'undefined') {
   const setLabelText = (lab, text) => { const t = textNode(lab); if (t) t.textContent = (t.textContent.startsWith(' ') ? ' ' : '') + text + (t.textContent.endsWith(' ') ? ' ' : ''); else lab.prepend(document.createTextNode(text)); };
   window.applyFieldLabelsToModal = function (group, root = document) {
     MODAL_MAP.forEach(([id, key, suffix]) => { const label = customLabel(group, key), lab = label && labelFor(root, id); if (lab) setLabelText(lab, label + suffix); });
+    // campos fixos excluídos do grupo somem do formulário (o valor gravado continua guardado)
+    const gone = new Set(removedFields(group));
+    MODAL_MAP.forEach(([id, key]) => {
+      if (!gone.has(key)) return;
+      const input = root.getElementById ? root.getElementById(id) : root.querySelector('#' + id); if (!input) return;
+      const box = key === 'prioritario' ? input.closest('label') : input.closest('.form-group') || input.closest('label');
+      if (box) { box.hidden = true; box.classList.add('fl-removed'); }
+    });
+    const fs = root.querySelector?.('#at-urgencia')?.closest('fieldset');
+    if (fs && ['urgencia', 'prioritario', 'solicitante'].every(k => gone.has(k))) fs.hidden = true;
   };
   const canEditGroup = group => Boolean(window.S?.isAdmin || window.userCanGroup?.(group, 'editar'));
   window.decorateFieldLabelEditors = function (group, scope = 'item', root = document) {
     if (!group || !canEditGroup(group)) return;
-    const targets = MODAL_MAP.map(([id, key, suffix]) => [labelFor(root, id), key, suffix]).filter(([lab]) => lab);
+    const gone = new Set(removedFields(group));
+    const targets = MODAL_MAP.filter(([, key]) => !gone.has(key)).map(([id, key, suffix]) => [labelFor(root, id), key, suffix]).filter(([lab]) => lab);
     root.querySelectorAll('label[data-ef-field]').forEach(lab => targets.push([lab, 'ef:' + lab.dataset.efField, '']));
     targets.forEach(([lab, key, suffix]) => {
       if (lab.querySelector('.fl-pencil')) return;

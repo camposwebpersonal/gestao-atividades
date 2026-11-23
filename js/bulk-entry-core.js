@@ -1,6 +1,6 @@
 import {recordSecretary} from './record-context.js';
 import {isAttendanceSection} from './atendimento-fluxo.js?v=96e12139';
-import {fieldLabel,hiddenColumns} from './field-labels.js?v=3a2b0671';
+import {fieldLabel,hiddenColumns,removedFields} from './field-labels.js?v=b924ccca';
 
 function templateOptions(template){
  const raw=template?.options;
@@ -48,7 +48,8 @@ export function bulkColumns(group,templates=[],{scope='item',includeHidden=false
   const type=template.field_type==='combobox'?'select':template.field_type||'text',choices=['checkboxes','radio'].includes(type);
   columns.push({key:'ef:'+template.field_name,label:template.field_name,type,width:choices?Math.max(260,templateOptions(template).length*95):template.field_type==='textarea'?260:170,extra:true,custom:true,fieldType:template.field_type||'text',templateId:template.id,options:templateOptions(template).map(value=>[String(value),String(value)])});
  });
- const hidden=new Set(hiddenColumns(group,scope==='subitem'?'subitem':'item'));
+ const hidden=new Set(hiddenColumns(group,scope==='subitem'?'subitem':'item')),removed=new Set(removedFields(group));
+ columns.splice(0,columns.length,...columns.filter(column=>!removed.has(column.key)));
  columns.forEach(column=>{column.baseLabel=column.custom?column.label:L(column.key);if(hidden.has(column.key)&&!column.required)column.hidden=true;});
  return includeHidden?columns:columns.filter(column=>!column.hidden);
 }

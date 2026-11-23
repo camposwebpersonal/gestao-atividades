@@ -303,6 +303,17 @@
   (Nome, Observação, Urgência, Prioritário, Solicitante, Responsáveis, Data início, Prazo) e personalizados
   (`<label data-ef-field>`); edita ali mesmo (Enter salva, Esc cancela), sem perder o que já foi digitado, e o campo aberto
   passa a gravar no nome novo (data-ef-key/data-ef-choice-key atualizados).
+- TIPO e EXCLUSÃO (23/11/2026): no painel, "⋯" de cada coluna abre: trocar o tipo do campo personalizado (texto, número,
+  data, texto longo, lista, escolha única, múltipla; opções sugeridas a partir do que já foi lançado) via
+  `pms_change_field_type` (converte os valores: dd/mm/aaaa → data, "A, B" → caixinhas, data → dd/mm/aaaa em texto);
+  transformar campo fixo convertível (Data da solicitação, Prazo, Responsável, Observação, Solicitante) em campo
+  personalizado de qualquer tipo via `pms_convert_builtin_field` (copia valores; o fixo vai para removed_fields);
+  excluir campo personalizado via `pms_delete_field` (tira dos lançamentos) ou campo fixo removível (`removed_fields`,
+  valores ficam nas colunas). Nome/descrição e Concluído/Data da conclusão não são excluíveis. Tudo com volta: tabela
+  `field_history` (RLS leitura por grupo; gravação só pelas RPCs security definer) + `pms_restore_field`; lista
+  "🗂 Campos excluídos e alterações" no painel com ↺ Restaurar/Desfazer. Sem WhatsApp, sem trocar autor (migração
+  20261123140000). Fixo excluído some da planilha, do formulário (`applyFieldLabelsToModal`), da tabela da tela
+  (`removedFieldClasses`, colunas 4/5) e do PDF (`removedFieldLabels` no drop de colunas). Teste: `tests/field-types.browser.cjs`.
 - Ocultar: `extra_fields.bulk_hidden_columns{item,subitem}`; o que já foi digitado numa coluna oculta fica guardado
   na linha (`row._hidden`) e vai junto no envio. Teste: `tests/field-labels.browser.cjs` (390 e 1366).
 
