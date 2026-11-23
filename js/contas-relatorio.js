@@ -101,7 +101,15 @@
       <label>Tipo de conta<select onchange="ccRelatorioSet('${secId}','tipo',this.value)">${opt('', 'Todos', d.tipoSel)}${d.tipos.map(t => opt(t, t, d.tipoSel)).join('')}</select></label>
       <label>Secretaria<select onchange="ccRelatorioSet('${secId}','sec',this.value)">${opt('', 'Todas', d.secSel)}${d.secNames.map(s => opt(s, s, d.secSel)).join('')}</select></label>
       <button type="button" class="ccr-pdf" onclick="ccRelatorioPdf('${secId}')">📄 Gerar PDF deste relatório</button></div>`;
-    const sum = `<div class="ccr-summary"><div><b>${d.list.length}</b><small>secretaria${d.list.length === 1 ? '' : 's'}</small></div><div><b>${d.tot.locais}</b><small>locais com conta</small></div><div><b>${d.tot.qtd}</b><small>lançamentos</small></div><div><b>${money(d.tot.total)}</b><small>total${d.anoSel ? ' em ' + d.anoSel : ''}</small></div><div class="is-ok"><b>${money(d.tot.pago)}</b><small>pago</small></div><div class="${d.tot.total - d.tot.pago > 0.004 ? 'is-bad' : ''}"><b>${money(d.tot.total - d.tot.pago)}</b><small>pendente</small></div></div>`;
+    // neuroarquitetura: situação numa frase + anel de progresso + fichas cujo valor nunca sai do card
+    const pend = d.tot.total - d.tot.pago, pct = d.tot.total ? d.tot.pago / d.tot.total * 100 : 0;
+    const escopo = [d.tipoSel ? `Contas de ${d.tipoSel}` : 'Todas as contas', d.anoSel ? `em ${d.anoSel}` : 'em todos os anos', d.secSel ? `· ${d.secSel}` : ''].filter(Boolean).join(' ');
+    const mood = !d.tot.qtd ? 'calm' : pend > 0.004 ? 'focus' : 'done';
+    const titulo = !d.tot.qtd ? 'Nada para mostrar com esses filtros' : pend > 0.004 ? `${money(d.tot.total)} em ${d.tot.locais} local(is)` : 'Tudo pago neste relatório ✨';
+    const frase = !d.tot.qtd ? 'Troque o ano, o tipo ou a secretaria abaixo para ver os lançamentos.' : pend > 0.004 ? `${escopo}. Já foram pagos ${money(d.tot.pago)}; faltam ${money(pend)}.` : `${escopo}: ${money(d.tot.total)} em ${d.tot.qtd} lançamento(s), tudo quitado.`;
+    const K = window.ccnKpi || ((c, i, l, v, s) => `<div class="ccn-kpi ${c}"><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${l}</span><b class="ccn-kpi-val">${v}</b><small>${s || ''}</small></div></div>`);
+    const sum = `<section class="ccn-hero ccn-hero-sm is-${mood}"><div class="ccn-hero-txt"><span class="ccn-hello">📑 Relatório por secretaria</span><h2>${esc(titulo)}</h2><p>${esc(frase)}</p><small class="ccn-scope">${d.list.length} secretaria(s) · ${d.tot.locais} local(is) com conta · ${d.tot.qtd} lançamento(s)</small></div>${d.tot.qtd && window.ccnRing ? `<div class="ccn-hero-ring">${window.ccnRing(pct)}</div>` : ''}</section>
+      <div class="ccn-kpis">${K('is-total', '💰', `Total${d.anoSel ? ' em ' + d.anoSel : ''}`, money(d.tot.total), `${d.tot.qtd} lançamento(s)`)}${K('is-paid', '✅', 'Pago', money(d.tot.pago), `${Math.round(pct)}% do valor`)}${K(pend > 0.004 ? 'is-pend' : 'is-zero', '⏳', 'Pendente', money(pend), pend > 0.004 ? 'a pagar' : 'nada pendente 🎉')}${K('is-total', '🏛️', 'Secretarias', String(d.list.length), `${d.tot.locais} local(is) com conta`)}</div>`;
     const body = d.list.map(g => `<section class="ccr-sec">
       <header class="ccr-sec-head"><div><small>${secLabel(g.name)}</small><h3>${secIcon(g.name)} ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${money(g.total)}</b><small>${g.com.length} local(is) · ${g.qtd} lançamento(s)</small></div></header>
       ${g.com.length ? `<div class="ccr-table-wrap"><table class="ccr-table"><thead><tr>${head.map((h, i) => `<th class="${i === valorIdx ? 'num' : ''}">${h}</th>`).join('')}</tr></thead>
@@ -148,8 +156,11 @@
   window.ccCadastroHtml = function (secId) {
     const d = cadastroData(secId);
     let n = 0;
-    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>🏢 Cadastro dos locais</b><span>Dados vindos de ADMINISTRAÇÃO › Cadastros (o coração do sistema) + os do controle.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
-      <div class="ccr-summary"><div><b>${d.groups.length}</b><small>secretarias</small></div><div><b>${d.total}</b><small>locais</small></div><div class="${d.missing ? 'is-bad' : 'is-ok'}"><b>${d.total - d.missing}</b><small>com conta contrato</small></div><div class="is-ok"><b>${d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length}</b><small>🔗 ligados ao cadastro</small></div></div>
+    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>Um local por linha</b><span>Conta contrato, relógio, endereço e demais dados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
+      ${(() => { const K = window.ccnKpi || ((c, i, l, v, s) => `<div class="ccn-kpi ${c}"><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${l}</span><b class="ccn-kpi-val">${v}</b><small>${s || ''}</small></div></div>`);
+        const lig = d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length, com = d.total - d.missing, pct = d.total ? com / d.total * 100 : 0;
+        return `<section class="ccn-hero ccn-hero-sm is-${d.missing ? 'focus' : 'done'}"><div class="ccn-hero-txt"><span class="ccn-hello">🏢 Cadastro dos locais</span><h2>${d.missing ? `${d.missing} local(is) sem conta contrato` : 'Cadastro completo ✨'}</h2><p>${d.missing ? 'Complete a conta contrato destes locais (marcados em vermelho) para o relatório e os PDFs saírem perfeitos.' : `Todos os ${d.total} locais têm conta contrato. Excelente!`}</p><small class="ccn-scope">Dados vindos de ADMINISTRAÇÃO › Cadastros (o coração do sistema) + os do controle.</small></div>${d.total && window.ccnRing ? `<div class="ccn-hero-ring">${window.ccnRing(pct, 'completo')}</div>` : ''}</section>
+        <div class="ccn-kpis">${K('is-total', '🏛️', 'Secretarias', String(d.groups.length), 'com locais')}${K('is-total', '📍', 'Locais', String(d.total), 'no controle')}${K(d.missing ? 'is-pend' : 'is-paid', '🧾', 'Com conta contrato', String(com), d.missing ? `faltam ${d.missing}` : 'todos 🎉')}${K(lig ? 'is-paid' : 'is-zero', '🔗', 'Ligados ao cadastro', String(lig), `de ${d.total} · 🔗 ligados ao cadastro oficial`)}</div>`; })()}
       ${d.groups.map(g => `<section class="ccr-sec"><header class="ccr-sec-head"><div><small>${secLabel(g.name)}</small><h3>${secIcon(g.name)} ${esc(g.name)}</h3><span>${esc([...g.cats].filter(c => norm(c) !== norm(g.name)).join(' · '))}</span></div><div class="ccr-sec-tot"><b>${g.locais.length}</b><small>local(is)</small></div></header>
         <ol class="ccc-list">${g.locais.map(l => `<li class="ccc-row"><span class="ccc-n">${++n}</span><div class="ccc-body"><div class="ccc-title">📍 ${esc(l.local.description || 'Local')}${linkTag(l.local)}</div><div class="ccc-fields">${fieldsOf(l, d.keys).map(f => `<span class="${f.bad ? 'bad' : ''}"><b>${esc(f.label.toUpperCase())}:</b> ${esc(f.value)}</span>`).join('')}</div></div></li>`).join('')}</ol></section>`).join('') || '<div class="empty">Nenhum local cadastrado.</div>'}</div>`;
   };
@@ -162,26 +173,27 @@
     const doc = new window.jspdf.jsPDF({orientation: land ? 'landscape' : 'portrait', unit: 'mm', format: 'a4'}); (window.safePdf || (x => x))(doc);
     const W = land ? 297 : 210, H = land ? 210 : 297, mx = 10;
     let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
-    const header = () => {
-      doc.setFillColor(247, 250, 248); doc.rect(0, 0, W, 16, 'F'); doc.setFillColor(33, 135, 82); doc.rect(0, 0, 3, 16, 'F');
-      if (logo?.d) doc.addImage(logo.d, 'PNG', W - 17, 2, 9, 12, undefined, 'FAST');
-      doc.setTextColor(15, 53, 43); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(`CADASTRO DOS LOCAIS · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, mx, 7.5);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(78, 105, 96);
-      doc.text(`Prefeitura Municipal de Sertânia · ${d.total} locais · ${d.groups.length} secretarias · ${d.total - d.missing} com conta contrato · ${new Date().toLocaleString('pt-BR')}`, mx, 12.5);
-    };
-    header(); let y = 20, num = 0;
+    const P = window.ccnPdf;
+    const header = () => P.header(doc, {W, title: `CADASTRO DOS LOCAIS · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, sub: `Prefeitura Municipal de Sertânia · ${d.total} locais · ${d.groups.length} secretarias · ${d.total - d.missing} com conta contrato · Emitido em ${P.hoje()}`, logo});
+    let y = header(), num = 0;
+    const lig = d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length;
+    y = P.situation(doc, {x: mx, y, w: W - mx * 2, mood: d.missing ? 'focus' : 'done', titulo: d.missing ? `${d.missing} local(is) ainda sem conta contrato` : 'Cadastro completo: todos os locais têm conta contrato',
+      frase: d.missing ? 'Os locais sem conta contrato aparecem com "não informado" - complete no sistema para o relatório sair perfeito.' : `${d.total} locais em ${d.groups.length} secretaria(s), todos com conta contrato.`});
+    y = P.kpis(doc, {x: mx, y, w: W - mx * 2, cards: [
+      {label: 'Secretarias', value: String(d.groups.length), tone: 'total'}, {label: 'Locais', value: String(d.total), tone: 'total'},
+      {label: 'Com conta contrato', value: String(d.total - d.missing), sub: d.missing ? `faltam ${d.missing}` : 'todos', tone: d.missing ? 'pend' : 'paid'},
+      {label: 'Ligados ao cadastro', value: String(lig), sub: `de ${d.total}`, tone: lig ? 'paid' : 'zero'}]}) + 1;
     for (const g of d.groups) {
-      if (y > H - 30) { doc.addPage(); header(); y = 20; }
-      doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 6.5, 1.2, 1.2, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 2.5, y + 4.5);
+      if (y > H - 30) { doc.addPage(); y = header(); }
+      doc.setFillColor(236, 247, 243); doc.roundedRect(mx, y, W - mx * 2, 6.5, 1.2, 1.2, 'F'); doc.setFillColor(14, 116, 144); doc.rect(mx, y, 1.4, 6.5, 'F');
+      doc.setTextColor(11, 37, 64); doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 2.5, y + 4.5);
       doc.setFontSize(7.5); doc.text(`${g.locais.length} local(is)`, W - mx - 2.5, y + 4.5, {align: 'right'}); y += 7.5;
       const recs = g.locais.map(l => ({num: String(++num), level: 0, title: l.local.description || 'Local', badges: window.cadastroLinks?.cad(l.local) ? [] : [{text: 'sem cadastro', tone: 'attention'}],
         fields: fieldsOf(l, d.keys).map(f => ({label: f.label.toUpperCase(), value: f.value}))}));
-      y = window.drawRecordsTable(doc, recs, {startY: y, width: W - mx * 2, perRow, fieldCols, headColor: [15, 61, 49], margin: {left: mx, right: mx, top: 20, bottom: 14},
+      y = window.drawRecordsTable(doc, recs, {startY: y, width: W - mx * 2, perRow, fieldCols, headColor: [15, 61, 49], margin: {left: mx, right: mx, top: 22, bottom: 12},
         onPage: data => { if (data.pageNumber > 1) header(); }}) + 4;
     }
-    const pages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pages; p++) { doc.setPage(p); doc.setFillColor(12, 61, 49); doc.rect(0, H - 9, W, 9, 'F'); doc.setTextColor(225, 242, 234); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CADASTRO DOS LOCAIS', mx, H - 3.5); doc.text(`Página ${p} de ${pages}`, W - mx, H - 3.5, {align: 'right'}); }
+    P.footer(doc, {W, H, text: 'PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CADASTRO DOS LOCAIS'});
     doc.save('CADASTRO-DOS-LOCAIS-CONTROLE-DE-CONTAS.pdf'); window.toast?.('PDF do cadastro gerado!', 'success');
   };
   window.ccRelatorioSet = function (secId, key, value) {
@@ -199,34 +211,33 @@
     const W = 297, H = 210, mx = 10;
     let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
     const periodo = [d.tipoSel ? `Contas de ${d.tipoSel}` : 'Todas as contas', d.anoSel ? `Ano ${d.anoSel}` : 'Todos os anos', d.secSel || 'Todas as secretarias', d.pagoF === 'pago' ? 'Só pagas' : d.pagoF === 'pendente' ? 'Só pendentes' : '', d.busca ? `Busca: "${d.busca}"` : ''].filter(Boolean).join(' · ');
-    const header = () => {
-      doc.setFillColor(247, 250, 248); doc.rect(0, 0, W, 24, 'F'); doc.setFillColor(33, 135, 82); doc.rect(0, 0, 4, 24, 'F');
-      doc.setDrawColor(121, 184, 65); doc.setLineWidth(.6); doc.line(0, 24, W, 24);
-      if (logo?.d) doc.addImage(logo.d, 'PNG', W - 24, 3, 13, 17, undefined, 'FAST');
-      doc.setTextColor(15, 53, 43); doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
-      doc.text(`RELATÓRIO POR SECRETARIA · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, mx, 11);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(78, 105, 96);
-      doc.text(`Prefeitura Municipal de Sertânia · ${periodo} · Emitido em ${new Date().toLocaleString('pt-BR')}`, mx, 18);
-    };
-    header();
-    // resumo
-    const cards = [['SECRETARIAS', String(d.list.length)], ['LOCAIS', String(d.tot.locais)], ['LANÇAMENTOS', String(d.tot.qtd)], ['TOTAL', money(d.tot.total)], ['PAGO', money(d.tot.pago)], ['PENDENTE', money(d.tot.total - d.tot.pago)]];
-    const cw = (W - mx * 2 - 5 * 3) / 6; let y = 29;
-    cards.forEach(([label, value], i) => {
-      const x = mx + i * (cw + 3); doc.setFillColor(247, 250, 248); doc.setDrawColor(218, 228, 224); doc.roundedRect(x, y, cw, 8, 1.2, 1.2, 'FD');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...(label === 'PENDENTE' && d.tot.total - d.tot.pago > 0.004 ? [176, 58, 22] : label === 'PAGO' ? [22, 128, 74] : [15, 53, 43]));
-      doc.text(value, x + 2.2, y + 5.4); doc.setFontSize(6); doc.setTextColor(78, 105, 96); doc.text(label, x + cw - 1.8, y + 5.2, {align: 'right'});
-    });
-    y += 10.5;
+    const P = window.ccnPdf;
+    const header = () => P.header(doc, {W, title: `RELATÓRIO POR SECRETARIA · ${(sec?.name || 'CONTROLE DE CONTAS').toUpperCase()}`, sub: `Prefeitura Municipal de Sertânia · ${periodo} · Emitido em ${P.hoje()}`, logo});
+    // neuroarquitetura: situação em uma frase + fichas (valor nunca sai da ficha) + barra do pago
+    let y = header();
+    const pend = d.tot.total - d.tot.pago, pct = d.tot.total ? d.tot.pago / d.tot.total * 100 : 0;
+    const qPago = d.list.reduce((s, g) => s + g.com.reduce((a, l) => a + l.rows.filter(isPago).length, 0), 0);
+    y = P.situation(doc, {x: mx, y, w: W - mx * 2, ...P.mood({total: d.tot.total, pago: d.tot.pago, qtd: d.tot.qtd, qtdPago: qPago}, money)});
+    y = P.kpis(doc, {x: mx, y, w: W - mx * 2, cards: [
+      {label: 'Secretarias', value: String(d.list.length), sub: `${d.tot.locais} local(is) com conta`, tone: 'total'},
+      {label: 'Lançamentos', value: String(d.tot.qtd), sub: `${qPago} pago(s)`, tone: 'total'},
+      {label: 'Total', value: money(d.tot.total), sub: d.anoSel ? `em ${d.anoSel}` : 'todos os anos', tone: 'total'},
+      {label: 'Pago', value: money(d.tot.pago), sub: `${Math.round(pct)}% do valor`, tone: 'paid'},
+      {label: 'Pendente', value: money(pend), sub: pend > 0.004 ? 'a pagar' : 'nada pendente', tone: pend > 0.004 ? 'pend' : 'zero'},
+    ]});
+    y = P.progress(doc, {x: mx, y, w: W - mx * 2, pct}) + 1;
     const valorIdx = head.indexOf('Valor'), sitIdx = head.indexOf('Situação'), obsIdx = head.indexOf('Observações');
     for (const g of d.list) {
       if (!g.com.length) continue;
-      if (y > H - 40) { doc.addPage(); header(); y = 30; }
-      // faixa da secretaria
-      doc.setFillColor(11, 77, 59); doc.roundedRect(mx, y, W - mx * 2, 10, 1.5, 1.5, 'F');
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11.5); doc.text(g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 3, y + 6.6);
-      doc.setFontSize(9); doc.text(`${money(g.total)}  ·  ${g.com.length} local(is)  ·  ${g.qtd} lançamento(s)`, W - mx - 3, y + 6.6, {align: 'right'});
-      y += 12;
+      if (y > H - 40) { doc.addPage(); y = header(); }
+      // faixa da secretaria (tom calmo, barra petróleo à esquerda)
+      doc.setFillColor(236, 247, 243); doc.roundedRect(mx, y, W - mx * 2, 9, 1.5, 1.5, 'F');
+      doc.setFillColor(14, 116, 144); doc.roundedRect(mx, y, 1.6, 9, .8, .8, 'F');
+      const totTxt = `${money(g.total)}  ·  ${g.com.length} local(is)  ·  ${g.qtd} lançamento(s)`;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.6); const tw = doc.getTextWidth(totTxt);
+      doc.setTextColor(12, 74, 110); doc.text(totTxt, W - mx - 3, y + 6, {align: 'right'});
+      doc.setTextColor(11, 37, 64); P.fitText(doc, g.name === SEM_CAD ? g.name : `SECRETARIA: ${g.name}`, mx + 4.5, y + 6.1, W - mx * 2 - tw - 14, 11, 7);
+      y += 10.5;
       const body = [];
       for (const l of g.com) {
         const ident = [l.contrato && `Conta contrato: ${l.contrato}`, l.relogio && `Relógio: ${l.relogio}`, l.lugar].filter(Boolean).join('   ·   ') || 'Sem conta contrato / relógio cadastrados';
@@ -237,24 +248,18 @@
           for (const r of m.rows) body.push(rowCells(r, cols).map((v, i) => i === 0 ? {content: '          ' + v, styles: {fontStyle: 'normal'}} : v));
           body.push([{content: `Total de ${m.key} · ${m.rows.length} contas`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', textColor: [29, 78, 137], fillColor: [246, 249, 255]}}, {content: money(m.rows.reduce((s, r) => s + (Number(r.valor) || 0), 0)), styles: {fontStyle: 'bold', halign: 'right', textColor: [29, 78, 137], fillColor: [246, 249, 255]}}, {content: '', colSpan: n - valorIdx - 1, styles: {fillColor: [246, 249, 255]}}]);
         }
-        body.push([{content: `Total do local · ${l.rows.length} lançamento(s)`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', textColor: [47, 69, 88], fillColor: [246, 250, 248]}}, {content: money(l.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [246, 250, 248], textColor: [15, 53, 43]}}, {content: l.total - l.pago > 0.004 ? `Pendente ${money(l.total - l.pago)}` : 'Tudo pago', colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [246, 250, 248], textColor: l.total - l.pago > 0.004 ? [176, 58, 22] : [22, 128, 74]}}]);
+        body.push([{content: `Total do local · ${l.rows.length} lançamento(s)`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', textColor: [47, 69, 88], fillColor: [246, 250, 248]}}, {content: money(l.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [246, 250, 248], textColor: [15, 53, 43]}}, {content: l.total - l.pago > 0.004 ? `Pendente ${money(l.total - l.pago)}` : 'Tudo pago', colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [246, 250, 248], textColor: l.total - l.pago > 0.004 ? [146, 64, 14] : [4, 120, 87]}}]);
       }
-      body.push([{content: `TOTAL ${g.name}`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}, {content: money(g.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}, {content: `Pago ${money(g.pago)}${g.total - g.pago > 0.004 ? ` · Pendente ${money(g.total - g.pago)}` : ''}`, colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [11, 77, 59], textColor: [255, 255, 255]}}]);
-      doc.autoTable({startY: y, head: [head], body, theme: 'grid', margin: {left: mx, right: mx, top: 30, bottom: 16},
+      body.push([{content: `TOTAL ${g.name}`, colSpan: valorIdx, styles: {fontStyle: 'bold', halign: 'right', fillColor: [224, 242, 254], textColor: [11, 37, 64]}}, {content: money(g.total), styles: {fontStyle: 'bold', halign: 'right', fillColor: [224, 242, 254], textColor: [12, 74, 110]}}, {content: `Pago ${money(g.pago)}${g.total - g.pago > 0.004 ? ` · Pendente ${money(g.total - g.pago)}` : ''}`, colSpan: n - valorIdx - 1, styles: {fontStyle: 'bold', fillColor: [224, 242, 254], textColor: g.total - g.pago > 0.004 ? [146, 64, 14] : [4, 120, 87]}}]);
+      doc.autoTable({startY: y, head: [head], body, theme: 'grid', margin: {left: mx, right: mx, top: 22, bottom: 12},
         styles: {fontSize: 7.8, cellPadding: 1.6, textColor: [33, 52, 63], lineColor: [218, 228, 224], lineWidth: .15, overflow: 'linebreak', valign: 'middle'},
-        headStyles: {fillColor: [22, 104, 70], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.8},
+        headStyles: {fillColor: [16, 94, 74], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.8}, alternateRowStyles: {fillColor: [250, 252, 251]},
         columnStyles: Object.fromEntries(head.map((h, i) => [i, h === 'Mês/Ano' ? {cellWidth: 26, fontStyle: 'bold'} : h === 'Valor' ? {halign: 'right', cellWidth: 28} : h === 'Situação' ? {cellWidth: 20} : h === 'Observações' ? {cellWidth: 'auto', fontSize: 7} : {cellWidth: 26}])),
-        didParseCell: c => { if (c.section === 'body' && c.column.index === sitIdx && (c.cell.raw === 'Pago' || c.cell.raw === 'Pendente')) { c.cell.styles.fontStyle = 'bold'; c.cell.styles.textColor = c.cell.raw === 'Pago' ? [22, 128, 74] : [176, 58, 22]; } },
+        didParseCell: c => { if (c.section === 'body' && c.column.index === sitIdx && (c.cell.raw === 'Pago' || c.cell.raw === 'Pendente')) { c.cell.styles.fontStyle = 'bold'; c.cell.styles.textColor = c.cell.raw === 'Pago' ? [4, 120, 87] : [146, 64, 14]; } },
         didDrawPage: () => { if (doc.internal.getCurrentPageInfo().pageNumber > 1) header(); }});
       y = doc.lastAutoTable.finalY + 8;
     }
-    const pages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pages; p++) {
-      doc.setPage(p); doc.setFillColor(12, 61, 49); doc.rect(0, H - 10, W, 10, 'F');
-      doc.setTextColor(225, 242, 234); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
-      doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA - GESTÃO DE ATIVIDADES · CONTROLE DE CONTAS', mx, H - 4);
-      doc.text(`Página ${p} de ${pages}`, W - mx, H - 4, {align: 'right'});
-    }
+    P.footer(doc, {W, H});
     const slug = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '');
     doc.save(`RELATORIO-CONTAS-POR-SECRETARIA${d.tipoSel ? '-' + slug(d.tipoSel) : ''}${d.anoSel ? '-' + d.anoSel : ''}${d.secSel ? '-' + slug(d.secSel) : ''}.pdf`);
     window.toast?.('PDF do relatório gerado!', 'success');

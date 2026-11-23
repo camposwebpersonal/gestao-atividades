@@ -185,10 +185,15 @@ window.renderControleContas = function(secId,opcoes={}){
   if(!mesesNavegaveis.some(m=>m.id===nav.mes))nav.mes=mesesNavegaveis.find(m=>contasAno.some(c=>numeroMes(c)===m.id))?.id||'1';
   _ccNavegacaoPorSecao.set(secId,nav);
   const navTabs=(nivel,values,selected)=>`<div class="cc-drill-tabs ${nivel==='local'?'cc-local-grid':''}" role="group" aria-label="${nivel}">${values.map(v=>`<button type="button" data-cc-level="${nivel}" data-cc-value="${esc(v.id)}" aria-pressed="${v.id===selected}" class="${v.id===selected?'active':''}">${esc(v.label)}</button>`).join('')}</div>`;
-  const navegacaoHtml=`<div class="cc-drilldown"><div class="cc-drill-label">1 · Setor</div>${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
-  ${locaisNavegaveis.length?`<div class="cc-drill-label">2 · Item / local</div>${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:_ccNomeLocal(local)})),nav.local)}`:''}
-  ${tiposNavegaveis.length?`<div class="cc-drill-label">3 · Tipo de conta</div>${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}<div class="cc-drill-label">4 · Ano</div>${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}
-  <div class="cc-drill-label">5 · Mês</div><div class="cc-months" role="group" aria-label="Mês do lançamento">${mesesNavegaveis.map(mes=>{const rows=contasAno.filter(c=>numeroMes(c)===mes.id),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);return `<button type="button" data-cc-level="mes" data-cc-value="${mes.id}" aria-pressed="${mes.id===nav.mes}" class="cc-month ${rows.length?'has-data':''} ${mes.id===nav.mes?'active':''}"><strong>${mes.label}</strong><small>${rows.length?'R$ '+total.toLocaleString('pt-BR',{minimumFractionDigits:2}):'Sem lançamento'}</small><small>${rows.length?rows.length+' lançamento(s)':''}</small></button>`;}).join('')}</div>
+  // Neuroarquitetura: passos numerados (um caminho claro), meses com a situação em palavras e cor calma.
+  const passo=(n,t)=>`<div class="cc-drill-label"><i aria-hidden="true">${n}</i>${t}</div>`;
+  const mesBtn=mes=>{const rows=contasAno.filter(c=>numeroMes(c)===mes.id),total=rows.reduce((v,c)=>v+(parseFloat(c.valor)||0),0),pend=rows.filter(c=>!c.pago).length;
+    return `<button type="button" data-cc-level="mes" data-cc-value="${mes.id}" aria-pressed="${mes.id===nav.mes}" class="cc-month ${rows.length?'has-data':''} ${rows.length?(pend?'has-pend':'all-paid'):''} ${mes.id===nav.mes?'active':''}" title="${rows.length?esc(mes.label+': '+_ccMoney(total)+' · '+rows.length+' lançamento(s)'):esc(mes.label+': sem lançamento')}"><strong>${mes.label}</strong><small class="ccn-fit">${rows.length?_ccMoney(total):'Sem lançamento'}</small><small class="cc-month-st">${rows.length?(pend?`⏳ ${pend} pendente${pend>1?'s':''}`:'✓ tudo pago'):'—'}</small></button>`;};
+  const navegacaoHtml=`<div class="ccn-intro"><span class="ccn-intro-ico" aria-hidden="true">🧾</span><div><b>Lançar e conferir</b><small>Siga os passos: setor → local → tipo → ano → mês. A conta do mês aparece logo abaixo, pronta para editar.</small></div></div>
+  <div class="cc-drilldown">${passo(1,'Setor')}${navTabs('setor',setoresNavegaveis.map(i=>({id:i.id,label:i.description||'Setor'})),nav.setor)}
+  ${locaisNavegaveis.length?`${passo(2,'Item / local')}${navTabs('local',locaisNavegaveis.map(local=>({id:local.id,label:_ccNomeLocal(local)})),nav.local)}`:''}
+  ${tiposNavegaveis.length?`<div class="cc-drill-row"><div>${passo(3,'Tipo de conta')}${navTabs('tipo',tiposNavegaveis.map(t=>({id:t,label:t})),nav.tipo)}</div><div>${passo(4,'Ano')}${navTabs('ano',anosNavegaveis.map(a=>({id:a,label:a})),nav.ano)}</div></div>
+  ${passo(5,'Mês')}<div class="cc-months" role="group" aria-label="Mês do lançamento">${mesesNavegaveis.map(mesBtn).join('')}</div>
   <div class="cc-path">${esc(setorAtivo?.description||'')} › ${esc(localAtivo?.description||'')} › ${esc(nav.tipo)} › ${esc(nav.ano)} › ${mesesNavegaveis.find(m=>m.id===nav.mes)?.label||''}</div>`:'<div class="empty">Nenhum lançamento neste item/local para os filtros selecionados.</div>'}</div>`;
   const paginaSolicitada = Math.max(1, _ccPaginaPorSecao.get(secId)||1);
   const inicioPagina = (paginaSolicitada-1)*CC_LOCAIS_POR_PAGINA;
@@ -277,7 +282,7 @@ window.renderControleContas = function(secId,opcoes={}){
           ${colsOff.has('contrato')?'':`<div class="cc-mobile-row"><span>Conta Contrato</span><span>${_ccHighlight(contaContrato||'—', buscaTokens)}</span></div>`}
           ${colsOff.has('leitura')?'':`<div class="cc-mobile-row"><span>Leitura</span><span>${esc(c.leitura_relogio||'—')}</span></div>`}
           ${colsOff.has('consumo')?'':`<div class="cc-mobile-row"><span>Consumo</span><span>${esc(c.consumo_kwh||'—')}</span></div>`}
-          <div class="cc-mobile-row"><span>Valor</span><span>R$ ${esc(String((parseFloat(c.valor)||0).toFixed(2)))}</span></div>
+          <div class="cc-mobile-row cc-mobile-valor"><span>Valor</span><span>${_ccMoney(c.valor)}</span></div>
           <div class="cc-mobile-row"><span>Vencimento</span><span>${fmtD(c.data_vencimento)}</span></div>
           <div class="cc-mobile-row"><span>Pagamento</span><span>${fmtD(c.data_pagamento)}</span></div>
           <div class="cc-mobile-row"><span>Pago</span><span><input type="checkbox" ${c.pago?'checked':''} onchange="ccTogglePago('${c.id}',this.checked)"></span></div>
@@ -297,14 +302,8 @@ window.renderControleContas = function(secId,opcoes={}){
       const lancamentosAno=lancamentos.filter(c=>ccAno(c)===nav.ano&&(c.tipo||'Outros')===nav.tipo);
       const totalLocalGeral=lancamentosAno.reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
       const totalLocalPago=lancamentosAno.filter(c=>c.pago).reduce((v,c)=>v+(parseFloat(c.valor)||0),0);
-      if(renderizarDetalhes) resumoLocalHtml = `<div class="cc-local-summary" style="margin-left:auto">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span class="cc-badge" style="font-size:14px;font-weight:800">Total do ano: R$ ${totalLocalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${totalLocalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(totalLocalGeral-totalLocalPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            <span style="font-size:11px;color:var(--muted)">${lancamentosAno.length} lançamento(s) no ano</span>
-          </div>
-        </div>`;
+      const _pend=totalLocalGeral-totalLocalPago;
+      if(renderizarDetalhes) resumoLocalHtml = `<div class="cc-local-summary"><span class="ccn-mini is-total"><i aria-hidden="true">📅</i><span>Total do ano: ${_ccMoney(totalLocalGeral)}</span></span><span class="ccn-mini is-paid"><i aria-hidden="true">✅</i><span>Pago: ${_ccMoney(totalLocalPago)}</span></span><span class="ccn-mini ${_pend>0.004?'is-pend':'is-zero'}"><i aria-hidden="true">${_pend>0.004?'⏳':'🎉'}</i><span>Pendente: ${_ccMoney(_pend)}</span></span><small class="ccn-mini-note">${lancamentosAno.length} lançamento(s) no ano</small></div>`;
       if(renderizarDetalhes) locaisHtml += `<div class="cc-local-card" id="cc-local-${local.id}">
         <div class="cc-local-head">
           <div class="cc-local-title">
@@ -313,7 +312,7 @@ window.renderControleContas = function(secId,opcoes={}){
           </div>
           <div class="cc-local-actions">
             ${S.isAdmin?`<button class="card-btn" onclick="ccOpenLocalModal('${local.id}','${item.id}')">✏️</button>`:''}
-            <button class="btn-action primary" style="font-size:12px;padding:5px 12px" onclick="ccOpenLancamentoModal(null,'${local.id}')">+ Lançamento</button>
+            <button class="btn-action primary ccn-add" onclick="ccOpenLancamentoModal(null,'${local.id}')">+ Lançamento</button>
           </div>
         </div>
         <div class="cc-lancamentos">
@@ -327,14 +326,7 @@ window.renderControleContas = function(secId,opcoes={}){
             </table>
           </div>
           ${mobileRows}
-          <div class="cc-total-bar">
-            <div style="display:flex;gap:12px;flex-wrap:wrap">
-              <span class="cc-badge">Total do mês: R$ ${detailTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(16,185,129,.15);color:#10b981">Pago: R$ ${detailPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-              <span class="cc-badge" style="background:rgba(248,113,113,.15);color:#f87171">Pendente: R$ ${(detailTotal-detailPago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-            </div>
-            <div style="font-size:11px;color:var(--muted)">${detailRows.length} lançamento(s)</div>
-          </div>
+          <div class="cc-total-bar"><span class="ccn-mini is-total"><i aria-hidden="true">🗓️</i><span>Total do mês: ${_ccMoney(detailTotal)}</span></span><span class="ccn-mini is-paid"><i aria-hidden="true">✅</i><span>Pago: ${_ccMoney(detailPago)}</span></span><span class="ccn-mini ${detailTotal-detailPago>0.004?'is-pend':'is-zero'}"><i aria-hidden="true">${detailTotal-detailPago>0.004?'⏳':'🎉'}</i><span>Pendente: ${_ccMoney(detailTotal-detailPago)}</span></span><small class="ccn-mini-note">${detailRows.length} lançamento(s)</small></div>
         </div>
       </div>`;
     });
@@ -344,15 +336,15 @@ window.renderControleContas = function(secId,opcoes={}){
     if(catQtd > 0) resumoCats.push({ nome: item.description || 'Categoria', qtd: catQtd, qPago: catQPago, qPendente: catQPendente, total: catTotal, pago: catPago, pendente: catPend });
     const mostrarCategoriaVazia = item.id===nav.setor && !locais.length && paginaSolicitada===1 && !buscaTokens.length && !tipoFiltro && !anoFiltro && !pagoFiltro;
     if(!locaisHtml && !mostrarCategoriaVazia) return '';
-    return `<div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-        <div style="font-size:15px;font-weight:800;color:#60a5fa">${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
-        ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')">✏️</button>`:''}
+    return `<div class="ccn-catblock">
+      <div class="ccn-catblock-head">
+        <div class="ccn-catblock-name">🗂️ ${_ccHighlight(item.description||'Categoria', buscaTokens)}</div>
+        ${S.isAdmin?`<button class="card-btn" onclick="ccOpenCategoriaModal('${item.id}','${secId}')" title="Editar categoria">✏️</button>`:''}
         ${resumoLocalHtml}
       </div>
-      ${catMeta?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${catMeta}</div>`:''}
+      ${catMeta?`<div class="ccn-catblock-meta">${catMeta}</div>`:''}
       ${locaisHtml}
-      ${S.isAdmin?`<button class="btn-action" style="font-size:12px;padding:5px 12px" onclick="ccOpenLocalModal(null,'${item.id}')">+ Local</button>`:''}
+      ${S.isAdmin?`<button class="btn-action ccn-soft-btn" onclick="ccOpenLocalModal(null,'${item.id}')">+ Local</button>`:''}
     </div>`;
   }).join('');
 
@@ -386,7 +378,7 @@ window.renderControleContas = function(secId,opcoes={}){
       const dt = new Date(c.data_vencimento+'T00:00:00');
       const dias = Math.round((dt-hoje)/86400000);
       const local = S.subitems.find(s=>s.id===c.subitem_id);
-      const cat = S.items.find(i=>i.id===c.item_id);
+      const cat = S.items.find(i=>i.id===(local?.item_id||c.item_id));
       return { c, dias, localNome: local?.description||'—', catNome: cat?.description||'' };
     })
     .sort((a,b)=>a.dias-b.dias);
@@ -397,28 +389,6 @@ window.renderControleContas = function(secId,opcoes={}){
   const vencOrdem = document.getElementById('cc-venc-ordem')?.value || 'asc';
   let linhas = [...vencidas, ...proximas];
   if(vencOrdem === 'desc') linhas = [...linhas].reverse();
-  // resumo quantitativo por categoria (item)
-  const porCat = {};
-  linhas.forEach(x=>{
-    const k = x.catNome || 'Sem categoria';
-    if(!porCat[k]) porCat[k] = { qtd: 0, valor: 0 };
-    porCat[k].qtd++; porCat[k].valor += (parseFloat(x.c.valor)||0);
-  });
-  const resumoCatHtml = Object.entries(porCat).sort((a,b)=>b[1].valor-a[1].valor).map(([k,v])=>
-    `<span class="cc-badge" style="font-size:11px"><b>${esc(k)}</b>: ${v.qtd} lanç. — R$ ${v.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`
-  ).join(' ');
-  const linhasHtml = linhas.map(x=>{
-    const venc = x.dias<0;
-    const cor = venc ? '#f87171' : (x.dias<=7 ? '#f59e0b' : '#fbbf24');
-    const status = venc ? `VENCIDA há ${-x.dias} dia(s)` : (x.dias===0 ? 'VENCE HOJE' : `vence em ${x.dias} dia(s)`);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
-      <span style="font-weight:800;color:${cor};min-width:86px">${fmtBR(x.c.data_vencimento)}</span>
-      <span style="font-size:11px;font-weight:700;color:${cor};min-width:130px">${venc?'🔴':(x.dias<=7?'🟠':'🟡')} ${status}</span>
-      <span style="flex:1;min-width:160px;font-size:12px">${esc(x.localNome)}${x.catNome?` <span style="color:var(--muted);font-size:11px">(${esc(x.catNome)})</span>`:''}</span>
-      <span style="font-size:12px;color:var(--muted)">${esc(x.c.tipo||'')}</span>
-      <span style="font-weight:800;min-width:100px;text-align:right">R$ ${(parseFloat(x.c.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-    </div>`;
-  }).join('');
   // ── PAINEL DE VIGÊNCIA DAS APÓLICES (por local/veículo) ──
   const _efGet = (ef, frag) => {
     for(const [k,v] of Object.entries(ef||{})){
@@ -441,52 +411,14 @@ window.renderControleContas = function(secId,opcoes={}){
     vigItens.push({ loc, vig, fimStr: m[2], dias, resp, zap });
   });
   vigItens.sort((a,b)=>a.dias-b.dias);
-  const vigRows = vigItens.map(x=>{
-    let cor, icone, status;
-    if(x.dias < 0){ cor='#f87171'; icone='🔴'; status=`APÓLICE VENCIDA há ${-x.dias} dia(s)`; }
-    else if(x.dias === 0){ cor='#f87171'; icone='🚨'; status='VENCE HOJE'; }
-    else if(x.dias <= 15){ cor='#f59e0b'; icone='🟠'; status=`vence em ${x.dias} dia(s) (≤15)`; }
-    else { cor='#fbbf24'; icone='🟡'; status=`vence em ${x.dias} dia(s) (≤30)`; }
-    const placa = _efGet(x.loc.extra_fields,'PLACA');
-    const msg = encodeURIComponent(`⚠️ ALERTA DE SEGURO — ${x.loc.description}${placa?` (placa ${placa})`:''}: a vigência da apólice ${x.dias<0?`VENCEU há ${-x.dias} dia(s)`:x.dias===0?'VENCE HOJE':`vence em ${x.dias} dia(s)`} (${x.fimStr}). Favor providenciar a renovação.`);
-    const zapBtn = x.zap ? `<a class="btn-action" style="font-size:11px;padding:4px 10px;text-decoration:none" target="_blank" href="https://wa.me/${x.zap.length<=11?'55'+x.zap:x.zap}?text=${msg}">📱 WhatsApp${x.resp?' ('+esc(x.resp.split(' ')[0])+')':''}</a>` : `<span style="font-size:11px;color:var(--muted)">sem WhatsApp — edite o local e preencha RESPONSÁVEL e WHATSAPP</span>`;
-    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap">
-      <span style="font-weight:800;color:${cor};min-width:86px">${esc(x.fimStr)}</span>
-      <span style="font-size:11px;font-weight:700;color:${cor};min-width:170px">${icone} ${status}</span>
-      <span style="flex:1;min-width:160px;font-size:12px">${esc(x.loc.description)}${x.resp?` <span style="color:var(--muted);font-size:11px">— Resp.: ${esc(x.resp)}</span>`:''}</span>
-      ${zapBtn}
-      ${S.isAdmin?`<button class="btn-action" style="font-size:11px;padding:4px 10px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.4)" onclick="ccOpenRenovarModal('${x.loc.id}')">✅ Renovado</button>`:''}
-    </div>`;
-  }).join('');
   const nVigVencidas = vigItens.filter(x=>x.dias<0).length;
   const nVigProximas = vigItens.length - nVigVencidas;
-  const vigPanel = vigItens.length ? `<div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.35);border-radius:12px;padding:12px 16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-      <div style="font-size:14px;font-weight:800">🛡️ Vigência das Apólices</div>
-      ${nVigVencidas?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${nVigVencidas} vencida(s)</span>`:''}
-      ${nVigProximas?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${nVigProximas} vencendo em até 30 dias</span>`:''}
-    </div>
-    ${vigRows}
-  </div>` : '';
   if(vigItens.length && !window.__ccVigAlarme){
     window.__ccVigAlarme = true;
     setTimeout(()=>toast(`🛡️ Atenção: ${nVigVencidas?nVigVencidas+' apólice(s) VENCIDA(S)':''}${nVigVencidas&&nVigProximas?' e ':''}${nVigProximas?nVigProximas+' apólice(s) vencendo em até 30 dias':''}!`,'error',7000),400);
   }
 
-  const alertPanel = linhas.length ? `<div style="background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.25);border-radius:12px;padding:12px 16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-      <div style="font-size:14px;font-weight:800">⏰ Vencimentos</div>
-      ${vencidas.length?`<span class="cc-badge" style="background:rgba(248,113,113,.18);color:#f87171;font-weight:700">${vencidas.length} vencida(s): R$ ${totVencido.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
-      ${proximas.length?`<span class="cc-badge" style="background:rgba(245,158,11,.15);color:#f59e0b;font-weight:700">${proximas.length} nos próximos 30 dias: R$ ${totProximo.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>`:''}
-      <div style="flex:1"></div>
-      <select id="cc-venc-ordem" onchange="renderControleContas('${secId}')" style="font-size:12px;padding:4px 8px;border-radius:8px;background:var(--card,#1e293b);color:inherit;border:1px solid rgba(255,255,255,.15)">
-        <option value="asc" ${vencOrdem==='asc'?'selected':''}>Mais antiga → mais recente</option>
-        <option value="desc" ${vencOrdem==='desc'?'selected':''}>Mais recente → mais antiga</option>
-      </select>
-    </div>
-    ${resumoCatHtml?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)">${resumoCatHtml}</div>`:''}
-    ${linhasHtml}
-  </div>` : '';
+  const vencPanel=_ccVencimentosHtml(secId,{vencidas,proximas,totVencido,totProximo,vigItens,vencOrdem,nVigVencidas,nVigProximas,_efGet});
 
   // Ao trocar o mês, conserva os cards, o foco e todos os elementos acima da lista.
   const resultados=opcoes.somenteMes?document.getElementById('cc-month-results'):null;
@@ -535,16 +467,72 @@ window.renderControleContas = function(secId,opcoes={}){
   </section>
   <section class="cc-workspace-panel cc-cadastro-panel" ${modo==='cadastro'?'':'hidden'}>${modo==='cadastro'?(window.ccCadastroHtml?.(secId)||''):''}</section>
   <section class="cc-workspace-panel cc-relatorio-panel" ${modo==='relatorio'?'':'hidden'}>${modo==='relatorio'?(window.ccRelatorioHtml?.(secId)||''):''}</section>
-  <section class="cc-workspace-panel" ${modo==='vencimentos'?'':'hidden'}>${vigPanel}${alertPanel}${!vigPanel&&!alertPanel?'<div class="empty">Nenhum vencimento ou apólice exige atenção neste momento.</div>':''}</section>
+  <section class="cc-workspace-panel cc-venc-panel" ${modo==='vencimentos'?'':'hidden'}>${vencPanel}</section>
   <section class="cc-workspace-panel cc-month-workspace" ${modo==='lancamentos'?'':'hidden'}>
   ${navegacaoHtml}
   <div id="cc-month-results">${categoriasHtml || '<div class="empty">Nenhum item/local disponível para os filtros selecionados.</div>'}</div>
   ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
   </section>`);
   document.querySelectorAll('[data-cc-level]').forEach(button=>button.onclick=()=>ccNavegar(secId,button.dataset.ccLevel,button.dataset.ccValue));
-  if(modo==='resumo')requestAnimationFrame(()=>window.ccOverviewEnhance?.(document.getElementById('content')||document));
+  requestAnimationFrame(()=>window.ccOverviewEnhance?.(document.getElementById('content')||document));
 };
 
+
+// ── VENCIMENTOS com neuroarquitetura: situação em frase, grupos por urgência (vencidas → esta semana → 30 dias),
+// cada conta numa linha clara com ação direta ("✓ Marcar paga"), apólices com WhatsApp e "Renovado".
+function _ccVencimentosHtml(secId, d){
+  const ord=list=>d.vencOrdem==='desc'?[...list].reverse():list;
+  const late=d.vencidas, semana=d.proximas.filter(x=>x.dias<=7), mes=d.proximas.filter(x=>x.dias>7);
+  const sum=l=>l.reduce((a,x)=>a+(parseFloat(x.c.valor)||0),0);
+  const nVig=d.vigItens.length;
+  let mood='done',titulo='Tudo tranquilo por aqui 🌿',frase='Nenhuma conta vence nos próximos 30 dias e nenhuma está atrasada.';
+  if(late.length){mood='alert';titulo=`${late.length} conta${late.length>1?'s':''} vencida${late.length>1?'s':''} · ${_ccMoney(d.totVencido)}`;frase=`Comece pela mais antiga (${late[0].localNome}, há ${-late[0].dias} dia${-late[0].dias>1?'s':''}).${semana.length?` Depois, ${semana.length} vence${semana.length>1?'m':''} ainda esta semana.`:''}`;}
+  else if(semana.length){mood='focus';titulo=`${semana.length} conta${semana.length>1?'s':''} vence${semana.length>1?'m':''} esta semana`;frase=`${_ccMoney(sum(semana))} para pagar nos próximos 7 dias. Nada atrasado — ótimo!`;}
+  else if(mes.length){mood='calm';titulo=`Nada atrasado ✨`;frase=`${mes.length} conta${mes.length>1?'s':''} vence${mes.length>1?'m':''} nos próximos 30 dias (${_ccMoney(sum(mes))}). Dá para se planejar com calma.`;}
+  if(nVig&&mood==='done'){mood='focus';titulo=`${nVig} apólice${nVig>1?'s':''} precisa${nVig>1?'m':''} de renovação`;frase='As contas estão em dia; só falta cuidar do seguro abaixo.';}
+  const kpi=(cls,icon,label,val,sub)=>`<div class="ccn-kpi ${cls}" title="${esc(label)}: ${esc(val)}"><span class="ccn-kpi-ico" aria-hidden="true">${icon}</span><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${label}</span><b class="ccn-kpi-val">${esc(val)}</b><small>${sub}</small></div></div>`;
+  const kpis=`<div class="ccn-kpis">
+    ${kpi(late.length?'is-late':'is-zero','🔴','Vencidas',late.length?_ccMoney(d.totVencido):'Nenhuma',late.length?`${late.length} conta(s) em atraso`:'continue assim')}
+    ${kpi(semana.length?'is-pend':'is-zero','🟠','Esta semana',semana.length?_ccMoney(sum(semana)):'Nada',semana.length?`${semana.length} conta(s) em até 7 dias`:'semana livre')}
+    ${kpi(mes.length?'is-total':'is-zero','🗓️','Próximos 30 dias',mes.length?_ccMoney(sum(mes)):'Nada',mes.length?`${mes.length} conta(s)`:'sem vencimentos')}
+    ${kpi(d.nVigVencidas?'is-late':nVig?'is-pend':'is-zero','🛡️','Apólices',nVig?String(nVig):'Em dia',nVig?`${d.nVigVencidas?d.nVigVencidas+' vencida(s) · ':''}${d.nVigProximas} a vencer`:'nenhuma a renovar')}
+  </div>`;
+  const row=(x,tone)=>{const [y,m,dd]=x.c.data_vencimento.split('-');const quando=x.dias<0?`há ${-x.dias} dia${-x.dias>1?'s':''}`:x.dias===0?'vence hoje':x.dias===1?'vence amanhã':`em ${x.dias} dias`;
+    return `<div class="ccv-row ${tone}"><span class="ccv-date" title="Vencimento ${dd}/${m}/${y}"><b>${dd}/${m}</b><small>${y}</small></span>
+      <span class="ccv-main"><b>${esc(x.localNome)}</b><small>${esc([x.catNome,x.c.tipo,x.c.mes_ano].filter(Boolean).join(' · '))}</small></span>
+      <span class="ccv-when">${quando}</span><span class="ccv-val">${_ccMoney(x.c.valor)}</span>
+      <span class="ccv-acts"><button type="button" class="ccv-pay" onclick="ccPagarRapido('${x.c.id}')" title="Marcar como paga hoje">✓ Marcar paga</button><button type="button" class="ccv-edit" onclick="ccOpenLancamentoModal('${x.c.id}','${x.c.subitem_id}')" title="Abrir o lançamento" aria-label="Editar lançamento">✏️</button></span></div>`;};
+  const group=(list,tone,icon,title,hint)=>list.length?`<section class="ccn-card ccv-group ${tone}"><header class="ccn-head"><h3>${icon} ${title}</h3><small>${list.length} conta(s) · ${_ccMoney(sum(list))}${hint?' · '+hint:''}</small></header><div class="ccv-list">${ord(list).map(x=>row(x,tone)).join('')}</div></section>`:'';
+  const porCat={};[...late,...d.proximas].forEach(x=>{const k=x.catNome||'Sem categoria';(porCat[k]??={q:0,v:0});porCat[k].q++;porCat[k].v+=parseFloat(x.c.valor)||0;});
+  const chips=Object.keys(porCat).length>1?`<div class="ccv-chips" aria-label="Por categoria">${Object.entries(porCat).sort((a,b)=>b[1].v-a[1].v).map(([k,v])=>`<span class="ccv-chip"><b>${esc(k)}</b> ${v.q} · ${_ccMoney(v.v)}</span>`).join('')}</div>`:'';
+  const vig=nVig?`<section class="ccn-card ccv-group is-vig"><header class="ccn-head"><h3>🛡️ Vigência das apólices</h3><small>${d.nVigVencidas?d.nVigVencidas+' vencida(s) · ':''}${d.nVigProximas} vencendo em até 30 dias</small></header><div class="ccv-list">${d.vigItens.map(x=>{
+      const tone=x.dias<0||x.dias===0?'is-late':x.dias<=15?'is-week':'is-month';
+      const quando=x.dias<0?`venceu há ${-x.dias} dia${-x.dias>1?'s':''}`:x.dias===0?'vence hoje':`vence em ${x.dias} dias`;
+      const placa=d._efGet(x.loc.extra_fields,'PLACA');
+      const msg=encodeURIComponent(`⚠️ ALERTA DE SEGURO — ${x.loc.description}${placa?` (placa ${placa})`:''}: a vigência da apólice ${x.dias<0?`VENCEU há ${-x.dias} dia(s)`:x.dias===0?'VENCE HOJE':`vence em ${x.dias} dia(s)`} (${x.fimStr}). Favor providenciar a renovação.`);
+      const [dd,mm,yy]=x.fimStr.split('/');
+      return `<div class="ccv-row ${tone}"><span class="ccv-date"><b>${dd}/${mm}</b><small>${yy}</small></span><span class="ccv-main"><b>${esc(x.loc.description)}</b><small>${x.resp?'Responsável: '+esc(x.resp):'Sem responsável — edite o local e preencha RESPONSÁVEL e WHATSAPP'}</small></span><span class="ccv-when">${quando}</span>
+        <span class="ccv-acts">${x.zap?`<a class="ccv-zap" target="_blank" rel="noopener" href="https://wa.me/${x.zap.length<=11?'55'+x.zap:x.zap}?text=${msg}">📱 Avisar${x.resp?' '+esc(x.resp.split(' ')[0]):''}</a>`:''}${S.isAdmin?`<button type="button" class="ccv-pay" onclick="ccOpenRenovarModal('${x.loc.id}')">✅ Renovado</button>`:''}</span></div>`;}).join('')}</div></section>`:'';
+  const nada=!late.length&&!d.proximas.length;
+  return `<div class="ccn">
+    <section class="ccn-hero ccn-hero-sm is-${mood}"><div class="ccn-hero-txt"><span class="ccn-hello">⏰ Vencimentos</span><h2>${esc(titulo)}</h2><p>${esc(frase)}</p></div>
+      ${nada?'':`<label class="ccv-order">Ordem<select id="cc-venc-ordem" onchange="renderControleContas('${secId}')"><option value="asc" ${d.vencOrdem==='asc'?'selected':''}>Mais antiga primeiro</option><option value="desc" ${d.vencOrdem==='desc'?'selected':''}>Mais recente primeiro</option></select></label>`}</section>
+    ${kpis}${chips}
+    ${group(late,'is-late','🔴','Vencidas','comece por aqui')}
+    ${group(semana,'is-week','🟠','Vencem esta semana','')}
+    ${group(mes,'is-month','🗓️','Próximos 30 dias','')}
+    ${vig}
+    ${nada&&!nVig?'<p class="ccn-note ccv-empty">🌿 Nenhum vencimento ou apólice exige atenção neste momento. Aproveite!</p>':''}
+  </div>`;
+}
+window.ccPagarRapido = async function(id){
+  const c=S.contas.find(x=>x.id===id); if(!c) return;
+  const hoje=new Date(), iso=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+  const data={pago:true,updated_at:serverTimestamp()}; if(!c.data_pagamento) data.data_pagamento=iso;
+  await updateDoc(doc(db,'contas',id),data);
+  await loadData(); renderControleContas(c.atividade_id);
+  toast('✓ Conta marcada como paga. Uma a menos!','success',2500);
+};
 
 // ── VISÃO GERAL com neuroarquitetura (regra do usuário, 23/11/2026) ──
 // Acolhimento (saudação + situação em linguagem humana), progresso visível (anel), "portas" para cada tarefa,
@@ -553,10 +541,14 @@ window.renderControleContas = function(secId,opcoes={}){
 // progressiva (detalhamento recolhível com busca própria) e microinterações suaves (respeitam reduzir movimento).
 const _ccMoney = v => 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const _ccShort = v => { const n=Number(v)||0, a=Math.abs(n); if(a>=1e6) return 'R$ '+(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi'; if(a>=1e4) return 'R$ '+(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil'; return _ccMoney(n); };
+// peças visuais compartilhadas com as outras abas (js/contas-relatorio.js)
+window.ccnMoney = v => _ccMoney(v);
+window.ccnRing = (pct, sub='pago') => {const p=Math.max(0,Math.min(100,Number(pct)||0)),txt=(p>=100?100:Math.min(99.9,Math.round(p*10)/10)).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%',r=44,c=2*Math.PI*r,off=c*(1-p/100);return `<svg class="ccn-ring" viewBox="0 0 100 100" role="img" aria-label="${txt} ${esc(sub)}"><circle class="ccn-ring-bg" cx="50" cy="50" r="${r}"/><circle class="ccn-ring-fg" cx="50" cy="50" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" style="--ccn-c:${c.toFixed(1)}"/><text x="50" y="49" text-anchor="middle" class="ccn-ring-pct">${esc(txt)}</text><text x="50" y="64" text-anchor="middle" class="ccn-ring-sub">${esc(sub)}</text></svg>`;};
+window.ccnKpi = (cls,icon,label,val,sub='') => `<div class="ccn-kpi ${cls}" title="${esc(label)}: ${esc(val)}"><span class="ccn-kpi-ico" aria-hidden="true">${icon}</span><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${esc(label)}</span><b class="ccn-kpi-val">${esc(val)}</b>${sub?`<small>${sub}</small>`:''}</div></div>`;
 function _ccGreeting(){ const h=new Date().getHours(); return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'; }
 function _ccOverviewHtml(secId, d){
   const nome=String(S.me?.display_name||S.me?.nome||'').trim().split(/\s+/)[0]||'';
-  const pct=d.totalGeral?Math.round(d.totalPago/d.totalGeral*1000)/10:0;
+  const pct=d.totalGeral?(d.totalPago>=d.totalGeral?100:Math.min(99.9,Math.round(d.totalPago/d.totalGeral*1000)/10)):0;
   const pctTxt=(Math.round(pct*10)/10).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
   const filtros=[d.tipoFiltro,d.anoFiltro,d.pagoFiltro==='pago'?'pagas':d.pagoFiltro==='pendente'?'pendentes':'',d.buscaFiltro&&`“${d.buscaFiltro}”`].filter(Boolean);
   const escopo=filtros.length?`Mostrando: ${filtros.map(esc).join(' · ')}`:'Todas as contas lançadas';
@@ -624,7 +616,7 @@ window.ccFiltrarDetalhe = function(input){
 window.ccOverviewEnhance = function(root=document){
   if(typeof root?.querySelectorAll!=='function')return;
   const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  root.querySelectorAll('.ccn-kpi-val,.ccn-cat-val').forEach(el=>{
+  root.querySelectorAll('.ccn-kpi-val,.ccn-cat-val,.ccn-fit').forEach(el=>{
     // encaixe: diminui a letra até o valor caber inteiro no card (e refaz quando o card muda de tamanho)
     const fit=()=>{el.style.fontSize='';let size=parseFloat(getComputedStyle(el).fontSize)||22;while(el.scrollWidth>el.clientWidth+1&&size>11){size-=0.5;el.style.fontSize=size+'px';}};
     el.__ccnFit=fit;fit();
@@ -997,20 +989,16 @@ window.ccGerarPdf = async function(secId, opts){
   const fmtPdfD=d=>d?fmtD(d):'-';
   const sf=(sz,bold,clr)=>{doc.setFontSize(sz||9);doc.setFont('helvetica',bold?'bold':'normal');const c=clr||[26,32,44];doc.setTextColor(c[0],c[1],c[2]);};
   const now = new Date().toLocaleDateString('pt-BR');
-  let y = 18;
-  doc.setFillColor(33,135,82); doc.rect(mx,12,cw,0.9,'F');
-  sf(18,true,[15,53,43]); const titleLines = doc.splitTextToSize(sec.name||'CONTROLE DE CONTAS', cw-10); doc.text(titleLines, mx, y); y += titleLines.length*5 + 4;
-  sf(9,false,[100,116,139]); doc.text('Prefeitura de Sertania - PE - Controle PMS - '+now, mx, y);
-  y+=6;
+  const P = window.ccnPdf, H = 210;
+  let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch(e) { /* sem logo */ }
   const filtros=[];
   if(opts.busca) filtros.push('Busca: "'+opts.busca+'"');
   if(opts.tipo) filtros.push('Tipo: '+opts.tipo);
-  if(opts.ano) filtros.push('Ano: '+opts.ano);
+  if(opts.ano) filtros.push('Ano: '+opts.ano); else filtros.push('Todos os anos');
   if(opts.pago==='pago') filtros.push('Apenas contas pagas');
   if(opts.pago==='pendente') filtros.push('Apenas contas pendentes');
-  if(filtros.length){ sf(8,false,[180,60,20]); doc.text('Filtros aplicados: '+filtros.join(' | '), mx, y); y+=5; }
-  if(sec.observacoes){ sf(8,false,[60,60,60]); const obs = doc.splitTextToSize(sec.observacoes, cw-10); doc.text(obs, mx, y); y += obs.length*3.5 + 4; }
-
+  const hojeIso = (()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;})();
+  let qtdVencidas=0, totVencido=0;
   let totalGeral=0, totalPago=0, qtdPago=0, qtdTotal=0;
   const rows=[];
   const catMap={};
@@ -1032,6 +1020,7 @@ window.ccGerarPdf = async function(secId, opts){
         const tipo=c.tipo||'N/A';
         totalGeral+=v; qtdTotal++; catTotal+=v; catQtd++; locTotal+=v; locQtd++;
         if(c.pago){ totalPago+=v; qtdPago++; catPago+=v; locPago++; }
+        else if(c.data_vencimento && c.data_vencimento<hojeIso){ qtdVencidas++; totVencido+=v; }
         if(!catMap[item.id]) catMap[item.id]={nome:item.description||'-',qtd:0,qPago:0,total:0,pago:0};
         catMap[item.id].qtd++; catMap[item.id].total+=v; if(c.pago){ catMap[item.id].qPago++; catMap[item.id].pago+=v; }
         if(!tipoMap[tipo]) tipoMap[tipo]={qtd:0,qPago:0,total:0,pago:0};
@@ -1039,12 +1028,12 @@ window.ccGerarPdf = async function(secId, opts){
         rows.push([item.description||'-', local.description||'-', c.mes_ano||'-', c.tipo||'-', c.leitura_relogio||'-', c.consumo_kwh||'-','R$ '+fmtMoney(v), c.pago?'SIM':'NÃO', fmtPdfD(c.data_vencimento), fmtPdfD(c.data_pagamento), c.observacao||'-']);
       });
       if(locQtd>0){
-        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' PAGOS'), '', '', '']);
+        rows.push([item.description||'-', (local.description||'-')+' - SUBTOTAL LOCAL', '', '', '', '', 'R$ '+fmtMoney(locTotal), (locPago+'/'+locQtd+' pagas'), '', '', '']);
         rows.push(['','','','','','','','','','','']);
       }
     });
     if(catQtd>0){
-      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' PAGOS'), '', '', '']);
+      rows.push([(item.description||'-')+' - TOTAL UNIDADE', '', '', '', '', '', 'R$ '+fmtMoney(catTotal), (catPago+'/'+catQtd+' pagas'), '', '', '']);
       rows.push(['','','','','','','','','','','']);
       rows.push(['','','','','','','','','','','']);
     }
@@ -1055,28 +1044,42 @@ window.ccGerarPdf = async function(secId, opts){
 
   const summaryRows=Object.values(catMap).sort((a,b)=>b.total-a.total).map(c=>{
     const pend=c.total-c.pago;
-    const pct=c.total ? (c.pago/c.total*100).toFixed(1) : '0.0';
-    return [c.nome,c.qtd,c.qPago,c.qtd-c.qPago,'R$ '+fmtMoney(c.total),'R$ '+fmtMoney(c.pago),'R$ '+fmtMoney(pend),pct+'%'];
+    return [c.nome,c.qtd,c.qPago,c.qtd-c.qPago,'R$ '+fmtMoney(c.total),'R$ '+fmtMoney(c.pago),'R$ '+fmtMoney(pend),P.pctFmt(c.total?c.pago/c.total*100:0)];
   });
-  summaryRows.push(['TOTAL GERAL',qtdTotal,qtdPago,qtdPendente,'R$ '+fmtMoney(totalGeral),'R$ '+fmtMoney(totalPago),'R$ '+fmtMoney(totalPendente),pctPago.toFixed(1)+'%']);
+  summaryRows.push(['TOTAL GERAL',qtdTotal,qtdPago,qtdPendente,'R$ '+fmtMoney(totalGeral),'R$ '+fmtMoney(totalPago),'R$ '+fmtMoney(totalPendente),P.pctFmt(pctPago)]);
 
-  sf(12,true,[13,34,64]); doc.text('RESUMO POR CATEGORIA', mx, y); y+=8;
+  // ── topo com neuroarquitetura: cabeçalho compacto, situação em uma frase, fichas que nunca vazam, progresso ──
+  const titulo = `CONTROLE DE CONTAS · ${(sec.name||'').toUpperCase()}`.replace(/ · CONTROLE DE CONTAS$/,'');
+  const sub = `Prefeitura Municipal de Sertânia · ${filtros.join(' · ')} · Emitido em ${P.hoje()}`;
+  const drawHeader = () => P.header(doc, {W, title: titulo, sub, logo});
+  let y = drawHeader();
+  const sit = P.mood({total: totalGeral, pago: totalPago, qtd: qtdTotal, qtdPago, vencidas: qtdVencidas, totVencido}, v => 'R$ '+fmtMoney(v));
+  y = P.situation(doc, {x: mx, y, w: cw, ...sit});
+  y = P.kpis(doc, {x: mx, y, w: cw, cards: [
+    {label: 'Total em contas', value: 'R$ '+fmtMoney(totalGeral), sub: `${qtdTotal} conta(s)`, tone: 'total'},
+    {label: 'Pago', value: 'R$ '+fmtMoney(totalPago), sub: `${qtdPago} conta(s)`, tone: 'paid'},
+    {label: 'Pendente', value: 'R$ '+fmtMoney(totalPendente), sub: qtdPendente ? `${qtdPendente} conta(s)` : 'nada pendente', tone: totalPendente>0.004 ? 'pend' : 'zero'},
+    {label: 'Vencidas', value: qtdVencidas ? 'R$ '+fmtMoney(totVencido) : 'Nenhuma', sub: qtdVencidas ? `${qtdVencidas} em atraso` : 'em dia', tone: qtdVencidas ? 'late' : 'zero'},
+  ]});
+  y = P.progress(doc, {x: mx, y, w: cw, pct: pctPago});
+  if(sec.observacoes){ sf(7.5,false,[71,85,105]); const obs = doc.splitTextToSize(sec.observacoes, cw); doc.text(obs, mx, y); y += obs.length*3.2 + 2; }
+  const secTitle = (t, yy) => { doc.setFillColor(14,116,144); doc.roundedRect(mx, yy-3.6, 1.4, 4.6, .6, .6, 'F'); sf(10,true,[11,37,64]); doc.text(t, mx+3.5, yy); };
+  const pageHook = {margin:{left:mx,right:mx,top:22,bottom:12}, didDrawPage:()=>{ if(doc.internal.getCurrentPageInfo().pageNumber>1) drawHeader(); }};
+  const PEND=[146,64,14], PAGO=[4,120,87];
+  secTitle('Resumo por categoria', y+3); y+=6;
+
   doc.autoTable({
+    ...P.table, ...pageHook,
     startY:y,
-    margin:{left:mx,right:mx},
-    head:[['Categoria','Lanc.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
+    head:[['Categoria','Lanç.','Pagos','Pendentes','Valor Total','Valor Pago','Valor Pendente','% Pago']],
     body:summaryRows,
-    theme:'grid',
-    headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
-    bodyStyles:{fontSize:9,textColor:[40,40,40]},
-    alternateRowStyles:{fillColor:[245,250,245]},
-    styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
     columnStyles:{0:{cellWidth:50},1:{cellWidth:18},2:{cellWidth:18},3:{cellWidth:22},4:{cellWidth:32,halign:'right'},5:{cellWidth:32,halign:'right'},6:{cellWidth:32,halign:'right'},7:{cellWidth:20,halign:'center'}},
     didParseCell:(data)=>{
-      if(data.row.raw[0]==='TOTAL GERAL'){ data.cell.styles.fontStyle='bold'; data.cell.styles.fillColor=[224,242,254]; }
+      if(data.section!=='body') return;
+      if(data.row.raw[0]==='TOTAL GERAL'){ data.cell.styles.fontStyle='bold'; data.cell.styles.fillColor=[224,242,254]; data.cell.styles.textColor=[11,37,64]; return; }
       if(data.column.index===4) data.cell.styles.fontStyle='bold';
-      if(data.column.index===5) data.cell.styles.textColor=[16,185,129];
-      if(data.column.index===6) data.cell.styles.textColor=[239,68,68];
+      if(data.column.index===5) data.cell.styles.textColor=PAGO;
+      if(data.column.index===6) data.cell.styles.textColor=data.cell.raw==='R$ 0,00'?[100,116,139]:PEND;
     }
   });
 
@@ -1084,40 +1087,32 @@ window.ccGerarPdf = async function(secId, opts){
     const pend=v.total-v.pago;
     return [t, v.qtd, v.qPago, v.qtd-v.qPago, 'R$ '+fmtMoney(v.total), 'R$ '+fmtMoney(v.pago), 'R$ '+fmtMoney(pend)];
   });
-  const startTipoY=doc.lastAutoTable?doc.lastAutoTable.finalY+12:y+30;
-  sf(12,true,[13,34,64]); doc.text('RESUMO POR TIPO DE CONTA', mx, startTipoY-6);
+  const startTipoY=doc.lastAutoTable?doc.lastAutoTable.finalY+10:y+30;
+  secTitle('Resumo por tipo de conta', startTipoY-4);
   doc.autoTable({
+    ...P.table, ...pageHook,
     startY:startTipoY,
-    margin:{left:mx,right:mx},
     head:[['Tipo de Conta','Quant.','Pagas','Pendentes','Valor Total','Valor Pago','Valor Pendente']],
     body:tipoRows,
-    theme:'grid',
-    headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:9},
-    bodyStyles:{fontSize:9,textColor:[40,40,40]},
-    alternateRowStyles:{fillColor:[245,250,245]},
-    styles:{cellPadding:2,overflow:'linebreak',font:'helvetica'},
     columnStyles:{0:{cellWidth:50},1:{cellWidth:22,halign:'center'},2:{cellWidth:22,halign:'center'},3:{cellWidth:22,halign:'center'},4:{cellWidth:34,halign:'right'},5:{cellWidth:34,halign:'right'},6:{cellWidth:34,halign:'right'}},
     didParseCell:(data)=>{
+      if(data.section!=='body') return;
       if(data.column.index===4) data.cell.styles.fontStyle='bold';
-      if(data.column.index===5) data.cell.styles.textColor=[16,185,129];
-      if(data.column.index===6) data.cell.styles.textColor=[239,68,68];
+      if(data.column.index===5) data.cell.styles.textColor=PAGO;
+      if(data.column.index===6) data.cell.styles.textColor=data.cell.raw==='R$ 0,00'?[100,116,139]:PEND;
     }
   });
 
-  const startDetailY=doc.lastAutoTable?doc.lastAutoTable.finalY+12:y+30;
-  sf(12,true,[13,34,64]); doc.text('DETALHAMENTO POR LANCAMENTO', mx, startDetailY-6);
+  let startDetailY=doc.lastAutoTable?doc.lastAutoTable.finalY+10:y+30;
+  if(startDetailY>H-40){ doc.addPage(); drawHeader(); startDetailY=30; }
+  secTitle('Detalhamento por lançamento', startDetailY-4);
   if(rows.length){
     doc.autoTable({
+      ...P.table, ...pageHook,
       startY:startDetailY,
-      margin:{left:mx,right:mx},
-      head:[['Categoria','Local','Mes/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
+      head:[['Categoria','Local','Mês/Ano','Tipo','Leitura','Consumo','Valor','Pago','Vencimento','Pagamento','Obs.']],
       body:rows,
-      theme:'grid',
-      headStyles:{fillColor:[22,104,70],textColor:[255,255,255],fontSize:8},
-      bodyStyles:{fontSize:8,textColor:[40,40,40]},
-      alternateRowStyles:{fillColor:[245,250,245]},
-      styles:{cellPadding:1.5,overflow:'linebreak',font:'helvetica'},
-      columnStyles:{0:{cellWidth:28},1:{cellWidth:32},2:{cellWidth:18},3:{cellWidth:20},4:{cellWidth:18},5:{cellWidth:18},6:{cellWidth:22,halign:'right'},7:{cellWidth:12,halign:'center'},8:{cellWidth:18},9:{cellWidth:18},10:{cellWidth:61}},
+      columnStyles:{0:{cellWidth:28},1:{cellWidth:34},2:{cellWidth:16},3:{cellWidth:15},4:{cellWidth:17},5:{cellWidth:17},6:{cellWidth:28,halign:'right'},7:{cellWidth:17,halign:'center'},8:{cellWidth:21},9:{cellWidth:21},10:{cellWidth:'auto'}},
       didParseCell:(data)=>{
         if(data.section!=='body') return;
         const isBlank = Array.isArray(data.row.raw) && data.row.raw.every(x=>String(x).trim()==='');
@@ -1134,11 +1129,11 @@ window.ccGerarPdf = async function(secId, opts){
         }
         if(isSub || isCat){
           data.cell.styles.fontStyle='bold';
-          data.cell.styles.fillColor = isCat ? [200,230,255] : [230,255,235];
-          data.cell.styles.textColor = [0,0,0];
+          data.cell.styles.fillColor = isCat ? [224,242,254] : [236,253,245];
+          data.cell.styles.textColor = [11,37,64];
         } else {
-          [2,6,8,9].forEach(idx=>{ if(data.column.index===idx) data.cell.styles.fontStyle='bold'; });
-          if(data.column.index===7 && data.row.raw[7]==='SIM') data.cell.styles.textColor=[0,0,0];
+          [2,6].forEach(idx=>{ if(data.column.index===idx) data.cell.styles.fontStyle='bold'; });
+          if(data.column.index===7){ data.cell.styles.fontStyle='bold'; data.cell.styles.textColor = data.row.raw[7]==='SIM' ? PAGO : PEND; }
         }
       }
     });
@@ -1146,12 +1141,11 @@ window.ccGerarPdf = async function(secId, opts){
     sf(10,false,[120,120,120]); doc.text('Nenhum lancamento encontrado para os filtros selecionados.', mx, startDetailY+10);
   }
 
-  const finalY=doc.lastAutoTable?doc.lastAutoTable.finalY+10:startDetailY+30;
-  const footerText=`TOTAL GERAL: R$ ${fmtMoney(totalGeral)}   |   PAGO: R$ ${fmtMoney(totalPago)}   |   PENDENTE: R$ ${fmtMoney(totalPendente)}   |   ${qtdPago}/${qtdTotal} CONTAS PAGAS (${pctPago.toFixed(1)}%)`;
-  const ftLines=doc.splitTextToSize(footerText, cw-12);
-  const fh=10+ftLines.length*4.5;
-  doc.setFillColor(12,61,49); doc.roundedRect(mx, finalY, cw, fh, 2, 2, 'F');
-  sf(9,true,[255,255,255]); doc.text(ftLines, mx+6, finalY+6);
+  // fechamento: o mesmo resumo em frase, num quadro calmo, e rodapé com página X de Y
+  let finalY=doc.lastAutoTable?doc.lastAutoTable.finalY+6:startDetailY+30;
+  if(finalY>H-34){ doc.addPage(); drawHeader(); finalY=24; }
+  P.situation(doc, {x: mx, y: finalY, w: cw, mood: sit.mood, titulo: `Total geral: R$ ${fmtMoney(totalGeral)} · ${qtdPago}/${qtdTotal} contas pagas (${P.pctFmt(pctPago)})`, frase: `Pago: R$ ${fmtMoney(totalPago)}   ·   Pendente: R$ ${fmtMoney(totalPendente)}${qtdVencidas?`   ·   Vencidas: ${qtdVencidas} (R$ ${fmtMoney(totVencido)})`:''}`});
+  P.footer(doc, {W, H});
 
   doc.save((sec.name||'controle-contas').replace(/[^a-zA-Z0-9\u00C0-\u00FA ]/g,'_').trim()+'_relatorio_'+now.replace(/\//g,'-')+'.pdf');
   toast('PDF gerado!','success');

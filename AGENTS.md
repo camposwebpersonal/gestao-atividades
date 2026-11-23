@@ -43,6 +43,9 @@
   está tudo em dia. Super intuitivo e fácil de usar, com experiência emocional positiva.
 - NUNCA um número/texto pode sair do seu card em nenhuma largura: container queries (`cqi`) + encaixe por JS com
   `ResizeObserver` + valor completo no `title`; teste varrendo 360→1920 px (ver `tests/contas-neuro.browser.cjs`).
+- PDFs também: usar `window.ccnPdf` (js/contas-pdf-neuro.js) — cabeçalho compacto, situação em frase, fichas que
+  encolhem a letra até caber, barra do pago, rodapé "Página X de Y". Controle de Contas já tem TODAS as abas e os 3 PDFs
+  neste padrão (`tests/contas-abas-neuro.browser.cjs`); próximas telas seguem o mesmo modelo.
 - Primeira tela feita assim: Controle de Contas › Visão geral (23/11/2026). Próximas telas devem seguir o mesmo padrão.
 
 ## Comportamento dinâmico esperado

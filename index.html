@@ -23,12 +23,13 @@
 <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"></noscript>
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/ordenacao-visual.js?v=92387ef1"></script>
-<script src="js/controle-contas.js?v=a15c38f3"></script>
+<script src="js/controle-contas.js?v=e4e42a8b"></script>
 <script src="js/controle-multas.js?v=6db2dfe2"></script>
 <script src="js/controle-leite.js?v=bbf9d56f"></script>
 <script src="js/pdf-layout.js?v=1bbcee81"></script>
 <script src="js/cadastro-links.js?v=f71171ad"></script>
-<script src="js/contas-relatorio.js?v=86116671"></script>
+<script src="js/contas-relatorio.js?v=aaff684d"></script>
+<script src="js/contas-pdf-neuro.js?v=ebaacfb8"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
 <style>
@@ -444,7 +445,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-cmdbar.css?v=8dc5e479">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
-<link rel="stylesheet" href="css/contas-neuro.css?v=64cf8267">
+<link rel="stylesheet" href="css/contas-neuro.css?v=0b2cc80e">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
 <link rel="stylesheet" href="css/controle-leite.css?v=39815603">
 <link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
@@ -931,7 +932,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=28f115a0';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=0b5da2ab';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
