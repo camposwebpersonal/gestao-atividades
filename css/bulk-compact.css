@@ -1,0 +1,84 @@
+/* Planilha de lançamentos — topo ultracompacto (neuroarquitetura).
+   Uma faixa de identidade (onde estou / o que é / para onde vai / está salvo)
+   e uma régua de ferramentas agrupada por intenção (linhas · edição · ações · status). */
+.bulk-modal-box .modal-head{display:none!important}
+.bk-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 8px;background:linear-gradient(100deg,#0f3b52 0%,#145a6e 55%,#0e6f5c 100%);color:#fff;flex:0 0 auto;min-width:0}
+.bk-back{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px;border:1px solid rgba(255,255,255,.28);border-radius:10px;background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer;flex:0 0 auto;transition:background .15s}
+.bk-back:hover,.bk-back:focus-visible{background:rgba(255,255,255,.22)}
+.bk-id{display:flex;flex-direction:column;justify-content:center;min-width:0;flex:1 1 auto}
+.bk-path{display:flex;align-items:center;gap:5px;min-width:0;color:#d6ecf2;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.bk-path i{font-style:normal;color:#9ff0d3}
+.bk-path em{font-style:normal;opacity:.75}
+.bk-path .bk-sec{flex:0 0 auto}
+.bk-path .bk-grp{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.modal-box .bk-title{width:100%;min-width:0;height:28px!important;min-height:28px!important;margin:1px 0 0;padding:0 6px!important;border:1px solid transparent!important;border-radius:7px!important;background:transparent!important;color:#fff!important;font-size:16px!important;font-weight:850!important;box-shadow:none!important;text-overflow:ellipsis}
+.modal-box .bk-title::placeholder{color:#cfe6ee;font-weight:600}
+.modal-box .bk-title:hover{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.22)!important}
+.modal-box .bk-title:focus{background:#fff!important;color:#0f2f42!important;border-color:#fff!important;outline:3px solid #7dd3c0;outline-offset:0}
+.bk-bar .bulk-target{display:flex;align-items:center;margin:0;padding:0;border:0;background:none;flex:0 1 330px;min-width:150px}
+.bk-bar .bulk-target.is-sub{background:none}
+.modal-box .bk-bar .bulk-target label{display:flex;align-items:center;gap:0;width:100%;margin:0;color:#fff!important;font-size:11px}
+.bk-bar .bulk-target label>span{flex:0 0 auto;height:34px;display:inline-flex;align-items:center;padding:0 9px;border-radius:10px 0 0 10px;background:#0a2a3b;color:#fff;font-size:10.5px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}
+.bk-bar .bulk-target select{flex:1 1 auto;min-width:0;height:34px;min-height:34px;max-width:none;padding:0 8px;border:0;border-radius:0 10px 10px 0;background:#fff;color:#0f2f42;font-size:12.5px;font-weight:700;cursor:pointer}
+.bk-bar .bulk-target.is-sub label>span{background:#34d399;color:#06281f}
+.bk-sr,.bk-sr *{color:#fff!important}.bk-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.bk-bar #bulk-save-status{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:999px;background:#0a2a3b;color:#e9fff7;font-size:10.5px;font-weight:800;white-space:nowrap}
+.bk-bar #bulk-save-status::before{content:"";width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 3px rgba(52,211,153,.25)}
+.bk-bar #bulk-save-status[data-tone="pending"]::before{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.3);animation:bkPulse 1s ease-in-out infinite}
+.bk-bar #bulk-save-status[data-tone="error"]::before{background:#f87171}
+@keyframes bkPulse{50%{opacity:.35}}
+.bk-x{flex:0 0 auto;width:34px;height:34px;border:0;border-radius:10px;background:rgba(255,255,255,.1);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+.bk-x:hover,.bk-x:focus-visible{background:#fff;color:#0f3b52}
+
+/* Régua de ferramentas */
+.bulk-modal-box .bulk-toolbar.bk-tools{display:flex;align-items:center;gap:6px!important;padding:5px 8px!important;border-bottom:1px solid #d7e3ea;background:#f6fafb;overflow:visible;flex-wrap:nowrap;min-width:0}
+.bk-seg{display:flex;align-items:center;flex:0 0 auto;height:32px;padding:2px;border:1px solid #cddbe3;border-radius:10px;background:#fff;box-shadow:0 1px 2px rgba(15,47,66,.05)}
+.bk-seg-l{padding:0 7px 0 6px;color:#4a6475;font-size:10px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}
+.bk-seg>button,.bk-seg>.bk-pop>summary{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 9px;border:0;border-radius:7px;background:transparent;color:#17384c;font:inherit;font-size:12px;font-weight:750;cursor:pointer;white-space:nowrap}
+.bk-seg>button i{font-style:normal;color:#0e7a63;font-size:13px}
+.bk-seg>button:hover,.bk-seg>.bk-pop>summary:hover{background:#e7f5f0;color:#0b5f4c}
+.bk-seg>button+button{box-shadow:-1px 0 0 #e3ebf0}
+.bk-seg .bulk-fill-button{background:#ecfaf4;color:#0b5f4c}
+.bk-chip-btn{flex:0 0 auto;height:32px;padding:0 11px;border:1px solid #cddbe3;border-radius:10px;background:#fff;color:#17384c;font:inherit;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.bk-chip-btn:hover{border-color:#0e7a63;color:#0b5f4c}
+.bk-chip-btn.bulk-done-button{border-color:#86d3b5;background:#e9f9f2;color:#0b5f4c}
+.bk-chip-btn[aria-expanded="true"]{background:#0f3b52;border-color:#0f3b52;color:#fff}
+.bk-meta{display:flex;align-items:center;gap:6px;margin-left:auto;flex:0 1 auto;min-width:0}
+.bk-meta>span{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;font-size:10.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk-meta #bulk-selection-count{background:#e8f0fe;color:#1e3a8a}
+.bk-meta #bulk-filled-count{background:#dcf5ea;color:#0b5f4c}
+/* Popovers */
+.bk-pop{position:relative}
+.bk-pop>summary{list-style:none}
+.bk-pop>summary::-webkit-details-marker{display:none}
+.bk-help>summary{display:grid;place-items:center;width:30px;height:30px;border:1px solid #cddbe3;border-radius:9px;background:#fff;color:#17384c;font-size:15px;cursor:pointer}
+.bk-pop[open]>summary{background:#0f3b52;color:#fff}
+.bk-pop-body{position:absolute;z-index:30;top:calc(100% + 8px);left:-4px;display:flex;flex-direction:column;gap:7px;min-width:230px;padding:10px;border:1px solid #cddbe3;border-radius:12px;background:#fff;box-shadow:0 14px 34px rgba(15,47,66,.2);animation:bkIn .14s ease-out}
+.bk-help .bk-pop-body{left:auto;right:0;min-width:260px;color:#17384c;font-size:12px}
+.bk-help .bk-pop-body strong{color:#0b5f4c;font-size:13px}
+.bk-help .bk-pop-body p{margin:0;color:#3f5566}
+.bk-help .bk-pop-body ul{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.bk-help kbd{display:inline-block;min-width:44px;padding:1px 5px;border:1px solid #c9d5dd;border-bottom-width:2px;border-radius:5px;background:#f8fbfc;color:#17384c;font-family:inherit;font-size:11px;text-align:center}
+.bk-pop-body .bulk-quantity{justify-content:space-between;padding:5px 5px 5px 9px;color:#3f5566;font-size:11px}
+.bk-pop-body .bulk-quantity button{min-width:74px}
+@keyframes bkIn{from{opacity:0;transform:translateY(-4px)}}
+
+/* Tablet/celular: identidade em 2 linhas enxutas, ferramentas em régua rolável */
+@media(max-width:900px){
+ .bk-bar{flex-wrap:wrap;gap:6px 8px}
+ .bk-id{flex:1 1 calc(100% - 140px);order:1}
+ .bk-back{order:0}.bk-bar #bulk-save-status{order:2}.bk-x{order:3}
+ .bk-bar .bulk-target{order:4;flex:1 1 100%}
+}
+@media(max-width:760px){
+ .bk-back b{display:none}.bk-back{padding:0 10px}
+ .bk-bar #bulk-save-status{font-size:0;padding:0 8px;gap:0}
+ .bk-bar #bulk-save-status::before{margin:0}
+ .bulk-modal-box .bulk-toolbar.bk-tools{overflow-x:auto;scrollbar-width:none}
+ .bulk-modal-box .bulk-toolbar.bk-tools::-webkit-scrollbar{display:none}
+ .bk-seg-l{display:none}
+ .bk-seg>button i{display:none}
+ .bk-meta #bulk-selection-count{display:none}
+ .bk-pop-body{position:fixed;top:auto;left:8px;right:8px;bottom:calc(64px + env(safe-area-inset-bottom));min-width:0}
+}
+@media(hover:none) and (pointer:coarse){.bk-seg{height:38px}.bk-seg>button,.bk-seg>.bk-pop>summary{height:32px}.bk-chip-btn{height:38px}.bk-tools :is(button,input){min-height:0!important}.bk-pop-body .bulk-quantity :is(button,input){min-height:36px!important}}

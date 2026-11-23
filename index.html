@@ -467,6 +467,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/multi-nest.css?v=298e5d2e">
 <link rel="stylesheet" href="css/record-fields.css?v=38eb4677">
 <link rel="stylesheet" href="css/whatsapp-avisos.css?v=94d99c2a">
+<link rel="stylesheet" href="css/bulk-compact.css?v=1f397407">
+<link rel="stylesheet" href="css/image-viewer.css?v=b3b2bf04">
 <link rel="stylesheet" href="css/contrast-guard.css?v=fdab26af">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -534,9 +536,22 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <div id="gallery-modal" onclick="if(event.target===this)closeGal()">
   <div class="gal-modal-box" id="gal-box"></div>
 </div>
-<div id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada" onclick="if(event.target===this)closeLb()">
-  <button id="lb-close" type="button" aria-label="Fechar imagem ampliada" onclick="closeLb()">×</button>
-  <img id="lb-img" alt="">
+<div id="lightbox" class="ivw" role="dialog" aria-modal="true" aria-label="Imagem ampliada">
+  <div class="ivw-amb" id="ivw-amb" aria-hidden="true"></div>
+  <div class="ivw-top">
+    <div class="ivw-ttl"><b id="ivw-title">Imagem</b><span id="ivw-count" hidden></span></div>
+    <div class="ivw-tools" role="toolbar" aria-label="Controles da imagem">
+      <div class="ivw-zoom"><button type="button" id="ivw-out" aria-label="Diminuir zoom" title="Diminuir zoom (−)">−</button><button type="button" id="ivw-pct" aria-label="Ajustar à tela" title="Ajustar à tela (0)">100%</button><button type="button" id="ivw-in" aria-label="Aumentar zoom" title="Aumentar zoom (+)">+</button></div>
+      <button type="button" class="ivw-tool" id="ivw-rot" aria-label="Girar imagem" title="Girar (R)">⟳</button>
+      <a class="ivw-tool" id="ivw-open" target="_blank" rel="noopener" aria-label="Abrir original em nova aba" title="Abrir original">↗</a>
+      <button id="lb-close" type="button" aria-label="Fechar imagem ampliada" title="Fechar (Esc)" onclick="closeLb()">×</button>
+    </div>
+  </div>
+  <div class="ivw-stage" id="ivw-stage"><img id="lb-img" alt="" draggable="false"></div>
+  <button type="button" class="ivw-nav ivw-prev" id="ivw-prev" aria-label="Imagem anterior" title="Anterior (←)" hidden>‹</button>
+  <button type="button" class="ivw-nav ivw-next" id="ivw-next" aria-label="Próxima imagem" title="Próxima (→)" hidden>›</button>
+  <div class="ivw-strip" id="ivw-strip" hidden></div>
+  <div class="ivw-hint" id="ivw-hint" aria-live="polite"></div>
 </div>
 <div id="toast"></div>
 
@@ -568,7 +583,7 @@ import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/field-labels.js?v=b924ccca';
-import './js/bulk-entry.js?v=22f42926';
+import './js/bulk-entry.js?v=5f063f44';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=bb2eac18';
 import './js/pdf-picker.js?v=e7e68483';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -2750,7 +2765,7 @@ window.closeLb=()=>{
 document.addEventListener('keydown',event=>{
   if(document.getElementById('lightbox').style.display!=='flex')return;
   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeLb();}
-  if(event.key==='Tab'){event.preventDefault();document.getElementById('lb-close').focus({preventScroll:true});}
+  if(event.key==='Tab'){const box=document.getElementById('lightbox'),f=box.querySelectorAll?[...box.querySelectorAll('button:not([hidden]),a[href]')].filter(e=>!e.closest('[hidden]')):[];if(f.length<2){event.preventDefault();document.getElementById('lb-close').focus({preventScroll:true});return;}const i=f.indexOf(document.activeElement);if(event.shiftKey&&i<=0){event.preventDefault();f[f.length-1].focus();}else if(!event.shiftKey&&(i===-1||i===f.length-1)){event.preventDefault();f[0].focus();}}
 });
 
 // ── ARMAZENAMENTO DURÁVEL DE IMAGENS ──
@@ -5627,5 +5642,6 @@ window.importarContatosExpocose52=async function(){
   return criados;
 };
 </script>
+<script type="module" src="js/image-viewer.js?v=873b491f"></script>
 </body>
 </html>

@@ -585,3 +585,21 @@
 - NÃO ligar solicitantes de demandas (água de pipa, saneamento, retro etc.) ao cadastro de PESSOAS: o
   usuário recusou explicitamente em 18/11/2026. O cadastro de pessoas vale só para as listas de pessoas.
 - Testes: `tests/contas-relatorio.browser.cjs` e `tests/cadastro-links.browser.cjs` (390 e 1366).
+
+## Planilha de lote: topo ultracompacto (regra do usuário, 23/11/2026, 20h40)
+
+- O topo da "Planilha de lançamentos" ocupa no máximo ~100 px no computador (antes ~380): sem o cabeçalho genérico do modal,
+  uma FAIXA DE IDENTIDADE (← Lotes · caminho Secretaria › Grupo · título do lote editável no próprio lugar · DESTINO
+  com o seletor · bolinha de "Salvo/pendente" · ×) e uma RÉGUA DE FERRAMENTAS agrupada por intenção (LINHAS ＋10 ＋25 #
+  [popover Adicionar/Total] · Copiar Colar Repetir Limpar · ✓ Concluir · ⚙️ Colunas · contadores · ⌨ atalhos em popover).
+  O texto de ajuda fixo saiu da tela (está no ⌨). `css/bulk-compact.css`; teste `tests/bulk-topo-viewer.browser.cjs`.
+
+## Visualizador de imagens (regra do usuário, 23/11/2026)
+
+- Toda foto aberta (miniatura do lançamento → `openGal`, `openLb` em qualquer tela) abre no visualizador imersivo
+  (`js/image-viewer.js` + `css/image-viewer.css`): tela inteira com a foto no MAIOR tamanho possível (amplia até encostar
+  na borda), fundo "ambilight" com a própria foto desfocada, contador "2 / 5", setas ‹ ›, miniaturas embaixo, ← → no
+  teclado, deslizar para trocar no celular; zoom pela roda do mouse (ancorado no cursor), botões − 100% +, duplo
+  clique/toque, pinça com 2 dedos, arrastar para mover; girar ⟳ e abrir original ↗. Várias fotos do mesmo lançamento
+  sempre navegáveis. `openGal` vai direto para o visualizador (sem a janelinha intermediária). API:
+  `window.openImageViewer(lista, índice, título)`.
