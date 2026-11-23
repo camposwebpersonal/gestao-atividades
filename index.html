@@ -424,7 +424,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=2e995a7d">
 <link rel="stylesheet" href="css/module-groups.css?v=2d7d37e2">
 <link rel="stylesheet" href="css/access-permissions.css?v=b692d554">
-<link rel="stylesheet" href="css/bulk-archive.css?v=5899fce5">
+<link rel="stylesheet" href="css/bulk-archive.css?v=23603e4d">
 <link rel="stylesheet" href="css/completed-details.css?v=cabef5ee">
 <link rel="stylesheet" href="css/trash.css?v=0beea816">
 <link rel="stylesheet" href="css/custom-fields.css?v=48f0323e">
@@ -556,8 +556,8 @@ import './js/mail-settings.js?v=b15f49d8';
 import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/field-labels.js?v=c327af65';
-import './js/bulk-entry.js?v=20391020';
+import './js/field-labels.js?v=3a2b0671';
+import './js/bulk-entry.js?v=62df6187';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -2405,7 +2405,7 @@ window.saveSec=async function(id){
 
 // ── ITEM MODAL ──
 window.openItemModal=function(id,secId,isSub,parentId,focusField){
-  setTimeout(()=>window.applyFieldLabelsToModal?.(S.secs.find(s=>s.id===(secId||curSecId))),0);
+  setTimeout(()=>{const g=S.secs.find(s=>s.id===(secId||curSecId));window.applyFieldLabelsToModal?.(g);window.decorateFieldLabelEditors?.(g,isSub?'subitem':'item');},0);
   const col=isSub?'subitem':'item';
   const it=id?(isSub?S.subitems.find(x=>x.id===id):S.items.find(x=>x.id===id)):null;
   const sec=S.secs.find(s=>s.id===(secId||curSecId));
@@ -2483,7 +2483,7 @@ window.openItemModal=function(id,secId,isSub,parentId,focusField){
       const val=raw===null||raw===undefined?'':String(raw);
       const choice=customFieldControl({...t,options:_tplOpts(t)},raw,esc);
       const inp=choice|| (t.field_type==='combobox'?`<select data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px"><option value="">-- Selecionar --</option>${(val&&!_tplOpts(t).includes(String(val))?`<option value="${esc(val)}" selected>${esc(val)} (valor anterior)</option>`:'')}${_tplOpts(t).map(o=>`<option value="${esc(o)}"${String(val)===String(o)?' selected':''}>${esc(o)}</option>`).join('')}</select>`:t.field_type==='textarea'?`<textarea data-ef-key="${esc(t.field_name)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px;resize:vertical;min-height:60px;font-family:inherit">${esc(val)}</textarea>`:`<input type="${t.field_type==='number'?'number':t.field_type==='date'?'date':'text'}" data-ef-key="${esc(t.field_name)}" value="${esc(val)}" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;background:#ffffff;color:var(--text);font-size:13px">`);
-      return`<div class="form-group full"><label>${esc(t.field_name)}</label>${inp}</div>`;
+      return`<div class="form-group full"><label data-ef-field="${esc(t.field_name)}">${esc(t.field_name)}</label>${inp}</div>`;
     }).join('')}</div></div>`;
   })()}
   ${rtHtml(col,id||'',it?.resp_url||null)}

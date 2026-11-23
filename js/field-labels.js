@@ -51,16 +51,68 @@ if (typeof window !== 'undefined') {
     hidden ? list.add(key) : list.delete(key); all[scope] = [...list];
     await saveGroupExtra(group, {bulk_hidden_columns: all});
   };
-  // Formulário do item/subitem: troca os rótulos dos campos fixos pelos nomes escolhidos no grupo.
+  // Formulário do item/subitem: troca os rótulos dos campos fixos pelos nomes escolhidos no grupo
+  // e põe um ✏️ em cada rótulo (fixos e personalizados) para renomear ali mesmo.
   const MODAL_MAP = [['it-name', 'description', ' *'], ['it-obs', 'observacao', ''], ['it-resp', 'responsaveis', ''], ['it-start', 'start_date', ''], ['it-deadline', 'deadline_date', ''], ['at-solicitante', 'solicitante', ''], ['at-urgencia', 'urgencia', ''], ['at-prioritario', 'prioritario', '']];
+  const labelFor = (root, id) => {
+    const input = root.getElementById ? root.getElementById(id) : root.querySelector('#' + id); if (!input) return null;
+    return input.closest('label') || root.querySelector?.(`label[for="${id}"]`) || input.closest('.form-group')?.querySelector(':scope > label');
+  };
+  const textNode = lab => [...lab.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+  const setLabelText = (lab, text) => { const t = textNode(lab); if (t) t.textContent = (t.textContent.startsWith(' ') ? ' ' : '') + text + (t.textContent.endsWith(' ') ? ' ' : ''); else lab.prepend(document.createTextNode(text)); };
   window.applyFieldLabelsToModal = function (group, root = document) {
-    MODAL_MAP.forEach(([id, key, suffix]) => {
-      const label = customLabel(group, key); if (!label) return;
-      const input = root.getElementById ? root.getElementById(id) : root.querySelector('#' + id); if (!input) return;
-      const lab = root.querySelector?.(`label[for="${id}"]`) || input.closest('.form-group')?.querySelector(':scope > label');
-      if (!lab) return;
-      const text = [...lab.childNodes].reverse().find(n => n.nodeType === 3 && n.textContent.trim());
-      if (text) text.textContent = (text.textContent.startsWith(' ') ? ' ' : '') + label + suffix; else lab.textContent = label + suffix;
+    MODAL_MAP.forEach(([id, key, suffix]) => { const label = customLabel(group, key), lab = label && labelFor(root, id); if (lab) setLabelText(lab, label + suffix); });
+  };
+  const canEditGroup = group => Boolean(window.S?.isAdmin || window.userCanGroup?.(group, 'editar'));
+  window.decorateFieldLabelEditors = function (group, scope = 'item', root = document) {
+    if (!group || !canEditGroup(group)) return;
+    const targets = MODAL_MAP.map(([id, key, suffix]) => [labelFor(root, id), key, suffix]).filter(([lab]) => lab);
+    root.querySelectorAll('label[data-ef-field]').forEach(lab => targets.push([lab, 'ef:' + lab.dataset.efField, '']));
+    targets.forEach(([lab, key, suffix]) => {
+      if (lab.querySelector('.fl-pencil')) return;
+      lab.classList.add('fl-labeled');
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'fl-pencil'; btn.textContent = '✏️';
+      btn.title = 'Renomear este campo neste grupo'; btn.setAttribute('aria-label', 'Renomear o campo ' + (textNode(lab)?.textContent.trim() || ''));
+      btn.dataset.flKey = key;
+      btn.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); startEdit(group, scope, lab, btn, suffix); });
+      lab.appendChild(btn);
     });
   };
+  function startEdit(group, scope, lab, btn, suffix) {
+    if (lab.querySelector('.fl-edit')) return;
+    const node = textNode(lab), current = (node?.textContent || '').trim().replace(/\s*\*$/, '');
+    let key = btn.dataset.flKey;
+    const input = document.createElement('input'); input.className = 'fl-edit'; input.maxLength = 80; input.value = current;
+    input.placeholder = key.startsWith('ef:') ? 'Nome do campo' : (BUILTIN_LABELS[key] || '') + ' (padrão)';
+    input.setAttribute('aria-label', 'Novo nome do campo');
+    const hint = document.createElement('small'); hint.className = 'fl-hint'; hint.textContent = 'Enter salva · Esc cancela · vale para todo o grupo';
+    if (node) node.textContent = ''; btn.hidden = true; [...lab.children].forEach(c => { if (c !== btn) c.dataset.flWasHidden = c.hidden ? '1' : ''; });
+    lab.prepend(input); input.after(hint); input.focus(); input.select();
+    let done = false;
+    const restore = text => { input.remove(); hint.remove(); btn.hidden = false; if (node) node.textContent = text; };
+    const finish = async save => {
+      if (done) return; done = true;
+      const value = input.value.replace(/\s+/g, ' ').trim();
+      if (!save || value === current) { restore(current + suffix); return; }
+      if (key.startsWith('ef:') && !value) { restore(current + suffix); window.toast?.('O campo precisa de um nome.', 'error'); return; }
+      input.disabled = true; hint.textContent = 'Salvando…';
+      try {
+        const res = await window.renameGroupField(group.id, key, value, {scope});
+        const finalName = res?.name || value || BUILTIN_LABELS[key] || current;
+        restore(finalName + suffix);
+        if (key.startsWith('ef:')) {
+          // o formulário aberto passa a gravar no nome novo
+          const box = lab.closest('.form-group');
+          box?.querySelectorAll('[data-ef-key]').forEach(el => { if (el.dataset.efKey === key.slice(3)) el.dataset.efKey = finalName; });
+          box?.querySelectorAll('[data-ef-choice-key]').forEach(el => { if (el.dataset.efChoiceKey === key.slice(3)) el.dataset.efChoiceKey = finalName; });
+          lab.dataset.efField = finalName; btn.dataset.flKey = 'ef:' + finalName;
+          const n = (res?.result?.items || 0) + (res?.result?.subitems || 0);
+          window.toast?.(`Campo “${current}” agora se chama “${finalName}”${n ? ` — atualizado em ${n} lançamento(s)` : ''}.`, 'success', 4500);
+        } else window.toast?.(`“${current}” agora se chama “${finalName}” neste grupo (formulário, planilha, tabela e PDF).`, 'success', 4200);
+      } catch (error) { restore(current + suffix); window.toast?.(error.message || String(error), 'error', 7000); }
+    };
+    input.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); finish(true); } else if (e.key === 'Escape') { e.preventDefault(); finish(false); } });
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('blur', () => finish(true));
+  }
 }

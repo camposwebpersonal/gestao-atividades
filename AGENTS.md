@@ -299,6 +299,10 @@
   20261123100000, security definer com checagem de permissão): troca o modelo, a chave em todos os itens/subitens
   do grupo (inclusive grafias antigas), a ordem salva, o campo do quantitativo e os lotes em rascunho, SEM mudar
   autor/data e SEM aviso de WhatsApp. A tela "Editar grupo" usa a mesma RPC.
+- Formulário do item/subitem: cada rótulo tem ✏️ (`decorateFieldLabelEditors`, chamado no openItemModal) — campos fixos
+  (Nome, Observação, Urgência, Prioritário, Solicitante, Responsáveis, Data início, Prazo) e personalizados
+  (`<label data-ef-field>`); edita ali mesmo (Enter salva, Esc cancela), sem perder o que já foi digitado, e o campo aberto
+  passa a gravar no nome novo (data-ef-key/data-ef-choice-key atualizados).
 - Ocultar: `extra_fields.bulk_hidden_columns{item,subitem}`; o que já foi digitado numa coluna oculta fica guardado
   na linha (`row._hidden`) e vai junto no envio. Teste: `tests/field-labels.browser.cjs` (390 e 1366).
 

@@ -1,6 +1,6 @@
 import {recordSecretary} from './record-context.js';
 import {isAttendanceSection} from './atendimento-fluxo.js?v=96e12139';
-import {fieldLabel,hiddenColumns} from './field-labels.js?v=c327af65';
+import {fieldLabel,hiddenColumns} from './field-labels.js?v=3a2b0671';
 
 function templateOptions(template){
  const raw=template?.options;
