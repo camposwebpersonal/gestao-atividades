@@ -425,6 +425,8 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/module-groups.css?v=2d7d37e2">
 <link rel="stylesheet" href="css/access-permissions.css?v=b692d554">
 <link rel="stylesheet" href="css/bulk-archive.css?v=23603e4d">
+<link rel="stylesheet" href="css/date-br.css?v=328f26c7">
+<script src="js/date-br.js?v=5598f433"></script>
 <link rel="stylesheet" href="css/completed-details.css?v=cabef5ee">
 <link rel="stylesheet" href="css/trash.css?v=0beea816">
 <link rel="stylesheet" href="css/custom-fields.css?v=48f0323e">
@@ -557,7 +559,7 @@ import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/field-labels.js?v=3a2b0671';
-import './js/bulk-entry.js?v=62df6187';
+import './js/bulk-entry.js?v=479d8f1a';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -928,7 +930,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=5202fbb2';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=0fbc16dd';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }

@@ -235,7 +235,7 @@ function setCell(input,value){
  else if(column.type==='select'){
   const option=[...input.options].find(item=>item.value.toLocaleLowerCase('pt-BR')===raw.toLocaleLowerCase('pt-BR')||item.textContent.toLocaleLowerCase('pt-BR')===raw.toLocaleLowerCase('pt-BR'));
   input.value=option?.value||raw;
- }else input.value=column.type==='date'?(normalizeBulkDate(raw)||raw):raw;
+ }else input.value=column.type==='date'?((iso=>iso?iso.split('-').reverse().join('/'):raw)(normalizeBulkDate(raw))):raw; // data sempre dd/mm/aaaa na tela
 }
 
 function updateCount(){

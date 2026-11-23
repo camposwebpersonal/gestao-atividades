@@ -398,6 +398,17 @@
   Tela/relatório novo que mostra data de calendário: usar fmtD/fmtDay ou `calendarDate` antes de `new Date`.
   Teste (navegador em America/Recife): `tests/calendar-dates.browser.cjs`.
 
+## Formato de data: SEMPRE dd/mm/aaaa (regra do usuário, 23/11/2026)
+
+- "Nunca mais mm/dd/aaaa", em tela, formulário, planilha, PDF e relatório. O `<input type="date">` nativo usa o idioma do
+  NAVEGADOR (em inglês mostra mm/dd/yyyy), então `js/date-br.js` + `css/date-br.css` (carregados no index) põem em TODO
+  campo date/datetime-local (inclusive os criados depois, via MutationObserver) uma caixa de texto dd/mm/aaaa com máscara,
+  tecla H = hoje, colar data BR ou ISO e botão 📅 (showPicker do campo nativo). O campo nativo fica escondido no mesmo lugar
+  e continua com o valor AAAA-MM-DD: código que lê/grava `.value`, eventos input/change e onchange="" funcionam igual.
+  Data impossível (31/02) fica vermelha, avisa e volta ao valor anterior. Planilha de lote mostra datas em dd/mm/aaaa.
+  Texto de data em tela/PDF: só `fmtD`/`toLocaleDateString('pt-BR')` — nunca toLocaleDateString() sem idioma nem ISO cru.
+  Teste: `tests/date-br.browser.cjs` (roda com o navegador em inglês; 390 e 1366).
+
 ## Linhas finas e Concluídos por dia (regra permanente, 17/11/2026)
 
 - Máximo de informação por tela: linhas de lançamento o mais finas possível em todo o site
