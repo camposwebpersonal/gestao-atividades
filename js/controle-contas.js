@@ -713,6 +713,8 @@ window.ccOverviewEnhance = function(root=document){
     // encaixe: diminui a letra até o valor caber inteiro no card (e refaz quando o card muda de tamanho)
     const fit=()=>{el.style.fontSize='';let size=parseFloat(getComputedStyle(el).fontSize)||22;const min=el.classList.contains('ccn-fit')?8:11;while(el.scrollWidth>el.clientWidth+1&&size>min){size-=0.5;el.style.fontSize=size+'px';}};
     el.__ccnFit=fit;fit();
+    // a fonte da página pode terminar de carregar depois: refaz o encaixe quando ela chega
+    document.fonts?.ready?.then(()=>requestAnimationFrame(fit));
     if(!el.__ccnRO&&typeof ResizeObserver!=='undefined'){el.__ccnRO=new ResizeObserver(()=>el.__ccnFit());el.__ccnRO.observe(el.parentElement);}
     if(!reduce&&el.classList.contains('ccn-kpi-val')&&/^R\$/.test(el.textContent)&&!el.dataset.counted){el.dataset.counted='1';const full=el.textContent,target=Number(full.replace(/[^\d,]/g,'').replace(',','.'))||0;if(!target)return;const t0=performance.now();const tick=now=>{const k=Math.min(1,(now-t0)/700),e=1-Math.pow(1-k,3);el.textContent=_ccMoney(target*e);if(k<1)requestAnimationFrame(tick);else{el.textContent=full;fit();}};requestAnimationFrame(tick);}
   });

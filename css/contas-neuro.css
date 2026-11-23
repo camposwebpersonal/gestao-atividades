@@ -165,7 +165,7 @@
 #content button.cc-month strong{font-size:13px;font-weight:900;color:#334155}
 #content button.cc-month small{margin:0!important;line-height:1.3}
 #content button.cc-month small:not(.ccn-fit){font-size:12px!important}
-#content button.cc-month small.ccn-fit{font-size:12.5px}
+#content button.cc-month small.ccn-fit{font-size:min(12.5px,16cqi)}
 #content button.cc-month .ccn-fit{display:block;white-space:nowrap;overflow:hidden;font-weight:800;font-variant-numeric:tabular-nums;color:#475569}
 #content button.cc-month .cc-month-st{font-weight:700;color:#64748b}
 #content button.cc-month::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:transparent}
