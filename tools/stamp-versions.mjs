@@ -27,7 +27,7 @@ function walk(dir, out = []) {
   }
   return out;
 }
-const SOURCES = ['index.html', 'login.html', 'supabase_compat.js', ...walk('js'), ...walk('css')].filter(f => existsSync(join(ROOT, f)));
+const SOURCES = ['index.html', 'login.html', 'conferir.html', 'mulher.html', 'supabase_compat.js', ...walk('js'), ...walk('css')].filter(f => existsSync(join(ROOT, f)));
 
 const REF = /(["'(])((?:\.\.?\/|\/)?[A-Za-z0-9_][A-Za-z0-9_./-]*\.(?:js|mjs|css))\?v=([0-9A-Za-z]+)/g;
 const read = f => readFileSync(join(ROOT, f), 'utf8');

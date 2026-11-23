@@ -29,6 +29,7 @@
 <script src="js/pdf-layout.js?v=1bbcee81"></script>
 <script src="js/cadastro-links.js?v=f71171ad"></script>
 <script src="js/contas-relatorio.js?v=e8db4286"></script>
+<script src="js/link-conferencia.js?v=72dfbd39"></script>
 <script src="js/contas-pdf-neuro.js?v=ebaacfb8"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
@@ -446,7 +447,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/contas-neuro.css?v=7e181883">
-<link rel="stylesheet" href="css/neuro-groups.css?v=389a8ca3">
+<link rel="stylesheet" href="css/neuro-groups.css?v=c46bd883">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
 <link rel="stylesheet" href="css/controle-leite.css?v=39815603">
 <link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
@@ -548,9 +549,9 @@ import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
-import {generateDemandPdf} from './js/demand-pdf.js?v=b93655d0';
-import {reportDateTime} from './js/demand-report.js?v=90f1fd43';
-import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=0da8f0c3';
+import {generateDemandPdf} from './js/demand-pdf.js?v=d0186662';
+import {reportDateTime} from './js/demand-report.js?v=2d1e7d4f';
+import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=8fd2cf75';
 import {drawRecordsTable,drawCommonBox,drawCompactHeader} from './js/pdf-records.js?v=eeeb503f';
 import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=ebb1b069';
@@ -567,7 +568,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=e7e68483';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=02c99ffb';
+import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=22862e19';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -933,7 +934,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=7ad99f8b';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=f6a11039';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1863,11 +1864,13 @@ window.openActivity=function(secId){
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
   const archiveEntries=_cp&&!_inl?completedArchiveEntries(allItems,groupSubitems,iProg):[];
   const _inlDone=_inl?allItems.filter(item=>iProg(item).pct===100).length:0;
-  const laneTabs=_inl?(allItems.length?`<div class="inline-done-summary" role="status"><span class="ids-ring" style="--p:${Math.round(_inlDone/allItems.length*100)}"></span><b>${_inlDone} de ${allItems.length} concluídos</b><small>${_inlDone===allItems.length?'Tudo concluído ✨':'os concluídos continuam no lugar, marcados com ✅'}</small></div>`:''):_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
+  const _confBanner=window.conferenciaBanner?.(secId)||'';
+  const laneTabs=_confBanner+(_inl?(allItems.length?`<div class="inline-done-summary" role="status"><span class="ids-ring" style="--p:${Math.round(_inlDone/allItems.length*100)}"></span><b>${_inlDone} de ${allItems.length} concluídos</b><small>${_inlDone===allItems.length?'Tudo concluído ✨':'os concluídos continuam no lugar, marcados com ✅'}</small></div>`:''):_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'');
   const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:groupSubitems,progress:iProg,canEdit:_can}):'';
   const _gMenu=[
     _can?`<button type="button" class="gcb-item" onclick="openSecModal('${secId}')">✏️ Editar grupo<small>nome, campos, controles</small></button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">% ${_showPct?'Ocultar percentual':'Mostrar percentual'}</button>`:'',
+    _can?`<button type="button" class="gcb-item" onclick="openConferenciaLink('${secId}')">🔗 Link de conferência<small>alguém confere pelo celular, sem login</small></button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarModoConclusao('${secId}')">${_inl?'🗂️ Levar concluídos para a aba Concluídos<small>separa o que já terminou</small>':'📍 Manter concluídos na mesma tela<small>ficam no lugar, marcados ✅</small>'}</button>`:'',
     _can&&_cp&&sec.concluded==1?`<button type="button" class="gcb-item" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Reabrir grupo</button>`:'',
     _can&&_cp&&sec.concluded!=1?`<button type="button" class="gcb-item" onclick="markActivityConcluded('${secId}')">✅ Concluir grupo</button>`:'',
@@ -1968,7 +1971,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
     const num=prefix?prefix+'.'+(_si+1):''+(_si+1);
     const chipsHtml=isAttendanceSection(_sec)?'':window.recordChipsHtml(c,_sec,{isSub:true,templates:S.fieldTemplates,small:true});
-    return`<div class="activity-subtree"><div class="sub-row ${lvlClass}${cD&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+    return`<div class="activity-subtree"><div class="sub-row ${lvlClass}${cD&&window.groupDoneInline(_sec)?' is-done-inline':''}${window.recordConferido?.(c)?' is-conferido':''}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
@@ -2003,7 +2006,7 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?`<div class="activity-subitem-collection activity-subitem-level-1">${_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="activity-subtree"><div class="sub-row lvl-1${sD&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+    return`<div class="activity-subtree"><div class="sub-row lvl-1${sD&&window.groupDoneInline(_sec)?' is-done-inline':''}${window.recordConferido?.(s)?' is-conferido':''}" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
@@ -2022,7 +2025,7 @@ function renderItem(item,today,itemNum){
     </div>${_renderSubSubs(s.id,item,today,subNum)}</div>`;
   }).join('')}</div>`:'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row${done&&!_nt&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row${done&&!_nt&&window.groupDoneInline(_sec)?' is-done-inline':''}${window.recordConferido?.(item)?' is-conferido':''}" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>

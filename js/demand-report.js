@@ -1,6 +1,6 @@
 // Monta os lançamentos do "Relatório de demandas" no formato compacto do motor de PDF.
 import {URGENCIAS, attendanceValue, recordExtra} from './atendimento-meta.js';
-import {customFields, controlFields} from './record-fields.js?v=0da8f0c3';
+import {customFields, controlFields} from './record-fields.js?v=8fd2cf75';
 
 export const STATUS_LABELS = {pendente: 'Pendente', solicitado: 'Solicitado', recebido: 'Recebido', analisando: 'Analisando', aprovado: 'Aprovado', ressalva: 'Ressalva', reprovado: 'Reprovado', andamento: 'Em andamento', concluido: 'Concluído', cancelado: 'Cancelado'};
 const URGENCY_TONE = {vermelho: 'urgent', amarelo: 'attention', verde: 'calm'};

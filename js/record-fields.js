@@ -93,6 +93,12 @@ export function controlFields(record, group, isSub = false) {
   if ((on('origem_verba') || on('verba')) && record?.origem_verba) out.push({key: 'origem_verba', label: 'Origem da verba', value: String(record.origem_verba)});
   if (on('documentacao') && record?.documentacao != null && record.documentacao !== '') out.push({key: 'documentacao', label: 'Documentação', value: Number(record.documentacao) === 1 ? 'Concluída' : 'Pendente', ok: Number(record.documentacao) === 1});
   if (on('licitacao') && record?.licitacao != null && record.licitacao !== '') out.push({key: 'licitacao', label: 'Licitação', value: Number(record.licitacao) === 1 ? 'Concluída' : 'Pendente', ok: Number(record.licitacao) === 1});
+  // Conferência por link provisório (js/link-conferencia.js): aparece em tela e PDF quando o lançamento foi conferido.
+  const cf = record?.conferencia || recordExtraOf(record).conferencia;
+  if (cf && typeof cf === 'object' && cf.em) {
+    const d = String(cf.em).slice(0, 10).split('-').reverse().join('/');
+    out.push({key: 'conferencia', label: 'Conferência', value: `Conferido em ${d}${cf.por ? ' por ' + cf.por : ''}`, ok: true});
+  }
   return out;
 }
 
