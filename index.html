@@ -446,6 +446,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/contas-neuro.css?v=7e181883">
+<link rel="stylesheet" href="css/neuro-groups.css?v=389a8ca3">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
 <link rel="stylesheet" href="css/controle-leite.css?v=39815603">
 <link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
@@ -932,7 +933,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=0b5da2ab';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=7ad99f8b';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1684,6 +1685,15 @@ window.saveActivityViewDefault=async function(secId){
   }catch(error){toast('Não foi possível salvar a visualização: '+(error.message||error),'error');}
 };
 window.resetActivityRecordView=function(secId){_activityViewOverrides.delete(secId);openActivity(secId);};
+// Modo de conclusão do grupo: 'aba' (padrão, concluídos vão para a aba Concluídos) ou 'mesma_tela'.
+window.groupDoneInline=function(sec){const e=typeof recordExtra==='function'?recordExtra(sec):{};return (sec?.conclusao_modo||e.conclusao_modo)==='mesma_tela';};
+window.alternarModoConclusao=async function(secId){
+  const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
+  const novo=window.groupDoneInline(sec)?'aba':'mesma_tela';
+  try{await updateDoc(doc(db,'secretariats',secId),{conclusao_modo:novo,updated_at:serverTimestamp()});sec.conclusao_modo=novo;
+    toast(novo==='mesma_tela'?'📍 Concluídos ficam na mesma tela, marcados com ✅.':'🗂️ Concluídos voltam para a aba Concluídos.','success');openActivity(secId);
+  }catch(error){toast('Não foi possível mudar: '+(error.message||error),'error');}
+};
 window.openActivity=function(secId){
   const sec=S.secs.find(s=>s.id===secId);if(!sec)return;
   if(!S.isAdmin&&!window.userCanGroup?.(sec,'acesso')){toast('Você não tem acesso a este grupo.','error');window.renderModulo?.(window.modForSec(sec));return;}
@@ -1701,8 +1711,10 @@ window.openActivity=function(secId){
   const groupSubitems=S.subitems.filter(sub=>sub.atividade_id===secId||itemIds.has(sub.item_id));
   const today=new Date();today.setHours(0,0,0,0);
   const _cp=sec.controle_pendencias===1||sec.controle_pendencias===true;
-  const activeItems=_cp?allItems.filter(item=>iProg(item).pct!==100):allItems;
-  const lane=_cp?activityLane(secId):'active';
+  // Modo "concluídos na mesma tela": o lançamento concluído fica onde está, só que marcado como concluído.
+  const _inl=_cp&&window.groupDoneInline(sec);
+  const activeItems=_cp&&!_inl?allItems.filter(item=>iProg(item).pct!==100):allItems;
+  const lane=_cp&&!_inl?activityLane(secId):'active';
   const items=lane==='completed'?[]:activeItems;
   const _showPct=sec.show_progress_percentage!==0;
   const tableModeAtiv=document.getElementById('ativ-table-mode')?.checked ?? Boolean(sec.show_table);
@@ -1849,12 +1861,14 @@ window.openActivity=function(secId){
   const qField=(sec.quantitativo_campo||'').trim()||((isBccs||isEmpregos)&&tableFields.some(f=>_normFieldKey(f)==='remuneração')?'Remuneração':'');
   const showQuant=(isBccs||isEmpregos)?sec.show_quantitativo!==0:sec.show_quantitativo==1;
   const bccsHtml=showQuant&&qField?_renderQuantitativo(secId,qField,(isBccs||isEmpregos)?'Colaboradores e folha salarial por grupo':'Resumo Quantitativo'):'';
-  const archiveEntries=_cp?completedArchiveEntries(allItems,groupSubitems,iProg):[];
-  const laneTabs=_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
+  const archiveEntries=_cp&&!_inl?completedArchiveEntries(allItems,groupSubitems,iProg):[];
+  const _inlDone=_inl?allItems.filter(item=>iProg(item).pct===100).length:0;
+  const laneTabs=_inl?(allItems.length?`<div class="inline-done-summary" role="status"><span class="ids-ring" style="--p:${Math.round(_inlDone/allItems.length*100)}"></span><b>${_inlDone} de ${allItems.length} concluídos</b><small>${_inlDone===allItems.length?'Tudo concluído ✨':'os concluídos continuam no lugar, marcados com ✅'}</small></div>`:''):_cp?completionLaneTabs(secId,activeItems.length,archiveEntries.length,lane):'';
   const archiveHtml=_cp&&lane==='completed'?renderCompletedArchive({group:sec,items:allItems,subitems:groupSubitems,progress:iProg,canEdit:_can}):'';
   const _gMenu=[
     _can?`<button type="button" class="gcb-item" onclick="openSecModal('${secId}')">✏️ Editar grupo<small>nome, campos, controles</small></button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">% ${_showPct?'Ocultar percentual':'Mostrar percentual'}</button>`:'',
+    _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarModoConclusao('${secId}')">${_inl?'🗂️ Levar concluídos para a aba Concluídos<small>separa o que já terminou</small>':'📍 Manter concluídos na mesma tela<small>ficam no lugar, marcados ✅</small>'}</button>`:'',
     _can&&_cp&&sec.concluded==1?`<button type="button" class="gcb-item" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Reabrir grupo</button>`:'',
     _can&&_cp&&sec.concluded!=1?`<button type="button" class="gcb-item" onclick="markActivityConcluded('${secId}')">✅ Concluir grupo</button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="limparAtividade('${secId}')">🧹 Limpar grupo</button>`:'',
@@ -1941,7 +1955,7 @@ window.alternarExibicaoPercentual=async function(secId,mostrar){
 function _renderSubSubs(parentSubId,item,today,prefix,level){
   const lvl=(level||0)+1;
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
-  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&activityLane(item.atividade_id)==='active';
+  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&!window.groupDoneInline(_sec)&&activityLane(item.atividade_id)==='active';
   const kids=[...S.subitems.filter(s=>s.parent_id===parentSubId&&s.parent_type==='subitem'&&(!_archiveActive||s.concluded!=1))].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
   if(!kids.length)return '';
   const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
@@ -1954,7 +1968,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
     const st=_ST.find(x=>x.v===(c.status||'pendente'))||_ST[0];
     const num=prefix?prefix+'.'+(_si+1):''+(_si+1);
     const chipsHtml=isAttendanceSection(_sec)?'':window.recordChipsHtml(c,_sec,{isSub:true,templates:S.fieldTemplates,small:true});
-    return`<div class="activity-subtree"><div class="sub-row ${lvlClass}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
+    return`<div class="activity-subtree"><div class="sub-row ${lvlClass}${cD&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${c.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${c.id}','${parentSubId}')" ondragover="onDrSubOver(event,'${c.id}','${parentSubId}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${c.id}','${parentSubId}','${item.atividade_id}')" style="padding-left:${14+indent}px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${c.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:${branchColor}">${branchIcon}</span>
@@ -1980,7 +1994,7 @@ function renderItem(item,today,itemNum){
   const _sec=S.secs.find(s=>s.id===item.atividade_id);
   const _can=S.isAdmin||window.userCanGroup?.(_sec,'editar');
   const _nt=_sec?.controle_pendencias===0;
-  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&activityLane(item.atividade_id)==='active';
+  const _archiveActive=(_sec?.controle_pendencias===1||_sec?.controle_pendencias===true)&&!window.groupDoneInline(_sec)&&activityLane(item.atividade_id)==='active';
   const late=!_nt&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;
   const badge=''; // O status já aparece no controle à direita; evita informação repetida.
   const _allSubs=[...S.subitems.filter(s=>s.item_id===item.id)].sort((a,b)=>(a.order_num||0)-(b.order_num||0));
@@ -1989,7 +2003,7 @@ function renderItem(item,today,itemNum){
   const subsHtml=_topSubs.length?`<div class="activity-subitem-collection activity-subitem-level-1">${_topSubs.map((s,_si)=>{
     const sD=s.concluded==1,sL=!_nt&&!sD&&s.deadline_date&&new Date(s.deadline_date)<today;
     const subNum=itemPrefix?itemPrefix+'.'+(_si+1):''+(_si+1);
-    return`<div class="activity-subtree"><div class="sub-row lvl-1" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
+    return`<div class="activity-subtree"><div class="sub-row lvl-1${sD&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${s.id}" draggable="${_can?'true':'false'}" ondragstart="onDrSubStart(event,'${s.id}','${item.id}')" ondragover="onDrSubOver(event,'${s.id}','${item.id}','${item.atividade_id}')" ondragleave="onDrLeave(event)" ondrop="onDrSubDrop(event,'${s.id}','${item.id}','${item.atividade_id}')" style="padding-left:14px">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${s.id}" data-issub="true" onclick="event.stopPropagation()" style="width:14px;height:14px;accent-color:#f59e0b;flex-shrink:0;margin-right:4px;cursor:pointer">`:''}
       <span class="drag-handle" title="💡 Reordenar=soltar no irmão | Desaninhar=soltar no pai/avô | Aninhar=segurar 1s em qualquer">⣿</span>
       <span class="hier-branch" style="color:#3b82f6">></span>
@@ -2008,7 +2022,7 @@ function renderItem(item,today,itemNum){
     </div>${_renderSubSubs(s.id,item,today,subNum)}</div>`;
   }).join('')}</div>`:'';
   const iColor=item.item_color||'#3B82F6';
-  return`<div class="item-row" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
+  return`<div class="item-row${done&&!_nt&&window.groupDoneInline(_sec)?' is-done-inline':''}" data-sort-id="${item.id}" id="ir-${item.id}" style="border-left:4px solid ${iColor}" draggable="${_can?'true':'false'}" ondragstart="onDrItemStart(event,'${item.id}')" ondragover="onDrItemOver(event,'${item.id}')" ondragleave="onDrLeave(event)" ondrop="onDrItemDrop(event,'${item.id}','${item.atividade_id}')">
     <div class="item-header" onclick="togItem('${item.id}')">
       ${_can?`<input type="checkbox" class="mass-sel" data-id="${item.id}" data-issub="false" onclick="event.stopPropagation()" style="width:16px;height:16px;accent-color:#f59e0b;flex-shrink:0;margin-right:6px;cursor:pointer">`:''}
       <span class="drag-handle" onclick="event.stopPropagation()" style="font-size:16px;flex-shrink:0;cursor:grab">⣿</span>
@@ -2333,6 +2347,9 @@ window.openSecModal=function(id){
         <label><input type="checkbox" id="s-default-item-external-geo" ${groupExternalGeolocationDefault(s)?'checked':''}><span><b>Ativar por padrão nos itens e subitens</b><small>Novos lançamentos deste grupo já abrirão com a exposição externa marcada.</small></span></label>
       </div>
       <label class="settings-option"><input type="checkbox" id="s-ctrl-pend" ${s?.controle_pendencias===1||s?.controle_pendencias===true?'checked':''}> 📋 Controle de Conclusão <span>(este tipo de lançamento tem concluído / em andamento: status, prazos, percentuais, aba Concluídos e concluir em massa)</span></label>
+      <div class="settings-option conc-mode" role="radiogroup" aria-label="Onde ficam os concluídos"><b>✅ Onde ficam os concluídos?</b>
+        <label><input type="radio" name="s-conc-modo" value="aba" ${window.groupDoneInline(s||{})?'':'checked'}> 🗂️ Vão para a aba <i>Concluídos</i> <span>(a tela mostra só o que falta)</span></label>
+        <label><input type="radio" name="s-conc-modo" value="mesma_tela" ${window.groupDoneInline(s||{})?'checked':''}> 📍 Ficam na mesma tela, no mesmo lugar <span>(marcados com ✅ Concluído — ex.: EXPOCOSE)</span></label></div>
       <label class="settings-option"><input type="checkbox" id="s-show-progress-percentage" ${s?.show_progress_percentage!==0?'checked':''}> % Mostrar percentual de conclusão <span>(pode ficar desligado mantendo os status)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_contas?'#f59e0b':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-contas" ${s?.controle_contas?'checked':''} style="width:14px;height:14px;accent-color:#f59e0b;cursor:pointer"> 💡 Controle de Contas <span style="font-size:11px;color:var(--muted);margin-left:4px">(habilita pagamentos de contas por local, tipo e mês/ano)</span></label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:#0e1729;border-radius:8px;padding:9px 12px;border:1px solid ${s?.controle_distribuicao?'#ec4899':'#1e3a5f'}"><input type="checkbox" id="s-ctrl-dist" ${s?.controle_distribuicao?'checked':''} style="width:14px;height:14px;accent-color:#ec4899;cursor:pointer"> 🎁 Controle de Distribuição <span style="font-size:11px;color:var(--muted);margin-left:4px">(cadastro de beneficiários/pacientes com dados e quantidade mensal)</span></label>
@@ -2393,7 +2410,7 @@ window.saveSec=async function(id){
   const original=id?S.secs.find(x=>x.id===id):null;
   const auditChanges=id&&S.isAdmin?readAdminAudit('s-audit',original,S.users):null;
   const itemsViewMode=g('s-items-view-mode')?.value==='cards'?'cards':'list',subitemsViewMode=g('s-subitems-view-mode')?.value==='cards'?'cards':'list';
-  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),extra_fields:{...recordExtra(existingGroup),show_group_external_geolocation:g('s-show-group-external-geo')?.checked===true,default_external_geolocation:g('s-default-item-external-geo')?.checked===true},controle_pendencias:gc('s-ctrl-pend'),show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:itemsViewMode==='cards'||subitemsViewMode==='cards'?0:gc('s-show-table'),items_view_mode:itemsViewMode,subitems_view_mode:subitemsViewMode,show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
+  const data={name,observacoes:g('s-obs')?.value.trim()||'',responsaveis:respStr,start_date:g('s-start')?.value||null,end_date:g('s-end')?.value||null,updated_at:serverTimestamp(),extra_fields:{...recordExtra(existingGroup),show_group_external_geolocation:g('s-show-group-external-geo')?.checked===true,default_external_geolocation:g('s-default-item-external-geo')?.checked===true},controle_pendencias:gc('s-ctrl-pend'),conclusao_modo:document.querySelector('input[name="s-conc-modo"]:checked')?.value||'aba',show_progress_percentage:gc('s-show-progress-percentage'),controle_contas:gc('s-ctrl-contas'),controle_distribuicao:gc('s-ctrl-dist'),controle_estoque:gc('s-ctrl-est'),ce_nome_secretaria:g('s-ce-nome-secretaria')?.value.trim()||'',ce_titulo_controle:g('s-ce-titulo')?.value.trim()||'',show_stats:gc('s-show-stats'),show_table:itemsViewMode==='cards'||subitemsViewMode==='cards'?0:gc('s-show-table'),items_view_mode:itemsViewMode,subitems_view_mode:subitemsViewMode,show_quantitativo:gc('s-show-quant'),quantitativo_campo:g('s-qt-campo')?.value.trim()||'',show_verba:gc('s-show-verba'),verba_on_subitems:gc('s-verba-subs'),verba_sum_subitems:gc('s-verba-sum'),verba_has_obs:gc('s-verba-obs'),show_origem_verba:gc('s-show-origem-verba'),origem_verba_on_subitems:gc('s-origem-verba-subs'),origem_verba_has_obs:gc('s-origem-verba-obs'),show_documentacao:gc('s-show-documentacao'),documentacao_on_subitems:gc('s-documentacao-subs'),documentacao_has_obs:gc('s-documentacao-obs'),show_licitacao:gc('s-show-licitacao'),licitacao_on_subitems:gc('s-licitacao-subs'),licitacao_has_obs:gc('s-licitacao-obs')};
   if(g('s-assunto')) data.assunto=g('s-assunto').value.trim();
   let did=id;
   if(id){

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gestao-pms-v271';
-// assets-hash: bbea9ec4f2bb (gerado por tools/stamp-versions.mjs — não editar)
+const CACHE_NAME = 'gestao-pms-v272';
+// assets-hash: 8fe749b4655a (gerado por tools/stamp-versions.mjs — não editar)
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -78,6 +78,7 @@ const STATIC_ASSETS = [
   'js/date-br.js',
   'css/date-br.css',
   'css/contas-neuro.css',
+  'css/neuro-groups.css',
   'css/controle-leite.css',
   'js/pdf-layout.js',
   'css/pdf-layout.css',
