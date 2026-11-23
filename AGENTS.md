@@ -227,6 +227,10 @@
   tabela, Itens/Subitens Lista|Cards, salvar padrão, expandir/recolher) + resumo em fichas finas (concluídos,
   pendentes, atrasados, total, progresso). Menus fecham ao clicar fora/escolher/Esc; um aberto por vez.
   No celular: Criar + Lote numa linha, ferramentas na outra, nada escondido (tudo continua no menu).
+  Resto da tela no mesmo padrão compacto (23/11/2026, fim de group-cmdbar.css): título do grupo menor (sem o texto
+  "Detalhes e progresso da atividade"; só mostra observações quando existem), responsável em `.activity-owner`, abas
+  Em andamento/Concluídos como seletor fino (36px), Exibição + fichas finas na mesma linha, barra "Selecionar todos"
+  de uma linha (dica some no celular) e painel do pipa em faixa: título + "Ver no mapa" numa linha, fichas pequenas.
   Atenção: `#content :is([class*="row"]…)` põe max-width:100% — o popover usa `max-width:none!important`.
 
 ## Nada fica "sem secretaria" (regra permanente)

@@ -86,3 +86,58 @@
   .gcb-stats .activity-stat{padding:4px 10px!important}
   .activity-lanes button span small{display:none}
 }
+
+/* ── Tela do grupo inteira no mesmo padrão compacto (pedido do usuário, 23/11/2026) ──
+   cabeçalho do grupo, abas Em andamento/Concluídos, Exibição + resumo, seleção em massa e o painel do pipa. */
+#content .activity-heading-row{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px 14px!important;margin:2px 0 8px!important}
+#content .activity-page-heading{flex:1 1 300px;min-width:min(300px,100%);margin:0!important}
+#content .activity-page-heading .page-title{font-size:clamp(19px,2.3vw,24px)!important;line-height:1.15!important;margin:0!important;letter-spacing:-.01em}
+#content .activity-page-heading .page-sub{font-size:13px!important;margin:3px 0 0!important;color:#475569!important}
+#content .activity-owner{display:flex;align-items:center;gap:6px;margin-top:3px;font-size:13px;font-weight:700;color:#4338ca}
+#content .activity-owner img{width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8}
+#content .activity-lane-cluster{flex:0 1 auto;min-width:min(330px,100%)}
+#content .activity-lanes{display:flex!important;gap:3px!important;padding:3px!important;border-radius:11px!important;background:#eef2f6!important;border:1px solid #dfe6ee!important;box-shadow:none!important}
+#content .activity-lanes button{flex:1 1 0;display:flex!important;align-items:center;justify-content:center;gap:8px;min-height:36px!important;padding:3px 12px!important;border-radius:8px!important;border:0!important;background:transparent!important;color:#334155!important;box-shadow:none!important;white-space:nowrap}
+#content .activity-lanes button span{display:block;font-size:13.5px!important;font-weight:800;line-height:1.1}
+#content .activity-lanes button span small{display:none!important}
+#content .activity-lanes button b{font-size:12.5px!important;min-width:24px;padding:1px 8px!important;border-radius:999px;background:#e2e8f0!important;color:#1e293b!important}
+#content .activity-lanes button.active{background:#ffffff!important;color:#0b5a40!important;box-shadow:0 1px 4px rgba(15,40,55,.12)!important}
+#content .activity-lanes button.active b{background:#dcfce7!important;color:#166534!important}
+#content .activity-command-summary-row{display:flex!important;flex-wrap:wrap;align-items:center!important;gap:6px 8px!important;margin:0 0 8px!important}
+#content .gcb-view-btn{min-height:32px!important;padding:3px 10px!important;font-size:13px!important}
+#content .gcb-stats{gap:5px!important}
+#content .gcb-stats .activity-stat{padding:3px 10px!important;min-height:30px;align-items:center}
+#content .gcb-stats .activity-stat b{font-size:15px!important}
+#content .gcb-stats .activity-stat span{font-size:12px!important}
+/* seleção em massa: uma linha fina */
+#content .mass-bar{padding:4px 10px!important;gap:6px 10px!important;margin:0 0 6px!important;border-radius:10px!important;min-height:0}
+#content .mass-bar .mass-all{min-height:30px;font-size:13px}
+#content .mass-bar .mass-hint{font-size:12px}
+#content .mass-bar:not(.has-selection) .mass-actions:empty{display:none}
+/* painel do controle de reabastecimento (pipa): faixa compacta */
+#content .pipa-group-bar{gap:6px 10px!important;padding:8px 10px!important;margin:0 0 8px!important;border-radius:12px!important}
+#content .pipa-group-title{flex:1 1 200px!important;gap:8px!important}
+#content .pipa-group-title>span{font-size:20px!important}
+#content .pipa-group-title strong{font-size:14px!important}
+#content .pipa-group-title small{font-size:11.5px!important;margin-top:0!important}
+#content .pipa-group-impact{display:flex!important;flex-wrap:wrap;gap:5px!important;margin:0!important}
+#content .pipa-group-impact>span{display:inline-flex!important;align-items:baseline;gap:5px;min-height:30px!important;padding:3px 10px!important;border-radius:999px!important;font-size:12px!important;flex:0 0 auto!important}
+#content .pipa-group-impact b{font-size:15px!important}
+#content .pipa-group-chips{gap:5px!important}
+#content .pipa-group-chip{min-height:30px!important;padding:3px 10px!important;gap:5px!important;font-size:12px!important;flex:0 0 auto!important}
+#content .pipa-group-chip b{font-size:15px!important}
+#content .pipa-group-map{min-height:32px!important;padding:0 12px!important;border-radius:9px!important;font-size:13px!important;width:auto!important;order:1;margin-left:auto}
+#content .pipa-group-title{order:0}
+#content .pipa-group-impact{order:2}
+#content .pipa-group-chips{order:3}
+@media (max-width:760px){
+  #content .activity-page-heading .page-title{font-size:19px!important}
+  #content .activity-lane-cluster{flex:1 1 100%}
+  #content .activity-lanes button .lane-extra{display:none}
+  #content .gcb-view-btn small{display:none}
+  #content .mass-bar:not(.has-selection) .mass-hint{display:none}
+  #content .pipa-group-title{flex:1 1 60%!important}
+  .top-actions-fixed.group-cmdbar .btn-action{min-height:38px!important}
+}
+#content .attendance-urgency.unset{color:#475569!important}
+#content .activity-lanes .lane-extra{font-style:normal}

@@ -441,7 +441,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/group-extras.css?v=72543723">
 <link rel="stylesheet" href="css/group-picker.css?v=c987c7e5">
 <link rel="stylesheet" href="css/mass-select.css?v=8640b25d">
-<link rel="stylesheet" href="css/group-cmdbar.css?v=87fdd79a">
+<link rel="stylesheet" href="css/group-cmdbar.css?v=8dc5e479">
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
@@ -560,8 +560,8 @@ import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
 import './js/field-labels.js?v=b924ccca';
 import './js/bulk-entry.js?v=22f42926';
-import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
-import './js/pdf-picker.js?v=1f31f6a2';
+import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=bb2eac18';
+import './js/pdf-picker.js?v=e7e68483';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
 import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=02c99ffb';
@@ -1877,11 +1877,11 @@ window.openActivity=function(secId){
     </div>
   </div>
   <div class="activity-heading-row" data-audit-skip>
-    <div class="activity-page-heading" style="margin-bottom:18px">
+    <div class="activity-page-heading">
       ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;cursor:pointer;display:block;background:transparent" onclick="openGal('activity','${secId}','${esc(sec.name)}')" loading="lazy">`:''}
       <div class="page-title">${esc(sec.name)}</div>
-      <div class="page-sub">${esc(sec.observacoes||'Detalhes e progresso da atividade')}</div>
-      ${sec.responsaveis?`<div style="font-size:13px;color:#818cf8;display:flex;align-items:center;gap:6px;margin-top:-8px;margin-bottom:10px">
+      ${sec.observacoes?`<div class="page-sub">${esc(sec.observacoes)}</div>`:''}
+      ${sec.responsaveis?`<div class="activity-owner">
         ${sec.resp_url?`<img src="${esc(sec.resp_url)}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #818cf8">`:''}
         👤 ${esc(sec.responsaveis)}</div>`:''}
     </div>
