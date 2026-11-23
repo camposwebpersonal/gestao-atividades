@@ -16,6 +16,9 @@ const SYSTEM_KEYS = new Set([
   'cadastro_id', 'cadastro_grupo', 'contas_local_id', 'seguro_local_id', 'agrupador',
   // recebimento de leite (js/controle-leite.js)
   'leite_entregas', 'leite_precos', 'leite_cotas', 'controle_leite', 'produtores_grupo', 'cadastro_leite',
+  // conferência por link (js/link-conferencia.js), modo de conclusão e Secretaria da Mulher (js/secretaria-mulher.js)
+  'conferencia', 'conferencia_link', 'conferencia_desde', 'conferencia_modo', 'conferencia_concluida', 'conclusao_modo',
+  'mulher_token', 'mulher_cadastro', 'mulher_levantamento', 'levantamento',
 ]);
 const SYSTEM_PREFIXES = ['item_show_', 'import_', 'pipa_', 'geo_', '_'];
 

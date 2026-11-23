@@ -1,7 +1,7 @@
 // PDF "Relatório de demandas": um bloco por lançamento, com situação e campos na mesma área.
-import {buildDemandRecords, fmtDay} from './demand-report.js?v=2d1e7d4f';
+import {buildDemandRecords, fmtDay} from './demand-report.js?v=cd67b682';
 import {drawRecordsTable, drawKpis, drawCommonBox, pdfSafe, safePdf} from './pdf-records.js?v=eeeb503f';
-import {commonValues} from './record-fields.js?v=8fd2cf75';
+import {commonValues} from './record-fields.js?v=d7293707';
 import {askDemandReportOptions} from './report-options.js?v=9bc1b759';
 import {recordExtra} from './atendimento-meta.js';
 

@@ -29,6 +29,8 @@
 <script src="js/pdf-layout.js?v=1bbcee81"></script>
 <script src="js/cadastro-links.js?v=f71171ad"></script>
 <script src="js/contas-relatorio.js?v=e8db4286"></script>
+<script src="js/vendor/qrcode.js?v=2b135d3d"></script>
+<script src="js/secretaria-mulher.js?v=2df475b9"></script>
 <script src="js/link-conferencia.js?v=72dfbd39"></script>
 <script src="js/contas-pdf-neuro.js?v=ebaacfb8"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
@@ -447,6 +449,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/contas-neuro.css?v=c866f981">
+<link rel="stylesheet" href="css/secretaria-mulher.css?v=a8f8f044">
 <link rel="stylesheet" href="css/neuro-groups.css?v=c46bd883">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
 <link rel="stylesheet" href="css/controle-leite.css?v=39815603">
@@ -549,9 +552,9 @@ import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
 import {isAttendanceSection,initAttendanceUI} from './js/atendimento-fluxo.js?v=96e12139';
 import {initAuditUI,adminAuditFields,readAdminAudit} from './js/autoria.js?v=d3bcd722';
-import {generateDemandPdf} from './js/demand-pdf.js?v=d0186662';
-import {reportDateTime} from './js/demand-report.js?v=2d1e7d4f';
-import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=8fd2cf75';
+import {generateDemandPdf} from './js/demand-pdf.js?v=8384b640';
+import {reportDateTime} from './js/demand-report.js?v=cd67b682';
+import {customFields,controlFields,commonValues,isSystemKey} from './js/record-fields.js?v=d7293707';
 import {drawRecordsTable,drawCommonBox,drawCompactHeader} from './js/pdf-records.js?v=eeeb503f';
 import './js/modal-context.js?v=e2d49ca2';
 import './js/nav-trail.js?v=ebb1b069';
@@ -568,7 +571,7 @@ import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLa
 import './js/pdf-picker.js?v=e7e68483';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
 import {normalizeSearchText,flattenSearchValues,searchText,searchRecord,rankSearch,highlightSearchText} from './js/search-engine.js?v=b4129240';
-import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=22862e19';
+import {prioritizeResults,dropdownHtml,recordSearchFields,foundIn,dropdownRowHtml,resultsPageHtml} from './js/search-results.js?v=4b489db9';
 import {locationEditorHtml,readLocationEditor,capturePosition,optimizePhoto,locationOf,externalGeolocationEnabled,groupExternalGeolocationDefault} from './js/geolocation.js?v=57348f45';
 import {initSmartCamera} from './js/smart-camera.js?v=abf75fd3';
 
@@ -934,7 +937,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=f6a11039';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=551e4af5';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1704,6 +1707,7 @@ window.openActivity=function(secId){
   if(sec.controle_distribuicao){renderControleDistribuicao(secId);return;}
   if(window.isMultasGroup?.(sec)){window.renderControleMultas(secId);return;}
   if(window.isLeiteGroup?.(sec)){window.renderControleLeite(secId);return;}
+  if(window.isMulherGroup?.(sec)){window.renderMulher(secId);return;}
   if(sec.controle_contas){renderControleContas(secId);return;}
   if(sec.controle_estoque){renderControleEstoque(secId);return;}
   if(window.isLicitacaoGroup?.(sec)){window.renderLicitacoes(secId);return;}

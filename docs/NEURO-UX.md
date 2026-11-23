@@ -50,3 +50,9 @@ segundos onde está e o que fazer, e sair com sensação de progresso — como n
     apólices com "📱 Avisar" (WhatsApp) e "✅ Renovado"; celebração quando não há nada vencendo.
   - Relatório por secretaria e Cadastro dos locais: situação em frase + anel + fichas; faixas das secretarias claras.
   - PDFs (geral, por secretaria, cadastro): cabeçalho compacto, situação, fichas, barra do pago e rodapé paginado.
+- **Compactação inteligente** (Controle de Contas › Lançamentos): muitos itens viram pílulas de uma linha com bolinha de
+  situação, busca instantânea e "＋N" — nunca uma parede de botões. Botão PDF do topo segue a aba aberta.
+- **Grupos de lançamento**: conclusão "na mesma tela" (selo ✅ no lugar), link de conferência com selo ✓ e faixa de progresso;
+  página pública `conferir.html` com acolhimento pelo nome, anel de progresso e duas ações claras por lançamento.
+- **Secretaria da Mulher**: tema lilás + verde-água, ficha em passos com pílulas, linha do tempo de ocorrências, PDF com QR
+  (cabeçalho e rodapé) e página somente leitura `mulher.html`; levantamento da rede com revelação progressiva.

@@ -47,6 +47,46 @@
   encolhem a letra até caber, barra do pago, rodapé "Página X de Y". Controle de Contas já tem TODAS as abas e os 3 PDFs
   neste padrão (`tests/contas-abas-neuro.browser.cjs`); próximas telas seguem o mesmo modelo.
 - Primeira tela feita assim: Controle de Contas › Visão geral (23/11/2026). Próximas telas devem seguir o mesmo padrão.
+- Regra reforçada pelo usuário (23/11/2026, 18h): neuroarquitetura, layout intuitivo, fácil e agradável de usar em TUDO
+  (sites, sistemas, telas, PDFs, projetos, cartazes, artes). Botões sempre organizados e compactos; compactar de forma
+  INTELIGENTE quando há muitos itens (pílulas de uma linha + busca + "＋N" em vez de parede de botões).
+- Controle de Contas › Lançamentos: seletor de locais compacto (`_ccLocaisCompactos`: bolinha verde/âmbar/cinza, contador
+  de pendências, filtro, ＋N locais — 23 no computador, 11 no celular); botão 📄 PDF do topo SEMPRE gera o relatório da aba
+  ativa (`ccPdfDaAba`: geral, lançamentos, vencimentos `ccVencimentosPdf`, relatório, cadastro).
+
+## Conclusão "na mesma tela" (regra do usuário, 23/11/2026)
+
+- Grupo com Controle de Conclusão escolhe onde ficam os concluídos: aba Concluídos (padrão) ou "📍 na mesma tela"
+  (`extra_fields.conclusao_modo = 'mesma_tela'`, `window.groupDoneInline`). No modo mesma tela o concluído fica na MESMA
+  posição, com fundo verde-claro e selo "✅ Concluído" no canto; resumo "X de Y concluídos". Atalho no ⚙️ Mais e opção em
+  Editar grupo. Exemplo pedido: EXPOCOSE 52. CSS em `css/neuro-groups.css`; teste `tests/conclusao-mesma-tela.browser.cjs`.
+
+## Link provisório de conferência (regra do usuário, 23/11/2026)
+
+- Todo grupo: ⚙️ Mais › 🔗 Link de conferência (`js/link-conferencia.js`). Modo "✏️ Editar e conferir" (padrão) ou
+  "👁 Só visualizar". Página pública `conferir.html?t=TOKEN` (`js/conferir.js`, sem login): pede o nome, ✏️ Corrigir,
+  "CONFERIDO" por lançamento (salvou conferido = travado), "CONFERIR TODOS" + "💾 Salvar" com caixa de confirmação.
+  Todos conferidos → link expira e o grupo ganha "✓ Grupo conferido". Link novo encerra o anterior e zera a conferência.
+- Selo "✓ Conferido" no canto superior direito de cada lançamento conferido (`is-conferido`), faixa "Conferência em
+  andamento · X de Y" e campo "Conferência: Conferido em dd/mm/aaaa por Fulano" no PDF (`controlFields`).
+- Banco (migração 20261123190000): tabela `share_links` (RLS só leitura para logados com acesso ao grupo); o visitante
+  usa só `pms_share_open/save/conferir_todos` (security definer, validam o token de 32 caracteres e o grupo, sem
+  WhatsApp, autor gravado como "Nome · link de conferência" via `pms.actor_name`). Criar/encerrar: `pms_share_create`,
+  `pms_share_revoke` (logado). Testes: `tests/conferir.browser.cjs` e `tests/link-conferencia.browser.cjs`.
+
+## Secretaria da Mulher (regra do usuário, 23/11/2026)
+
+- Espaço próprio (`js/secretaria-mulher.js` + `css/secretaria-mulher.css`, tema lilás acolhedor), abas 👩 Mulheres
+  cadastradas · 🗺️ Levantamento da rede. Grupo MULHERES CADASTRADAS (`mulher_cadastro:1`; deixou de ser o grupo de entrada
+  do Registro de Campo) = fichas; ocorrências = subitens da ficha (linha do tempo). Ficha em 4 passos (Identificação,
+  Contato e endereço, Vida e família, Situação e rede de proteção) com pílulas, campos condicionais e nomes legíveis.
+- PDF da ficha com QR no CABEÇALHO e no RODAPÉ (`js/vendor/qrcode.js`, qrcode-generator MIT) → `mulher.html?t=<mulher_token>`
+  somente leitura (ficha + todas as ocorrências) via `pms_mulher_publica` (migração 20261123210000). O usuário escolheu
+  "público por link" (sem PIN) em 23/11/2026; token aleatório de 32 caracteres, aviso LGPD no PDF e na página.
+- Grupo LEVANTAMENTO DA REDE DE ENFRENTAMENTO (`mulher-levantamento-rede`, `mulher_levantamento:1`): formulário do PDF
+  "Levantamento da Rede de Enfrentamento e Atendimento à Mulher" (I município, II OMPM, III–VIII redes com equipamentos
+  ilimitados; "Existe? NÃO" recolhe o resto). Dados em `extra_fields.levantamento` (interno) + resumos legíveis; PDF igual.
+  Teste: `tests/secretaria-mulher.browser.cjs` (390 e 1366).
 
 ## Comportamento dinâmico esperado
 

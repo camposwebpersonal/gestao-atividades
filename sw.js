@@ -1,5 +1,5 @@
-const CACHE_NAME = 'gestao-pms-v274';
-// assets-hash: f399d866303c (gerado por tools/stamp-versions.mjs — não editar)
+const CACHE_NAME = 'gestao-pms-v277';
+// assets-hash: d473084941ed (gerado por tools/stamp-versions.mjs — não editar)
 const STATIC_ASSETS = [
   'index.html',
   'login.html',
@@ -86,6 +86,9 @@ const STATIC_ASSETS = [
   'js/contas-relatorio.js',
   'js/contas-pdf-neuro.js',
   'js/link-conferencia.js',
+  'js/secretaria-mulher.js',
+  'js/vendor/qrcode.js',
+  'css/secretaria-mulher.css',
   'css/contas-relatorio.css',
   'css/group-picker.css',
   'css/group-extras.css',
