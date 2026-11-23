@@ -424,7 +424,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/demandas-secretarias.css?v=2e995a7d">
 <link rel="stylesheet" href="css/module-groups.css?v=2d7d37e2">
 <link rel="stylesheet" href="css/access-permissions.css?v=b692d554">
-<link rel="stylesheet" href="css/bulk-archive.css?v=b8568562">
+<link rel="stylesheet" href="css/bulk-archive.css?v=5899fce5">
 <link rel="stylesheet" href="css/completed-details.css?v=cabef5ee">
 <link rel="stylesheet" href="css/trash.css?v=0beea816">
 <link rel="stylesheet" href="css/custom-fields.css?v=48f0323e">
@@ -556,7 +556,8 @@ import './js/mail-settings.js?v=b15f49d8';
 import './js/pwned-check.js?v=e0db86b9';
 import './js/whatsapp-avisos.js?v=35591e59';
 import {recordSecretary,secretaryIsFixed} from './js/record-context.js';
-import './js/bulk-entry.js?v=976a53fe';
+import './js/field-labels.js?v=c327af65';
+import './js/bulk-entry.js?v=20391020';
 import {activityLane,completedArchiveEntries,renderCompletedArchive,completionLaneTabs,recordIsCompleted} from './js/completed-archive.js?v=b6a8b23c';
 import './js/pdf-picker.js?v=1f31f6a2';
 import {fieldTypeHasOptions,customFieldControl,collectCustomFieldValues,formatCustomFieldValue} from './js/custom-fields.js?v=37ee1695';
@@ -927,7 +928,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=022b267c';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=5202fbb2';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1757,7 +1758,7 @@ window.openActivity=function(secId){
   const resumoAtiv=document.getElementById('ativ-resumo-mode')?.checked||false;
   let itemsHtml,_totHtml;
   if(useTableAtiv){
-    const th=['#','Item','Nome / Descrição','Responsáveis','Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){if(_showPct)th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
+    const th=['#','Item',window.fieldLabel?.(sec,'description')||'Nome / Descrição',window.customFieldLabel?.(sec,'responsaveis')||'Responsáveis',window.fieldLabel?.(sec,'observacao')||'Observação'];tableFields.forEach(fn=>th.push(fn));if(_cp){if(_showPct)th.push('Prog.');th.push('Status');}if(_can)th.push('Ações');
     let tbl='<div class="activity-table-scroll sticky-scroll-source"><table class="activity-data-table">';
     tbl+='<thead><tr style="background:#0e1729">'+th.map(h=>`<th style="padding:8px 10px;text-align:left;color:#94a3b8;font-size:11px;font-weight:700;border-bottom:1px solid #1e3a5f;white-space:nowrap">${h}</th>`).join('')+'</tr></thead><tbody>';
     let allSubCnt=0;
@@ -2404,6 +2405,7 @@ window.saveSec=async function(id){
 
 // ── ITEM MODAL ──
 window.openItemModal=function(id,secId,isSub,parentId,focusField){
+  setTimeout(()=>window.applyFieldLabelsToModal?.(S.secs.find(s=>s.id===(secId||curSecId))),0);
   const col=isSub?'subitem':'item';
   const it=id?(isSub?S.subitems.find(x=>x.id===id):S.items.find(x=>x.id===id)):null;
   const sec=S.secs.find(s=>s.id===(secId||curSecId));
@@ -3597,9 +3599,9 @@ async function _gerarPdfCore(secId,opts){
   let tblH,tblB=[],tblE=[];
   let rowNum=0;
   if(useTable){
-    const h=['#','Item / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];
+    const h=['#',window.customFieldLabel?.(sec,'description')||'Item / Descri\u00e7\u00e3o',window.customFieldLabel?.(sec,'responsaveis')||'Respons\u00e1veis',window.fieldLabel?.(sec,'observacao')||'Observa\u00e7\u00e3o'];
     (opts.efFields||[]).forEach(fn=>h.push(fn));
-    if(_cp){h.push('Progresso');h.push('Status');h.push('Prazo');}
+    if(_cp){h.push('Progresso');h.push('Status');h.push(window.fieldLabel?.(sec,'deadline_date')||'Prazo');}
     tblH=[h];
     const totalCols=h.length;
     for(let ii=0;ii<items.length;ii++){
@@ -3766,7 +3768,7 @@ async function _gerarPdfCore(secId,opts){
       sf(12.5,true,[255,255,255]);doc.text(opts.sepField.toUpperCase()+': '+opts.sepVal,mx+5,y+7.5);y+=14;
       let sTblH,sTblB=[],sTblE=[];
       if(useTable){
-        const h=['#','Item / Descri\u00e7\u00e3o','Respons\u00e1veis','Observa\u00e7\u00e3o'];(opts.efFields||[]).forEach(fn=>h.push(fn));if(_cp){h.push('Progresso');h.push('Status');h.push('Prazo');}sTblH=[h];const totalCols=h.length;
+        const h=['#',window.customFieldLabel?.(sec,'description')||'Item / Descri\u00e7\u00e3o',window.customFieldLabel?.(sec,'responsaveis')||'Respons\u00e1veis',window.fieldLabel?.(sec,'observacao')||'Observa\u00e7\u00e3o'];(opts.efFields||[]).forEach(fn=>h.push(fn));if(_cp){h.push('Progresso');h.push('Status');h.push(window.fieldLabel?.(sec,'deadline_date')||'Prazo');}sTblH=[h];const totalCols=h.length;
         sepItems.forEach(({item,pr,sepSubs},sii)=>{
           const done=pr.hasSubs?(pr.pct===100):(item.concluded==1);const late=_cp&&!done&&item.deadline_date&&new Date(item.deadline_date)<today;const st=_cp?(done?'\u2713 Conclu\u00eddo':late?'\u26a0 Atrasado':'Pendente'):'\u2014';
           const pct=pr.hasSubs?pr.pct:(item.concluded==1?100:0);
@@ -3957,11 +3959,9 @@ window.saveEditFieldTpl=async function(tplId,actId){
  if(fieldTypeHasOptions(type)&&new Set(options).size!==options.length){toast('Há opções repetidas na lista','error');return;}
  const btn=document.querySelector('#ftpl-row-'+tplId+' .primary');btn.disabled=true;
  try{
-   // Copia os valores para o novo nome antes de mudar o template; mantém a chave antiga como segurança.
-   if(name!==tpl.field_name){const col=tpl.scope==='item'?'items':'subitems',entities=S[col].filter(e=>e.atividade_id===actId&&Object.prototype.hasOwnProperty.call(e.extra_fields||{},tpl.field_name));
-     if(entities.some(e=>Object.prototype.hasOwnProperty.call(e.extra_fields,name)&&e.extra_fields[name]!==e.extra_fields[tpl.field_name]))throw new Error('Nome já utilizado nos dados cadastrados. Escolha outro nome.');
-     for(const entity of entities)await updateDoc(doc(db,col,entity.id),{extra_fields:{...entity.extra_fields,[name]:entity.extra_fields[tpl.field_name]}});
-   }
+   // Nome novo: o banco troca o nome do campo e a chave em todos os lançamentos do grupo de uma vez
+   // (pms_rename_field — sem mudar autor nem disparar avisos de WhatsApp).
+   if(name!==tpl.field_name){const {error}=await db.rpc('pms_rename_field',{p_group:actId,p_old:tpl.field_name,p_new:name,p_scope:tpl.scope});if(error)throw new Error(window.friendlyDbError?.(error)||error.message);}
    await updateDoc(doc(db,'fieldTemplates',tplId),{field_name:name,field_type:type,options:fieldTypeHasOptions(type)?options:[]});
    await loadData();cancelEditFieldTpl(tplId,actId);toast('Campo atualizado!');
  }catch(e){console.error(e);toast(e.message||'Não foi possível salvar o campo','error');btn.disabled=false;}

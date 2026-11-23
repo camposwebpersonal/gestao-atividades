@@ -1,5 +1,5 @@
 import {supabase,collection,doc,getDocs,query,where,orderBy,addDoc,updateDoc,deleteDoc,permanentDeleteDoc,setDoc} from '../supabase_compat.js?v=7a75381f';
-import {bulkColumns,hasConclusionControl,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=4466f5c7';
+import {bulkColumns,hasConclusionControl,bulkPayloads,bulkSubPayloads,normalizeBulkDate,persistBulkPayloads,persistBulkSubPayloads} from './bulk-entry-core.js?v=075c8b28';
 import {listBulkDrafts,createBulkDraft,updateBulkDraft,deleteBulkDraft,submitBulkDraft} from './bulk-drafts-core.js?v=36f81519';
 
 export {bulkColumns,bulkPayloads,normalizeBulkDate,persistBulkPayloads};
@@ -44,7 +44,11 @@ function columnSignature(){return state.columns.map(column=>column.key);}
 // Destino do lote: itens do grupo (padrão) ou subitens dentro de um item escolhido.
 function groupItems(){return (window.S?.items||[]).filter(item=>item.atividade_id===state.group?.id).sort((a,b)=>(Number(a.order_num)||0)-(Number(b.order_num)||0));}
 function targetOf(draft){const id=draft?.grid_data?.target_item_id;return id?(window.S?.items||[]).find(item=>item.id===id)||null:null;}
-function buildColumns(target){state.target=target||null;state.columns=applyColumnOrder(bulkColumns(state.group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id),{scope:target?'subitem':'item'}),savedColumnOrder());}
+const freshGroup=()=>{const g=(window.S?.secs||[]).find(s=>s.id===state.group?.id);if(g)state.group=g;return state.group;};
+const groupTemplates=()=>{freshGroup();return (window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id);};
+function buildColumns(target){state.target=target||null;state.columns=applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope:target?'subitem':'item'}),savedColumnOrder());}
+const allColumns=()=>applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope:orderScope(),includeHidden:true}),[...new Set([...state.columns.map(c=>c.key),...savedColumnOrder()])]);
+const canManage=()=>Boolean(window.S?.isAdmin||window.userCanGroup?.(state.group,'editar'));
 // ── Ordem das colunas (arrastar o título, setas ou painel "⇄ Colunas") ──
 // Fica salva por grupo e por tipo (itens/subitens): no grupo (extra_fields.bulk_column_order, vale para todos)
 // quando o usuário pode gerenciar o grupo, e sempre neste aparelho. Os valores são guardados pela chave da
@@ -64,13 +68,29 @@ function applyColumnOrder(columns,order){
  columns.forEach((c,i)=>{if(rank.has(c.key))return;const prev=columns.slice(0,i).reverse().find(x=>known.includes(x));known.splice(prev?known.indexOf(prev)+1:0,0,c);});
  return known;
 }
-function headHtml(){return `<th>#</th>${state.columns.map((column,index)=>`<th style="min-width:${column.width}px" data-col-key="${esc(column.key)}" tabindex="0" title="Arraste para mudar a posição (ou Alt + ← →)"><span class="bulk-col-head"><span class="bulk-col-grip" aria-hidden="true">⠿</span><span>${esc(column.label)}</span></span></th>`).join('')}`;}
-function columnPanelHtml(){return `<div class="bulk-col-panel-head"><strong>Ordem das colunas</strong><span>Vale para os próximos lançamentos deste grupo.</span></div><ol>${state.columns.map((column,index)=>`<li><span>${index+1}. ${esc(column.label)}</span><button type="button" onclick="bulkMoveColumn(${index},${index-1})" ${index?'':'disabled'} aria-label="Subir ${esc(column.label)}">↑</button><button type="button" onclick="bulkMoveColumn(${index},${index+1})" ${index<state.columns.length-1?'':'disabled'} aria-label="Descer ${esc(column.label)}">↓</button></li>`).join('')}</ol><div class="bulk-col-panel-foot"><button type="button" onclick="bulkResetColumns()">↺ Ordem padrão</button><button type="button" class="bulk-col-done" onclick="bulkToggleColumnPanel(false)">Pronto</button></div>`;}
-function rerenderGrid(){
- const rows=gridRows(),count=Math.max(rows.length,1),wrap=document.querySelector('.bulk-grid-wrap'),scroll=[wrap?.scrollTop||0,wrap?.scrollLeft||0];
+function headHtml(){const can=canManage();return `<th>#</th>${state.columns.map((column,index)=>`<th style="min-width:${column.width}px" data-col-key="${esc(column.key)}" tabindex="0" title="Arraste para mudar a posição (ou Alt + ← →)${can?' · clique duas vezes no nome para renomear':''}"><span class="bulk-col-head"><span class="bulk-col-grip" aria-hidden="true">⠿</span><span class="bulk-col-name" ${can?`ondblclick="bulkRenameColumn('${esc(column.key)}')"`:''}>${esc(column.label)}</span>${can?`<button type="button" class="bulk-col-rename" onclick="bulkRenameColumn('${esc(column.key)}')" aria-label="Renomear a coluna ${esc(column.label)}" title="Renomear coluna">✏️</button>`:''}</span></th>`).join('')}`;}
+const TYPE_NAMES={text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista',select:'Lista',checkboxes:'Múltipla escolha',radio:'Escolha única',checkbox:'Sim / não'};
+function columnPanelHtml(){
+ const can=canManage(),cols=allColumns(),visible=state.columns.map(c=>c.key);
+ const rows=cols.map(column=>{const index=visible.indexOf(column.key),hidden=index<0,fixed=!column.custom;
+  return `<li class="${hidden?'is-hidden':''}" data-panel-key="${esc(column.key)}"><span class="bulk-col-pos">${hidden?'—':index+1}</span>
+   ${can?`<input class="bulk-col-label" value="${esc(fixed?window.customFieldLabel?.(state.group,column.key)||column.baseLabel:column.label)}" placeholder="${esc(column.baseLabel)}" aria-label="Nome da coluna ${esc(column.label)}" data-key="${esc(column.key)}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}else if(event.key==='Escape'){this.value=this.defaultValue;this.blur()}" onchange="bulkRenameColumn('${esc(column.key)}',this.value)">`:`<span class="bulk-col-label-ro">${esc(column.label)}</span>`}
+   <small class="bulk-col-type ${fixed?'is-fixed':''}">${fixed?'fixo':esc(TYPE_NAMES[column.fieldType]||column.fieldType||'Texto')}${column.required?' · obrigatório':''}</small>
+   ${hidden?'':`<button type="button" onclick="bulkMoveColumn(${index},${index-1})" ${index?'':'disabled'} aria-label="Subir ${esc(column.label)}">↑</button><button type="button" onclick="bulkMoveColumn(${index},${index+1})" ${index<visible.length-1?'':'disabled'} aria-label="Descer ${esc(column.label)}">↓</button>`}
+   ${can&&!column.required?`<button type="button" class="bulk-col-eye" onclick="bulkToggleHidden('${esc(column.key)}',${hidden?'false':'true'})" aria-label="${hidden?'Mostrar':'Ocultar'} ${esc(column.label)}" title="${hidden?'Mostrar esta coluna':'Ocultar esta coluna da planilha (os dados continuam guardados)'}">${hidden?'🚫':'👁'}</button>`:''}</li>`;}).join('');
+ const add=can?`<details class="bulk-col-new"><summary>＋ Criar novo campo neste grupo</summary><div class="bulk-col-new-form">
+   <label><span>Nome do campo</span><input id="bulk-new-field-name" maxlength="80" placeholder="Ex.: Comunidade, Quantidade, Nº do pedido…" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkCreateField()}"></label>
+   <label><span>Tipo</span><select id="bulk-new-field-type" onchange="document.getElementById('bulk-new-field-opts-wrap').hidden=!['combobox','checkboxes','radio'].includes(this.value)">${Object.entries({text:'Texto',number:'Número',date:'Data',textarea:'Texto longo',combobox:'Lista (escolher 1)',radio:'Escolha única (botões)',checkboxes:'Múltipla escolha'}).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></label>
+   <label id="bulk-new-field-opts-wrap" hidden><span>Opções (uma por linha)</span><textarea id="bulk-new-field-opts" rows="3" placeholder="Sítio&#10;Povoado&#10;Zona urbana"></textarea></label>
+   <button type="button" class="bulk-col-create" onclick="bulkCreateField()">Criar campo</button></div></details>`:'';
+ return `<div class="bulk-col-panel-head"><strong>⚙️ Colunas e campos deste grupo</strong><span>${can?'Troque o nome de qualquer coluna (vale no formulário, na tabela e no PDF), mude a ordem, oculte o que não usa e crie campos novos. Apagar o nome de uma coluna fixa volta ao padrão.':'Só quem gerencia o grupo pode renomear ou criar campos.'}</span></div><ol>${rows}</ol>${add}<div class="bulk-col-panel-foot"><button type="button" onclick="bulkResetColumns()">↺ Ordem padrão</button><button type="button" class="bulk-col-done" onclick="bulkToggleColumnPanel(false)">Pronto</button></div>`;
+}
+function rerenderGrid(rowsOverride){
+ const rows=rowsOverride||gridRows(),count=Math.max(rows.length,1),wrap=document.querySelector('.bulk-grid-wrap'),scroll=[wrap?.scrollTop||0,wrap?.scrollLeft||0];
  const head=document.getElementById('bulk-grid-head'),body=document.getElementById('bulk-grid-body');if(!head||!body)return;
  head.innerHTML=headHtml();body.innerHTML='';addRows(count);
  rows.forEach((values,row)=>state.columns.forEach((column,col)=>{if(Object.prototype.hasOwnProperty.call(values||{},column.key))setCell(cellAt(row,col),values[column.key]);}));
+ stashHidden(rows);
  const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden)panel.innerHTML=columnPanelHtml();
  if(wrap){wrap.scrollTop=scroll[0];wrap.scrollLeft=scroll[1];}updateCount();
 }
@@ -102,6 +122,55 @@ window.bulkMarkConcluded=function(){
  boxes.forEach(x=>{x.checked=!allOn;});markDirty();
  window.toast?.(allOn?`${boxes.length} linha(s) voltaram para em andamento.`:`${boxes.length} linha(s) marcadas como concluídas. Sem data, vale a de hoje.`,'success',3200);
 };
+// ── Renomear / ocultar / criar campos (regra do usuário, 23/11/2026: flexibilidade total) ──
+function remapRows(rows,from,to){return rows.map(row=>{if(!Object.prototype.hasOwnProperty.call(row,from))return row;const copy={...row};if(copy[to]===undefined||copy[to]===''||copy[to]===false)copy[to]=copy[from];delete copy[from];return copy;});}
+function remapLocalOrder(from,to){try{const key=orderLocalKey(),local=JSON.parse(localStorage.getItem(key)||'null');if(Array.isArray(local))localStorage.setItem(key,JSON.stringify(local.map(k=>k===from?to:k)));}catch{}}
+function refreshColumns(rows){const order=state.columns.map(c=>c.key);state.columns=applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope:orderScope()}),order);rerenderGrid(rows);bindColumnDrag();}
+window.bulkRenameColumn=async function(key,value){
+ if(!canManage()){window.toast?.('Só quem gerencia o grupo pode renomear colunas.','error');return;}
+ const column=allColumns().find(c=>c.key===key);if(!column)return;
+ if(value===undefined){ // edição direto no título da coluna
+  const th=document.querySelector(`#bulk-grid-head [data-col-key="${CSS.escape(key)}"]`),span=th?.querySelector('.bulk-col-name');if(!span||th.querySelector('.bulk-col-edit'))return;
+  const input=document.createElement('input');input.className='bulk-col-edit';input.maxLength=80;input.value=column.custom?column.label:(window.customFieldLabel?.(state.group,key)||column.baseLabel);input.placeholder=column.baseLabel;input.setAttribute('aria-label','Novo nome da coluna');
+  span.hidden=true;span.after(input);input.focus();input.select();let done=false;
+  const finish=save=>{if(done)return;done=true;const v=input.value;input.remove();span.hidden=false;if(save&&v.trim()!==(column.custom?column.label:column.label.replace(/\s*\*$/,'')))window.bulkRenameColumn(key,v);};
+  input.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();finish(true);}else if(e.key==='Escape'){e.preventDefault();finish(false);}});
+  input.addEventListener('blur',()=>finish(true));return;
+ }
+ const before=column.label.replace(/\s*\*$/,'');
+ if(column.custom&&!String(value).trim()){window.toast?.('O campo precisa de um nome.','error');refreshPanel();return;}
+ status('Renomeando…','pending');
+ try{
+  const rows=gridRows(),res=await window.renameGroupField(state.group.id,key,value,{scope:orderScope()});
+  let finalRows=rows;
+  if(column.custom&&res?.name&&res.name!==before){const to='ef:'+res.name;finalRows=remapRows(rows,key,to);remapLocalOrder(key,to);state.columns=state.columns.map(c=>c.key===key?{...c,key:to}:c);
+   const r=res.result||{},n=(r.items||0)+(r.subitems||0);window.toast?.(`Campo “${before}” agora se chama “${res.name}”${n?` — atualizado em ${n} lançamento(s) já gravado(s)`:''}.`,'success',5000);}
+  else window.toast?.(`Coluna “${before}” agora se chama “${res?.name||before}” neste grupo (planilha, formulário, tabela e PDF).`,'success',4200);
+  refreshColumns(finalRows);refreshPanel();markDirty();status('Salvo','saved');
+ }catch(error){status('Não renomeado','error');window.toast?.(error.message||String(error),'error',7000);refreshPanel();}
+};
+function refreshPanel(){const panel=document.getElementById('bulk-col-panel');if(panel&&!panel.hidden){const open=panel.querySelector('.bulk-col-new')?.open;panel.innerHTML=columnPanelHtml();if(open)panel.querySelector('.bulk-col-new').open=true;}}
+window.bulkToggleHidden=async function(key,hide){
+ const rows=gridRows(),column=allColumns().find(c=>c.key===key);
+ try{await window.setBulkColumnHidden(state.group.id,key,hide,orderScope());}catch(error){window.toast?.('Não foi possível salvar: '+(error.message||error),'error',6000);return;}
+ const order=state.columns.map(c=>c.key);if(!hide&&!order.includes(key)){const all=allColumns().map(c=>c.key),i=all.indexOf(key);order.splice(Math.min(order.length,Math.max(0,i)),0,key);}
+ state.columns=applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope:orderScope()}),order);rerenderGrid(rows);refreshPanel();persistColumnOrder();markDirty();
+ window.toast?.(hide?`“${column?.label}” ocultada da planilha. O que já foi digitado continua guardado.`:`“${column?.label}” de volta na planilha.`,'success',3200);
+};
+window.bulkCreateField=async function(){
+ const name=document.getElementById('bulk-new-field-name')?.value.replace(/\s+/g,' ').trim(),type=document.getElementById('bulk-new-field-type')?.value||'text';
+ if(!name){window.toast?.('Dê um nome ao campo novo.','error');document.getElementById('bulk-new-field-name')?.focus();return;}
+ const scope=orderScope(),same=groupTemplates().filter(t=>t.scope===scope);
+ const norm=v=>String(v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim();
+ if(same.some(t=>norm(t.field_name)===norm(name))||allColumns().some(c=>norm(c.label.replace(/\s*\*$/,''))===norm(name))){window.toast?.(`Já existe uma coluna chamada “${name}”.`,'error');return;}
+ let options=[];if(['combobox','checkboxes','radio'].includes(type)){options=[...new Set((document.getElementById('bulk-new-field-opts')?.value||'').split('\n').map(v=>v.trim()).filter(Boolean))];if(!options.length){window.toast?.('Escreva as opções da lista, uma por linha.','error');return;}}
+ const rows=gridRows();
+ try{await window.addDoc(window.collection(window.db,'fieldTemplates'),{atividade_id:state.group.id,scope,field_name:name,field_type:type,options,order_num:Math.max(-1,...same.map(t=>Number(t.order_num)||0))+1,created_at:window.serverTimestamp()});await window.loadData?.();}
+ catch(error){window.toast?.('Não foi possível criar o campo: '+(window.friendlyDbError?.(error)||error.message||error),'error',7000);return;}
+ const order=[...state.columns.map(c=>c.key),'ef:'+name];state.columns=applyColumnOrder(bulkColumns(state.group,groupTemplates(),{scope}),order);rerenderGrid(rows);refreshPanel();persistColumnOrder();markDirty();
+ window.toast?.(`Campo “${name}” criado — já aparece na planilha, no formulário e no PDF deste grupo.`,'success',4500);
+ document.querySelector(`#bulk-grid-head [data-col-key="${CSS.escape('ef:'+name)}"]`)?.scrollIntoView({inline:'center',block:'nearest'});
+};
 window.bulkResetColumns=function(){
  try{localStorage.removeItem(orderLocalKey());}catch{}
  state.columns=bulkColumns(state.group,(window.S.fieldTemplates||[]).filter(t=>t.atividade_id===state.group.id),{scope:orderScope()});
@@ -118,7 +187,7 @@ function bindColumnDrag(){
  const ths=()=>[...head.querySelectorAll('[data-col-key]')];
  const clearMarks=()=>ths().forEach(th=>th.classList.remove('bulk-drop-before','bulk-drop-after','bulk-col-dragging'));
  const targetIndex=x=>{const list=ths();for(let i=0;i<list.length;i++){const r=list[i].getBoundingClientRect();if(x<r.left+r.width/2)return i;}return list.length;};
- head.addEventListener('pointerdown',event=>{const th=event.target.closest('[data-col-key]');if(!th||event.button>0)return;drag={th,from:ths().indexOf(th),x:event.clientX,active:false,id:event.pointerId};});
+ head.addEventListener('pointerdown',event=>{const th=event.target.closest('[data-col-key]');if(!th||event.button>0||event.target.closest('button,input'))return;drag={th,from:ths().indexOf(th),x:event.clientX,active:false,id:event.pointerId};});
  head.addEventListener('pointermove',event=>{
   if(!drag||event.pointerId!==drag.id)return;
   if(!drag.active){if(Math.abs(event.clientX-drag.x)<8)return;drag.active=true;head.setPointerCapture(event.pointerId);drag.th.classList.add('bulk-col-dragging');}
@@ -226,7 +295,9 @@ function fillDown(){
  paintSelection();markDirty();window.toast?.('Conteúdo repetido nas células selecionadas.','success',2200);
 }
 
-function gridRows(){return allRows().map(row=>Object.fromEntries([...row.querySelectorAll('[data-bulk-cell]')].map(cell=>[cell.dataset.key,cellValue(cell)])));}
+function gridRows(){return allRows().map(row=>({...(row._hidden||{}),...Object.fromEntries([...row.querySelectorAll('[data-bulk-cell]')].map(cell=>[cell.dataset.key,cellValue(cell)]))}));}
+// Valores de colunas ocultas ficam guardados na linha (não se perdem ao ocultar nem ao enviar).
+function stashHidden(rows){const visible=new Set(state.columns.map(c=>c.key));allRows().forEach((row,index)=>{const values=rows[index]||{},keep={};Object.keys(values).forEach(key=>{if(!visible.has(key)&&values[key]!==''&&values[key]!=null&&values[key]!==false)keep[key]=values[key];});row._hidden=Object.keys(keep).length?keep:undefined;});}
 function draftPatch(){
  const wrap=document.querySelector('.bulk-grid-wrap'),active=document.activeElement?.closest?.('[data-bulk-cell]'),selection=state.selection||{focusRow:0,focusCol:0};
  return {title:(document.getElementById('bulk-draft-title')?.value||state.draft?.title||'').trim(),grid_data:{version:1,target_item_id:state.target?.id||null,rows:gridRows()},column_signature:columnSignature(),row_count:allRows().length,scroll_top:Math.round(wrap?.scrollTop||0),scroll_left:Math.round(wrap?.scrollLeft||0),active_row:Number(active?.dataset.row??selection.focusRow??0),active_col:Number(active?.dataset.col??selection.focusCol??0)};
@@ -250,12 +321,13 @@ function restoreGrid(draft){
  let source=draft;try{const local=JSON.parse(localStorage.getItem(localKey(draft.id))||'null');if(local&&new Date(local.local_updated_at)>new Date(draft.updated_at))source={...draft,...local};}catch{}
  const rows=Array.isArray(source.grid_data?.rows)?source.grid_data.rows:[],count=clamp(Math.max(source.row_count||12,rows.length,1),1,500);addRows(count);
  rows.slice(0,count).forEach((values,row)=>state.columns.forEach((column,col)=>{if(Object.prototype.hasOwnProperty.call(values||{},column.key))setCell(cellAt(row,col),values[column.key]);}));
+ stashHidden(rows);
  const row=clamp(source.active_row,0,count-1),col=clamp(source.active_col,0,state.columns.length-1);selectCell(row,col);
  requestAnimationFrame(()=>{const wrap=document.querySelector('.bulk-grid-wrap'),target=cellAt(row,col);if(wrap){wrap.scrollTop=source.scroll_top||0;wrap.scrollLeft=source.scroll_left||0;}target?.focus({preventScroll:true});updateCount();});
 }
 
 function readRows(validate=true){
- const rows=[];allRows().forEach(row=>{const values={};row.querySelectorAll('[data-bulk-cell]').forEach(input=>{values[input.dataset.key]=cellValue(input);input.classList.remove('invalid');});const used=Object.values(values).some(value=>Array.isArray(value)?value.length>0:value!==''&&value!==false);if(!used)return;if(validate&&!values.description){row.querySelector('[data-key="description"]')?.classList.add('invalid');throw new Error(`Informe o nome na linha ${Number(row.dataset.bulkRow)+1}.`);}if(validate)for(const key of ['start_date','deadline_date','conclusion_date'])if(values[key]&&!normalizeBulkDate(values[key])){row.querySelector(`[data-key="${key}"]`)?.classList.add('invalid');throw new Error(`Confira a data na linha ${Number(row.dataset.bulkRow)+1}. Use dd/mm/aaaa.`);}rows.push(values);});return rows;
+ const rows=[];allRows().forEach(row=>{const values={...(row._hidden||{})};row.querySelectorAll('[data-bulk-cell]').forEach(input=>{values[input.dataset.key]=cellValue(input);input.classList.remove('invalid');});const used=Object.values(values).some(value=>Array.isArray(value)?value.length>0:value!==''&&value!==false);if(!used)return;if(validate&&!values.description){row.querySelector('[data-key="description"]')?.classList.add('invalid');throw new Error(`Informe o nome na linha ${Number(row.dataset.bulkRow)+1}.`);}if(validate)for(const key of ['start_date','deadline_date','conclusion_date'])if(values[key]&&!normalizeBulkDate(values[key])){row.querySelector(`[data-key="${key}"]`)?.classList.add('invalid');throw new Error(`Confira a data na linha ${Number(row.dataset.bulkRow)+1}. Use dd/mm/aaaa.`);}rows.push(values);});return rows;
 }
 
 function bindGrid(){
@@ -283,7 +355,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function renderEditor(draft){
  buildColumns(targetOf(draft));
  state.draft=draft;state.editor=true;state.busy=false;state.dirty=false;state.selection=null;
- window.openModal('▦ Planilha de lançamentos',state.group.name,`<div class="bulk-draft-head"><button type="button" class="btn-action" onclick="bulkBackToDrafts()">← Meus lotes</button><label><span>Título deste lote</span><input id="bulk-draft-title" maxlength="180" value="${esc(draft.title)}" oninput="bulkDraftChanged()"></label><span id="bulk-save-status" data-tone="saved">Salvo no Supabase</span></div>${targetBanner()}<div class="bulk-intro"><div><strong>Planilha inteligente</strong><span>Selecione células arrastando ou com Shift + setas. Funciona como no Excel.</span></div><div class="bulk-shortcuts"><kbd>Ctrl C</kbd> copiar <kbd>Ctrl V</kbd> colar <kbd>Ctrl D</kbd> repetir de cima <span class="bulk-col-tip">· arraste o título de uma coluna para mudar a ordem</span></div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><label class="bulk-quantity"><span>Adicionar</span><input id="bulk-add-count" type="number" min="1" max="500" value="50" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkAddCustomRows()}"><button type="button" onclick="bulkAddCustomRows()">＋ linhas</button></label><label class="bulk-quantity"><span>Total</span><input id="bulk-total-count" type="number" min="1" max="500" value="12" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkSetRowCount()}"><button type="button" onclick="bulkSetRowCount()">Definir</button></label><button type="button" class="btn-action" onclick="bulkCopySelection()">Copiar</button><button type="button" class="btn-action" onclick="bulkPasteSelection()">Colar</button><button type="button" class="btn-action bulk-fill-button" onclick="bulkFillDown()">Repetir ↓</button><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar</button>${hasConclusionControl(state.group)?'<button type="button" class="btn-action bulk-done-button" onclick="bulkMarkConcluded()" title="Marca como concluídas as linhas selecionadas (ou todas as preenchidas)">✓ Concluir selecionadas</button>':''}<button type="button" class="btn-action bulk-col-toggle" id="bulk-col-toggle" aria-expanded="false" onclick="bulkToggleColumnPanel()" title="Mudar a ordem das colunas">⇄ Colunas</button><span id="bulk-selection-count">Selecione células</span><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div id="bulk-col-panel" class="bulk-col-panel" hidden></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr id="bulk-grid-head">${headHtml()}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Salvamento automático ativo. O lote só vira cadastro quando você enviar.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="bulkSaveAndClose()">Salvar e fechar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">${state.target?'Enviar subitens':'Enviar lançamentos'}</button></div></div>`);
+ window.openModal('▦ Planilha de lançamentos',state.group.name,`<div class="bulk-draft-head"><button type="button" class="btn-action" onclick="bulkBackToDrafts()">← Meus lotes</button><label><span>Título deste lote</span><input id="bulk-draft-title" maxlength="180" value="${esc(draft.title)}" oninput="bulkDraftChanged()"></label><span id="bulk-save-status" data-tone="saved">Salvo no Supabase</span></div>${targetBanner()}<div class="bulk-intro"><div><strong>Planilha inteligente</strong><span>Selecione células arrastando ou com Shift + setas. Funciona como no Excel.</span></div><div class="bulk-shortcuts"><kbd>Ctrl C</kbd> copiar <kbd>Ctrl V</kbd> colar <kbd>Ctrl D</kbd> repetir de cima <span class="bulk-col-tip">· arraste o título para mudar a ordem · ✏️ ou duplo clique no título para renomear</span></div></div><div class="bulk-toolbar"><button type="button" class="btn-action" onclick="bulkAddRows(10,true)">＋ 10 linhas</button><button type="button" class="btn-action" onclick="bulkAddRows(25,true)">＋ 25 linhas</button><label class="bulk-quantity"><span>Adicionar</span><input id="bulk-add-count" type="number" min="1" max="500" value="50" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkAddCustomRows()}"><button type="button" onclick="bulkAddCustomRows()">＋ linhas</button></label><label class="bulk-quantity"><span>Total</span><input id="bulk-total-count" type="number" min="1" max="500" value="12" inputmode="numeric" onkeydown="if(event.key==='Enter'){event.preventDefault();bulkSetRowCount()}"><button type="button" onclick="bulkSetRowCount()">Definir</button></label><button type="button" class="btn-action" onclick="bulkCopySelection()">Copiar</button><button type="button" class="btn-action" onclick="bulkPasteSelection()">Colar</button><button type="button" class="btn-action bulk-fill-button" onclick="bulkFillDown()">Repetir ↓</button><button type="button" class="btn-action" onclick="bulkClearGrid()">Limpar</button>${hasConclusionControl(state.group)?'<button type="button" class="btn-action bulk-done-button" onclick="bulkMarkConcluded()" title="Marca como concluídas as linhas selecionadas (ou todas as preenchidas)">✓ Concluir selecionadas</button>':''}<button type="button" class="btn-action bulk-col-toggle" id="bulk-col-toggle" aria-expanded="false" onclick="bulkToggleColumnPanel()" title="Renomear, ordenar, ocultar e criar colunas">⚙️ Colunas e campos</button><span id="bulk-selection-count">Selecione células</span><span id="bulk-filled-count">0 lançamentos preenchidos</span></div><div id="bulk-col-panel" class="bulk-col-panel" hidden></div><div class="bulk-grid-wrap"><table class="bulk-grid"><thead><tr id="bulk-grid-head">${headHtml()}</tr></thead><tbody id="bulk-grid-body"></tbody></table></div><div class="bulk-foot"><p>Salvamento automático ativo. O lote só vira cadastro quando você enviar.</p><div class="modal-actions"><button type="button" class="btn-cancel" onclick="bulkSaveAndClose()">Salvar e fechar</button><button type="button" class="btn-save" id="bulk-save" onclick="saveBulkEntries()">${state.target?'Enviar subitens':'Enviar lançamentos'}</button></div></div>`);
  document.querySelector('#modal-ov .modal-box')?.classList.add('bulk-modal-box');restoreGrid(draft);bindGrid();bindColumnDrag();window.bulkModalClosing=()=>{const saving=saveDraftNow(true);state.editor=false;return saving;};
 }
 

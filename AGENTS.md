@@ -287,6 +287,21 @@
   prioridade). Valores do lote são guardados pela chave da coluna: reordenar nunca embaralha dados.
   Campo novo entra ao lado da vizinha natural. Teste: `tests/bulk-columns.browser.cjs` (390 e 1366).
 
+## Nomes das colunas e campos: flexibilidade total por grupo (regra do usuário, 23/11/2026)
+
+- Planilha de lote › "⚙️ Colunas e campos" (ou ✏️ / duplo clique no título da coluna): renomear QUALQUER coluna,
+  ordenar, ocultar (👁/🚫) e criar campo novo (texto, número, data, texto longo, lista, escolha única, múltipla).
+- Colunas fixas (Nome/descrição, Data da solicitação, Responsável, Solicitante, Urgência, Prioritário, Prazo, Concluído,
+  Data da conclusão, Observação): nome por grupo em `extra_fields.field_labels` (`js/field-labels.js`:
+  `fieldLabel`/`customFieldLabel`); vale na planilha, no formulário do item (`applyFieldLabelsToModal`), na tabela
+  e no PDF. Nome apagado = volta ao padrão. Nome/descrição continua obrigatório (o * é automático).
+- Campos personalizados: renomear chama a RPC `pms_rename_field(grupo, antigo, novo, escopo)` (migração
+  20261123100000, security definer com checagem de permissão): troca o modelo, a chave em todos os itens/subitens
+  do grupo (inclusive grafias antigas), a ordem salva, o campo do quantitativo e os lotes em rascunho, SEM mudar
+  autor/data e SEM aviso de WhatsApp. A tela "Editar grupo" usa a mesma RPC.
+- Ocultar: `extra_fields.bulk_hidden_columns{item,subitem}`; o que já foi digitado numa coluna oculta fica guardado
+  na linha (`row._hidden`) e vai junto no envio. Teste: `tests/field-labels.browser.cjs` (390 e 1366).
+
 ## Lote em grupo com Controle de Conclusão (regra permanente)
 
 - Se o grupo tem "📋 Controle de Conclusão" (`controle_pendencias`), a planilha de lote ganha as colunas

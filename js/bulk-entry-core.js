@@ -1,5 +1,6 @@
 import {recordSecretary} from './record-context.js';
 import {isAttendanceSection} from './atendimento-fluxo.js?v=96e12139';
+import {fieldLabel,hiddenColumns} from './field-labels.js?v=c327af65';
 
 function templateOptions(template){
  const raw=template?.options;
@@ -20,31 +21,36 @@ export function bulkConclusion(row,group){
  return done?{concluded:1,status:'concluido',conclusion_date:date||todayIso()}:{concluded:0,status:'pendente'};
 }
 
-export function bulkColumns(group,templates=[],{scope='item'}={}){
+// Nomes das colunas fixas podem ser trocados por grupo (extra_fields.field_labels) e colunas podem ser
+// ocultadas (extra_fields.bulk_hidden_columns); com includeHidden as ocultas vêm marcadas com hidden:true.
+export function bulkColumns(group,templates=[],{scope='item',includeHidden=false}={}){
+ const L=key=>fieldLabel(group,key);
  const columns=[
-  {key:'description',label:'Nome / descrição *',type:'text',width:250,required:true},
-  {key:'start_date',label:'Data da solicitação',type:'date',width:145},
-  {key:'responsaveis',label:'Responsável',type:'text',width:190}
+  {key:'description',label:L('description')+' *',type:'text',width:250,required:true},
+  {key:'start_date',label:L('start_date'),type:'date',width:145},
+  {key:'responsaveis',label:L('responsaveis'),type:'text',width:190}
  ];
  if(isAttendanceSection(group))columns.push(
-  {key:'solicitante',label:'Solicitante',type:'text',width:180,extra:true},
-  {key:'urgencia',label:'Urgência',type:'select',width:145,extra:true,options:[['verde','Pode aguardar'],['amarelo','Atenção'],['vermelho','Urgente']]},
-  {key:'prioritario',label:'Prioritário',type:'checkbox',width:100,extra:true}
+  {key:'solicitante',label:L('solicitante'),type:'text',width:180,extra:true},
+  {key:'urgencia',label:L('urgencia'),type:'select',width:145,extra:true,options:[['verde','Pode aguardar'],['amarelo','Atenção'],['vermelho','Urgente']]},
+  {key:'prioritario',label:L('prioritario'),type:'checkbox',width:100,extra:true}
  );
- columns.push({key:'deadline_date',label:'Prazo',type:'date',width:145});
+ columns.push({key:'deadline_date',label:L('deadline_date'),type:'date',width:145});
  // Controle de Conclusão ligado no grupo: dá para lançar já concluído (marcar e, se quiser, informar a data).
  if(hasConclusionControl(group))columns.push(
-  {key:'concluido',label:'Concluído',type:'checkbox',width:100},
-  {key:'conclusion_date',label:'Data da conclusão',type:'date',width:150}
+  {key:'concluido',label:L('concluido'),type:'checkbox',width:100},
+  {key:'conclusion_date',label:L('conclusion_date'),type:'date',width:150}
  );
  columns.push(
-  {key:'observacao',label:'Observação',type:'text',width:260}
+  {key:'observacao',label:L('observacao'),type:'text',width:260}
  );
  templates.filter(template=>template.scope===(scope==='subitem'?'subitem':'item')).sort((a,b)=>(a.order_num||0)-(b.order_num||0)).forEach(template=>{
   const type=template.field_type==='combobox'?'select':template.field_type||'text',choices=['checkboxes','radio'].includes(type);
-  columns.push({key:'ef:'+template.field_name,label:template.field_name,type,width:choices?Math.max(260,templateOptions(template).length*95):template.field_type==='textarea'?260:170,extra:true,options:templateOptions(template).map(value=>[String(value),String(value)])});
+  columns.push({key:'ef:'+template.field_name,label:template.field_name,type,width:choices?Math.max(260,templateOptions(template).length*95):template.field_type==='textarea'?260:170,extra:true,custom:true,fieldType:template.field_type||'text',templateId:template.id,options:templateOptions(template).map(value=>[String(value),String(value)])});
  });
- return columns;
+ const hidden=new Set(hiddenColumns(group,scope==='subitem'?'subitem':'item'));
+ columns.forEach(column=>{column.baseLabel=column.custom?column.label:L(column.key);if(hidden.has(column.key)&&!column.required)column.hidden=true;});
+ return includeHidden?columns:columns.filter(column=>!column.hidden);
 }
 
 export function normalizeBulkDate(value){
