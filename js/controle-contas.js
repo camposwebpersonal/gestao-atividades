@@ -711,7 +711,9 @@ window.ccOverviewEnhance = function(root=document){
   const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   root.querySelectorAll('.ccn-kpi-val,.ccn-cat-val,.ccn-fit').forEach(el=>{
     // encaixe: diminui a letra até o valor caber inteiro no card (e refaz quando o card muda de tamanho)
-    const fit=()=>{el.style.fontSize='';let size=parseFloat(getComputedStyle(el).fontSize)||22;const min=el.classList.contains('ccn-fit')?8:11;while(el.scrollWidth>el.clientWidth+1&&size>min){size-=0.5;el.style.fontSize=size+'px';}};
+    const fit=()=>{const soft=el.classList.contains('ccn-fit');el.style.fontSize='';el.style.whiteSpace='nowrap';el.style.overflowWrap='';let size=parseFloat(getComputedStyle(el).fontSize)||22;const min=soft?8:11;while(el.scrollWidth>el.clientWidth+1&&size>min){size-=0.5;el.style.fontSize=size+'px';}
+      // último recurso (fonte mais larga, tela muito estreita): quebra a linha dentro do card — vazar, nunca
+      if(el.scrollWidth>el.clientWidth+1){el.style.whiteSpace='normal';el.style.overflowWrap='anywhere';}};
     el.__ccnFit=fit;fit();
     // a fonte da página pode terminar de carregar depois: refaz o encaixe quando ela chega
     document.fonts?.ready?.then(()=>requestAnimationFrame(fit));
