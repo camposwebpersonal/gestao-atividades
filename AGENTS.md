@@ -33,6 +33,18 @@
 - Este arquivo preserva as preferências para sessões que leiam o repositório;
   credenciais podem expirar e precisam ser verificadas novamente quando necessário.
 
+## NEUROARQUITETURA em tudo (regra permanente do usuário, 23/11/2026)
+
+- Toda tela, relatório, PDF, cartaz e arte deste e de qualquer projeto do usuário segue o guia `docs/NEURO-UX.md`:
+  ambiente acolhedor (saudação, situação explicada em frase humana), hierarquia situação → números → ações → detalhes,
+  cores com intenção (azul/verde calmos; âmbar atenção; vermelho só para problema real; zero nunca vermelho),
+  conforto cognitivo (nada repetido, zeros discretos, revelação progressiva), biofilia suave (tons de água/folha),
+  microinterações curtas que respeitam `prefers-reduced-motion`, "portas" claras para cada tarefa e celebração quando
+  está tudo em dia. Super intuitivo e fácil de usar, com experiência emocional positiva.
+- NUNCA um número/texto pode sair do seu card em nenhuma largura: container queries (`cqi`) + encaixe por JS com
+  `ResizeObserver` + valor completo no `title`; teste varrendo 360→1920 px (ver `tests/contas-neuro.browser.cjs`).
+- Primeira tela feita assim: Controle de Contas › Visão geral (23/11/2026). Próximas telas devem seguir o mesmo padrão.
+
 ## Comportamento dinâmico esperado
 
 - Aplicar lógica preventiva e contextual em toda manutenção deste projeto para

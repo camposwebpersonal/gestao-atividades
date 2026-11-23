@@ -372,64 +372,6 @@ window.renderControleContas = function(secId,opcoes={}){
     </div>
   </div>`;
 
-  const tipoResumoHtml = (()=>{
-    const tipos = Object.entries(tipoMap).sort((a,b)=>b[1].total-a[1].total);
-    if(!tipos.length) return '';
-    const max = Math.max(...tipos.map(x=>x[1].total));
-    return `<div style='margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px'>
-  <div style='display:flex;align-items:center;gap:10px;margin-bottom:12px'><div style='font-size:18px'>📑</div><div style='font-size:14px;font-weight:700;color:#60a5fa'>Relatorio por Tipo de Conta</div></div>
-  <div style='display:grid;gap:10px'>
-    ${tipos.map(([t,v])=>{
-      const pct = max ? (v.total/max*100) : 0;
-      return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
-        <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px'>
-          <span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(t)}</span>
-          <span style='font-size:12px;color:#94a3b8'>${v.qtd} lanc. · R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-        </div>
-        <div style='display:flex;align-items:center;gap:10px'>
-          <div style='flex:1;background:#1e293b;border-radius:999px;height:12px;overflow:hidden'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#60a5fa,#34d399);border-radius:999px'></div></div>
-          <span style='font-size:12px;font-weight:700;color:#60a5fa;min-width:60px;text-align:right'>${Math.round(pct)}% do total</span>
-        </div>
-        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:6px'>
-          <span>${v.qPago} pagos · R$ ${v.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-          <span style='color:#f87171'>${v.qtd-v.qPago} pendentes · R$ ${(v.total-v.pago).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>
-</div>`;
-  })();
-  const locaisResumoHtml = (()=>{
-    if(!locaisResumo.length) return '';
-    return `<div class='cc-table-wrap' style='margin-bottom:14px'>
-    <table class='cc-table'>
-      <thead><tr>
-        <th>Categoria</th><th>Local</th><th style='text-align:center'>Lanc.</th>
-        <th style='text-align:center'>Pagos</th><th style='text-align:center'>Pendentes</th>
-        <th style='text-align:right'>Valor Total</th><th style='text-align:right'>Valor Pago</th><th style='text-align:right'>Valor Pendente</th>
-      </tr></thead>
-      <tbody>${locaisResumo.map(l=>`<tr>
-        <td>${esc(l.categoria)}</td><td>${esc(l.local)}</td>
-        <td style='text-align:center'>${l.qtd}</td>
-        <td style='text-align:center;color:#10b981'>${l.qPago}</td>
-        <td style='text-align:center;color:#f87171'>${l.qtd-l.qPago}</td>
-        <td style='text-align:right;font-weight:700'>R$ ${l.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#10b981'>R$ ${l.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#f87171'>R$ ${l.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      </tr>`).join('')}</tbody>
-      <tfoot><tr style='background:rgba(13,34,64,.35);font-weight:700'>
-        <td colspan='2'>TOTAL GERAL</td>
-        <td style='text-align:center'>${qtdTotal}</td>
-        <td style='text-align:center;color:#10b981'>${qtdPago}</td>
-        <td style='text-align:center;color:#f87171'>${qtdPendente}</td>
-        <td style='text-align:right'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style='text-align:right;color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      </tr></tfoot>
-    </table>
-  </div>`;
-  })();
-
   const anos = [...new Set(contasSecao.filter(c=>c.mes_ano).map(c=>String(c.mes_ano).split('/')[1]).filter(Boolean))].sort();
   const anoOptions = anos.map(a=>`<option value="${esc(a)}" ${a===anoFiltro?'selected':''}>${esc(a)}</option>`).join('');
   const tipoOptions = CC_TIPOS.map(t=>`<option value="${esc(t)}" ${t===tipoFiltro?'selected':''}>${esc(t)}</option>`).join('');
@@ -546,42 +488,6 @@ window.renderControleContas = function(secId,opcoes={}){
     ${linhasHtml}
   </div>` : '';
 
-  const pctPago = totalGeral ? (totalPago / totalGeral * 100) : 0;
-  const pctPend = totalGeral ? (totalPendente / totalGeral * 100) : 0;
-  const dashHtml = `<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px'>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>💰</div><div><div class='stat-val' style='color:#60a5fa'>R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Total em Contas</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>✅</div><div><div class='stat-val' style='color:#10b981'>R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pago</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>⏳</div><div><div class='stat-val' style='color:#f87171'>R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class='stat-lbl'>Pendente</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px'><div style='font-size:32px;filter:grayscale(0.2)'>📊</div><div><div class='stat-val' style='color:#f59e0b'>${qtdPago} / ${qtdTotal}</div><div class='stat-lbl'>Contas Pagas</div></div></div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px;position:relative;overflow:hidden'>
-    <div style='position:relative;width:64px;height:64px'>
-      <svg width='64' height='64' viewBox='0 0 100 100' style='transform:rotate(-90deg)'><circle cx='50' cy='50' r='42' fill='none' stroke='#1e3a5f' stroke-width='12'/><circle cx='50' cy='50' r='42' fill='none' stroke='#10b981' stroke-width='12' stroke-dasharray='${Math.min(264, Math.round(pctPago*2.64))} 264' stroke-linecap='round'/></svg>
-      <div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#10b981'>${Math.round(pctPago)}%</div>
-    </div>
-    <div><div class='stat-val' style='color:#10b981'>${Math.round(pctPago)}%</div><div class='stat-lbl'>Percentual Pago</div></div>
-  </div>
-  <div class='stat-card' style='display:flex;align-items:center;gap:12px;position:relative;overflow:hidden'>
-    <div style='position:relative;width:64px;height:64px'>
-      <svg width='64' height='64' viewBox='0 0 100 100' style='transform:rotate(-90deg)'><circle cx='50' cy='50' r='42' fill='none' stroke='#1e3a5f' stroke-width='12'/><circle cx='50' cy='50' r='42' fill='none' stroke='#f87171' stroke-width='12' stroke-dasharray='${Math.min(264, Math.round(pctPend*2.64))} 264' stroke-linecap='round'/></svg>
-      <div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#f87171'>${Math.round(pctPend)}%</div>
-    </div>
-    <div><div class='stat-val' style='color:#f87171'>${Math.round(pctPend)}%</div><div class='stat-lbl'>Percentual Pendente</div></div>
-  </div>
-</div>`;
-  const catsProgressHtml = resumoCats.length?`<div style='margin-bottom:16px;background:#0a1222;border:1px solid #1e3a5f;border-radius:12px;padding:14px'>
-  <div style='display:flex;align-items:center;gap:10px;margin-bottom:12px'><div style='font-size:18px'>📊</div><div style='font-size:14px;font-weight:700;color:#60a5fa'>Progresso por Categoria</div></div>
-  <div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px'>
-    ${resumoCats.map(c=>{
-      const pct = c.total ? (c.pago/c.total*100) : 0;
-      return `<div style='background:#0e1729;border:1px solid #1e3a5f;border-radius:10px;padding:10px'>
-        <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:6px'><span style='font-size:13px;font-weight:700;color:#e2e8f0'>${esc(c.nome)}</span><span style='font-size:12px;color:#10b981;font-weight:700'>${Math.round(pct)}% pago</span></div>
-        <div style='background:#1e293b;border-radius:999px;height:10px;overflow:hidden;margin-bottom:6px'><div style='width:${Math.min(100,Math.round(pct))}%;height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:999px;transition:width .5s ease'></div></div>
-        <div style='display:flex;justify-content:space-between;font-size:11px;color:#94a3b8'><span>${c.qPago} de ${c.qtd} pagos</span><span>R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})} / R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
-      </div>`;
-    }).join('')}
-  </div>
-</div>`:'';
-
   // Ao trocar o mês, conserva os cards, o foco e todos os elementos acima da lista.
   const resultados=opcoes.somenteMes?document.getElementById('cc-month-results'):null;
   if(resultados){
@@ -595,27 +501,26 @@ window.renderControleContas = function(secId,opcoes={}){
     requestAnimationFrame(()=>window.refreshStickyTableScroll?.());
     return;
   }
-  setC(`<div style="margin-bottom:14px">
-    ${sec.cover_url?`<img src="${esc(sec.cover_url)}" style="max-height:80px;max-width:260px;border-radius:10px;object-fit:contain;margin-bottom:10px;display:block;background:transparent">`:''}
-    <div class="page-title">${esc(sec.name)}</div>
-    <div class="page-sub">${esc(sec.observacoes||'Controle de pagamento de contas por local')}</div>
-  </div>
-  <div class="cc-filtros-fixas">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <button class="btn-action" onclick="window.renderModulo(window.modForSec(S.secs.find(s=>s.id==='${secId}')))">← Voltar</button>
-      <div style="flex:1;min-width:20px"></div>
-      ${S.isAdmin?`<button class="btn-action" onclick="ccOpenCategoriaModal(null,'${secId}')">+ Categoria</button>`:''}
-      ${S.isAdmin?`<button class="btn-action" onclick="openSecModal('${secId}')">✏️ Editar</button>`:''}
-      ${S.isAdmin?`<button class="btn-action" onclick="ccOpenColunasModal('${secId}')">⚙️ Colunas</button>`:''}
+  const _ccTemFiltro=!!(tipoFiltro||anoFiltro||pagoFiltro||String(buscaFiltro||'').trim());
+  setC(`<div class="ccn-top">
+    <div class="ccn-title">
+      ${sec.cover_url?`<img src="${esc(sec.cover_url)}" alt="" class="ccn-cover">`:''}
+      <div><div class="page-title">${esc(sec.name)}</div>
+      <div class="page-sub">${esc(sec.observacoes||'Controle de pagamento de contas por local')}</div></div>
     </div>
-    <input id="cc-busca" type="text" value="${esc(buscaFiltro)}" placeholder="🔍 Buscar por local, endereço, conta contrato, categoria... (combine vários termos)" oninput="ccBuscaInput('${secId}')" class="cc-busca-input">
+    ${S.isAdmin?`<details class="gcb-menu gcb-actions ccn-admin"><summary class="btn-action gcb-tool">⚙️ Ajustes<i aria-hidden="true"></i></summary><div class="gcb-pop" role="menu"><div class="gcb-sec"><span>Controle de contas</span>
+      <button type="button" class="gcb-item" onclick="ccOpenCategoriaModal(null,'${secId}')">＋ Nova categoria<small>ex.: Escolas, Unidades de saúde</small></button>
+      <button type="button" class="gcb-item" onclick="openSecModal('${secId}')">✏️ Editar este controle<small>nome, descrição e campos</small></button>
+      <button type="button" class="gcb-item" onclick="ccOpenColunasModal('${secId}')">🧱 Colunas da tabela<small>o que aparece em cada conta</small></button></div></div></details>`:''}
+  </div>
+  <div class="cc-filtros-fixas ccn-filterbar">
+    <input id="cc-busca" type="search" value="${esc(buscaFiltro)}" placeholder="🔍 Buscar local, endereço, conta contrato, categoria…" oninput="ccBuscaInput('${secId}')" class="cc-busca-input" aria-label="Buscar no controle de contas">
     <div class="cc-filtros">
-      <select id="cc-filtro-tipo" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos os tipos</option>${tipoOptions}</select>
-      <select id="cc-filtro-ano" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos os anos</option>${anoOptions}</select>
-      <select id="cc-filtro-pago" onchange="ccResetPaginaERender('${secId}')"><option value="">Todos</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>Pago</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>Pendente</option></select>
-      <button class="btn-action" style="font-size:12px;padding:6px 12px" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';ccResetPaginaERender('${secId}')">Limpar</button>
-      <div style="flex:1;min-width:8px"></div>
-      <button class="btn-action" onclick="ccOpenPdfOpts('${secId}')">📄 PDF${(tipoFiltro||anoFiltro||pagoFiltro||buscaFiltro.trim())?' (filtrado)':''}</button>
+      <select id="cc-filtro-tipo" aria-label="Tipo de conta" onchange="ccResetPaginaERender('${secId}')"><option value="">⚡ Todos os tipos</option>${tipoOptions}</select>
+      <select id="cc-filtro-ano" aria-label="Ano" onchange="ccResetPaginaERender('${secId}')"><option value="">📅 Todos os anos</option>${anoOptions}</select>
+      <select id="cc-filtro-pago" aria-label="Situação" onchange="ccResetPaginaERender('${secId}')"><option value="">● Pagas e pendentes</option><option value="pago" ${pagoFiltro==='pago'?'selected':''}>✅ Só pagas</option><option value="pendente" ${pagoFiltro==='pendente'?'selected':''}>⏳ Só pendentes</option></select>
+      ${_ccTemFiltro?`<button class="btn-action ccn-clear" onclick="document.getElementById('cc-busca').value='';document.getElementById('cc-filtro-tipo').value='';document.getElementById('cc-filtro-ano').value='';document.getElementById('cc-filtro-pago').value='';ccResetPaginaERender('${secId}')">✕ Limpar filtros</button>`:''}
+      <button class="btn-action ccn-pdf" onclick="ccOpenPdfOpts('${secId}')">📄 PDF${_ccTemFiltro?' (filtrado)':''}</button>
     </div>
   </div>
   <nav class="cc-workspace-tabs" aria-label="Áreas do controle de contas">
@@ -626,41 +531,7 @@ window.renderControleContas = function(secId,opcoes={}){
     <button class="cc-workspace-tab ${modo==='cadastro'?'active':''}" onclick="ccSetModo('${secId}','cadastro')">🏢 Cadastro dos locais</button>
   </nav>
   <section class="cc-workspace-panel" ${modo==='resumo'?'':'hidden'}>
-  ${dashHtml}
-  ${catsProgressHtml}
-  ${tipoResumoHtml}
-  ${locaisResumoHtml}
-  ${resumoCats.length?`<div class="cc-table-wrap" style="margin-bottom:14px">
-    <table class="cc-table">
-      <thead><tr>
-        <th>Categoria</th>
-        <th style="text-align:center">Lançamentos</th>
-        <th style="text-align:center">Pagos</th>
-        <th style="text-align:center">Pendentes</th>
-        <th style="text-align:right">Valor Total</th>
-        <th style="text-align:right">Valor Pago</th>
-        <th style="text-align:right">Valor Pendente</th>
-      </tr></thead>
-      <tbody>${resumoCats.map(c=>`<tr>
-        <td>${esc(c.nome)}</td>
-        <td style="text-align:center">${c.qtd}</td>
-        <td style="text-align:center;color:#10b981">${c.qPago}</td>
-        <td style="text-align:center;color:#f87171">${c.qPendente}</td>
-        <td style="text-align:right;font-weight:700">R$ ${c.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#10b981">R$ ${c.pago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#f87171">R$ ${c.pendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      </tr>`).join('')}</tbody>
-      <tfoot><tr style="background:rgba(13,34,64,.35);font-weight:700">
-        <td>TOTAL GERAL</td>
-        <td style="text-align:center">${qtdTotal}</td>
-        <td style="text-align:center;color:#10b981">${qtdPago}</td>
-        <td style="text-align:center;color:#f87171">${qtdPendente}</td>
-        <td style="text-align:right">R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#10b981">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-        <td style="text-align:right;color:#f87171">R$ ${totalPendente.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      </tr></tfoot>
-    </table>
-  </div>`:''}
+  ${_ccOverviewHtml(secId,{totalGeral,totalPago,totalPendente,qtdTotal,qtdPago,qtdPendente,resumoCats,tipoMap,locaisResumo,vencidas,proximas,totVencido,totProximo,vigItens,tipoFiltro,anoFiltro,pagoFiltro,buscaFiltro:String(buscaFiltro||'').trim()})}
   </section>
   <section class="cc-workspace-panel cc-cadastro-panel" ${modo==='cadastro'?'':'hidden'}>${modo==='cadastro'?(window.ccCadastroHtml?.(secId)||''):''}</section>
   <section class="cc-workspace-panel cc-relatorio-panel" ${modo==='relatorio'?'':'hidden'}>${modo==='relatorio'?(window.ccRelatorioHtml?.(secId)||''):''}</section>
@@ -671,7 +542,95 @@ window.renderControleContas = function(secId,opcoes={}){
   ${quantidadeLocaisEncontrados>CC_LOCAIS_POR_PAGINA?paginacaoHtml:''}
   </section>`);
   document.querySelectorAll('[data-cc-level]').forEach(button=>button.onclick=()=>ccNavegar(secId,button.dataset.ccLevel,button.dataset.ccValue));
+  if(modo==='resumo')requestAnimationFrame(()=>window.ccOverviewEnhance?.(document.getElementById('content')||document));
+};
 
+
+// ── VISÃO GERAL com neuroarquitetura (regra do usuário, 23/11/2026) ──
+// Acolhimento (saudação + situação em linguagem humana), progresso visível (anel), "portas" para cada tarefa,
+// números que NUNCA saem do card (container queries + valor completo no title), cores calmas (azul/verde =
+// confiança/tranquilidade; âmbar = atenção; vermelho só quando existe problema de verdade), revelação
+// progressiva (detalhamento recolhível com busca própria) e microinterações suaves (respeitam reduzir movimento).
+const _ccMoney = v => 'R$ ' + (Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const _ccShort = v => { const n=Number(v)||0, a=Math.abs(n); if(a>=1e6) return 'R$ '+(n/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi'; if(a>=1e4) return 'R$ '+(n/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil'; return _ccMoney(n); };
+function _ccGreeting(){ const h=new Date().getHours(); return h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'; }
+function _ccOverviewHtml(secId, d){
+  const nome=String(S.me?.display_name||S.me?.nome||'').trim().split(/\s+/)[0]||'';
+  const pct=d.totalGeral?Math.round(d.totalPago/d.totalGeral*1000)/10:0;
+  const pctTxt=(Math.round(pct*10)/10).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%';
+  const filtros=[d.tipoFiltro,d.anoFiltro,d.pagoFiltro==='pago'?'pagas':d.pagoFiltro==='pendente'?'pendentes':'',d.buscaFiltro&&`“${d.buscaFiltro}”`].filter(Boolean);
+  const escopo=filtros.length?`Mostrando: ${filtros.map(esc).join(' · ')}`:'Todas as contas lançadas';
+  const nVenc=d.vencidas.length, nProx=d.proximas.length, nVig=d.vigItens.length;
+  let mood='calm', titulo, frase;
+  if(!d.qtdTotal){ titulo='Vamos começar?'; frase='Ainda não há contas lançadas aqui. Abra “Lançamentos” para registrar a primeira.'; mood='calm'; }
+  else if(nVenc){ mood='alert'; titulo=`${nVenc} conta${nVenc>1?'s':''} vencida${nVenc>1?'s':''} pede${nVenc>1?'m':''} sua atenção`; frase=`${_ccMoney(d.totVencido)} em atraso. Resolva primeiro estas e o restante segue tranquilo.`; }
+  else if(d.qtdPendente){ mood='focus'; titulo=`Faltam ${d.qtdPendente} conta${d.qtdPendente>1?'s':''} para fechar 100%`; frase=`${_ccMoney(d.totalPendente)} ainda a pagar${nProx?` · ${nProx} vence${nProx>1?'m':''} nos próximos 30 dias`:''}. Você já concluiu ${pctTxt} do valor.`; }
+  else { mood='done'; titulo='Tudo em dia ✨'; frase=`Todas as ${d.qtdTotal.toLocaleString('pt-BR')} contas estão pagas — ${_ccMoney(d.totalPago)}. Excelente trabalho!`; }
+  const ring=(()=>{const r=44,c=2*Math.PI*r,off=c*(1-Math.min(100,pct)/100);return `<svg class="ccn-ring" viewBox="0 0 100 100" role="img" aria-label="${pctTxt} do valor já pago"><circle class="ccn-ring-bg" cx="50" cy="50" r="${r}"/><circle class="ccn-ring-fg" cx="50" cy="50" r="${r}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" style="--ccn-c:${c.toFixed(1)}"/><text x="50" y="49" text-anchor="middle" class="ccn-ring-pct">${esc(pctTxt)}</text><text x="50" y="64" text-anchor="middle" class="ccn-ring-sub">pago</text></svg>`;})();
+  const go=(modo,icon,label,sub,tone='')=>`<button type="button" class="ccn-door ${tone}" onclick="ccSetModo('${secId}','${modo}')"><span class="ccn-door-ico" aria-hidden="true">${icon}</span><span class="ccn-door-txt"><b>${label}</b><small>${sub}</small></span><span class="ccn-door-go" aria-hidden="true">→</span></button>`;
+  const doors=`<div class="ccn-doors" role="navigation" aria-label="O que você quer fazer?">
+    ${go('lancamentos','🧾','Lançar e conferir contas',`${d.qtdTotal.toLocaleString('pt-BR')} lançamento(s) por local e mês`)}
+    ${go('vencimentos','⏰','Vencimentos',nVenc||nProx||nVig?`${nVenc?nVenc+' vencida(s) · ':''}${nProx} nos próximos 30 dias${nVig?` · ${nVig} apólice(s)`:''}`:'Nada vencendo — tudo tranquilo',nVenc?'is-alert':nProx?'is-focus':'')}
+    ${go('relatorio','📑','Relatório por secretaria','Mês a mês, com totais e PDF')}
+    ${go('cadastro','🏢','Cadastro dos locais','Conta contrato, relógio, endereço')}
+  </div>`;
+  const kpi=(cls,icon,label,full,short,sub)=>`<div class="ccn-kpi ${cls}" title="${esc(label)}: ${esc(full)}"><span class="ccn-kpi-ico" aria-hidden="true">${icon}</span><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${label}</span><b class="ccn-kpi-val" data-full="${esc(full)}">${esc(short)}</b>${sub?`<small>${sub}</small>`:''}</div></div>`;
+  const kpis=`<div class="ccn-kpis">
+    ${kpi('is-total','💰','Total em contas',_ccMoney(d.totalGeral),_ccMoney(d.totalGeral),`${d.qtdTotal.toLocaleString('pt-BR')} conta(s)`)}
+    ${kpi('is-paid','✅','Pago',_ccMoney(d.totalPago),_ccMoney(d.totalPago),`${d.qtdPago.toLocaleString('pt-BR')} conta(s) · ${pctTxt}`)}
+    ${kpi(d.totalPendente?'is-pend':'is-zero','⏳','Pendente',_ccMoney(d.totalPendente),_ccMoney(d.totalPendente),d.qtdPendente?`${d.qtdPendente.toLocaleString('pt-BR')} conta(s)`:'nada pendente 🎉')}
+    ${kpi(nVenc?'is-late':'is-zero','⏰','Vencidas',_ccMoney(d.totVencido),nVenc?_ccMoney(d.totVencido):'Nenhuma',nVenc?`${nVenc} conta(s) em atraso`:'continue assim')}
+  </div>`;
+  const maxCat=Math.max(1,...d.resumoCats.map(c=>c.total));
+  const cats=d.resumoCats.length?`<section class="ccn-card"><header class="ccn-head"><h3>🗂️ Onde está o dinheiro</h3><small>Por categoria · toque para ver os lançamentos</small></header>
+    <div class="ccn-cats">${[...d.resumoCats].sort((a,b)=>b.total-a.total).map(c=>{const p=c.total?Math.round(c.pago/c.total*100):0,share=Math.round(c.total/maxCat*100);return `<button type="button" class="ccn-cat" onclick="ccFiltrarCategoria('${secId}',${JSON.stringify(String(c.nome)).replace(/"/g,'&quot;')})" title="${esc(c.nome)}: ${_ccMoney(c.total)} (${p}% pago)">
+      <span class="ccn-cat-top"><b>${esc(c.nome)}</b><em class="${p===100?'ok':p>=80?'mid':'low'}">${p===100?'✓ ':''}${p}% pago</em></span>
+      <span class="ccn-cat-val">${_ccMoney(c.total)}</span>
+      <span class="ccn-bar" aria-hidden="true"><i style="width:${share}%"><s style="width:${p}%"></s></i></span>
+      <small>${c.qPago} de ${c.qtd} pagas${c.pendente>0?` · falta ${_ccMoney(c.pendente)}`:''}</small></button>`;}).join('')}</div></section>`:'';
+  const tipos=Object.entries(d.tipoMap).sort((a,b)=>b[1].total-a[1].total);
+  const tiposHtml=tipos.length>1||tipos.length&&tipos[0][1].qtd!==d.qtdTotal?`<section class="ccn-card"><header class="ccn-head"><h3>⚡ Por tipo de conta</h3></header><div class="ccn-types">${tipos.map(([t,v])=>{const p=v.total?Math.round(v.pago/v.total*100):0;return `<div class="ccn-type"><span><b>${esc(t)}</b><small>${v.qtd} lanç.</small></span><span class="ccn-bar" aria-hidden="true"><i style="width:${Math.round(v.total/(tipos[0][1].total||1)*100)}%"><s style="width:${p}%"></s></i></span><span class="ccn-type-val">${_ccMoney(v.total)}<small>${p}% pago</small></span></div>`;}).join('')}</div></section>`:(tipos.length?`<p class="ccn-note">⚡ Todas as contas são do tipo <b>${esc(tipos[0][0])}</b>.</p>`:'');
+  // detalhamento por local: agrupado por categoria (sem repetir o nome), busca própria, zeros discretos
+  const grupos={};d.locaisResumo.forEach(l=>{(grupos[l.categoria]??=[]).push(l);});
+  const z=(v,txt,cls)=>v?`<td class="${cls}">${txt}</td>`:`<td class="ccn-zero">—</td>`;
+  const det=d.locaisResumo.length?`<details class="ccn-card ccn-detail" ${d.buscaFiltro?'open':''}><summary class="ccn-head"><h3>📋 Detalhamento por local</h3><small>${d.locaisResumo.length} locais · toque para abrir</small></summary>
+    <div class="ccn-detail-tools"><input type="search" class="ccn-detail-search" placeholder="🔍 Filtrar locais nesta tabela…" oninput="ccFiltrarDetalhe(this)" aria-label="Filtrar locais"></div>
+    <div class="cc-table-wrap ccn-table-wrap"><table class="cc-table ccn-table"><thead><tr><th>Local</th><th class="n">Lanç.</th><th class="n">Pagas</th><th class="n">Pendentes</th><th class="m">Total</th><th class="m">Pago</th><th class="m">Pendente</th></tr></thead>
+    ${Object.entries(grupos).map(([cat,ls])=>{const t=ls.reduce((a,l)=>({q:a.q+l.qtd,qp:a.qp+l.qPago,v:a.v+l.total,p:a.p+l.pago,pe:a.pe+l.pendente}),{q:0,qp:0,v:0,p:0,pe:0});return `<tbody class="ccn-group"><tr class="ccn-cat-row"><th colspan="4" scope="rowgroup">${esc(cat)} <small>${ls.length} local(is)</small></th><td class="m">${_ccMoney(t.v)}</td><td class="m ok">${_ccMoney(t.p)}</td>${z(t.pe,_ccMoney(t.pe),'m bad')}</tr>${ls.map(l=>`<tr data-q="${esc(_ccNorm(l.local+' '+cat))}"><td>${esc(l.local)}</td><td class="n">${l.qtd}</td><td class="n ok">${l.qPago}</td>${z(l.qtd-l.qPago,l.qtd-l.qPago,'n bad')}<td class="m strong">${_ccMoney(l.total)}</td><td class="m ok">${_ccMoney(l.pago)}</td>${z(l.pendente,_ccMoney(l.pendente),'m bad')}</tr>`).join('')}</tbody>`;}).join('')}
+    <tfoot><tr><td>TOTAL GERAL</td><td class="n">${d.qtdTotal}</td><td class="n">${d.qtdPago}</td><td class="n">${d.qtdPendente||'—'}</td><td class="m">${_ccMoney(d.totalGeral)}</td><td class="m">${_ccMoney(d.totalPago)}</td><td class="m">${d.totalPendente?_ccMoney(d.totalPendente):'—'}</td></tr></tfoot></table></div></details>`:'';
+  return `<div class="ccn">
+    <section class="ccn-hero is-${mood}">
+      <div class="ccn-hero-txt"><span class="ccn-hello">${_ccGreeting()}${nome?', '+esc(nome):''} 👋</span><h2>${esc(titulo)}</h2><p>${esc(frase)}</p>
+        ${nVenc?`<button type="button" class="ccn-cta" onclick="ccSetModo('${secId}','vencimentos')">Ver vencidas agora →</button>`:''}<small class="ccn-scope">${escopo}</small></div>
+      <div class="ccn-hero-ring">${ring}</div>
+    </section>
+    ${kpis}
+    ${doors}
+    ${cats}
+    ${tiposHtml}
+    ${det}
+  </div>`;
+}
+window.ccFiltrarCategoria = function(secId, nome){
+  const inp=document.getElementById('cc-busca'); if(inp) inp.value=nome;
+  _ccPaginaPorSecao.set(secId,1); _ccModoPorSecao.set(secId,'lancamentos'); renderControleContas(secId);
+  window.toast?.(`Mostrando os lançamentos de “${nome}”. Use “Limpar” para ver tudo.`,'success',3500);
+};
+window.ccFiltrarDetalhe = function(input){
+  const t=_ccNorm(input.value).split(/\s+/).filter(Boolean);const table=input.closest('.ccn-detail')?.querySelector('table');if(!table)return;
+  table.querySelectorAll('tbody.ccn-group').forEach(g=>{let any=false;g.querySelectorAll('tr[data-q]').forEach(r=>{const ok=!t.length||t.every(k=>r.dataset.q.includes(k));r.hidden=!ok;any=any||ok;});g.hidden=!any;});
+};
+// números animados (contagem suave) e encaixe do valor no card — nunca vaza
+window.ccOverviewEnhance = function(root=document){
+  if(typeof root?.querySelectorAll!=='function')return;
+  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  root.querySelectorAll('.ccn-kpi-val,.ccn-cat-val').forEach(el=>{
+    // encaixe: diminui a letra até o valor caber inteiro no card (e refaz quando o card muda de tamanho)
+    const fit=()=>{el.style.fontSize='';let size=parseFloat(getComputedStyle(el).fontSize)||22;while(el.scrollWidth>el.clientWidth+1&&size>11){size-=0.5;el.style.fontSize=size+'px';}};
+    el.__ccnFit=fit;fit();
+    if(!el.__ccnRO&&typeof ResizeObserver!=='undefined'){el.__ccnRO=new ResizeObserver(()=>el.__ccnFit());el.__ccnRO.observe(el.parentElement);}
+    if(!reduce&&el.classList.contains('ccn-kpi-val')&&/^R\$/.test(el.textContent)&&!el.dataset.counted){el.dataset.counted='1';const full=el.textContent,target=Number(full.replace(/[^\d,]/g,'').replace(',','.'))||0;if(!target)return;const t0=performance.now();const tick=now=>{const k=Math.min(1,(now-t0)/700),e=1-Math.pow(1-k,3);el.textContent=_ccMoney(target*e);if(k<1)requestAnimationFrame(tick);else{el.textContent=full;fit();}};requestAnimationFrame(tick);}
+  });
 };
 
 window.ccOpenCategoriaModal = function(id, secId){
