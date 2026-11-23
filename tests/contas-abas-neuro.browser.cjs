@@ -38,7 +38,7 @@ const conta = (id, local, mes, valor, pago, venc) => row({id, atividade_id: 'ccx
   }));
   const sweep = async tab => {
     for (const width of [360, 390, 600, 900, 1280, 1920]) {
-      await page.setViewportSize({width, height: 900}); await page.waitForTimeout(220);
+      await page.setViewportSize({width, height: 900}); await page.waitForTimeout(450);
       assert.deepEqual(await overflow(), [], `${tab}: vazou em ${width}px`);
     }
     await page.setViewportSize({width: W, height: 900}); await page.waitForTimeout(250);

@@ -282,3 +282,4 @@
 #content .cc-mobile-row>span:last-child{text-align:right;overflow-wrap:anywhere;min-width:0}
 #content .cc-mobile-valor>span:last-child{font-size:16px;font-weight:900;color:#0c4a6e;font-variant-numeric:tabular-nums}
 #content .cc-mobile-row input[type=checkbox]{width:22px;height:22px;accent-color:#10b981}
+#content button.cc-month .cc-month-vazio{font-weight:700;color:#64748b;white-space:normal;overflow-wrap:anywhere}
