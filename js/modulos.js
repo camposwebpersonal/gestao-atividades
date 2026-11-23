@@ -1,4 +1,4 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=873caf8b';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=92d7dc5a';
 import {supabase} from '../supabase_compat.js?v=7a75381f';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=6cf633ef';

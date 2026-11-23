@@ -51,6 +51,18 @@ const txt = async (page, sel) => (await page.textContent(sel)).replace(/\s+/g, '
   await page.waitForSelector('.mu-tl-i');
   assert.match(await txt(page, '.mu-tl'), /Atendimento psicossocial.*Orientada sobre a rede/);
   await page.screenshot({path: os.tmpdir() + `/mulher-ficha-${W}.png`, fullPage: true});
+  // 🔗 Criar link: validade + PIN opcional (desligado por padrão), QR na tela, link somente leitura
+  await page.evaluate(() => { window.db.from = () => { const q = {select: () => q, eq: () => q, is: () => q, order: () => q, limit: async () => ({data: []})}; return q; };
+    window.db.rpc = async (n, a) => { window.__rpc = [n, a]; return {data: {token: 'LINK-NOVO-ABCDEFGHIJKLMNOPQRSTUV'}}; }; });
+  await page.click('.mu-actions button:has-text("Criar link")');
+  await page.waitForSelector('.mu-share .lk-opts');
+  assert.equal(await page.locator('#lk-pin-on').isChecked(), false, 'PIN desligado por padrão');
+  await page.click('.lk-chips label:has-text("1 dia")');
+  await page.click('#mu-share-go');
+  await page.waitForSelector('.mu-share-card .lk-qr');
+  assert.deepEqual(await page.evaluate(() => window.__rpc[1]), {p_group: 'mu-cad', p_modo: 'ver', p_alvo_tipo: 'mulher', p_alvo_id: await page.evaluate(() => window.S.items.find(x => x.description === 'JOANA PEREIRA').id), p_horas: 24, p_pin: null});
+  assert.match(await page.inputValue('.mu-share-card input'), /mulher\.html\?t=LINK-NOVO-/);
+  assert.deepEqual(await page.evaluate(() => window.__contrastAudit(document.querySelector('#modal-ov'))), [], 'contraste compartilhar');
   await page.evaluate(() => window.closeModal());
   // PDF com QR
   if (process.env.LIBS) {
@@ -109,6 +121,15 @@ const txt = async (page, sel) => (await page.textContent(sel)).replace(/\s+/g, '
   assert.deepEqual(await pub.evaluate(() => window.__contrastAudit(document.body)), []);
   await pub.goto('http://127.0.0.1:8090/mulher.html?t=outro'); await pub.waitForSelector('.mp-end');
   assert.match(await txt(pub, '.mp-end'), /não encontrada/);
+  // ficha com PIN: pede, recusa errado, abre com o certo; link vencido
+  const pin = await (await browser.newContext({viewport: {width: W, height: 860}})).newPage();
+  await pin.addInitScript(() => { window.__PUBLIC_RPC = async (n, a) => /VENCIDO/.test(a.p_token) ? {ok: false, motivo: 'expirado'} : a.p_pin === '2468' ? {ok: true, expira: new Date(Date.now() + 3600e3).toISOString(), ficha: {nome: 'ANA COM PIN', campos: {}}, ocorrencias: []} : {ok: false, motivo: a.p_pin ? 'pin_errado' : 'pin'}; });
+  await pin.goto('http://127.0.0.1:8090/mulher.html?t=TOKEN-COM-PIN-1234567890'); await pin.waitForSelector('#mp-pin');
+  await pin.fill('#mp-pin', '1111'); await pin.click('#mp-pin-form button'); await pin.waitForSelector('.mp-pin-bad');
+  await pin.fill('#mp-pin', '2468'); await pin.click('#mp-pin-form button'); await pin.waitForSelector('.mp-hero');
+  assert.match(await txt(pin, 'main'), /válido até.*ANA COM PIN/);
+  await pin.goto('http://127.0.0.1:8090/mulher.html?t=TOKEN-VENCIDO-123456789012'); await pin.waitForSelector('.mp-end');
+  assert.match(await txt(pin, '.mp-end'), /expirou/);
   console.log(`ok - Secretaria da Mulher (${W}px)`);
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });

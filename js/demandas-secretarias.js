@@ -43,6 +43,7 @@ export function demandSidebar(active){
  return `<div class="demand-subnav" aria-label="Secretarias de demandas">${sections().map(s=>`<button type="button" class="demand-subnav-btn ${active&&current===s.id?'active':''}" onclick="openDemandSecretaria(${arg(s.id)})" title="${esc(titleFor(s))}" ${active&&current===s.id?'aria-current="page"':''}><span class="demand-dot ${s.id===UNASSIGNED?'pending':''}"></span><span>${esc(s.name)}</span><b>${s.groups.length}</b></button>`).join('')}</div>`;
 }
 window.openDemandSecretaria=function(id=''){
+ window.mulherModoClassicoReset?.();
  window.currentDemandSecretaria=id;query='';window.renderModulo('atendimentos');
 };
 window.setDemandView=function(value){
@@ -80,6 +81,8 @@ export function renderDemandas(){
  ensureView();
  const all=groups(),secs=sections();
  if(selected()&&!secs.some(s=>s.id===selected()))window.currentDemandSecretaria='';
+ // Secretaria da Mulher tem página de entrada própria (js/mulher-home.js); a grade fica no "modo clássico".
+ if(window.mulherHomeFor?.(selected())){window.renderMulherHome(selected());return;}
   const create=window.userCanCreateGroups?.()&&can('criar');
  document.getElementById('content').innerHTML=`<section class="demand-shell" aria-labelledby="demand-title">
   <header class="demand-heading"><div><span class="workspace-kicker">Organização municipal</span><h1 id="demand-title">Demandas por Secretarias</h1><p>As demandas no lugar certo. Cada grupo, todos os seus lançamentos.</p></div><div class="demand-summary"><b>${secs.filter(s=>s.id!==UNASSIGNED).length}<small>secretarias</small></b><b>${all.length}<small>grupos</small></b><b>${all.reduce((n,g)=>n+api.total(g),0)}<small>lançamentos</small></b></div></header>

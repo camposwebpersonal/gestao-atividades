@@ -35,3 +35,9 @@ body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,
 .mp-end>span{display:grid;place-items:center;width:70px;height:70px;border-radius:50%;background:#f5f0ff;font-size:32px}
 .mp-end h1{margin:0;font-size:21px;color:#2e1065}.mp-end p{margin:0;font-size:15px;line-height:1.5;color:#3a3f5c}
 @media (prefers-reduced-motion:reduce){.mp-spin{animation:none}}
+.mp-pin form{display:flex;gap:8px;justify-content:center}
+.mp-pin input{width:140px;height:52px;border-radius:14px;border:2px solid #d8d0f3;font-size:26px;font-weight:900;letter-spacing:.4em;text-align:center;color:#2e1065;background:#fff}
+.mp-pin input.is-bad{border-color:#e11d48}
+.mp-pin button{min-height:52px;padding:0 20px;border:0;border-radius:14px;background:#6d28d9;color:#fff;font-size:16px;font-weight:900;cursor:pointer}
+.mp-pin-bad{color:#9f1239!important;font-weight:800}
+.mp-exp{margin:0;padding:6px 12px;border-radius:12px;background:#fff7ed;color:#7c2d12;font-size:13px;font-weight:800;align-self:flex-start}

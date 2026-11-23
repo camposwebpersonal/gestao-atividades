@@ -81,6 +81,29 @@ const fake = modo => `(() => {
   // token inválido
   await p2.goto('http://127.0.0.1:8090/conferir.html?t=xxx'); await p2.waitForSelector('.cf-end');
   assert.match(await p2.textContent('.cf-end'), /não encontrado/);
+  // PIN opcional: pede, recusa errado, abre com o certo e manda o PIN junto ao salvar; link de UM lançamento
+  const p3 = await ctx.newPage(); p3.on('pageerror', e => errors.push(String(e)));
+  await p3.addInitScript(() => {
+    window.__calls = [];
+    window.__PUBLIC_RPC = async (n, a) => { window.__calls.push([n, a]);
+      if (a.p_pin !== '4321') return n === 'pms_share_open' ? {ok: false, motivo: a.p_pin ? 'pin_errado' : 'pin'} : (() => { throw new Error('PIN incorreto.'); })();
+      if (n === 'pms_share_open') return {ok: true, modo: 'editar', alvo: 'item', alvo_nome: 'PALCO PRINCIPAL', expira: new Date(Date.now() + 2 * 3600e3).toISOString(), criado_em: '2026-11-23', grupo: {id: 'g', nome: 'EXPOCOSE'}, campos: [], itens: [{id: 'p', tipo: 'item', descricao: 'PALCO PRINCIPAL', campos: {}, conferido: false}], subitens: []};
+      return {ok: true, restantes: 0, finalizado: true}; };
+    localStorage.setItem('conferir-nome', 'Ana');
+  });
+  await p3.goto('http://127.0.0.1:8090/conferir.html?t=tok'); await p3.waitForSelector('#cf-pin');
+  await p3.fill('#cf-pin', '1111'); await p3.click('#cf-pin-form button');
+  await p3.waitForSelector('.cf-pin-bad'); assert.match(await p3.textContent('.cf-pin-bad'), /PIN incorreto/);
+  await p3.fill('#cf-pin', '4321'); await p3.click('#cf-pin-form button');
+  await p3.waitForSelector('.cf-card');
+  assert.match(await p3.textContent('.cf-hero'), /PALCO PRINCIPAL.*EXPOCOSE.*válido até/s);
+  await p3.click('[data-act="mark"]'); await p3.click('[data-act="save"]'); await p3.click('#cf-dialog button[value="yes"]');
+  await p3.waitForSelector('.cf-end.is-done');
+  assert.equal(await p3.evaluate(() => window.__calls.find(c => c[0] === 'pms_share_save')[1].p_pin), '4321');
+  // link vencido
+  const p4 = await ctx.newPage(); await p4.addInitScript(() => { window.__PUBLIC_RPC = async () => ({ok: false, motivo: 'expirado'}); });
+  await p4.goto('http://127.0.0.1:8090/conferir.html?t=tok'); await p4.waitForSelector('.cf-end');
+  assert.match(await p4.textContent('.cf-end'), /expirou/);
   assert.deepEqual(errors, []);
   console.log(`ok - link de conferência (${W}px)`);
   await browser.close();

@@ -10,7 +10,7 @@ const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 const dBR = v => { if (!v) return ''; const s = String(v); const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return s; if (s.length <= 10) return `${m[3]}/${m[2]}/${m[1]}`; const d = new Date(s); return isNaN(d) ? `${m[3]}/${m[2]}/${m[1]}` : d.toLocaleDateString('pt-BR'); };
 const parseOpts = o => { let v = o; for (let i = 0; i < 3 && typeof v === 'string'; i++) { try { v = JSON.parse(v); } catch { break; } } return Array.isArray(v) ? v.map(String) : []; };
 const NAME_KEY = 'conferir-nome';
-let data = null, nome = '', dirty = new Map(), marked = new Set(), open = new Set(), allMode = false, saving = false;
+let data = null, pin = '', nome = '', dirty = new Map(), marked = new Set(), open = new Set(), allMode = false, saving = false;
 
 const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
 const records = () => [...(data.itens || []), ...(data.subitens || [])];
@@ -83,9 +83,9 @@ function render() {
   <header class="cf-hero">
     <img src="img/logo_sertania.png" alt="Prefeitura de Sertânia" class="cf-logo">
     <div class="cf-hero-txt"><span class="cf-hello">${greeting()}${nome ? ', ' + esc(nome.split(' ')[0]) : ''} 👋</span>
-      <h1>${esc(data.grupo.nome)}</h1>
+      <h1>${data.alvo && data.alvo !== 'grupo' ? esc(data.alvo_nome || 'Lançamento') : esc(data.grupo.nome)}</h1>${data.alvo && data.alvo !== 'grupo' ? `<span class="cf-sub">${esc(data.grupo.nome)}</span>` : ''}
       <p>${edit ? (pct === 100 ? 'Tudo conferido. Obrigado!' : `Confira cada lançamento. Se algo estiver errado, toque em <b>✏️ Corrigir</b>; quando estiver certo, marque <b>CONFERIDO</b> e salve.`) : 'Você pode ver todos os lançamentos deste grupo (somente leitura).'}</p>
-      <small>Link enviado${data.criado_por ? ' por ' + esc(data.criado_por) : ''} em ${dBR(data.criado_em)}</small></div>
+      <small>Link enviado${data.criado_por ? ' por ' + esc(data.criado_por) : ''} em ${dBR(data.criado_em)}${data.expira ? ` · ⏳ válido até ${new Date(data.expira).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}` : ''}</small></div>
     <div class="cf-hero-ring">${ring(pct)}<small>${feitos} de ${total}</small></div>
   </header>
   ${needName ? `<section class="cf-name"><label for="cf-nome"><b>Antes de começar: qual é o seu nome?</b><small>Ele fica registrado em cada lançamento que você conferir.</small></label><div><input id="cf-nome" type="text" autocomplete="name" placeholder="Seu nome"><button type="button" class="cf-btn primary" id="cf-nome-ok">Começar</button></div></section>` : ''}
@@ -103,10 +103,28 @@ function render() {
 
 function renderEnd() {
   const m = data.motivo;
+  if (m === 'pin' || m === 'pin_errado') return renderPin(m === 'pin_errado');
   const t = m === 'concluido' ? ['✓', 'Conferência concluída', `Todos os lançamentos${data.grupo ? ' de <b>' + esc(data.grupo) + '</b>' : ''} foram conferidos${data.em ? ' em ' + dBR(data.em) : ''}. Este link expirou. Obrigado!`, 'is-done']
+    : m === 'expirado' ? ['⏳', 'Este link expirou', 'O prazo deste link terminou. Se ainda precisar, peça um link novo para quem enviou.', 'is-off']
+    : m === 'bloqueado' ? ['🔒', 'Link bloqueado', 'O PIN foi digitado errado muitas vezes e o link foi bloqueado por segurança. Peça um link novo.', 'is-off']
     : m === 'revogado' ? ['⛔', 'Link encerrado', 'Quem enviou este link o encerrou. Se precisar, peça um link novo.', 'is-off']
     : ['🔎', 'Link não encontrado', 'Confira se o endereço foi copiado inteiro ou peça um novo link.', 'is-off'];
   app.innerHTML = `<section class="cf-end ${t[3]}"><span class="cf-end-ico" aria-hidden="true">${t[0]}</span><h1>${t[1]}</h1><p>${t[2]}</p><img src="img/logo_sertania.png" alt="Prefeitura de Sertânia" class="cf-logo"></section>`;
+}
+
+function renderPin(errado) {
+  app.innerHTML = `<section class="cf-end cf-pin"><span class="cf-end-ico" aria-hidden="true">🔒</span><h1>Digite o PIN</h1><p>Este link é protegido. Quem enviou passou um PIN de 4 números para você.</p>
+    <form id="cf-pin-form" autocomplete="off"><input id="cf-pin" inputmode="numeric" maxlength="4" pattern="\\d{4}" placeholder="••••" aria-label="PIN de 4 números" class="${errado ? 'is-bad' : ''}"><button class="cf-btn primary" type="submit">Abrir</button></form>
+    ${errado ? '<p class="cf-pin-bad" role="alert">PIN incorreto. Confira e tente de novo.</p>' : ''}<img src="img/logo_sertania.png" alt="Prefeitura de Sertânia" class="cf-logo"></section>`;
+  const inp = document.getElementById('cf-pin'); inp.focus();
+  inp.addEventListener('input', () => { inp.value = inp.value.replace(/\D/g, '').slice(0, 4); });
+  document.getElementById('cf-pin-form').addEventListener('submit', e => { e.preventDefault(); if (inp.value.length === 4) { pin = inp.value; abrir(); } });
+}
+
+async function abrir() {
+  try { data = await rpc('pms_share_open', {p_token: token, p_pin: pin || null}); }
+  catch (e) { app.innerHTML = `<section class="cf-end is-off"><span class="cf-end-ico">📶</span><h1>Sem conexão</h1><p>Não foi possível abrir agora. Verifique a internet e tente de novo.</p><button class="cf-btn primary" onclick="location.reload()">Tentar de novo</button></section>`; return; }
+  render();
 }
 
 function collect(cardEl, r) {
@@ -152,7 +170,7 @@ function ask(title, text, okLabel) {
 
 async function saveRecord(r, conferido) {
   const d = dirty.get(key(r)) || {};
-  const res = await rpc('pms_share_save', {p_token: token, p_tipo: r.tipo === 'item' ? 'item' : 'sub', p_id: r.id, p_dados: {descricao: d.descricao, ...(d.observacao !== undefined ? {observacao: d.observacao} : {}), campos: d.campos || {}}, p_conferido: !!conferido, p_nome: nome});
+  const res = await rpc('pms_share_save', {p_token: token, p_tipo: r.tipo === 'item' ? 'item' : 'sub', p_id: r.id, p_dados: {descricao: d.descricao, ...(d.observacao !== undefined ? {observacao: d.observacao} : {}), campos: d.campos || {}}, p_conferido: !!conferido, p_nome: nome, p_pin: pin || null});
   if (d.descricao) r.descricao = d.descricao; if (d.observacao !== undefined) r.observacao = d.observacao; r.campos = {...(r.campos || {}), ...(d.campos || {})};
   if (conferido) { r.conferido = true; r.conferido_por = nome; marked.delete(key(r)); }
   dirty.delete(key(r)); open.delete(key(r));
@@ -181,7 +199,7 @@ async function saveAll() {
   saving = true;
   try {
     for (const k of [...new Set([...dirty.keys(), ...marked])]) { const r = byKey(k); if (r && !r.conferido) await saveRecord(r, marked.has(k) && !todos); }
-    if (todos) { const res = await rpc('pms_share_conferir_todos', {p_token: token, p_nome: nome}); records().forEach(r => { r.conferido = true; r.conferido_por = r.conferido_por || nome; }); if (res?.finalizado !== false) return finish(); }
+    if (todos) { const res = await rpc('pms_share_conferir_todos', {p_token: token, p_nome: nome, p_pin: pin || null}); records().forEach(r => { r.conferido = true; r.conferido_por = r.conferido_por || nome; }); if (res?.finalizado !== false) return finish(); }
     toast('💾 Tudo salvo!');
     if (!pendentes().length) return finish();
     allMode = false; render();
@@ -196,7 +214,5 @@ function finish() {
 (async () => {
   try { nome = localStorage.getItem(NAME_KEY) || ''; } catch { nome = ''; }
   if (!token) { data = {ok: false, motivo: 'invalido'}; return renderEnd(); }
-  try { data = await rpc('pms_share_open', {p_token: token}); }
-  catch (e) { app.innerHTML = `<section class="cf-end is-off"><span class="cf-end-ico">📶</span><h1>Sem conexão</h1><p>Não foi possível abrir agora. Verifique a internet e tente de novo.</p><button class="cf-btn primary" onclick="location.reload()">Tentar de novo</button></section>`; return; }
-  render();
+  abrir();
 })();

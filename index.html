@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://esm.sh" crossorigin>
 <link rel="preconnect" href="https://xwlmpxypjheuhbxyfplo.supabase.co" crossorigin>
 <link rel="modulepreload" href="supabase_compat.js?v=7a75381f">
-<link rel="modulepreload" href="js/modulos.js?v=cce3d9ae">
+<link rel="modulepreload" href="js/modulos.js?v=863160e7">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" media="print" onload="this.media='all'">
@@ -30,8 +30,9 @@
 <script src="js/cadastro-links.js?v=f71171ad"></script>
 <script src="js/contas-relatorio.js?v=e8db4286"></script>
 <script src="js/vendor/qrcode.js?v=2b135d3d"></script>
-<script src="js/secretaria-mulher.js?v=2df475b9"></script>
-<script src="js/link-conferencia.js?v=72dfbd39"></script>
+<script src="js/mulher-home.js?v=c9e415f3"></script>
+<script src="js/secretaria-mulher.js?v=5dce9d9c"></script>
+<script src="js/link-conferencia.js?v=f5d8f1cf"></script>
 <script src="js/contas-pdf-neuro.js?v=ebaacfb8"></script>
 <script src="js/controle-distribuicao.js?v=e085ec52"></script>
 <script src="js/controle-estoque.js?v=47c363d5"></script>
@@ -449,8 +450,9 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/completed-compact.css?v=2a632db3">
 <link rel="stylesheet" href="css/contas-relatorio.css?v=74b0b3e7">
 <link rel="stylesheet" href="css/contas-neuro.css?v=59e44ef9">
-<link rel="stylesheet" href="css/secretaria-mulher.css?v=a8f8f044">
-<link rel="stylesheet" href="css/neuro-groups.css?v=c46bd883">
+<link rel="stylesheet" href="css/mulher-home.css?v=60037c0d">
+<link rel="stylesheet" href="css/secretaria-mulher.css?v=a39b8689">
+<link rel="stylesheet" href="css/neuro-groups.css?v=a756f9dd">
 <link rel="stylesheet" href="css/controle-multas.css?v=b7e78b7a">
 <link rel="stylesheet" href="css/controle-leite.css?v=39815603">
 <link rel="stylesheet" href="css/pdf-layout.css?v=9212440f">
@@ -546,7 +548,7 @@ import {uploadDurableImage} from './js/image-storage.js?v=cc738610';
 import {isRefillGroup,refillEditorHtml,readRefillEditor,applyRefillToExtra} from './js/pipa-refill.js?v=bdf11a1f';
 import './js/multi-nest.js?v=c1b0b758';
 import './js/defesa-civil-questionarios.js?v=71b92b8e';
-import './js/modulos.js?v=cce3d9ae';
+import './js/modulos.js?v=863160e7';
 import './js/water-points.js?v=cef20c53';
 import {normalizeUsername,userEmail,usernameFromEmail} from './js/usuario-login.js';
 import {attendanceFields,readAttendance,recordExtra} from './js/atendimento-meta.js';
@@ -937,7 +939,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=551e4af5';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=2b3820e7';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1986,7 +1988,7 @@ function _renderSubSubs(parentSubId,item,today,prefix,level){
         ${chipsHtml}
       </div>
       <span style="padding:2px 8px;border-radius:999px;background:${st.bg};color:${st.c};font-size:10px">${st.l}</span>
-      ${_can?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button>`:''}
+      ${_can?`<button class="card-btn" onclick="openItemModal('${c.id}','${item.atividade_id}',true,'${parentSubId}')">✏️</button><button class="card-btn rec-link-btn" title="Link de conferência só deste subitem" aria-label="Link de conferência deste subitem" onclick="event.stopPropagation();openConferenciaLink('${item.atividade_id}','sub','${c.id}')">🔗</button>`:''}
       ${_can?`<button class="card-btn" onclick="toggleDone('subitem','${c.id}',${cD?0:1})">${cD?'↺':'✓'}</button>`:''}
       ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${c.id}',true)">🗑️</button>`:''}
       ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${c.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${c.id}')">+ Sub</button>`:''}
@@ -2022,7 +2024,7 @@ function renderItem(item,today,itemNum){
       ${s.resp_url?`<img src="${esc(s.resp_url)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:2px solid #818cf8" loading="lazy">`:''}
       ${s.cover_url?`<img src="${esc(s.cover_url)}" style="height:26px;border-radius:4px;object-fit:contain;background:transparent" loading="lazy">`:''}
       ${_nt?'':statusBadge(s.status,s.id,'subitem')}
-      ${_can?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button>`:''}
+      ${_can?`<button class="card-btn" onclick="openItemModal('${s.id}','${item.atividade_id}',true,'${item.id}')">✏️</button><button class="card-btn rec-link-btn" title="Link de conferência só deste subitem" aria-label="Link de conferência deste subitem" onclick="event.stopPropagation();openConferenciaLink('${item.atividade_id}','sub','${s.id}')">🔗</button>`:''}
       ${_can&&!_nt?`<button class="card-btn" onclick="toggleDone('subitem','${s.id}',${sD?0:1})">${sD?'↺':'✓'}</button>`:''}
       ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="font-size:10px;background:#7f1d1d;color:#fca5a5" onclick="deleteItem('${s.id}',true)">🗑️</button>`:''}
       ${_can&&window.userCanCreateItems?.()?`<button class="card-btn" style="font-size:10px;background:#1e3a5f;color:#60a5fa" onclick="duplicarItem('${s.id}',true,'${item.atividade_id}')" title="Duplicar">📋</button><button class="card-btn" style="font-size:10px" onclick="openItemModal(null,'${item.atividade_id}',true,'${s.id}')">+ Sub</button>`:''}
@@ -2047,7 +2049,7 @@ function renderItem(item,today,itemNum){
       ${_nt?'':statusBadge(item.status,item.id,'item')}
       ${_nt||_sec?.show_progress_percentage===0?'':pRing(pr.pct)}
       <span id="chev-${item.id}" style="color:var(--muted);font-size:11px;transition:transform .2s;flex-shrink:0">▶</span>
-      ${_can?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button>`:''}
+      ${_can?`<button class="card-btn" style="margin-left:4px" onclick="event.stopPropagation();openItemModal('${item.id}','${item.atividade_id}',false,null)">✏️</button><button class="card-btn rec-link-btn" title="Link de conferência só deste lançamento" aria-label="Link de conferência deste lançamento" onclick="event.stopPropagation();openConferenciaLink('${item.atividade_id}','item','${item.id}')">🔗</button>`:''}
       ${_can&&done&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',0)">↺</button>`:''}
       ${_can&&!done&&!pr.hasSubs&&!_nt?`<button class="card-btn" onclick="event.stopPropagation();toggleDone('item','${item.id}',1)">✓</button>`:''}
       ${_can&&window.userCanDeleteItems?.()?`<button class="card-btn" style="background:#7f1d1d;color:#fca5a5" onclick="event.stopPropagation();deleteItem('${item.id}',false)">🗑️</button>`:''}

@@ -177,8 +177,8 @@
       <header class="mu-ficha-head"><span class="mu-av lg" aria-hidden="true">${esc(String(m.description || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase())}</span>
         <div><h3>${esc(m.description)}</h3><small>${[a != null ? a + ' anos' : '', val(m, 'Bairro / localidade'), val(m, 'Telefone')].filter(Boolean).map(esc).join(' · ')}</small></div></header>
       <div class="mu-actions">${pode ? `<button type="button" class="btn-action primary" onclick="mulherOcorrencia('${gid}','${esc(id)}')">＋ Ocorrência</button><button type="button" class="btn-action" onclick="mulherFicha('${gid}','${esc(id)}')">✏️ Editar ficha</button>` : ''}
-        <button type="button" class="btn-action" onclick="mulherPdf('${gid}','${esc(id)}')">📄 PDF com QR</button>
-        ${ef(m).mulher_token ? `<button type="button" class="btn-action" onclick="mulherCopiarLink('${esc(ef(m).mulher_token)}',this)">🔗 Link de leitura</button>` : ''}
+        <button type="button" class="btn-action" onclick="mulherCompartilhar('${gid}','${esc(id)}','pdf')">📄 PDF com QR</button>
+        <button type="button" class="btn-action" onclick="mulherCompartilhar('${gid}','${esc(id)}','link')">🔗 Criar link</button>
         ${pode && window.userCanDeleteItems?.() ? `<button type="button" class="btn-action mu-del" onclick="deleteItem('${esc(id)}',false)">🗑️</button>` : ''}</div>
       ${blocos || '<p class="mu-empty">Ficha sem detalhes — toque em ✏️ Editar ficha para completar.</p>'}
       ${m.observacao ? `<section class="mu-sec"><h4>📝 Observações</h4><p>${esc(m.observacao)}</p></section>` : ''}
@@ -222,6 +222,46 @@
       await window.loadData(); window.toast('🕊️ Ocorrência salva.', 'success'); window.openActivity(gid); window.mulherVer(gid, mid);
     } catch (e) { window.toast('Não foi possível salvar: ' + (window.friendlyDbError?.(e) || e.message || e), 'error'); btn.disabled = false; }
   };
+  // ── compartilhar a ficha (somente leitura): validade e PIN opcionais; serve para o link e para o QR do PDF ──
+  async function linksDaFicha(gid, id) {
+    try { const {data} = await window.db.from('share_links').select('id,token,created_at,expires_at,pin_hash,visits,created_by_name').eq('atividade_id', gid).eq('alvo_tipo', 'mulher').eq('alvo_id', id).is('revoked_at', null).order('created_at', {ascending: false}).limit(6);
+      return (data || []).filter(l => !l.expires_at || new Date(l.expires_at) > new Date()); } catch { return []; }
+  }
+  window.mulherCompartilhar = async function (gid, id, modo) {
+    const m = (S().items || []).find(i => i.id === id); if (!m) return;
+    const pdf = modo === 'pdf';
+    window.openModal(pdf ? '📄 PDF da ficha com QR' : '🔗 Link da ficha (somente leitura)', esc(m.description), `<div class="mu-share">
+      <section class="mu-share-hero"><span aria-hidden="true">${pdf ? '📄' : '🔗'}</span><div><b>${pdf ? 'O QR do cabeçalho e do rodapé abre esta ficha' : 'Quem abrir o link vê a ficha e as ocorrências'}</b><small>Somente leitura — ninguém consegue alterar nada pelo link. Escolha por quanto tempo ele vale e, se quiser, um PIN.</small></div></section>
+      ${window.linkOpcoesHtml?.('Sem prazo: vale até você encerrar.') || ''}
+      <div class="mu-share-out" hidden></div>
+      <div class="mu-share-ativos"></div>
+      <div class="mu-foot"><button type="button" class="btn-action" onclick="mulherVer('${gid}','${esc(id)}')">← Voltar à ficha</button><button type="button" class="btn-action primary" id="mu-share-go" onclick="mulherGerarLink('${gid}','${esc(id)}','${modo}')">${pdf ? '📄 Gerar PDF' : '🔗 Gerar link'}</button></div></div>`);
+    const ativos = await linksDaFicha(gid, id), box = document.querySelector('#modal-ov .mu-share-ativos');
+    if (box && ativos.length) box.innerHTML = `<h4 class="conf-h">Links abertos desta ficha</h4><ul class="mu-share-list">${ativos.map(l => `<li><span>${l.pin_hash ? '🔒 ' : ''}criado em ${new Date(l.created_at).toLocaleDateString('pt-BR')} · ${esc(window.linkValidadeTexto?.(l.expires_at) || '')} · ${l.visits || 0} acesso(s)</span><button type="button" class="btn-action" onclick="mulherCopiarLink('${esc(l.token)}',this)">📋 Copiar</button><button type="button" class="btn-action conf-revoke" onclick="mulherEncerrarLink('${gid}','${esc(id)}','${l.id}','${modo}')">⛔ Encerrar</button></li>`).join('')}</ul>`;
+  };
+  window.mulherGerarLink = async function (gid, id, modo) {
+    const root = document.querySelector('#modal-ov .mu-share'), op = window.linkOpcoesLer?.(root) || {horas: null, pin: null}; if (!op) return;
+    const btn = document.getElementById('mu-share-go'); btn.disabled = true; btn.textContent = 'Gerando…';
+    let t = null;
+    try { const {data, error} = await window.db.rpc('pms_share_create', {p_group: gid, p_modo: 'ver', p_alvo_tipo: 'mulher', p_alvo_id: id, p_horas: op.horas, p_pin: op.pin}); if (error) throw error; t = data?.token; }
+    catch (e) {
+      if (op.horas || op.pin) { window.toast('Não foi possível criar o link: ' + (window.friendlyDbError?.(e) || e.message || e), 'error'); btn.disabled = false; btn.textContent = modo === 'pdf' ? '📄 Gerar PDF' : '🔗 Gerar link'; return; }
+      t = ef((S().items || []).find(i => i.id === id)).mulher_token; // sem internet para criar: usa o QR permanente da ficha
+    }
+    if (modo === 'pdf') { await window.mulherPdf(gid, id, t, op); window.mulherVer(gid, id); return; }
+    const url = publicUrl(t), msg = encodeURIComponent(`Ficha (somente leitura) — Secretaria da Mulher de Sertânia:\n${url}${op.pin ? '\n(o PIN será informado separadamente)' : ''}`);
+    const out = root.querySelector('.mu-share-out'); out.hidden = false;
+    out.innerHTML = `<div class="mu-share-card">${window.qrSvg?.(url, 156) || ''}<div><span class="conf-chip is-time">⏳ ${esc(window.linkValidadeTexto?.(op.horas ? new Date(Date.now() + op.horas * 3600e3) : null) || '')}</span>${op.pin ? ' <span class="conf-chip is-pin">🔒 com PIN</span>' : ''}
+      <div class="conf-url"><input type="text" readonly value="${esc(url)}" onclick="this.select()" aria-label="Link da ficha"><button type="button" class="btn-action primary" onclick="conferenciaCopiar(this)">📋 Copiar</button></div>
+      <div class="conf-actions"><a class="btn-action conf-zap" target="_blank" rel="noopener" href="https://wa.me/?text=${msg}">📱 WhatsApp</a></div></div></div>`;
+    btn.disabled = false; btn.textContent = '🔗 Gerar outro link';
+    window.toast('🔗 Link criado!', 'success');
+  };
+  window.mulherEncerrarLink = async function (gid, id, linkId, modo) {
+    if (!confirm('Encerrar este link? Quem tiver o link (ou o QR impresso dele) não conseguirá mais abrir a ficha.')) return;
+    try { const {error} = await window.db.rpc('pms_share_revoke', {p_id: linkId}); if (error) throw error; window.toast('⛔ Link encerrado.', 'success'); window.mulherCompartilhar(gid, id, modo); }
+    catch (e) { window.toast('Não foi possível encerrar: ' + (window.friendlyDbError?.(e) || e.message || e), 'error'); }
+  };
   window.mulherCopiarLink = async function (t, btn) {
     const url = publicUrl(t); try { await navigator.clipboard.writeText(url); } catch { prompt('Copie o link:', url); }
     if (btn) { btn.textContent = '✓ Link copiado'; setTimeout(() => { btn.textContent = '🔗 Link de leitura'; }, 1800); }
@@ -237,11 +277,12 @@
   }
   const LIL = [124, 58, 237], INK = [46, 16, 101], TXT = [33, 37, 63], MUT = [91, 97, 128], SOFT = [245, 243, 255];
 
-  window.mulherPdf = async function (gid, id) {
+  window.mulherPdf = async function (gid, id, tokenLink, op = {}) {
     const m = (S().items || []).find(i => i.id === id); if (!m) return;
     if (!window.jspdf?.jsPDF) { window.toast('Gerador de PDF não carregado.', 'error'); return; }
-    let t = ef(m).mulher_token;
+    let t = tokenLink || ef(m).mulher_token;
     if (!t) { t = token(); try { await window.updateDoc(window.doc(window.db, 'items', id), {extra_fields: {...ef(m), mulher_token: t}}); await window.loadData(); } catch { /* segue sem salvar */ } }
+    const qrNota = [op.horas ? `QR válido até ${new Date(Date.now() + op.horas * 3600e3).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}` : 'QR sem prazo', op.pin ? 'protegido por PIN' : ''].filter(Boolean).join(' · ');
     const url = publicUrl(t), {jsPDF} = window.jspdf, doc = new jsPDF({unit: 'mm', format: 'a4'}); window.safePdf?.(doc);
     const W = 210, H = 297, mx = 12, cw = W - mx * 2, oc = ocorrencias(m), a = idade(val(m, 'Data de nascimento'));
     let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
@@ -251,7 +292,7 @@
       doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...LIL); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA · SECRETARIA DA MULHER', mx + 17, 9);
       doc.setFontSize(14); doc.setTextColor(...INK); const nm = doc.splitTextToSize(String(m.description || '').toUpperCase(), cw - 17 - 30); doc.text(nm[0], mx + 17, 16);
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MUT);
-      doc.text([`Ficha de acompanhamento${a != null ? ' · ' + a + ' anos' : ''}${val(m, 'Situação do acompanhamento') ? ' · ' + val(m, 'Situação do acompanhamento') : ''}`, `Emitido em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} · QR: ficha somente leitura`], mx + 17, 21.5);
+      doc.text([`Ficha de acompanhamento${a != null ? ' · ' + a + ' anos' : ''}${val(m, 'Situação do acompanhamento') ? ' · ' + val(m, 'Situação do acompanhamento') : ''}`, `Emitido em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} · ${qrNota}`], mx + 17, 21.5);
       drawQr(doc, url, W - mx - 24, 3, 24);
       return 36;
     };
@@ -288,8 +329,8 @@
     for (let pg = 1; pg <= pages; pg++) {
       doc.setPage(pg); doc.setFillColor(...SOFT); doc.rect(0, H - 24, W, 24, 'F'); doc.setFillColor(...LIL); doc.rect(0, H - 24, W, .8, 'F');
       drawQr(doc, url, mx, H - 22, 20);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...INK); doc.text('Escaneie para ver esta ficha e todas as ocorrências (somente leitura)', mx + 24, H - 15);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(...MUT); doc.text('Documento com dados pessoais e sensíveis (LGPD) — guarde em local seguro.', mx + 24, H - 10.5);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...INK); doc.text(`Escaneie para ver esta ficha e todas as ocorrências (somente leitura)${op.pin ? ' — pede PIN' : ''}`, mx + 24, H - 15);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(...MUT); doc.text(`${qrNota} · Documento com dados pessoais e sensíveis (LGPD) — guarde em local seguro.`, mx + 24, H - 10.5);
       doc.text(`Página ${pg} de ${pages}`, W - mx, H - 5, {align: 'right'}); doc.text('Prefeitura Municipal de Sertânia · Gestão de Atividades', mx + 24, H - 5);
     }
     const slug = String(m.description || 'ficha').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '');

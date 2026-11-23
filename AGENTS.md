@@ -73,6 +73,13 @@
   usa só `pms_share_open/save/conferir_todos` (security definer, validam o token de 32 caracteres e o grupo, sem
   WhatsApp, autor gravado como "Nome · link de conferência" via `pms.actor_name`). Criar/encerrar: `pms_share_create`,
   `pms_share_revoke` (logado). Testes: `tests/conferir.browser.cjs` e `tests/link-conferencia.browser.cjs`.
+- v2 (migração 20261124000000, pedido de 23/11/2026 20h): link também para UM lançamento (botão 🔗 ao lado do ✏️ em
+  cada item/subitem → `openConferenciaLink(grupo,'item'|'sub',id)`; o link alcança o item + subitens / o subitem +
+  descendentes, `pms_share_escopo`) e para a FICHA DA MULHER (`alvo_tipo 'mulher'`, somente leitura). Validade opcional
+  (Sem prazo, 1 h, 2 h, 6 h, 1 dia, 2 dias, 7 dias, 30 dias → `expires_at`) e PIN de 4 números OPCIONAL, DESLIGADO por
+  padrão (`linkOpcoesHtml`/`linkOpcoesLer` em js/link-conferencia.js; hash bcrypt em `pin_hash`; 8 erros bloqueiam o
+  link — `pms_share_barreira`). conferir.html e mulher.html pedem o PIN e mostram "válido até…"; vencido/bloqueado
+  explicam em frase. Um link aberto por alvo de conferência (o novo encerra o anterior e zera só aquele escopo).
 
 ## Secretaria da Mulher (regra do usuário, 23/11/2026)
 
@@ -80,6 +87,16 @@
   cadastradas · 🗺️ Levantamento da rede. Grupo MULHERES CADASTRADAS (`mulher_cadastro:1`; deixou de ser o grupo de entrada
   do Registro de Campo) = fichas; ocorrências = subitens da ficha (linha do tempo). Ficha em 4 passos (Identificação,
   Contato e endereço, Vida e família, Situação e rede de proteção) com pílulas, campos condicionais e nomes legíveis.
+- PÁGINA DE ENTRADA "CASA LILÁS" (`js/mulher-home.js` + `css/mulher-home.css`): ao abrir a SECRETARIA DA MULHER (casa do
+  grupo `mulher_cadastro`) o site NÃO mostra a grade genérica de grupos (pedido do usuário: layout totalmente diferente e
+  inovador). Aurora lilás/pêssego/menta, flor que "respira", saudação + frase de cuidado, gestos grandes (🤗 Acolher uma
+  mulher, 🕊️ Registrar ocorrência com escolha rápida da mulher, 📖 Todas as fichas), busca instantânea de fichas,
+  "pulso do cuidado", agenda de retornos (atrasado em âmbar), últimas ocorrências, mosaico dos espaços (cada grupo com
+  ícone/cor/frase), rede de apoio com telefones do último levantamento (toque para ligar) + 180 e 190. "▦ Ver em grade
+  (modo clássico)" mostra a grade antiga com "💜 Voltar…". Gancho em `renderDemandas` (`mulherHomeFor`).
+  Teste: `tests/mulher-home.browser.cjs` (390 e 1366).
+- Ficha: "🔗 Criar link" e "📄 PDF com QR" abrem a escolha de validade + PIN opcional (desligado por padrão) e listam os
+  links abertos da ficha com "⛔ Encerrar"; o QR do PDF usa o link criado (rodapé informa "QR válido até…/sem prazo").
 - PDF da ficha com QR no CABEÇALHO e no RODAPÉ (`js/vendor/qrcode.js`, qrcode-generator MIT) → `mulher.html?t=<mulher_token>`
   somente leitura (ficha + todas as ocorrências) via `pms_mulher_publica` (migração 20261123210000). O usuário escolheu
   "público por link" (sem PIN) em 23/11/2026; token aleatório de 32 caracteres, aviso LGPD no PDF e na página.
@@ -554,7 +571,9 @@
   usuário, 19/11/2026: "as pessoas normais na cidade não entram em cadastro"). Fonte = `pms_pessoas_fontes()`:
   CONTROLE DE EMPREGOS / VEREADORES › itens "FOLHA OFICIAL - …" com Vínculo = 1 (efetivos e cargos CC/AP) e
   vigias com vínculo EFETIVO/COMISSIONADO. BCCS, contratados por secretaria, taxistas e beneficiários NÃO entram.
-  Migração 20261118180000 aplicada em 19/11/2026: 1.374 fichas, 1.400 registros ligados (Vínculo 2 = a confirmar com o usuário). Mesma
+  Migração 20261118180000 aplicada em 19/11/2026: 1.374 fichas, 1.400 registros ligados. Vínculo 2 (23/11/2026, migração
+  20261123230000): são os 20 SEGUNDOS vínculos de servidores que já têm Vínculo 1 (acúmulo de cargo) — entram como fonte e
+  ficam ligados à MESMA ficha (0 fichas novas, 20 registros ligados). Mesma
   pessoa = mesmo CPF ou, sem CPF, mesmo nome (`pms_nome_chave`: sem acento/parênteses). Na ficha só entram
   identificação e contato (CPF, RG, NIS, CNH, telefone, endereço, localidade); salário, função, indicação ficam
   só na lista de origem. `pms_pessoas_sync()` (migração 20261118170000) é idempotente, não dispara WhatsApp e
