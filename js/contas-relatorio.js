@@ -99,8 +99,7 @@
     const controls = `<div class="ccr-controls">
       <label>Ano<select onchange="ccRelatorioSet('${secId}','ano',this.value)">${opt('', 'Todos os anos', d.anoSel)}${d.anos.map(a => opt(a, a, d.anoSel)).join('')}</select></label>
       <label>Tipo de conta<select onchange="ccRelatorioSet('${secId}','tipo',this.value)">${opt('', 'Todos', d.tipoSel)}${d.tipos.map(t => opt(t, t, d.tipoSel)).join('')}</select></label>
-      <label>Secretaria<select onchange="ccRelatorioSet('${secId}','sec',this.value)">${opt('', 'Todas', d.secSel)}${d.secNames.map(s => opt(s, s, d.secSel)).join('')}</select></label>
-      <button type="button" class="ccr-pdf" onclick="ccRelatorioPdf('${secId}')">📄 Gerar PDF deste relatório</button></div>`;
+      <label>Secretaria<select onchange="ccRelatorioSet('${secId}','sec',this.value)">${opt('', 'Todas', d.secSel)}${d.secNames.map(s => opt(s, s, d.secSel)).join('')}</select></label></div>`;
     // neuroarquitetura: situação numa frase + anel de progresso + fichas cujo valor nunca sai do card
     const pend = d.tot.total - d.tot.pago, pct = d.tot.total ? d.tot.pago / d.tot.total * 100 : 0;
     const escopo = [d.tipoSel ? `Contas de ${d.tipoSel}` : 'Todas as contas', d.anoSel ? `em ${d.anoSel}` : 'em todos os anos', d.secSel ? `· ${d.secSel}` : ''].filter(Boolean).join(' ');
@@ -156,7 +155,7 @@
   window.ccCadastroHtml = function (secId) {
     const d = cadastroData(secId);
     let n = 0;
-    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>Um local por linha</b><span>Conta contrato, relógio, endereço e demais dados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div><button type="button" class="ccr-pdf" onclick="ccCadastroPdf('${secId}')">📄 Gerar PDF do cadastro</button></div>
+    return `<div class="ccr ccr-cadastro"><div class="ccr-controls"><div class="ccr-cad-intro"><b>Um local por linha</b><span>Conta contrato, relógio, endereço e demais dados.${d.missing ? ` <em>${d.missing} sem conta contrato.</em>` : ''}</span></div></div>
       ${(() => { const K = window.ccnKpi || ((c, i, l, v, s) => `<div class="ccn-kpi ${c}"><div class="ccn-kpi-body"><span class="ccn-kpi-lbl">${l}</span><b class="ccn-kpi-val">${v}</b><small>${s || ''}</small></div></div>`);
         const lig = d.groups.flatMap(g => g.locais).filter(l => window.cadastroLinks?.cad(l.local)).length, com = d.total - d.missing, pct = d.total ? com / d.total * 100 : 0;
         return `<section class="ccn-hero ccn-hero-sm is-${d.missing ? 'focus' : 'done'}"><div class="ccn-hero-txt"><span class="ccn-hello">🏢 Cadastro dos locais</span><h2>${d.missing ? `${d.missing} local(is) sem conta contrato` : 'Cadastro completo ✨'}</h2><p>${d.missing ? 'Complete a conta contrato destes locais (marcados em vermelho) para o relatório e os PDFs saírem perfeitos.' : `Todos os ${d.total} locais têm conta contrato. Excelente!`}</p><small class="ccn-scope">Dados vindos de ADMINISTRAÇÃO › Cadastros (o coração do sistema) + os do controle.</small></div>${d.total && window.ccnRing ? `<div class="ccn-hero-ring">${window.ccnRing(pct, 'completo')}</div>` : ''}</section>

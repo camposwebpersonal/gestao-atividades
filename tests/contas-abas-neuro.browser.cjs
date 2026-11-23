@@ -55,6 +55,11 @@ const conta = (id, local, mes, valor, pago, venc) => row({id, atividade_id: 'ccx
   assert.match(await txt('button.cc-month.has-pend'), /FEV.*1 pendente/);
   assert.equal(await page.locator('button.cc-month').count(), 12);
   assert.match(await txt('.cc-local-summary'), /Total do ano: R\$ 1\.853\.927,99.*Pendente: R\$ 549,38/);
+  // seletor compacto de locais: pílulas com bolinha de situação + filtro instantâneo; PDF do topo = aba ativa
+  assert.equal(await page.locator('.cc-lpill').count(), 2);
+  assert.match(await txt('.ccn-pdf'), /PDF dos lançamentos/);
+  await page.evaluate(() => window.ccNavegar('ccx', 'setor', 'cat-esc'));
+  assert.equal(await page.locator('.cc-lpill.st-pend').count(), 2);
   await sweep('lancamentos');
 
   // ⏰ Vencimentos: situação em frase, grupos por urgência, ação direta
@@ -65,6 +70,16 @@ const conta = (id, local, mes, valor, pago, venc) => row({id, atividade_id: 'ccx
   assert.match(await txt('.ccv-group.is-late .ccv-row'), /HOSPITAL.*UNIDADES DE SAÚDE · Luz.*há 40 dias.*R\$ 455\.662,94.*Marcar paga/);
   assert.match(await txt('.ccv-group.is-week'), /CRECHE BARTOLOMEU.*em 3 dias/);
   await sweep('vencimentos');
+  assert.match(await txt('.ccn-pdf'), /PDF dos vencimentos/);
+  if (process.env.LIBS) {
+    await page.evaluate(() => { window.__pdf = null; window.jspdf.jsPDF.API.save = function (name) { window.__pdf = {name, b64: this.output('datauristring').split(',')[1]}; }; });
+    await page.click('.ccn-pdf');
+    await page.waitForFunction(() => window.__pdf, null, {timeout: 20000});
+    const v = await page.evaluate(() => window.__pdf); const vf = os.tmpdir() + `/contas-venc-${W}.pdf`; fs.writeFileSync(vf, Buffer.from(v.b64, 'base64'));
+    const vt = execFileSync('pdftotext', ['-layout', vf, '-']).toString();
+    for (const piece of ['VENCIMENTOS', 'conta(s) vencida(s)', 'Vencidas · 2 conta(s)', 'HOSPITAL MARIA ALICE', 'Vencem esta semana', 'Página 1 de']) assert.ok(vt.includes(piece), 'faltou no PDF de vencimentos: ' + piece);
+    assert.match(v.name, /^VENCIMENTOS-/);
+  }
   await page.click('.ccv-group.is-late .ccv-row:first-child .ccv-pay');
   await page.waitForFunction(() => window.S.contas.find(c => c.id === 'k4')?.pago === true);
   const k4 = await page.evaluate(() => window.S.contas.find(c => c.id === 'k4'));

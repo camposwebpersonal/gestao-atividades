@@ -72,7 +72,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   // PDF
   if (process.env.LIBS) {
     await page.evaluate(() => { window.__pdf = null; window.jspdf.jsPDF.API.save = function (name) { window.__pdf = {name, b64: this.output('datauristring').split(',')[1]}; }; });
-    await page.click('.ccr-pdf');
+    await page.click('.ccn-pdf');
     await page.waitForFunction(() => window.__pdf, null, {timeout: 20000});
     const {b64, name} = await page.evaluate(() => window.__pdf);
     const file = os.tmpdir() + '/ccr-' + W + '.pdf'; fs.writeFileSync(file, Buffer.from(b64, 'base64'));
@@ -96,7 +96,7 @@ const conta = (id, local, mes, valor, pago, obs, extra = {}) => row({id, ativida
   await page.screenshot({path: os.tmpdir() + `/ccr-cad-${W}.png`, fullPage: true});
   if (process.env.LIBS) {
     await page.evaluate(() => { window.__pdf = null; });
-    await page.click('.ccr-cadastro .ccr-pdf');
+    await page.click('.ccn-pdf');
     await page.waitForFunction(() => window.__pdf, null, {timeout: 20000});
     const {b64, name} = await page.evaluate(() => window.__pdf);
     const file = os.tmpdir() + '/ccr-cad-' + W + '.pdf'; fs.writeFileSync(file, Buffer.from(b64, 'base64'));
