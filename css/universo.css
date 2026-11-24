@@ -281,3 +281,4 @@
  @keyframes bkSheet{from{transform:translateY(40px);opacity:.4}}
 }
 @media(prefers-reduced-motion:reduce){#modal-ov .modal-box.bk-modal{animation:none}}
+@media(max-width:420px){.uv-praca-faixa .uv-praca-pulso i{display:none}.uv-praca-faixa .uv-praca-pulso span{padding:3px 9px;gap:4px}.uv-praca-faixa .uv-praca-pulso b{font-size:14px}}

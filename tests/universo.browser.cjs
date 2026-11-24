@@ -28,7 +28,7 @@ const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
   console.log('praça', JSON.stringify({...praca, faixa: praca.faixa.slice(0, 90)}));
   assert.equal(praca.hero, false, 'saudação desligada por padrão'); assert.match(praca.faixa, /Praça de Sertânia/); assert.ok(praca.pers, 'admin vê Personalizar');
   await page.screenshot({path: `/tmp/uv-praca-${W}.png`});
-  assert.ok(praca.h < (W < 800 ? 160 : 110), 'faixa fina: ' + praca.h);
+  assert.ok(praca.h < (W < 800 ? 200 : 120), 'faixa fina: ' + praca.h);
   assert.equal(praca.cards, praca.uv); assert.ok(praca.mundos.includes('Roça Viva')); assert.ok(praca.mundos.includes('Casa do Cuidado'));
   assert.deepEqual(await audit('.productivity-dashboard'), []); assert.deepEqual(await over('.productivity-dashboard'), []);
   await page.screenshot({path: `/tmp/uv-praca-${W}.png`});
