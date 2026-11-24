@@ -23,27 +23,55 @@ const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
 
   // Praça de Sertânia (Visão geral)
   await page.evaluate(() => { S.secretarias.forEach(s => { s.demandas_ativa = true; }); window.setView('mod'); window.renderModulos(); });
-  await page.waitForSelector('.uv-praca');
-  const praca = await page.evaluate(() => ({hero: document.querySelector('.uv-praca')?.textContent, ceu: [...document.querySelector('.uv-praca').classList].find(c => c.startsWith('is-')), cards: document.querySelectorAll('.secretary-launch-card').length, uv: document.querySelectorAll('.secretary-launch-card.uv-card').length, mundos: [...document.querySelectorAll('.uv-card-mundo')].map(e => e.textContent), mundo: document.getElementById('content').dataset.mundo}));
-  console.log('praça', JSON.stringify({...praca, hero: praca.hero.slice(0, 120)}));
-  assert.match(praca.hero, /(Bom dia|Boa tarde|Boa noite)/); assert.match(praca.hero, /Praça de Sertânia/); assert.ok(praca.ceu);
-  assert.equal(praca.cards, praca.uv); assert.ok(praca.mundos.includes('Roça Viva'), 'Agricultura vira Roça Viva');
-  assert.ok(praca.mundos.includes('Casa do Cuidado'), 'Saúde vira Casa do Cuidado');
+  await page.waitForSelector('.uv-praca-faixa');
+  const praca = await page.evaluate(() => ({faixa: document.querySelector('.uv-praca-faixa')?.textContent, hero: !!document.querySelector('.uv-praca'), cards: document.querySelectorAll('.secretary-launch-card').length, uv: document.querySelectorAll('.secretary-launch-card.uv-card').length, mundos: [...document.querySelectorAll('.uv-card-mundo')].map(e => e.textContent), pers: !!document.querySelector('.uv-praca-faixa .uv-pers'), h: document.querySelector('.uv-praca-faixa').getBoundingClientRect().height}));
+  console.log('praça', JSON.stringify({...praca, faixa: praca.faixa.slice(0, 90)}));
+  assert.equal(praca.hero, false, 'saudação desligada por padrão'); assert.match(praca.faixa, /Praça de Sertânia/); assert.ok(praca.pers, 'admin vê Personalizar');
+  await page.screenshot({path: `/tmp/uv-praca-${W}.png`});
+  assert.ok(praca.h < (W < 800 ? 160 : 110), 'faixa fina: ' + praca.h);
+  assert.equal(praca.cards, praca.uv); assert.ok(praca.mundos.includes('Roça Viva')); assert.ok(praca.mundos.includes('Casa do Cuidado'));
   assert.deepEqual(await audit('.productivity-dashboard'), []); assert.deepEqual(await over('.productivity-dashboard'), []);
   await page.screenshot({path: `/tmp/uv-praca-${W}.png`});
+  // personalizar a Praça: liga a saudação (céu) e desliga o mapa
+  await page.click('.uv-praca-faixa .uv-pers'); await page.waitForSelector('.bk-lista .bk-item');
+  assert.deepEqual(await audit('#modal-ov .modal-box'), []);
+  await page.waitForTimeout(400); await page.screenshot({path: `/tmp/uv-blocos-${W}.png`});
+  await page.click('.bk-item[data-bloco="saudacao"] .bk-sw'); await page.waitForSelector('.uv-praca');
+  await page.click('.bk-item[data-bloco="mapa"] .bk-sw'); await page.waitForTimeout(150);
+  assert.ok(await page.evaluate(() => document.querySelector('.map-shortcut-card')?.hidden === true || !document.querySelector('.map-shortcut-card')));
+  assert.match(await page.textContent('.uv-praca'), /(Bom dia|Boa tarde|Boa noite)/);
+  await page.click('.bk-presets button:has-text("Padrão do site")'); await page.waitForSelector('.uv-praca-faixa');
+  await page.evaluate(() => window.closeModal());
   // menu lateral com emoji do mundo
   assert.ok(await page.evaluate(() => document.querySelectorAll('.sidebar-secretary-link.uv-side[data-emoji]').length > 0));
 
   // página da secretaria (Agricultura)
   await page.evaluate(() => window.openDemandSecretaria('sec2'));
   await page.waitForSelector('.uv-home');
-  const home = await page.evaluate(() => ({mundo: document.querySelector('.uv-home').dataset.mundoHome, h1: document.querySelector('.uv-hero h1').textContent, lema: document.querySelector('.uv-lema').textContent, gestos: [...document.querySelectorAll('.uv-gesto b')].map(b => b.textContent), espacos: [...document.querySelectorAll('.uv-espaco b')].map(b => b.textContent), ico: document.querySelector('.uv-espaco .uv-esp-ico')?.textContent, atencao: document.querySelectorAll('#uv-atencao li').length, late: document.querySelectorAll('#uv-atencao li.is-late').length}));
-  console.log('home', JSON.stringify(home));
-  assert.equal(home.mundo, 'agricultura'); assert.match(home.lema, /1 lançamento passou do prazo/);
-  assert.ok(home.espacos.includes('SOLICITAÇÃO DE ÁGUA DE PIPA - AGRICULTURA')); assert.equal(home.atencao, 2); assert.equal(home.late, 1);
-  assert.ok(home.gestos.some(g => /Novo lançamento/.test(g)));
+  const home = await page.evaluate(() => ({mundo: document.querySelector('.uv-home').dataset.mundoHome, faixa: document.querySelector('.uv-faixa')?.textContent, hero: !!document.querySelector('.uv-hero'), atencao: !!document.getElementById('uv-atencao'), ultimos: document.querySelectorAll('.uv-painel').length, gestos: [...document.querySelectorAll('.uv-gestos.is-compact .uv-gesto b')].map(b => b.textContent), espacos: [...document.querySelectorAll('.uv-espaco b')].map(b => b.textContent), topo: document.querySelector('.uv-mosaico').getBoundingClientRect().top - document.querySelector('.uv-home').getBoundingClientRect().top}));
+  console.log('home', JSON.stringify({...home, faixa: home.faixa?.slice(0, 80)}));
+  assert.equal(home.mundo, 'agricultura'); assert.equal(home.hero, false); assert.equal(home.atencao, false); assert.equal(home.ultimos, 0);
+  assert.match(home.faixa, /SECRETARIA DE AGRICULTURA/); assert.match(home.faixa, /1 atrasado/);
+  assert.ok(home.espacos.includes('SOLICITAÇÃO DE ÁGUA DE PIPA - AGRICULTURA')); assert.ok(home.gestos.some(g => /Novo lançamento/.test(g)));
   assert.deepEqual(await audit('.uv-home'), []); assert.deepEqual(await over('.uv-home'), []);
   await page.screenshot({path: `/tmp/uv-home-${W}.png`, fullPage: true});
+  // atrasados sem o bloco "Precisa de atenção": abre a lista numa janela
+  await page.click('.uv-gesto.is-atencao'); await page.waitForSelector('#modal-ov .uv-lista li.is-late');
+  await page.evaluate(() => window.closeModal());
+  // personalizar a secretaria: liga Saudação, Precisa de atenção e Últimos; muda a ordem; volta ao padrão
+  await page.click('.uv-faixa .uv-pers'); await page.waitForSelector('.bk-item[data-bloco="atencao"]');
+  for (const b of ['saudacao', 'atencao', 'ultimos']) await page.click(`.bk-item[data-bloco="${b}"] .bk-sw`);
+  await page.waitForFunction(() => document.querySelector('.uv-hero') && document.querySelectorAll('.uv-painel.is-half').length === 2);
+  const lig = await page.evaluate(() => ({lema: document.querySelector('.uv-lema').textContent, late: document.querySelectorAll('#uv-atencao li.is-late').length, half: document.querySelectorAll('.uv-painel.is-half').length}));
+  assert.match(lig.lema, /1 lançamento passou do prazo/); assert.equal(lig.late, 1); assert.equal(lig.half, 2);
+  await page.click('.bk-item[data-bloco="espacos"] .bk-ord button:first-child'); await page.waitForTimeout(150);
+  const ordem = await page.evaluate(() => [...document.querySelector('.uv-home').children].map(e => e.className.split(' ')[0]));
+  console.log('ordem', ordem.join(','));
+  assert.ok(ordem.indexOf('uv-espacos') < ordem.lastIndexOf('uv-painel'), 'espaços subiu');
+  assert.equal(await page.evaluate(() => window.uvBlocos('sec:sec2').personalizado), true);
+  assert.equal(await page.evaluate(() => window.uvBlocos('sec:sec5').liga('saudacao')), false, 'outras secretarias não mudam');
+  await page.click('.bk-presets button:has-text("Padrão do site")'); await page.waitForSelector('.uv-faixa');
+  await page.evaluate(() => window.closeModal());
   // busca da secretaria
   await page.fill('#uv-busca', 'caititu'); await page.waitForTimeout(80);
   assert.match(await page.textContent('#uv-find-res'), /MARIA DO SÍTIO CAITITU/);
@@ -62,6 +90,13 @@ const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
   console.log('grupo', JSON.stringify(g)); assert.match(g.selo, /Roça Viva/); assert.equal(g.esp, '💧'); assert.equal(g.mundo, 'agricultura');
   assert.deepEqual(await audit('.activity-heading-row'), []);
   await page.screenshot({path: `/tmp/uv-grupo-${W}.png`});
+  // personalizar a tela do grupo: some o selo e a barra de seleção
+  await page.evaluate(() => window.uvPersonalizarGrupo('uvg1')); await page.waitForSelector('.bk-item[data-bloco="selo"]');
+  await page.click('.bk-item[data-bloco="selo"] .bk-sw'); await page.click('.bk-item[data-bloco="selecao"] .bk-sw');
+  assert.equal(await page.isVisible('.uv-selo'), false); assert.equal(await page.evaluate(() => document.getElementById('content').dataset.uvOff), 'selo selecao');
+  await page.evaluate(() => window.closeModal());
+  await page.evaluate(() => window.openActivity('uvg1')); await page.waitForTimeout(200);
+  assert.equal(await page.isVisible('.uv-selo'), false, 'escolha do grupo continua depois de reabrir');
   // tela sem mundo: a aurora some
   await page.evaluate(() => window.setView('cont')); await page.waitForTimeout(200);
   console.log('depois', await page.evaluate(() => [location.hash, document.getElementById('content').dataset.mundoOnde, window.__currentView, document.getElementById('content').firstElementChild?.className]));

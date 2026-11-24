@@ -83,6 +83,22 @@
 - Tela nova de secretaria/módulo: chamar `universoMundo(nome)` e usar as variáveis --uv-*; nunca cards genéricos.
   Teste: `tests/universo.browser.cjs` (390 e 1366).
 
+## BLOCOS personalizáveis em cada página (regra do usuário, 24/11/2026)
+
+- "Cada coisa é um módulo e eu escolho o que aparece em cada local de lançamento." `js/blocos.js`: `uvBlocos(chave)` →
+  ordem + ligados; chaves `sec:<id da secretaria>`, `praca` (Visão geral) e `grp:<id do grupo>`. Gravado para TODOS em
+  `app_settings` id `blocos` ({paginas:{chave:{ordem,on,off}}}); só administrador grava (RLS) e vê o botão 🎛️.
+- PADRÃO DO SITE: Saudação ("Bom dia"/céu), "Precisa de atenção" e "Últimos lançamentos" DESLIGADOS em todas as páginas;
+  no lugar da saudação fica uma FAIXA FINA de identidade (emoji + secretaria + "⏰ N atrasados"/"tudo em dia ✨" + 🎛️) e os
+  atalhos viram pílulas. A Casa Lilás (Secretaria da Mulher) NÃO usa blocos: fica exatamente como está.
+- Blocos: secretaria = Saudação, Atalhos, Busca, Números, Precisa de atenção, Últimos, Espaços (sempre), Rodapé (com ▲▼
+  para ordem); Visão geral = Saudação/céu, Números, Atalho de campo, Mapa, Secretarias (sempre); tela do grupo (⚙️ Mais ›
+  🎛️ Personalizar esta tela) = Selo do mundo, Painel do pipa (só se existir), Fichas de resumo, Barra "Selecionar todos"
+  (`#content[data-uv-off~=…]`). Atalhos do painel: 🎯 Modo foco, 🌈 Tudo à vista, ↺ Padrão do site, 🏛️ Usar em todas as
+  secretarias. Painel = gaveta lateral (folha de baixo no celular) com PRÉVIA AO VIVO: a página muda a cada toque.
+  Com "Precisa de atenção" desligado, o atalho "⏰ N atrasados" abre a lista numa janela (`universoAtrasados`).
+  Teste: `tests/universo.browser.cjs` (390 e 1366).
+
 ## Conclusão "na mesma tela" (regra do usuário, 23/11/2026)
 
 - Grupo com Controle de Conclusão escolhe onde ficam os concluídos: aba Concluídos (padrão) ou "📍 na mesma tela"

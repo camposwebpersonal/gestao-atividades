@@ -30,7 +30,8 @@
 <script src="js/cadastro-links.js?v=f71171ad"></script>
 <script src="js/contas-relatorio.js?v=e8db4286"></script>
 <script src="js/vendor/qrcode.js?v=2b135d3d"></script>
-<script src="js/universo.js?v=1dc8ec7c"></script>
+<script src="js/blocos.js?v=026f804e"></script>
+<script src="js/universo.js?v=e4a3b9d5"></script>
 <script src="js/mulher-home.js?v=c9e415f3"></script>
 <script src="js/secretaria-mulher.js?v=5dce9d9c"></script>
 <script src="js/link-conferencia.js?v=f5d8f1cf"></script>
@@ -470,7 +471,7 @@ mark.cc-hl{background:#fde047;color:#111827;border-radius:3px;padding:0 2px;font
 <link rel="stylesheet" href="css/whatsapp-avisos.css?v=94d99c2a">
 <link rel="stylesheet" href="css/bulk-compact.css?v=1f397407">
 <link rel="stylesheet" href="css/image-viewer.css?v=b3b2bf04">
-<link rel="stylesheet" href="css/universo.css?v=f727bd40">
+<link rel="stylesheet" href="css/universo.css?v=58c4b166">
 <link rel="stylesheet" href="css/contrast-guard.css?v=fdab26af">
 <link rel="preconnect" href="https://images.weserv.nl">
 <link rel="preconnect" href="https://i.ibb.co">
@@ -965,7 +966,7 @@ window.workspaceFromHash=workspaceFromHash;
 // ── PWA SERVICE WORKER ──
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=2b3820e7';
+    const swPath=location.pathname.replace(/\/[^\/]*$/,'')+'/sw.js?v=a0d3ec8b';
     navigator.serviceWorker.register(swPath,{updateViaCache:'none'}).then(registration=>{registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)worker.postMessage({type:'SKIP_WAITING'});});});console.log('SW registrado e atualizado');}).catch(e=>{console.error('SW erro:',e);toast('Modo offline indisponível: '+(e.message||e),'error');});
   });
 }
@@ -1903,6 +1904,7 @@ window.openActivity=function(secId){
     _can?`<button type="button" class="gcb-item" onclick="openSecModal('${secId}')">✏️ Editar grupo<small>nome, campos, controles</small></button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarExibicaoPercentual('${secId}',${_showPct?'false':'true'})">% ${_showPct?'Ocultar percentual':'Mostrar percentual'}</button>`:'',
     _can?`<button type="button" class="gcb-item" onclick="openConferenciaLink('${secId}')">🔗 Link de conferência<small>alguém confere pelo celular, sem login</small></button>`:'',
+    window.uvPodeEditar?.()?`<button type="button" class="gcb-item" onclick="uvPersonalizarGrupo('${secId}')">🎛️ Personalizar esta tela<small>escolher os blocos que aparecem</small></button>`:'',
     _can&&_cp?`<button type="button" class="gcb-item" onclick="alternarModoConclusao('${secId}')">${_inl?'🗂️ Levar concluídos para a aba Concluídos<small>separa o que já terminou</small>':'📍 Manter concluídos na mesma tela<small>ficam no lugar, marcados ✅</small>'}</button>`:'',
     _can&&_cp&&sec.concluded==1?`<button type="button" class="gcb-item" onclick="_doMarkActivityUnconcluded('${secId}')">↺ Reabrir grupo</button>`:'',
     _can&&_cp&&sec.concluded!=1?`<button type="button" class="gcb-item" onclick="markActivityConcluded('${secId}')">✅ Concluir grupo</button>`:'',
@@ -2293,7 +2295,7 @@ window.excluirSelecionados=async function(secId){
 // ── MODAL ──
 window.openModal=function(title,sub,html,ctx){
   releaseSaveButtons();
-  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box');
+  document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box','bk-modal');
   document.getElementById('modal-ttl').textContent=title;
   document.getElementById('modal-sub').textContent=sub||'';
   document.getElementById('modal-sub').hidden=!sub;
@@ -2303,7 +2305,7 @@ window.openModal=function(title,sub,html,ctx){
   document.getElementById('modal-ov').style.display='flex';
   const box=document.querySelector('#modal-ov .modal-box');if(box)box.scrollTop=0;
 }
-window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box');_pRT={};};
+window.closeModal=function(){releaseSaveButtons();const closingHook=window.bulkModalClosing;window.bulkModalClosing=null;closingHook?.();document.getElementById('modal-ov').style.display='none';document.querySelector('#modal-ov .modal-box')?.classList.remove('bulk-modal-box','bulk-drafts-modal-box','gp-modal-box','bk-modal');_pRT={};};
 
 // ── RESPONSÁVEIS HELPERS ──
 function _respOptions(selectedName){

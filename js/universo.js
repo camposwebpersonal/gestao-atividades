@@ -106,7 +106,7 @@
   // quando o conteúdo marcado sai da tela (contatos, usuários, lixeira…), a aurora some
   const vigiar = () => {
     const c = document.getElementById('content'); if (!c || c.__uvObs) return; c.__uvObs = true;
-    new MutationObserver(() => { if (c.dataset.mundo && location.hash !== c.__uvHash && !(c.__uvNodes || []).some(n => n.isConnected && n.parentNode === c)) { delete c.dataset.mundo; delete c.dataset.mundoOnde; c.setAttribute('style', (c.getAttribute('style') || '').replace(/--uv-[^;]+;?/g, '')); }
+    new MutationObserver(() => { if (c.dataset.mundo && location.hash !== c.__uvHash && !(c.__uvNodes || []).some(n => n.isConnected && n.parentNode === c)) { delete c.dataset.mundo; delete c.dataset.mundoOnde; delete c.dataset.uvOff; c.setAttribute('style', (c.getAttribute('style') || '').replace(/--uv-[^;]+;?/g, '')); }
       const mod = location.hash.match(/^#module\/([^/?]+)/)?.[1]; if (mod && mod !== 'atendimentos' && !c.dataset.mundo) window.universoMundoModulo(decodeURIComponent(mod)); }).observe(c, {childList: true});
   };
   document.addEventListener('DOMContentLoaded', vigiar); setTimeout(vigiar, 0);
@@ -147,38 +147,39 @@
     const atencao = [...e.atrasados, ...e.semana.filter(i => !e.atrasados.includes(i))].map(i => ({i, d: dias(String(i.deadline_date).slice(0, 10))})).sort((a, b) => a.d - b.d).slice(0, 7);
     const ultimos = [...e.itens].sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || ''))).slice(0, 6);
     const campo = typeof window.openFieldCapture === 'function';
-    window.setC(`<div class="uv uv-home" style="${vars(m)}" data-mundo-home="${m.key}">
-      <section class="uv-hero">
-        <div class="uv-hero-txt"><span class="uv-kicker">${m.emoji} ${esc(m.nome)} · ${esc(hoje)}</span>
-          <h1>${saudacao()}${meuNome() ? ', ' + esc(meuNome()) : ''}</h1>
-          <p class="uv-sec-name">${esc(sec.name)}</p>
-          <p class="uv-lema">${esc(fraseDe(e, m))}</p>
-          <div class="uv-gestos">
+    const B = window.uvBlocos ? window.uvBlocos('sec:' + secId) : {ordem: ['saudacao', 'gestos', 'busca', 'pulso', 'atencao', 'ultimos', 'espacos', 'rodape'], liga: () => true};
+    const pers = window.uvBotaoPersonalizar?.('sec:' + secId, sec.name, `uvPersonalizar('sec:${secId}',${JSON.stringify(sec.name)},()=>renderUniversoHome('${secId}'))`) || '';
+    const gestosHtml = `<div class="uv-gestos">
             ${podeCriar && gruposCriaveis.length ? `<button type="button" class="uv-gesto is-main" onclick="universoNovo(${arg(secId)})"><span aria-hidden="true">＋</span><b>Novo lançamento</b><small>escolha o espaço e pronto</small></button>` : ''}
             ${campo ? `<button type="button" class="uv-gesto" onclick="universoCampo(${arg(secId)})"><span aria-hidden="true">📷</span><b>Registro de campo</b><small>foto + localização</small></button>` : ''}
-            ${e.atrasados.length ? `<button type="button" class="uv-gesto is-atencao" onclick="document.getElementById('uv-atencao')?.scrollIntoView({behavior:'smooth',block:'center'})"><span aria-hidden="true">⏰</span><b>${plural(e.atrasados.length, 'atrasado', 'atrasados')}</b><small>ver o que precisa de atenção</small></button>` : `<button type="button" class="uv-gesto" onclick="document.getElementById('uv-espacos')?.scrollIntoView({behavior:'smooth',block:'start'})"><span aria-hidden="true">🧭</span><b>Espaços</b><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')}</small></button>`}
-          </div></div>
-        <div class="uv-hero-art">${art(m.art)}</div>
-      </section>
-      <section class="uv-find" role="search"><span aria-hidden="true">🔎</span><input type="search" id="uv-busca" value="${esc(busca)}" placeholder="Encontrar em ${esc(m.nome)}: nome, telefone, localidade, assunto…" aria-label="Buscar nesta secretaria" oninput="universoBusca(${arg(secId)},this.value)" autocomplete="off"><div class="uv-find-res" id="uv-find-res"></div></section>
-      <section class="uv-pulso" aria-label="Pulso da secretaria">
+            ${e.atrasados.length ? `<button type="button" class="uv-gesto is-atencao" onclick="universoAtrasados(${arg(secId)})"><span aria-hidden="true">⏰</span><b>${plural(e.atrasados.length, 'atrasado', 'atrasados')}</b><small>ver o que precisa de atenção</small></button>` : `<button type="button" class="uv-gesto" onclick="document.getElementById('uv-espacos')?.scrollIntoView({behavior:'smooth',block:'start'})"><span aria-hidden="true">🧭</span><b>Espaços</b><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')}</small></button>`}
+          </div>`;
+    const duas = B.liga('atencao') && B.liga('ultimos');
+    const P = {
+      saudacao: () => `<section class="uv-hero"><div class="uv-hero-txt"><span class="uv-kicker">${m.emoji} ${esc(m.nome)} · ${esc(hoje)}</span>
+          <h1>${saudacao()}${meuNome() ? ', ' + esc(meuNome()) : ''}</h1><p class="uv-sec-name">${esc(sec.name)}</p><p class="uv-lema">${esc(fraseDe(e, m))}</p>
+          ${B.liga('gestos') ? gestosHtml : ''}</div><div class="uv-hero-art">${art(m.art)}</div>${pers ? `<div class="uv-hero-pers">${pers}</div>` : ''}</section>`,
+      gestos: () => B.liga('saudacao') ? '' : gestosHtml.replace('class="uv-gestos"', 'class="uv-gestos is-compact"'),
+      busca: () => `<section class="uv-find" role="search"><span aria-hidden="true">🔎</span><input type="search" id="uv-busca" value="${esc(busca)}" placeholder="Encontrar em ${esc(m.nome)}: nome, telefone, localidade, assunto…" aria-label="Buscar nesta secretaria" oninput="universoBusca(${arg(secId)},this.value)" autocomplete="off"><div class="uv-find-res" id="uv-find-res"></div></section>`,
+      pulso: () => `<section class="uv-pulso" aria-label="Pulso da secretaria">
         ${[['🌀', e.abertos.length, 'em andamento', 1], ['⏰', e.atrasados.length, e.atrasados.length ? 'passaram do prazo' : 'nada atrasado', e.atrasados.length ? 'warn' : 2], ['✅', e.feitos30.length, 'concluídos em 30 dias', 3], ['🧭', grupos.length, 'espaços de trabalho', 4]].map(([i, n, l, t]) => `<div class="uv-bolha is-t${t}"><span aria-hidden="true">${i}</span><b>${n}</b><small>${l}</small></div>`).join('')}
-      </section>
-      <div class="uv-duo">
-        <section class="uv-painel" id="uv-atencao"><header><h2>⏰ Precisa de atenção</h2><small>prazos vencidos e desta semana</small></header>
+      </section>`,
+      atencao: () => `<section class="uv-painel${duas ? ' is-half' : ''}" id="uv-atencao"><header><h2>⏰ Precisa de atenção</h2><small>prazos vencidos e desta semana</small></header>
           ${atencao.length ? `<ol class="uv-lista">${atencao.map(x => `<li class="${x.d < 0 ? 'is-late' : x.d === 0 ? 'is-today' : ''}"><button type="button" onclick="revealRecord('items',${arg(x.i.id)})"><span class="uv-dia"><b>${dBR(x.i.deadline_date)}</b><small>${x.d < 0 ? `há ${-x.d} d` : x.d === 0 ? 'hoje' : x.d === 1 ? 'amanhã' : `em ${x.d} d`}</small></span><span class="uv-li-txt"><b>${esc(x.i.description || 'Sem descrição')}</b><small>${esc(gnome(x.i.atividade_id))}</small></span></button></li>`).join('')}</ol>` : '<p class="uv-calma">🌿 Nenhum prazo apertado. Tudo sob controle.</p>'}
-        </section>
-        <section class="uv-painel"><header><h2>🕊️ Últimos lançamentos</h2><small>o que chegou por último</small></header>
+        </section>`,
+      ultimos: () => `<section class="uv-painel${duas ? ' is-half' : ''}"><header><h2>🕊️ Últimos lançamentos</h2><small>o que chegou por último</small></header>
           ${ultimos.length ? `<ol class="uv-lista">${ultimos.map(i => `<li><button type="button" onclick="revealRecord('items',${arg(i.id)})"><span class="uv-ponto${i.concluded == 1 ? ' is-ok' : ''}" aria-hidden="true"></span><span class="uv-li-txt"><b>${esc(i.description || 'Sem descrição')}</b><small>${esc(gnome(i.atividade_id))}${i.created_at ? ' · ' + dBR(String(i.created_at).slice(0, 10)) : ''}${i.concluded == 1 ? ' · ✅ concluído' : ''}</small></span></button></li>`).join('')}</ol>` : '<p class="uv-calma">Ainda não há lançamentos por aqui.</p>'}
-        </section>
-      </div>
-      <section class="uv-espacos" id="uv-espacos"><header><h2>Espaços de ${esc(m.nome)}</h2><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')} · toque para entrar</small></header>
+        </section>`,
+      espacos: () => `<section class="uv-espacos" id="uv-espacos"><header><h2>Espaços de ${esc(m.nome)}</h2><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')} · toque para entrar</small></header>
         <div class="uv-mosaico">${grupos.map((g, k) => { const sp = espacoDe(g, m), its = (S().items || []).filter(i => i.atividade_id === g.id), ab = its.filter(i => i.concluded != 1).length;
           const big = k < 2 && grupos.length > 3 && ab > 0;
           return `<button type="button" class="uv-espaco is-t${k % 4 + 1}${big ? ' is-big' : ''}" onclick="openActivity(${arg(g.id)})"><span class="uv-esp-ico" aria-hidden="true">${sp.ico}</span><b>${esc(g.name)}</b><small>${esc(sp.txt)}</small><em>${its.length ? (ab ? `${ab} em andamento · ${its.length} no total` : `tudo em dia ✨ · ${its.length}`) : 'vazio por enquanto'}</em></button>`; }).join('') || '<p class="uv-calma">Nenhum espaço liberado para o seu usuário nesta secretaria.</p>'}</div>
-      </section>
-      <footer class="uv-rodape"><button type="button" onclick="universoModoClassico(true)">▦ Ver em grade (modo clássico)</button>${window.userCanCreateGroups?.() && window.userCan?.('atendimentos', 'criar') ? `<button type="button" onclick="universoModoClassico(true);setTimeout(()=>window.newDemandGroup?.(),60)">＋ Criar grupo</button>` : ''}<span>${m.emoji} ${esc(m.nome)} · ${esc(sec.name)} · Prefeitura de Sertânia</span></footer>
-    </div>`);
+      </section>`,
+      rodape: () => `<footer class="uv-rodape"><button type="button" onclick="universoModoClassico(true)">▦ Ver em grade (modo clássico)</button>${window.userCanCreateGroups?.() && window.userCan?.('atendimentos', 'criar') ? `<button type="button" onclick="universoModoClassico(true);setTimeout(()=>window.newDemandGroup?.(),60)">＋ Criar grupo</button>` : ''}<span>${m.emoji} ${esc(m.nome)} · ${esc(sec.name)} · Prefeitura de Sertânia</span></footer>`,
+    };
+    // Sem a saudação, a identidade vira uma faixa fina de uma linha (mais espaço para trabalhar).
+    const faixa = B.liga('saudacao') ? '' : `<div class="uv-faixa"><span class="uv-faixa-ico" aria-hidden="true">${m.emoji}</span><span class="uv-faixa-txt"><b>${esc(sec.name)}</b><small>${esc(m.nome)}${e.atrasados.length ? ` · <em>⏰ ${plural(e.atrasados.length, 'atrasado', 'atrasados')}</em>` : e.abertos.length ? ` · ${e.abertos.length} em andamento` : ' · tudo em dia ✨'}</small></span><span class="uv-faixa-art" aria-hidden="true">${art(m.art)}</span>${pers}</div>`;
+    window.setC(`<div class="uv uv-home${B.liga('saudacao') ? '' : ' is-enxuto'}" style="${vars(m)}" data-mundo-home="${m.key}">${faixa}${B.ordem.filter(id => B.liga(id)).map(id => P[id]?.() || '').join('')}</div>`);
     aplicarMundo(m, 'secretaria');
     if (busca) window.universoBusca(secId, busca);
   };
@@ -200,6 +201,12 @@
     if (grupos.length === 1) { window.openActivity(grupos[0].id); setTimeout(() => window.openItemModal?.(null, grupos[0].id, false, null), 30); return; }
     window.openModal(`${m.emoji} Novo lançamento`, `Em qual espaço de ${m.nome}?`, `<div class="uv-pick" style="${vars(m)}">${grupos.map((g, k) => { const sp = espacoDe(g, m); return `<button type="button" class="uv-espaco is-t${k % 4 + 1}" onclick="closeModal();openActivity(${arg(g.id)});setTimeout(()=>openItemModal(null,${arg(g.id)},false,null),30)"><span class="uv-esp-ico" aria-hidden="true">${sp.ico}</span><b>${esc(g.name)}</b><small>${esc(sp.txt)}</small></button>`; }).join('')}</div>`);
   };
+  window.universoAtrasados = function (secId) {
+    const alvo = document.getElementById('uv-atencao'); if (alvo) { alvo.scrollIntoView({behavior: 'smooth', block: 'center'}); return; }
+    const sec = (S().secretarias || []).find(s => s.id === secId), m = mundoDe(sec?.name), grupos = gruposDa(secId), e = estat(grupos);
+    const gn = id => grupos.find(g => g.id === id)?.name || '';
+    window.openModal(`⏰ Precisa de atenção`, `${sec?.name || ''} · ${plural(e.atrasados.length, 'atrasado', 'atrasados')}`, `<div class="uv" style="${vars(m)}"><ol class="uv-lista">${e.atrasados.map(i => ({i, d: dias(String(i.deadline_date).slice(0, 10))})).sort((a, b) => a.d - b.d).map(x => `<li class="is-late"><button type="button" onclick="closeModal();revealRecord('items',${arg(x.i.id)})"><span class="uv-dia"><b>${dBR(x.i.deadline_date)}</b><small>há ${-x.d} d</small></span><span class="uv-li-txt"><b>${esc(x.i.description || 'Sem descrição')}</b><small>${esc(gn(x.i.atividade_id))}</small></span></button></li>`).join('')}</ol></div>`);
+  };
   window.universoCampo = function (secId) {
     window.openFieldCapture?.();
     setTimeout(() => { const s = document.getElementById('field-secretaria'); if (s && [...s.options].some(o => o.value === secId)) { s.value = secId; s.dispatchEvent(new Event('change', {bubbles: true})); window.updateFieldCaptureGroups?.(); } }, 40);
@@ -219,15 +226,24 @@
     const c = ceu(), secs = (S().secretarias || []);
     aplicarMundo(PRACA, 'praca');
     const todos = (S().secs || []).filter(g => S().isAdmin || window.userCanGroup?.(g, 'acesso') !== false), e = estat(todos);
+    const B = window.uvBlocos ? window.uvBlocos('praca') : {ordem: ['saudacao', 'pulso', 'campo', 'mapa', 'secretarias'], liga: () => true};
+    const pers = window.uvBotaoPersonalizar?.('praca', 'na Visão geral', "uvPersonalizar('praca','na Visão geral',()=>renderModulos())") || '';
     const head = shell.querySelector('.productivity-heading');
     if (head) {
       const btn = head.querySelector('.dashboard-new-demand')?.outerHTML || '';
       const hoje = new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'long'});
-      head.classList.add('uv-praca', 'is-' + c);
-      head.innerHTML = `<div class="uv-praca-txt"><span class="uv-kicker">🏙️ Praça de Sertânia · ${esc(hoje)}</span><h1 id="dashboard-title">${saudacao()}${meuNome() ? ', ' + esc(meuNome()) : ''} <span aria-hidden="true">${c === 'noite' ? '🌙' : c === 'tarde' ? '🌇' : '☀️'}</span></h1><p class="uv-lema">${esc(CEU_FRASE[c])}</p>
-        <div class="uv-praca-pulso">${[['🌀', e.abertos.length, 'em andamento'], ['⏰', e.atrasados.length, 'passaram do prazo'], ['✅', e.feitos30.length, 'concluídos em 30 dias']].map(([i, n, l], k) => `<span class="${k === 1 && n ? 'is-warn' : ''}"><i aria-hidden="true">${i}</i><b>${n}</b>${l}</span>`).join('')}</div>${btn}</div>
-        <svg class="uv-art uv-ceu" viewBox="0 0 220 180" aria-hidden="true" focusable="false">${CEU_ART[c]}</svg>`;
+      const pulso = B.liga('pulso') ? `<div class="uv-praca-pulso">${[['🌀', e.abertos.length, 'em andamento'], ['⏰', e.atrasados.length, 'passaram do prazo'], ['✅', e.feitos30.length, 'concluídos em 30 dias']].map(([i, n, l], k) => `<span class="${k === 1 && n ? 'is-warn' : ''}"><i aria-hidden="true">${i}</i><b>${n}</b>${l}</span>`).join('')}</div>` : '';
+      if (B.liga('saudacao')) {
+        head.classList.add('uv-praca', 'is-' + c);
+        head.innerHTML = `<div class="uv-praca-txt"><span class="uv-kicker">🏙️ Praça de Sertânia · ${esc(hoje)}</span><h1 id="dashboard-title">${saudacao()}${meuNome() ? ', ' + esc(meuNome()) : ''} <span aria-hidden="true">${c === 'noite' ? '🌙' : c === 'tarde' ? '🌇' : '☀️'}</span></h1><p class="uv-lema">${esc(CEU_FRASE[c])}</p>${pulso}${btn}</div>
+        <svg class="uv-art uv-ceu" viewBox="0 0 220 180" aria-hidden="true" focusable="false">${CEU_ART[c]}</svg>${pers ? `<div class="uv-hero-pers">${pers}</div>` : ''}`;
+      } else {
+        head.classList.add('uv-praca-faixa', 'is-' + c);
+        head.innerHTML = `<div class="uv-pf-id"><span class="uv-faixa-ico" aria-hidden="true">🏙️</span><span class="uv-faixa-txt"><b id="dashboard-title">Praça de Sertânia</b><small>${esc(hoje)}</small></span></div>${pulso}<div class="uv-pf-acoes">${btn}${pers}</div>`;
+      }
     }
+    const blocoEl = {campo: shell.querySelector('.dashboard-field-focus'), mapa: shell.querySelector('.map-shortcut-card'), secretarias: shell.querySelector('.secretary-launch-section')};
+    B.ordem.filter(id => blocoEl[id]).forEach(id => { const el = blocoEl[id]; el.hidden = !B.liga(id); shell.appendChild(el); });
     shell.querySelectorAll('.secretary-launch-card').forEach(card => {
       const id = (card.getAttribute('onclick') || '').match(/openDemandSecretaria\((?:&quot;|")(.*?)(?:&quot;|")\)/)?.[1];
       const sec = secs.find(s => String(s.id) === id) || secs.find(s => norm(s.name) === norm(card.querySelector('strong')?.textContent));
@@ -249,6 +265,8 @@
     const g = (S().secs || []).find(x => x.id === gid); if (!g) return;
     const sec = window.groupHomeSecretary?.(g) || (S().secretarias || []).find(s => s.id === g.demanda_secretaria_id);
     const m = mundoDe(sec?.name || g.name); aplicarMundo(m, 'grupo');
+    const Bg = window.uvBlocos?.('grp:' + gid); const c = document.getElementById('content');
+    if (c && Bg) c.dataset.uvOff = Bg.defs.filter(d => !Bg.liga(d.id)).map(d => d.id).join(' ');
     const head = document.querySelector('#content .activity-page-heading');
     if (head && !head.querySelector('.uv-selo')) {
       const sp = espacoDe(g, m);
@@ -257,6 +275,8 @@
       const t = head.querySelector('.page-title'); if (t && !t.querySelector('.uv-esp')) t.insertAdjacentHTML('afterbegin', `<span class="uv-esp" aria-hidden="true">${sp.ico}</span>`);
     }
   };
+  window.uvPersonalizarGrupo = gid => { const g = (S().secs || []).find(x => x.id === gid); document.querySelectorAll('.gcb-menu[open]').forEach(d => d.open = false);
+    window.uvPersonalizar('grp:' + gid, g?.name || 'este grupo', () => { const Bg = window.uvBlocos('grp:' + gid), c = document.getElementById('content'); if (c) c.dataset.uvOff = Bg.defs.filter(d => !Bg.liga(d.id)).map(d => d.id).join(' '); }, sel => !!document.querySelector('#content ' + sel)); };
   const MOD_MUNDO = {contas: 'financas', multas: 'transportes', frota: 'transportes', extintores: 'defesa', licitacoes: 'financas', estoque: 'administracao', pocos: 'agricultura', leite: 'agricultura', eventos: 'cultura', cadastros: 'administracao', empregos: 'administracao', atendimentos: 'praca'};
   window.universoMundoModulo = function (modId) {
     if (modId === 'atendimentos') return; // a página da secretaria marca o próprio mundo
