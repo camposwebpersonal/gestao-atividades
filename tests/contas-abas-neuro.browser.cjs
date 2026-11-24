@@ -10,7 +10,8 @@ const {execFileSync} = require('child_process');
 const {boot} = require('./contrast/run.cjs');
 const W = Number(process.env.W || 1366);
 const now = new Date().toISOString();
-const iso = d => { const x = new Date(); x.setDate(x.getDate() + d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+// dia no fuso do navegador do teste (America/Recife), mesmo quando o CI roda em UTC perto da meia-noite
+const iso = d => new Date(Date.now() + d * 864e5).toLocaleDateString('en-CA', {timeZone: 'America/Recife'});
 const Y = new Date().getFullYear();
 const row = o => ({order_num: 0, created_at: now, updated_at: now, extra_fields: {}, ...o});
 const conta = (id, local, mes, valor, pago, venc) => row({id, atividade_id: 'ccx', nome: 'Luz', valor, extra_fields: {subitem_id: local, item_id: 'x', tipo: 'Luz', mes_ano: mes, pago, data_vencimento: venc, data_pagamento: pago ? venc : ''}});
