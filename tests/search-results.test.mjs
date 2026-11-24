@@ -104,3 +104,21 @@ test('grupo cujo nome tem o termo vem antes de qualquer lançamento (ex.: "areia
     const page = resultsPageHtml(sorted, 'areia').html;
     assert.ok(page.indexOf('search-group-card') > -1 && page.indexOf('search-group-card') < page.indexOf('search-sec-head', page.indexOf('search-group-cards')), 'cards de grupo no topo da página');
 });
+
+test('secretaria cujo nome tem o termo vem antes de tudo e vira "porta" com atalhos (ex.: "mulher")', () => {
+    const results = [
+        {type: 'subitem', title: 'PONTO DE APOIO A MULHER', data: {id: 's1'}, group: retro, score: 900},
+        {type: 'group', title: 'MULHERES CADASTRADAS', data: {id: 'g9'}, score: 800},
+        {type: 'contact', title: 'Galba', context: 'Secretaria da Mulher', data: {id: 'c1'}, score: 700},
+        {type: 'secretary', title: 'SECRETARIA DA MULHER', data: {id: 'smul'}, counts: {groups: 2, total: 3, open: 1}, shortcuts: [{id: 'g9', name: 'MULHERES CADASTRADAS', open: 1}], score: 100},
+    ];
+    const sorted = prioritizeResults(results, 'mulher');
+    assert.equal(sorted[0].type, 'secretary');
+    assert.equal(sorted[0].exact, 2, 'nome da secretaria sem o "SECRETARIA DA" é igual ao termo');
+    assert.equal(sorted[1].type, 'group');
+    const html = dropdownHtml(sorted, 'mulher', 0);
+    assert.ok(html.indexOf('Secretarias') < html.indexOf('Grupos de lançamento'));
+    assert.match(html, /gs-door/); assert.match(html, /Entrar/); assert.match(html, /openActivity/);
+    const page = resultsPageHtml(sorted, 'mulher').html;
+    assert.ok(page.indexOf('busca-secretarias') > -1 && page.indexOf('busca-secretarias') < page.indexOf('busca-grupos'));
+});

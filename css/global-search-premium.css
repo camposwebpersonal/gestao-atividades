@@ -113,3 +113,42 @@ body.global-search-open .global-search-wrap,body.global-search-open .global-sear
 .sgc-open{flex:0 0 auto;font-size:12.5px;font-weight:900;color:#0b5a40}
 .search-chip.is-groups{background:#e8f3ef!important;color:#0b5a40!important;border-color:#9fd3bd!important}
 .search-sec-groups .search-group-cards{padding:10px 12px}
+
+/* ── Secretarias primeiro: "porta" da secretaria no topo da busca (regra do usuário, 23/11/2026) ── */
+.global-search-section.is-place{background:linear-gradient(90deg,#efe9ff,#e6f4ff);color:#3b2a86}
+.global-search-section.is-place b{color:#3b2a86}
+.gs-door{margin:4px 2px 6px;border:1px solid #d9d0fb;border-radius:14px;background:linear-gradient(120deg,#faf7ff 0%,#f1f8ff 100%);box-shadow:0 2px 10px rgba(76,52,170,.08);overflow:hidden;transition:box-shadow .15s,border-color .15s}
+.gs-door.active,.gs-door:hover{border-color:#7c5cf0;box-shadow:0 6px 20px rgba(76,52,170,.16)}
+.gs-door .global-search-result.is-door{margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;min-height:58px}
+.gs-door .global-search-result.is-door.active{background:rgba(124,92,240,.07)!important}
+.gs-door-icon{background:linear-gradient(135deg,#7c3aed,#2563eb)!important;color:#fff!important;font-size:20px!important}
+.gs-door .global-search-result-copy strong{color:#24135f}
+.gs-door .search-crumbs{color:#4b4270!important}
+.gs-door .search-crumbs b{color:#0b5a40}
+.gs-door-go{display:inline-flex;align-items:center;gap:5px;padding:7px 12px;border-radius:999px;background:#5b3fd6;color:#fff;font-size:12.5px;font-weight:900;white-space:nowrap;grid-column:3/5}
+.gs-door-go i{font-style:normal;transition:transform .15s}
+.gs-door:hover .gs-door-go i,.gs-door.active .gs-door-go i{transform:translateX(3px)}
+.gs-door-shortcuts{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px 66px}
+.gs-door-shortcuts button{display:inline-flex;align-items:center;gap:5px;max-width:260px;min-height:28px;padding:3px 10px;border:1px solid #d9d0fb;border-radius:999px;background:#fff;color:#2c1f6b;font:inherit;font-size:12px;font-weight:750;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gs-door-shortcuts button:hover,.gs-door-shortcuts button:focus-visible{border-color:#5b3fd6;background:#f4f0ff}
+.gs-door-shortcuts b{flex:0 0 auto;padding:0 6px;border-radius:999px;background:#e5f6ee;color:#0b5a40;font-size:11px}
+.search-sec-card{display:flex;flex-direction:column;gap:6px}
+.search-sec-card .gs-door-shortcuts{padding:0 4px}
+.search-group-card.is-secretary{border-color:#d9d0fb;border-left-color:#5b3fd6;background:linear-gradient(120deg,#faf7ff,#f1f8ff)}
+.search-group-card.is-secretary .sgc-open{color:#4c32c4}
+.search-chip.is-secs{background:#efe9ff;color:#3b2a86}
+.search-sec-secretarias .search-group-cards{padding:10px 12px}
+/* Campo vazio: buscas recentes e abertos */
+.global-search-section.is-recent{background:#f1f5f9;color:#334155}
+.gs-recent-clear{border:0;background:none;color:#0b5a40;font:inherit;font-size:11.5px;font-weight:800;text-transform:none;letter-spacing:0;cursor:pointer;text-decoration:underline}
+.gs-recent-chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 6px 4px}
+.gs-recent-chips button{min-height:30px;padding:4px 12px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;color:#17344d;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.gs-recent-chips button:hover{border-color:#0b5a40;background:#ecfdf5}
+@media(max-width:960px){.gs-door-shortcuts{padding-left:12px}.gs-door-go{padding:6px 10px}}
+.global-search-summary span{color:#475569!important}
+.global-search-result-icon{color:#0b5a40!important}
+.gs-door .gs-door-icon{color:#fff!important}
+.global-search-result-copy small,.global-search-result-copy .search-group-count{color:#3f4f63!important}
+.search-results-page>header p{color:#3f5568!important}
+.gs-door .global-search-result-copy strong{white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.2}
+@media(max-width:520px){.gs-door-go{padding:7px 10px;font-size:0;gap:0}.gs-door-go i{font-size:16px}}

@@ -8,7 +8,7 @@ const os = require('os');
 const {boot} = require('./contrast/run.cjs');
 const W = Number(process.env.W || 390);
 const now = new Date().toISOString();
-const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); };
+const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const row = o => ({order_num: 0, created_at: now, updated_at: now, extra_fields: {}, ...o});
 const txt = async (page, sel) => (await page.textContent(sel)).replace(/\s+/g, ' ');
 (async () => {

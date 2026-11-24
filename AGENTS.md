@@ -293,6 +293,20 @@
   Motivo: "areia" não mostrava o grupo PEDIDOS DE AREIA (sem lançamentos) porque lançamentos pontuavam mais.
   Teste: `tests/search-results.test.mjs`.
 
+## Busca do topo: SECRETARIA primeiro (regra do usuário, 23/11/2026, 21h)
+
+- Ordem atual (substitui a de 20/11): 1º SECRETARIAS cujo nome tem o termo, 2º áreas do sistema, 3º grupos pelo nome,
+  4º lançamentos com o termo no nome, por último o resto. Dentro de cada faixa: nome igual ao termo (ignorando
+  "SECRETARIA DA/DE/DO/ESPECIAL…") > começa com o termo > relevância (`prioritizeResults`: `tier`, `titleHit`, `exact`).
+- No painel instantâneo a secretaria é uma "PORTA" (`secretaryDoorHtml`): 🏛️ nome, "N grupos · X em andamento",
+  botão "Entrar →" (abre `openSecretaryWorkspace` → a área da secretaria; Casa Lilás na Mulher) e atalhos para os 3
+  grupos mais movimentados. Página "ver todos": seção 🏛️ Secretarias no topo, antes dos grupos.
+- Teclado: termo = nome da secretaria → Enter entra direto (o painel avisa "Enter entra na secretaria · Shift+Enter
+  mostra tudo"); depois de usar ↑↓, Enter abre o item escolhido; sem setas, Enter abre a página de todos.
+- Campo vazio mostra 🕘 buscas recentes (chips) e ⭐ últimos abertos pela busca (localStorage
+  `gestao-busca-recentes-v1`/`gestao-busca-abertos-v1`, "limpar"). Secretaria só aparece se o usuário pode vê-la
+  (`userCanSeeSecretaria`). Testes: `tests/search-results.test.mjs` e `tests/search-secretaria.browser.cjs` (390 e 1366).
+
 ## Barra de comandos da tela do grupo (regra do usuário, 20/11/2026)
 
 - `css/group-cmdbar.css` + openActivity (index.html): à vista só o principal — "＋ Criar item" (verde) e "▦ Lançar em
