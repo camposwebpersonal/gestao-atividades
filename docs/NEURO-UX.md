@@ -6,6 +6,28 @@
 A ideia: a tela é um **ambiente**, não uma página. Quem entra precisa se sentir acolhido, entender em
 segundos onde está e o que fazer, e sair com sensação de progresso — como num lugar bonito e bem organizado.
 
+## ⭐ PADRÃO-OURO: "Casa Lilás" (Secretaria da Mulher) — aprovado pelo Ricardo em 23/11/2026
+
+> "Agora sim você pegou a minha essência do que eu queria com neuroarquitetura, inovação e excelência.
+> Quando eu pedir um layout inovador de alguma coisa, que seja nesse nível ou superior. SEMPRE."
+
+Referência viva: `js/mulher-home.js` + `css/mulher-home.css` (teste `tests/mulher-home.browser.cjs`).
+Todo pedido de "layout inovador / me surpreenda" deve atingir NO MÍNIMO este nível. Checklist:
+
+1. **Identidade própria do lugar** — nunca repetir a grade genérica do site; cada área tem paleta-tema, ícones e voz.
+2. **Abertura acolhedora** — data em versalete, saudação grande com o nome da pessoa, frase humana que explica a situação
+   e sugere o próximo passo ("Comece acolhendo a primeira mulher").
+3. **Elemento vivo** — ilustração SVG com microanimação suave (a flor que "respira"), aurora/gradiente com 2–3 tons
+   (lilás/pêssego/menta), respeitando `prefers-reduced-motion`.
+4. **Gestos, não botões** — 2 a 3 cartões grandes para as tarefas principais, com ícone + verbo + subtítulo
+   ("🤗 Acolher uma mulher · nova ficha em 4 passos"); o principal em destaque cheio.
+5. **Busca instantânea** larga logo abaixo, com placeholder que diz o que encontra.
+6. **Pulso** — fichas numéricas finas com ícone e rótulo em frase (zeros calmos, nunca vermelhos).
+7. **Tempo e memória** — agenda (próximos dias, atrasado em âmbar) e últimos acontecimentos; vazio = frase positiva 🌿.
+8. **Mosaico de espaços** — cada grupo vira um cartão com ícone, cor própria e frase do que ele é + contagem discreta.
+9. **Rede de apoio / atalhos úteis** no rodapé (telefones que ligam ao toque etc.) e "modo clássico" sempre disponível.
+10. Tudo com contraste AA, sem vazamento de texto, 390 → 1920 px, mesmas funções no celular.
+
 ## Os 8 princípios e como aplicar
 
 | Princípio | Na prática (o que fazer em toda tela nova) |

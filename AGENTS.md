@@ -46,6 +46,9 @@
 - PDFs também: usar `window.ccnPdf` (js/contas-pdf-neuro.js) — cabeçalho compacto, situação em frase, fichas que
   encolhem a letra até caber, barra do pago, rodapé "Página X de Y". Controle de Contas já tem TODAS as abas e os 3 PDFs
   neste padrão (`tests/contas-abas-neuro.browser.cjs`); próximas telas seguem o mesmo modelo.
+- ⭐ PADRÃO-OURO aprovado pelo usuário (23/11/2026, 21h): a "Casa Lilás" da Secretaria da Mulher (`js/mulher-home.js` +
+  `css/mulher-home.css`) é EXATAMENTE a essência de neuroarquitetura que ele quer. Todo pedido de layout inovador /
+  "me surpreenda" deve ficar nesse nível OU SUPERIOR, sempre — checklist em `docs/NEURO-UX.md` (seção PADRÃO-OURO).
 - Primeira tela feita assim: Controle de Contas › Visão geral (23/11/2026). Próximas telas devem seguir o mesmo padrão.
 - Regra reforçada pelo usuário (23/11/2026, 18h): neuroarquitetura, layout intuitivo, fácil e agradável de usar em TUDO
   (sites, sistemas, telas, PDFs, projetos, cartazes, artes). Botões sempre organizados e compactos; compactar de forma
