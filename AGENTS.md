@@ -57,6 +57,32 @@
   de pendências, filtro, ＋N locais — 23 no computador, 11 no celular); botão 📄 PDF do topo SEMPRE gera o relatório da aba
   ativa (`ccPdfDaAba`: geral, lançamentos, vencimentos `ccVencimentosPdf`, relatório, cadastro).
 
+## UNIVERSO SERTÂNIA — cada secretaria é um mundo (regra do usuário, 23/11/2026, 22h)
+
+- Pedido: "quero me sentir bem e maravilhado no site TODO, como na Secretaria da Mulher; cada parte com identidade
+  própria; nada de cards genéricos repetitivos". `js/universo.js` + `css/universo.css` (padrão-ouro: Casa Lilás).
+- MUNDOS (`MUNDOS` em universo.js, `window.universoMundo(nome)`): Agricultura = 🌾 Roça Viva (sol + broto), Saúde = 🩺 Casa
+  do Cuidado (coração + ECG), Educação = 📚 Jardim do Saber, Infraestrutura = 🏗️ Canteiro da Cidade, Serviços públicos =
+  💡 Cidade Cuidada, Defesa Civil = 🛡️ Base de Proteção (radar), Ação Social = 🤝 Abraço Social, Cultura = 🎭 Palco da
+  Cultura, Meio Ambiente = 🌳 Mata Viva, Finanças = 💰 Cofre Transparente, Desenvolvimento = 📈 Mercado em Movimento,
+  Administração = 🏛️ Coração da Gestão, Gabinete = ⭐, Transportes = 🚌 Estrada Viva, Comunicação = 📣 Voz da Cidade,
+  Segurança = 🚔 Guarda Cidadã, CEDOCA = 🎈 Ninho de Sonhos, Esporte = ⚽ Arena; demais = 🏙️ Praça de Sertânia. Cada um
+  tem paleta (--uv-a texto profundo, --uv-b destaque, aurora g1–g3, fundos, 4 tons de ladrilho), ilustração SVG viva e frase.
+- Página de UMA secretaria (Controle de Demandas com secretaria escolhida) = `renderUniversoHome` (gancho em
+  `renderDemandas`, depois da Casa Lilás): saudação + frase calculada (atrasados / prazos da semana / em andamento / tudo
+  em dia ✨), gestos (＋ Novo lançamento → escolher o espaço; 📷 Registro de campo com a secretaria já marcada; ⏰
+  atrasados ou 🧭 Espaços), busca instantânea dos lançamentos, pulso, "⏰ Precisa de atenção" (prazos), "🕊️ Últimos
+  lançamentos", mosaico de espaços (ícone pelo nome do grupo: 💧 pipa, 🚰 saneamento, 🚜 máquinas, 💡 iluminação, 🏫
+  escola…) e "▦ Ver em grade (modo clássico)". A visão "todas as secretarias" continua a grade.
+- Visão geral = "Praça de Sertânia" (`universoDecorarHome`, chamado no fim do renderModulos): céu da HORA DO DIA
+  (manhã, dia, pôr do sol, noite estrelada), saudação, pulso da cidade; cartões das secretarias com cor, emoji, nome do
+  mundo, alerta de atrasados e a ilustração ao fundo. Escolha de áreas da secretaria (`universoDecorarWorkspace`), tela do
+  grupo (`universoMundoGrupo`: selo "🌾 Roça Viva · SECRETARIA…" + ícone do espaço no título + botão Criar na cor do mundo)
+  e módulos (`universoMundoModulo`, também pela rota #module/) recebem a aurora do mundo em `#content[data-mundo]`; telas
+  sem mundo (contatos, usuários…) limpam sozinhas. Menu lateral: emoji do mundo via CSS (`data-emoji`, fora do texto).
+- Tela nova de secretaria/módulo: chamar `universoMundo(nome)` e usar as variáveis --uv-*; nunca cards genéricos.
+  Teste: `tests/universo.browser.cjs` (390 e 1366).
+
 ## Conclusão "na mesma tela" (regra do usuário, 23/11/2026)
 
 - Grupo com Controle de Conclusão escolhe onde ficam os concluídos: aba Concluídos (padrão) ou "📍 na mesma tela"

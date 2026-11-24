@@ -1,0 +1,182 @@
+/* UNIVERSO SERTÂNIA — cada secretaria é um mundo (paleta em variáveis --uv-*, definidas por js/universo.js).
+   Mesma linguagem da Casa Lilás: aurora suave, ilustração viva, saudação, gestos grandes, pulso, mosaico de espaços.
+   Texto sempre na cor profunda do mundo (--uv-a) sobre fundo claro: contraste AA. Movimento só se permitido. */
+.uv{--uv-a:#0f3b52;--uv-b:#0e7490;position:relative;display:flex;flex-direction:column;gap:16px;color:#1f2937;isolation:isolate}
+.uv::before{content:"";position:absolute;inset:-14px 0 auto;height:540px;z-index:-1;border-radius:0 0 48px 48px;
+  background:radial-gradient(60% 70% at 88% 8%,var(--uv-g1) 0%,transparent 70%),radial-gradient(55% 60% at 8% 0%,var(--uv-g2) 0%,transparent 70%),radial-gradient(50% 50% at 50% 100%,var(--uv-g3) 0%,transparent 70%),linear-gradient(180deg,var(--uv-bg1),var(--uv-bg2))}
+.uv-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 24px;padding:16px 6px 4px}
+.uv-hero-txt{display:flex;flex-direction:column;gap:7px;min-width:0}
+.uv-kicker{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--uv-a)}
+.uv-hero h1{margin:0;font-size:clamp(28px,4.4vw,46px);line-height:1.05;font-weight:900;letter-spacing:-.025em;color:var(--uv-a)}
+.uv-sec-name{margin:0;font-size:14px;font-weight:900;letter-spacing:.04em;color:var(--uv-a);opacity:.92}
+.uv-lema{margin:0;max-width:60ch;font-size:clamp(15px,1.6vw,18px);line-height:1.5;color:#334155}
+.uv-gestos{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.uv-gesto{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;min-width:min(220px,100%);flex:1 1 200px;max-width:320px;padding:12px 16px;border-radius:22px;border:1px solid rgba(15,23,42,.08);background:rgba(255,255,255,.88);backdrop-filter:blur(6px);color:var(--uv-a);text-align:left;font:inherit;cursor:pointer;box-shadow:0 8px 24px rgba(15,23,42,.07);transition:transform .2s,box-shadow .2s}
+.uv-gesto>span{grid-row:1/3;font-size:26px;line-height:1}
+.uv-gesto b{font-size:16px;font-weight:900}.uv-gesto small{font-size:12.5px;color:#475569}
+.uv-gesto:hover,.uv-gesto:focus-visible{transform:translateY(-2px);box-shadow:0 14px 30px rgba(15,23,42,.13);outline:none}
+.uv-gesto.is-main{background:linear-gradient(135deg,var(--uv-b),var(--uv-a));border-color:transparent;color:#fff;box-shadow:0 12px 28px rgba(15,23,42,.22)}
+.uv-gesto.is-main small{color:#fff}.uv-gesto.is-main>span{font-weight:900}
+.uv-gesto.is-atencao{background:#fffbeb;border-color:#fde68a;color:#78350f}.uv-gesto.is-atencao small{color:#78350f}
+.uv-hero-art{width:min(30vw,220px)}
+.uv-art{display:block;width:100%;height:auto;filter:drop-shadow(0 16px 26px rgba(15,23,42,.14))}
+/* animações vivas (suaves) */
+.uv-sway{animation:uvSway 6s ease-in-out infinite}.uv-pulse{animation:uvPulse 2.4s ease-in-out infinite}
+.uv-spin{animation:uvSpin 9s linear infinite}.uv-spin-slow{animation:uvSpin 40s linear infinite}
+.uv-float{animation:uvFloat 5s ease-in-out infinite}.uv-twinkle{animation:uvTwinkle 2.6s ease-in-out infinite}
+.uv-swing{animation:uvSwing 5s ease-in-out infinite}.uv-rise{animation:uvRise 4s ease-in-out infinite}
+.uv-fall{animation:uvFall 6s ease-in infinite}.uv-drive{animation:uvDrive 7s ease-in-out infinite}
+.uv-wave{animation:uvWave 2.4s ease-out infinite}.uv-glow{animation:uvGlow 3.5s ease-in-out infinite}
+.uv-bounce{animation:uvBounce 1.8s cubic-bezier(.5,0,.5,1) infinite}.uv-shadow{animation:uvShadow 1.8s cubic-bezier(.5,0,.5,1) infinite;transform-origin:110px 190px}
+.uv-drift{animation:uvDrift 14s ease-in-out infinite}
+.uv-ecg{stroke-dasharray:320;animation:uvEcg 2.4s linear infinite}
+@keyframes uvSway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes uvPulse{0%,100%{transform:scale(1)}15%{transform:scale(1.07)}30%{transform:scale(.98)}45%{transform:scale(1.04)}}
+@keyframes uvSpin{to{transform:rotate(360deg)}}
+@keyframes uvFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes uvTwinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+@keyframes uvSwing{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes uvRise{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes uvFall{0%{transform:translate(0,0) rotate(0);opacity:0}15%{opacity:1}100%{transform:translate(-20px,160px) rotate(160deg);opacity:0}}
+@keyframes uvDrive{0%,100%{transform:translateX(0)}50%{transform:translateX(96px)}}
+@keyframes uvWave{0%{opacity:0;transform:translateX(-6px)}40%{opacity:1}100%{opacity:0;transform:translateX(10px)}}
+@keyframes uvGlow{0%,100%{opacity:.75}50%{opacity:1}}
+@keyframes uvBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-46px)}}
+@keyframes uvShadow{0%,100%{transform:scaleX(1);opacity:.5}50%{transform:scaleX(.6);opacity:.25}}
+@keyframes uvDrift{0%,100%{transform:translateX(0)}50%{transform:translateX(26px)}}
+@keyframes uvEcg{from{stroke-dashoffset:320}to{stroke-dashoffset:0}}
+/* busca */
+.uv-find{position:relative;display:flex;align-items:center;gap:10px;padding:6px 8px 6px 16px;border-radius:999px;background:#fff;border:1px solid rgba(15,23,42,.1);box-shadow:0 10px 28px rgba(15,23,42,.07)}
+.uv-find>span{font-size:18px}
+.uv-find input{flex:1 1 auto;min-width:0;height:46px;border:0!important;background:transparent!important;font-size:16px;color:#1f2937;box-shadow:none!important}
+.uv-find input:focus{outline:none}
+.uv-find:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--uv-b) 35%,transparent),0 10px 28px rgba(15,23,42,.07)}
+.uv-find-res{position:absolute;left:8px;right:8px;top:calc(100% + 6px);z-index:5;display:flex;flex-direction:column;gap:2px;max-height:60vh;overflow:auto;border-radius:18px;background:#fff;box-shadow:0 18px 40px rgba(15,23,42,.18)}
+.uv-find-res:empty{display:none}
+.uv-find-res button{display:flex;align-items:center;gap:10px;padding:8px 12px;border:0;border-radius:14px;background:transparent;color:#1f2937;text-align:left;font:inherit;cursor:pointer}
+.uv-find-res button:hover,.uv-find-res button:focus-visible{background:#f1f5f9;outline:none}
+.uv-find-res button>span:last-child{display:flex;flex-direction:column;min-width:0}
+.uv-find-res b{font-size:14.5px;color:var(--uv-a);overflow-wrap:anywhere}.uv-find-res small{font-size:12.5px;color:#475569}
+.uv-find-res p{margin:0;padding:12px 14px;font-size:14px;color:#475569}
+.uv-av{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:var(--uv-t1);font-size:18px}
+/* pulso */
+.uv-pulso{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:10px}
+.uv-bolha{container-type:inline-size;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;min-width:0;padding:14px 16px;border-radius:28px 28px 28px 10px;background:#fff;border:1px solid rgba(15,23,42,.06);box-shadow:0 6px 18px rgba(15,23,42,.05)}
+.uv-bolha>span{grid-row:1/3;font-size:24px}
+.uv-bolha b{font-size:clamp(22px,16cqi,32px);font-weight:900;line-height:1;color:var(--uv-a)}
+.uv-bolha small{font-size:12.5px;font-weight:700;color:#475569;overflow-wrap:anywhere}
+.uv-bolha.is-t1{background:linear-gradient(160deg,var(--uv-t1),#fff)}.uv-bolha.is-t2{background:linear-gradient(160deg,var(--uv-t2),#fff)}
+.uv-bolha.is-t3{background:linear-gradient(160deg,var(--uv-t3),#fff)}.uv-bolha.is-t4{background:linear-gradient(160deg,var(--uv-t4),#fff)}
+.uv-bolha.is-twarn{background:linear-gradient(160deg,#fef3c7,#fff)}.uv-bolha.is-twarn b{color:#92400e}.uv-bolha.is-twarn small{color:#78350f}
+/* painéis */
+.uv-duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:12px}
+.uv-painel,.uv-espacos{padding:14px 16px;border-radius:24px;background:#fff;border:1px solid rgba(15,23,42,.06);box-shadow:0 6px 18px rgba(15,23,42,.04)}
+.uv-painel header,.uv-espacos header{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;margin-bottom:10px}
+.uv h2{margin:0;font-size:17px;font-weight:900;color:var(--uv-a)}
+.uv header small{font-size:12.5px;color:#475569}
+.uv-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.uv-lista button{width:100%;display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:16px;border:1px solid rgba(15,23,42,.06);background:#fcfdff;color:#1f2937;text-align:left;font:inherit;cursor:pointer;transition:background .15s}
+.uv-lista button:hover{background:var(--uv-bg1)}
+.uv-dia{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;padding:4px 0;border-radius:12px;background:var(--uv-t1)}
+.uv-dia b{font-size:15px;font-weight:900;color:var(--uv-a)}.uv-dia small{font-size:11px;font-weight:800;color:var(--uv-a)}
+.uv-lista .is-today .uv-dia{background:#dcfce7}.uv-lista .is-today .uv-dia b,.uv-lista .is-today .uv-dia small{color:#065f46}
+.uv-lista .is-late .uv-dia{background:#fef3c7}.uv-lista .is-late .uv-dia b,.uv-lista .is-late .uv-dia small{color:#7c4a03}
+.uv-li-txt{display:flex;flex-direction:column;min-width:0}
+.uv-li-txt b{font-size:14px;color:var(--uv-a);overflow-wrap:anywhere}.uv-li-txt small{font-size:12.5px;color:#475569;overflow-wrap:anywhere}
+.uv-ponto{flex:0 0 12px;width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,var(--uv-b),var(--uv-a));box-shadow:0 0 0 4px var(--uv-t1)}
+.uv-ponto.is-ok{background:#22c55e;box-shadow:0 0 0 4px #dcfce7}
+.uv-calma{margin:0;padding:12px 14px;border-radius:16px;background:#f3fbf6;color:#14532d;font-weight:700}
+/* mosaico de espaços */
+.uv-mosaico,.uv-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:10px}
+.uv-espaco{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:124px;padding:14px 16px;border-radius:26px;border:0;color:#1f2937;text-align:left;font:inherit;cursor:pointer;overflow:hidden;transition:transform .2s,box-shadow .2s}
+.uv-espaco::after{content:"";position:absolute;right:-30px;bottom:-40px;width:120px;height:120px;border-radius:46% 54% 40% 60%/55% 45% 55% 45%;background:rgba(255,255,255,.5);pointer-events:none}
+.uv-espaco:hover,.uv-espaco:focus-visible{transform:translateY(-3px);box-shadow:0 16px 32px rgba(15,23,42,.12);outline:none}
+.uv-espaco.is-big{grid-column:span 2;min-height:146px}
+.uv-esp-ico{font-size:28px;line-height:1}
+.uv-espaco b{font-size:15px;font-weight:900;color:var(--uv-a);overflow-wrap:anywhere;position:relative;z-index:1}
+.uv-espaco small{font-size:12.5px;color:#334155;position:relative;z-index:1}
+.uv-espaco em{margin-top:auto;font-style:normal;font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px;background:rgba(255,255,255,.8);color:var(--uv-a);position:relative;z-index:1}
+.uv-espaco.is-t1{background:linear-gradient(140deg,var(--uv-t1),#fff)}.uv-espaco.is-t2{background:linear-gradient(140deg,var(--uv-t2),#fff)}
+.uv-espaco.is-t3{background:linear-gradient(140deg,var(--uv-t3),#fff)}.uv-espaco.is-t4{background:linear-gradient(140deg,var(--uv-t4),#fff)}
+.uv-pick .uv-espaco{min-height:104px}
+.uv-rodape{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:4px 4px 10px;font-size:12.5px;color:#475569}
+.uv-rodape button{min-height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(15,23,42,.14);background:#fff;color:var(--uv-a);font-size:12.5px;font-weight:800;cursor:pointer}
+.uv-rodape span{margin-left:auto}
+.uv-voltar{align-self:flex-start;margin:0 0 10px;min-height:40px;padding:0 16px;border-radius:999px;border:1px solid rgba(15,23,42,.15);background:var(--uv-bg1);color:var(--uv-a);font-size:14px;font-weight:900;cursor:pointer}
+
+/* ── aurora do mundo nas demais telas (grupo, módulos, escolha de áreas) ── */
+#content[data-mundo]{position:relative;isolation:isolate}
+#content[data-mundo]:not([data-mundo-onde="secretaria"])::before{content:"";position:absolute;left:0;right:0;top:0;height:300px;z-index:-1;pointer-events:none;border-radius:0 0 40px 40px;
+  background:radial-gradient(55% 80% at 90% 0%,var(--uv-g1) 0%,transparent 70%),radial-gradient(45% 70% at 5% 0%,var(--uv-g2) 0%,transparent 72%),linear-gradient(180deg,var(--uv-bg1) 0%,rgba(255,255,255,0) 100%)}
+#content[data-mundo] .activity-page-heading .page-title{color:var(--uv-a)}
+.uv-selo{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin:0 0 4px;padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.08);color:var(--uv-a);font-size:12px;font-weight:900;letter-spacing:.03em;text-transform:uppercase;box-shadow:0 2px 8px rgba(15,23,42,.06);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.uv-selo i{font-style:normal;font-weight:700;opacity:.9}
+.uv-esp{margin-right:8px}
+#content[data-mundo] .activity-create-primary{background:linear-gradient(135deg,var(--uv-b),var(--uv-a))!important;border-color:transparent!important;color:#fff!important}
+/* escolha de áreas da secretaria */
+.uv-ws header{position:relative;display:flex;align-items:center;gap:16px}
+.uv-ws header h1{color:var(--uv-a)}
+.uv-ws .workspace-kicker{color:var(--uv-a)!important}
+.uv-ws-art{margin-left:auto;width:min(22vw,150px);flex:0 0 auto}
+.uv-ws .secretary-workspace-grid>button{border-radius:24px!important;background:linear-gradient(140deg,var(--uv-t1),#fff)!important;border:1px solid rgba(15,23,42,.07)!important;transition:transform .2s,box-shadow .2s}
+.uv-ws .secretary-workspace-grid>button:nth-child(4n+2){background:linear-gradient(140deg,var(--uv-t2),#fff)!important}
+.uv-ws .secretary-workspace-grid>button:nth-child(4n+3){background:linear-gradient(140deg,var(--uv-t3),#fff)!important}
+.uv-ws .secretary-workspace-grid>button:hover{transform:translateY(-3px);box-shadow:0 16px 32px rgba(15,23,42,.12)}
+
+/* ── Praça de Sertânia (Visão geral) ── */
+.productivity-heading.uv-praca{position:relative;display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px 20px;padding:20px 22px!important;border-radius:30px;overflow:hidden;border:1px solid rgba(15,23,42,.06);box-shadow:0 12px 34px rgba(15,23,42,.08);isolation:isolate}
+.uv-praca::before{content:"";position:absolute;inset:0;z-index:-1}
+.uv-praca.is-manha::before{background:linear-gradient(160deg,#fff7ed 0%,#e0f2fe 55%,#ecfdf5 100%)}
+.uv-praca.is-dia::before{background:linear-gradient(160deg,#e0f2fe 0%,#f0f9ff 50%,#fefce8 100%)}
+.uv-praca.is-tarde::before{background:linear-gradient(160deg,#ffedd5 0%,#fce7f3 50%,#ede9fe 100%)}
+.uv-praca.is-noite::before{background:linear-gradient(160deg,#eef2ff 0%,#e0e7ff 50%,#f5f3ff 100%)}
+.uv-praca-txt{display:flex;flex-direction:column;gap:7px;min-width:0}
+.uv-praca h1{margin:0!important;font-size:clamp(28px,4.2vw,44px)!important;line-height:1.05;font-weight:900;color:#0f3b52!important;letter-spacing:-.02em}
+.uv-praca .uv-kicker{color:#0f3b52}
+.uv-praca .uv-lema{color:#334155}
+.uv-praca-pulso{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.uv-praca-pulso span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.85);border:1px solid rgba(15,23,42,.07);color:#334155;font-size:13px;font-weight:700}
+.uv-praca-pulso i{font-style:normal}.uv-praca-pulso b{font-size:16px;color:#0f3b52}
+.uv-praca-pulso .is-warn{background:#fffbeb;border-color:#fde68a;color:#78350f}.uv-praca-pulso .is-warn b{color:#92400e}
+.uv-praca .dashboard-new-demand{justify-self:start;margin-top:6px}
+.uv-ceu{width:min(28vw,220px);filter:none}
+/* cartões das secretarias: cada um no seu mundo */
+.secretary-launch-card.uv-card{position:relative;overflow:hidden;background:linear-gradient(140deg,var(--uv-t1) 0%,#fff 75%)!important;border:1px solid rgba(15,23,42,.07)!important;border-radius:24px!important;transition:transform .2s,box-shadow .2s;isolation:isolate}
+.secretary-launch-card.uv-card:hover,.secretary-launch-card.uv-card:focus-visible{transform:translateY(-3px);box-shadow:0 16px 32px rgba(15,23,42,.12)}
+.uv-card .secretary-launch-icon{background:#fff!important;box-shadow:0 4px 12px rgba(15,23,42,.08)}
+.uv-card-emoji{font-size:24px;line-height:1}
+.uv-card .secretary-launch-copy strong{color:var(--uv-a)!important}
+.uv-card .secretary-launch-copy>span{color:#334155!important}
+.uv-card-mundo{display:block;font-style:normal;font-size:11.5px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--uv-a)}
+.uv-card-alerta{display:inline-block;margin-top:3px;padding:1px 8px;border-radius:999px;background:#fef3c7;color:#78350f;font-style:normal;font-size:11.5px;font-weight:800}
+.uv-card-art{position:absolute;right:-18px;bottom:-22px;width:92px;opacity:.28;z-index:-1;pointer-events:none}
+.uv-card-art .uv-art{filter:none}
+.uv-card .secretary-launch-arrow{color:var(--uv-a)!important}
+
+@media (max-width:640px){
+  .uv-hero{grid-template-columns:minmax(0,1fr) 92px;padding-top:8px}
+  .uv-hero-art{width:92px;align-self:start}
+  .uv-gestos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .uv-gesto{max-width:none;min-width:0;padding:10px 12px;border-radius:18px}
+  .uv-gesto.is-main{grid-column:1/-1}
+  .uv-gesto:not(.is-main){grid-template-columns:1fr;grid-template-rows:auto auto auto}
+  .uv-gesto:not(.is-main)>span{grid-row:auto;font-size:22px}
+  .uv-gesto b{font-size:14.5px}
+  .uv-mosaico{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .uv-espaco{min-height:110px;padding:12px;border-radius:20px}
+  .uv-espaco.is-big{grid-column:1/-1;min-height:118px}
+  .uv-espaco b{font-size:13.5px}
+  .uv-esp-ico{font-size:24px}
+  .uv-pulso{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .uv-rodape span{margin-left:0}
+  .productivity-heading.uv-praca{grid-template-columns:minmax(0,1fr) 84px;padding:16px!important}
+  .uv-ceu{width:84px;align-self:start}
+  .uv-ws-art{width:84px}
+}
+@media (prefers-reduced-motion:reduce){.uv [class*="uv-"],.uv-art *,.uv-ceu *{animation:none!important}.uv-gesto,.uv-espaco,.uv-card{transition:none}}
+.sidebar-secretary-link.uv-side .demand-dot{display:none}
+.sidebar-secretary-link.uv-side{grid-template-columns:20px minmax(0,1fr) 12px!important}
+.sidebar-secretary-link.uv-side::before{content:attr(data-emoji);display:block;width:20px;text-align:center;font-size:14px;line-height:1}
+.uv-praca .dashboard-new-demand{width:auto!important;max-width:100%;padding:10px 20px!important;border-radius:999px!important;background:linear-gradient(135deg,#0e7490,#0f3b52)!important;color:#fff!important;font-weight:900}
+
+.uv-ws header p,.uv-ws .secretary-workspace-grid small{color:#334155!important}

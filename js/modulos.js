@@ -1,4 +1,4 @@
-import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=92d7dc5a';
+import {initDemandas,renderDemandas,demandSidebar} from './demandas-secretarias.js?v=887e9681';
 import {supabase} from '../supabase_compat.js?v=7a75381f';
 import {modulePermission,groupPermission,demandSecretaryPermission,groupCreationPermission,groupDeletionPermission,itemCreationPermission,itemDeletionPermission} from './access-scope.js';
 import {fieldCaptureDashboardCard,initFieldCapture} from './camera-capture.js?v=6cf633ef';
@@ -518,6 +518,7 @@ window.openSecretaryWorkspace=function(secretaryId){
   const destinations=_secretaryDestinations(secretary);if(destinations.length===1){destinations[0].open();return;}if(!destinations.length){window.toast?.('Nenhuma área está liberada para esta secretaria.','info');return;}
   window.__currentView='secretary-workspace';window.rememberWorkspace?.({kind:'secretaria',id:secretary.id});_renderSidebarModules('secretary:'+secretary.id);
   _md.setC(`<section class="secretary-workspace"><header><button type="button" onclick="renderModulos()">← Visão geral</button><div><span class="workspace-kicker">SECRETARIA MUNICIPAL</span><h1>${_md.esc(secretary.name)}</h1><p>Escolha a área de trabalho que deseja acessar.</p></div></header><div class="secretary-workspace-grid">${destinations.map(destination=>`<button type="button" onclick="openSecretaryDestination(${_md.arg(secretary.id)},${_md.arg(destination.id)})"><span>${destination.icon}</span><span><strong>${_md.esc(destination.title)}</strong><small>${_md.esc(destination.description)}</small></span><i>→</i></button>`).join('')}</div></section>`);
+  window.universoDecorarWorkspace?.(secretary);
 };
 // Navegação (breadcrumbs): quantas áreas a secretaria tem e a qual secretaria um módulo especial pertence.
 window.secretaryDestinationCount=secretaryId=>{const secretary=(window.S?.secretarias||[]).find(item=>String(item.id)===String(secretaryId));return secretary?_secretaryDestinations(secretary).length:0;};
@@ -540,6 +541,7 @@ function _renderSidebarModules(activeId=''){
     return `<button type="button" class="sidebar-secretary-link ${activeId===`secretary:${secretary.id}`?'active':''}" onclick="openSecretaryWorkspace(${_md.arg(secretary.id)})"><span class="demand-dot"></span><span>${_md.esc(secretary.name)}</span><i>›</i></button>`;
   }).join('');
   host.innerHTML=`<button type="button" class="sidebar-module-btn ${activeId==='atendimentos'?'active':''}" onclick="${allowedDemand?'window.openDemandSecretaria()':'void 0'}" title="Secretarias" style="--module-soft:${demand.color}28;--module-color:${demand.color}"><span class="sidebar-module-icon">${demand.icon}</span><span class="sidebar-module-label">Secretarias</span></button><div class="sidebar-secretary-tree">${secretaryRows}</div>`;
+  window.universoDecorarSidebar?.(host);
 }
 window.refreshSidebarModules=_renderSidebarModules;
 
@@ -632,11 +634,12 @@ window.renderModulos=function(){
     ${_mapShortcutCard()}
     <section class="secretary-launch-section"><header><div><span class="workspace-kicker">Acesso direto</span><h2>Demandas por secretaria</h2><p>Acesse rapidamente as áreas de atuação do município.</p></div><div class="secretary-launch-tools"><label><span>⌕</span><input type="search" aria-label="Buscar secretaria" placeholder="Buscar secretaria..." oninput="filterDashboardSecretaries(this.value)"></label><div class="secretary-view-toggle" role="group" aria-label="Formato de visualização"><button type="button" data-dashboard-view="grid" class="${_dashboardSecretaryView==='grid'?'active':''}" aria-pressed="${_dashboardSecretaryView==='grid'}" onclick="setDashboardSecretaryView('grid')" title="Grade">▦</button><button type="button" data-dashboard-view="list" class="${_dashboardSecretaryView==='list'?'active':''}" aria-pressed="${_dashboardSecretaryView==='list'}" onclick="setDashboardSecretaryView('list')" title="Lista">☷</button></div></div></header><div class="secretary-launch-summary"><span id="dashboard-secretary-count">${secretaries.length} secretaria${secretaries.length===1?'':'s'}</span></div><div class="secretary-launch-grid ${_dashboardSecretaryView==='list'?'is-list':''}">${cards||'<div class="empty">Nenhuma secretaria de demandas está liberada para o seu perfil.</div>'}</div></section>
   </section>`);
+  window.universoDecorarHome?.();
 };
 
 const _renderModuloBeforeRedesign=window.renderModulo;
 window.renderModulo=function(id){
   _renderSidebarModules(id);
   document.querySelectorAll('#navmenu > .nav-btn').forEach(btn=>btn.classList.remove('active'));
-  return _renderModuloBeforeRedesign(id);
+  const _r=_renderModuloBeforeRedesign(id);try{window.universoMundoModulo?.(id);}catch(e){console.error('[universo]',e);}return _r;
 };
