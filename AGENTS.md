@@ -671,3 +671,10 @@
   clique/toque, pinça com 2 dedos, arrastar para mover; girar ⟳ e abrir original ↗. Várias fotos do mesmo lançamento
   sempre navegáveis. `openGal` vai direto para o visualizador (sem a janelinha intermediária). API:
   `window.openImageViewer(lista, índice, título)`.
+
+## Importação e-mail mulher@sertania.pe.gov.br (25/11/2026)
+- Grupo MULHERES CADASTRADAS (7665247b-…): 77 fichas (ids `mu…`) + 95 ocorrências (ids `mo…`), created_by_name 'Sistema / importação e-mail', feito com `pms.whatsapp_off`.
+- Fonte: decisões MPU (TJPE 2ª Vara/custódia Arcoverde), ofícios DEPOL 158ª, CREAS/CRAS/hospitais/MPPE/Ligue 180/Disque Denúncia. Cada ocorrência traz resumo, nomes dos anexos e link do e-mail (`#all/<idHex>`).
+- PDFs NÃO foram subidos: o bucket de imagens é público e os documentos têm segredo de justiça. Se quiser anexar, criar bucket privado + URL assinada.
+- Não cadastrados: casos de criança/homem (Maysa — Conselho Tutelar; José Levi), NF MPPE 02276.000.168/2025 (vítima não nomeada no e-mail), denúncia 229.7.2026 (Caruaru, sem vítima), e-mails administrativos. E-mail 19d1f8dd "Justiça Federal" de is-an-engineer.com é PHISHING.
+- Reimportar sem duplicar: inserts com `not exists` por nome (fichas) e por item+descrição (ocorrências).
