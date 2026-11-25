@@ -99,6 +99,15 @@
   Com "Precisa de atenção" desligado, o atalho "⏰ N atrasados" abre a lista numa janela (`universoAtrasados`).
   Teste: `tests/universo.browser.cjs` (390 e 1366).
 
+## OPERAÇÃO CARRO PIPA (Defesa Civil) — PAs ativos importados (25/11/2026)
+
+- Grupo `d7e9bad1-d21e-432a-9ec2-f9fa9ec5b10d` (DEFESA CIVIL). Importados 96 pontos de abastecimento da planilha
+  "SERTÂNIA – PA ATIVOS – PARA COMPDEC": descrição = nome do PA (rótulo "PONTO DE ABASTECIMENTO (PA)" em field_labels),
+  campos novos SEQ., APONTADOR, QTD. BENEFICIÁRIOS (soma 2.102) e Nº DO CARTÃO (texto, 13 dígitos), e
+  `extra_fields.geo_location` com a latitude/longitude da planilha (source 'planilha') → todos no Mapa geral e no mapa
+  dentro do grupo (`map_inline`, pino 💧); `default_external_geolocation` liga o 📍 em cada lançamento. Feito sem WhatsApp;
+  reimportar não duplica (confere o Nº DO CARTÃO).
+
 ## Conclusão "na mesma tela" (regra do usuário, 23/11/2026)
 
 - Grupo com Controle de Conclusão escolhe onde ficam os concluídos: aba Concluídos (padrão) ou "📍 na mesma tela"
