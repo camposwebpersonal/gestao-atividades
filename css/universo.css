@@ -282,3 +282,17 @@
 }
 @media(prefers-reduced-motion:reduce){#modal-ov .modal-box.bk-modal{animation:none}}
 @media(max-width:420px){.uv-praca-faixa .uv-praca-pulso i{display:none}.uv-praca-faixa .uv-praca-pulso span{padding:3px 9px;gap:4px}.uv-praca-faixa .uv-praca-pulso b{font-size:14px}}
+/* ✏️ Frases das secretarias */
+.bk-rod{flex-wrap:wrap}
+.fr-lista{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px;max-height:min(58vh,560px);overflow:auto}
+.fr-item{border:1px solid #e2e8f0;border-radius:14px;padding:10px 12px;background:#fff;display:grid;gap:8px}
+.fr-item.is-sem{background:#f8fafc;border-style:dashed}
+.fr-top{display:flex;align-items:center;gap:8px}.fr-top b{flex:1;color:#0f172a;font-size:14px}
+.fr-btn{min-height:34px;padding:0 12px;border-radius:999px;border:1px solid #cbd5e1;background:#fff;color:#0f3b52;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+.fr-item.is-sem .fr-btn{background:#0f3b52;color:#fff;border-color:#0f3b52}
+.fr-item label{display:grid;gap:3px;font-size:12px;font-weight:700;color:#334155}
+.fr-item input{min-height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;font:inherit;font-size:14px;color:#0f172a;background:#fff}
+.fr-item input:disabled{background:#f1f5f9;color:#475569}
+.fr-item input::placeholder{color:#64748b}
+@media (min-width:720px){.fr-item{grid-template-columns:1fr 1.6fr}.fr-top{grid-column:1/-1}}
+.fr-painel .bk-ok{margin-left:auto}

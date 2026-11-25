@@ -42,6 +42,20 @@ const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
   assert.match(await page.textContent('.uv-praca'), /(Bom dia|Boa tarde|Boa noite)/);
   await page.click('.bk-presets button:has-text("Padrão do site")'); await page.waitForSelector('.uv-praca-faixa');
   await page.evaluate(() => window.closeModal());
+  // ✏️ frases das secretarias: editar uma, tirar outra (vale para cards, selo e faixa)
+  await page.click('.uv-praca-faixa .uv-pers'); await page.waitForSelector('.bk-lista .bk-item');
+  await page.click('.bk-rod button:has-text("Frases das secretarias")'); await page.waitForSelector('#fr-lista .fr-item');
+  assert.deepEqual(await audit('#modal-ov .modal-box'), []);
+  await page.waitForTimeout(450); await page.screenshot({path: `/tmp/uv-frases-${W}.png`});
+  await page.evaluate(() => { const lis = [...document.querySelectorAll('#fr-lista .fr-item')];
+    const agri = lis.find(li => /AGRICULTURA/.test(li.dataset.sec)); agri.querySelector('.fr-nome').value = 'Terra Boa';
+    const outra = lis.find(li => !/AGRICULTURA/.test(li.dataset.sec)); outra.querySelector('.fr-btn').click(); window.__semFrase = outra.dataset.sec; });
+  await page.click('#fr-salvar'); await page.waitForTimeout(300);
+  await page.evaluate(() => { window.setView('mod'); window.renderModulos(); }); await page.waitForSelector('.uv-praca-faixa');
+  const fr = await page.evaluate(() => ({mundos: [...document.querySelectorAll('.uv-card-mundo')].map(e => e.textContent), cards: document.querySelectorAll('.secretary-launch-card').length, v: (S.appSettings.find(r => r.id === 'blocos') || {}).value}));
+  console.log('frases', JSON.stringify(fr.v.frases));
+  assert.ok(fr.mundos.includes('Terra Boa')); assert.ok(!fr.mundos.includes('Roça Viva')); assert.equal(fr.mundos.length, fr.cards - 1, 'uma secretaria ficou sem frase');
+  assert.ok(fr.v.paginas, 'blocos preservados');
   // menu lateral com emoji do mundo
   assert.ok(await page.evaluate(() => document.querySelectorAll('.sidebar-secretary-link.uv-side[data-emoji]').length > 0));
 
@@ -87,7 +101,7 @@ const day = n => new Date(Date.now() + n * 864e5).toLocaleDateString('en-CA');
   await page.click('.uv-espaco >> text=SOLICITAÇÃO DE ÁGUA DE PIPA - AGRICULTURA');
   await page.waitForSelector('.uv-selo');
   const g = await page.evaluate(() => ({selo: document.querySelector('.uv-selo').textContent, esp: document.querySelector('.uv-esp')?.textContent, mundo: document.getElementById('content').dataset.mundo}));
-  console.log('grupo', JSON.stringify(g)); assert.match(g.selo, /Roça Viva/); assert.equal(g.esp, '💧'); assert.equal(g.mundo, 'agricultura');
+  console.log('grupo', JSON.stringify(g)); assert.match(g.selo, /Terra Boa/); assert.equal(g.esp, '💧'); assert.equal(g.mundo, 'agricultura');
   assert.deepEqual(await audit('.activity-heading-row'), []);
   await page.screenshot({path: `/tmp/uv-grupo-${W}.png`});
   // personalizar a tela do grupo: some o selo e a barra de seleção

@@ -678,3 +678,7 @@
 - PDFs NÃO foram subidos: o bucket de imagens é público e os documentos têm segredo de justiça. Se quiser anexar, criar bucket privado + URL assinada.
 - Não cadastrados: casos de criança/homem (Maysa — Conselho Tutelar; José Levi), NF MPPE 02276.000.168/2025 (vítima não nomeada no e-mail), denúncia 229.7.2026 (Caruaru, sem vítima), e-mails administrativos. E-mail 19d1f8dd "Justiça Federal" de is-an-engineer.com é PHISHING.
 - Reimportar sem duplicar: inserts com `not exists` por nome (fichas) e por item+descrição (ocorrências).
+
+## FRASES das secretarias (25/11/2026)
+- "Abraço Social", "Roça Viva", "Coração da Gestão"… (nome do mundo em `js/universo.js`) são editáveis ou removíveis por secretaria: Personalizar → "✏️ Frases das secretarias" (`uvFrases` em `js/blocos.js`, só admin).
+- Gravado em app_settings 'blocos'.value.frases[NOME NORMALIZADO] = {nome, lema}; nome '' = sem frase. `mundoDe()` aplica e expõe `m.rotulo` (frase ou nome da secretaria) para frases como "Espaços de …". Escritas de blocos preservam `frases` e vice-versa.

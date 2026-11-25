@@ -72,7 +72,14 @@
     M('mulher', /MULHER/, 'Casa Lilás', '💜', 'maos', '#3b0764', '#7e22ce', ['rgba(196,181,253,.45)', 'rgba(249,168,212,.38)', 'rgba(167,243,208,.35)'], ['#fbf7ff', '#fffaf6'], ['#ede9fe', '#ffe4ef', '#d9f7ea', '#ffe7d6'], 'Espaço de acolhimento, proteção e autonomia das mulheres.'),
   ];
   const PRACA = M('praca', /^$/, 'Praça de Sertânia', '🏙️', 'cidade', '#0f3b52', '#0e7490', ['rgba(125,211,252,.42)', 'rgba(167,243,208,.38)', 'rgba(253,224,71,.28)'], ['#f3fbff', '#f9fdf6'], ['#e0f2fe', '#dcfce7', '#fef9c3', '#ede9fe'], 'Um espaço de trabalho cuidado para servir melhor à cidade.');
-  const mundoDe = nome => MUNDOS.find(m => m.re.test(norm(nome))) || PRACA;
+  const mundoBase = nome => MUNDOS.find(m => m.re.test(norm(nome))) || PRACA;
+  /* Frases editáveis por secretaria (pedido 25/11/2026): app_settings 'blocos'.value.frases[norm(nome)] = {nome, lema}.
+   * nome '' = frase removida (some dos cards, selos e faixas); ausente = frase padrão do mundo. */
+  const frasesTodas = () => { let v = (S().appSettings || []).find(r => r.id === 'blocos')?.value; try { if (typeof v === 'string') v = JSON.parse(v); } catch { v = {}; } return v?.frases || {}; };
+  const mundoDe = nome => { const m = mundoBase(nome), f = nome ? frasesTodas()[norm(nome).replace(/\s+/g, ' ').trim()] : null;
+    const n = f && typeof f.nome === 'string' ? f.nome.trim() : m.nome, l = f && typeof f.lema === 'string' && f.lema.trim() ? f.lema.trim() : m.lema;
+    return {...m, nome: n, lema: l, rotulo: n || String(nome || m.nome).trim(), padrao: m.nome, lemaPadrao: m.lema}; };
+  window.universoMundoBase = mundoBase;
   window.universoMundo = mundoDe;
 
   /* ícone e frase de cada espaço (grupo) pelo nome */
@@ -134,7 +141,7 @@
   window.universoHomeFor = id => !classico && !!id && id !== 'sem-secretaria' && id !== window.mulherSecretariaId?.() && (S().secretarias || []).some(s => s.id === id);
   window.universoModoClassico = on => { classico = !!on; window.renderModulo?.('atendimentos');
     if (classico) requestAnimationFrame(() => { const sec = (S().secretarias || []).find(s => s.id === window.currentDemandSecretaria), m = mundoDe(sec?.name);
-      document.querySelector('.demand-shell')?.insertAdjacentHTML('afterbegin', `<button type="button" class="uv-voltar" style="${vars(m)}" onclick="universoModoClassico(false)">${m.emoji} Voltar para ${esc(m.nome)}</button>`); }); };
+      document.querySelector('.demand-shell')?.insertAdjacentHTML('afterbegin', `<button type="button" class="uv-voltar" style="${vars(m)}" onclick="universoModoClassico(false)">${m.emoji} Voltar para ${esc(m.rotulo)}</button>`); }); };
   window.universoModoClassicoReset = () => { classico = false; busca = ''; };
 
   window.renderUniversoHome = function (secId) {
@@ -156,11 +163,11 @@
           </div>`;
     const duas = B.liga('atencao') && B.liga('ultimos');
     const P = {
-      saudacao: () => `<section class="uv-hero"><div class="uv-hero-txt"><span class="uv-kicker">${m.emoji} ${esc(m.nome)} · ${esc(hoje)}</span>
+      saudacao: () => `<section class="uv-hero"><div class="uv-hero-txt"><span class="uv-kicker">${m.emoji} ${m.nome ? esc(m.nome) + ' · ' : ''}${esc(hoje)}</span>
           <h1>${saudacao()}${meuNome() ? ', ' + esc(meuNome()) : ''}</h1><p class="uv-sec-name">${esc(sec.name)}</p><p class="uv-lema">${esc(fraseDe(e, m))}</p>
           ${B.liga('gestos') ? gestosHtml : ''}</div><div class="uv-hero-art">${art(m.art)}</div>${pers ? `<div class="uv-hero-pers">${pers}</div>` : ''}</section>`,
       gestos: () => B.liga('saudacao') ? '' : gestosHtml.replace('class="uv-gestos"', 'class="uv-gestos is-compact"'),
-      busca: () => `<section class="uv-find" role="search"><span aria-hidden="true">🔎</span><input type="search" id="uv-busca" value="${esc(busca)}" placeholder="Encontrar em ${esc(m.nome)}: nome, telefone, localidade, assunto…" aria-label="Buscar nesta secretaria" oninput="universoBusca(${arg(secId)},this.value)" autocomplete="off"><div class="uv-find-res" id="uv-find-res"></div></section>`,
+      busca: () => `<section class="uv-find" role="search"><span aria-hidden="true">🔎</span><input type="search" id="uv-busca" value="${esc(busca)}" placeholder="Encontrar em ${esc(m.rotulo)}: nome, telefone, localidade, assunto…" aria-label="Buscar nesta secretaria" oninput="universoBusca(${arg(secId)},this.value)" autocomplete="off"><div class="uv-find-res" id="uv-find-res"></div></section>`,
       pulso: () => `<section class="uv-pulso" aria-label="Pulso da secretaria">
         ${[['🌀', e.abertos.length, 'em andamento', 1], ['⏰', e.atrasados.length, e.atrasados.length ? 'passaram do prazo' : 'nada atrasado', e.atrasados.length ? 'warn' : 2], ['✅', e.feitos30.length, 'concluídos em 30 dias', 3], ['🧭', grupos.length, 'espaços de trabalho', 4]].map(([i, n, l, t]) => `<div class="uv-bolha is-t${t}"><span aria-hidden="true">${i}</span><b>${n}</b><small>${l}</small></div>`).join('')}
       </section>`,
@@ -170,15 +177,15 @@
       ultimos: () => `<section class="uv-painel${duas ? ' is-half' : ''}"><header><h2>🕊️ Últimos lançamentos</h2><small>o que chegou por último</small></header>
           ${ultimos.length ? `<ol class="uv-lista">${ultimos.map(i => `<li><button type="button" onclick="revealRecord('items',${arg(i.id)})"><span class="uv-ponto${i.concluded == 1 ? ' is-ok' : ''}" aria-hidden="true"></span><span class="uv-li-txt"><b>${esc(i.description || 'Sem descrição')}</b><small>${esc(gnome(i.atividade_id))}${i.created_at ? ' · ' + dBR(String(i.created_at).slice(0, 10)) : ''}${i.concluded == 1 ? ' · ✅ concluído' : ''}</small></span></button></li>`).join('')}</ol>` : '<p class="uv-calma">Ainda não há lançamentos por aqui.</p>'}
         </section>`,
-      espacos: () => `<section class="uv-espacos" id="uv-espacos"><header><h2>Espaços de ${esc(m.nome)}</h2><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')} · toque para entrar</small></header>
+      espacos: () => `<section class="uv-espacos" id="uv-espacos"><header><h2>Espaços de ${esc(m.rotulo)}</h2><small>${plural(grupos.length, 'área de trabalho', 'áreas de trabalho')} · toque para entrar</small></header>
         <div class="uv-mosaico">${grupos.map((g, k) => { const sp = espacoDe(g, m), its = (S().items || []).filter(i => i.atividade_id === g.id), ab = its.filter(i => i.concluded != 1).length;
           const big = k < 2 && grupos.length > 3 && ab > 0;
           return `<button type="button" class="uv-espaco is-t${k % 4 + 1}${big ? ' is-big' : ''}" onclick="openActivity(${arg(g.id)})"><span class="uv-esp-ico" aria-hidden="true">${sp.ico}</span><b>${esc(g.name)}</b><small>${esc(sp.txt)}</small><em>${its.length ? (ab ? `${ab} em andamento · ${its.length} no total` : `tudo em dia ✨ · ${its.length}`) : 'vazio por enquanto'}</em></button>`; }).join('') || '<p class="uv-calma">Nenhum espaço liberado para o seu usuário nesta secretaria.</p>'}</div>
       </section>`,
-      rodape: () => `<footer class="uv-rodape"><button type="button" onclick="universoModoClassico(true)">▦ Ver em grade (modo clássico)</button>${window.userCanCreateGroups?.() && window.userCan?.('atendimentos', 'criar') ? `<button type="button" onclick="universoModoClassico(true);setTimeout(()=>window.newDemandGroup?.(),60)">＋ Criar grupo</button>` : ''}<span>${m.emoji} ${esc(m.nome)} · ${esc(sec.name)} · Prefeitura de Sertânia</span></footer>`,
+      rodape: () => `<footer class="uv-rodape"><button type="button" onclick="universoModoClassico(true)">▦ Ver em grade (modo clássico)</button>${window.userCanCreateGroups?.() && window.userCan?.('atendimentos', 'criar') ? `<button type="button" onclick="universoModoClassico(true);setTimeout(()=>window.newDemandGroup?.(),60)">＋ Criar grupo</button>` : ''}<span>${m.emoji} ${m.nome ? esc(m.nome) + ' · ' : ''}${esc(sec.name)} · Prefeitura de Sertânia</span></footer>`,
     };
     // Sem a saudação, a identidade vira uma faixa fina de uma linha (mais espaço para trabalhar).
-    const faixa = B.liga('saudacao') ? '' : `<div class="uv-faixa"><span class="uv-faixa-ico" aria-hidden="true">${m.emoji}</span><span class="uv-faixa-txt"><b>${esc(sec.name)}</b><small>${esc(m.nome)}${e.atrasados.length ? ` · <em>⏰ ${plural(e.atrasados.length, 'atrasado', 'atrasados')}</em>` : e.abertos.length ? ` · ${e.abertos.length} em andamento` : ' · tudo em dia ✨'}</small></span><span class="uv-faixa-art" aria-hidden="true">${art(m.art)}</span>${pers}</div>`;
+    const faixa = B.liga('saudacao') ? '' : `<div class="uv-faixa"><span class="uv-faixa-ico" aria-hidden="true">${m.emoji}</span><span class="uv-faixa-txt"><b>${esc(sec.name)}</b><small>${esc(m.nome)}${e.atrasados.length ? `${m.nome ? ' · ' : ''}<em>⏰ ${plural(e.atrasados.length, 'atrasado', 'atrasados')}</em>` : e.abertos.length ? `${m.nome ? ' · ' : ''}${e.abertos.length} em andamento` : `${m.nome ? ' · ' : ''}tudo em dia ✨`}</small></span><span class="uv-faixa-art" aria-hidden="true">${art(m.art)}</span>${pers}</div>`;
     window.setC(`<div class="uv uv-home${B.liga('saudacao') ? '' : ' is-enxuto'}" style="${vars(m)}" data-mundo-home="${m.key}">${faixa}${B.ordem.filter(id => B.liga(id)).map(id => P[id]?.() || '').join('')}</div>`);
     aplicarMundo(m, 'secretaria');
     if (busca) window.universoBusca(secId, busca);
@@ -199,7 +206,7 @@
     const sec = (S().secretarias || []).find(s => s.id === secId), m = mundoDe(sec?.name);
     const grupos = gruposDa(secId).filter(g => S().isAdmin || window.userCanGroup?.(g, 'editar'));
     if (grupos.length === 1) { window.openActivity(grupos[0].id); setTimeout(() => window.openItemModal?.(null, grupos[0].id, false, null), 30); return; }
-    window.openModal(`${m.emoji} Novo lançamento`, `Em qual espaço de ${m.nome}?`, `<div class="uv-pick" style="${vars(m)}">${grupos.map((g, k) => { const sp = espacoDe(g, m); return `<button type="button" class="uv-espaco is-t${k % 4 + 1}" onclick="closeModal();openActivity(${arg(g.id)});setTimeout(()=>openItemModal(null,${arg(g.id)},false,null),30)"><span class="uv-esp-ico" aria-hidden="true">${sp.ico}</span><b>${esc(g.name)}</b><small>${esc(sp.txt)}</small></button>`; }).join('')}</div>`);
+    window.openModal(`${m.emoji} Novo lançamento`, `Em qual espaço de ${m.rotulo}?`, `<div class="uv-pick" style="${vars(m)}">${grupos.map((g, k) => { const sp = espacoDe(g, m); return `<button type="button" class="uv-espaco is-t${k % 4 + 1}" onclick="closeModal();openActivity(${arg(g.id)});setTimeout(()=>openItemModal(null,${arg(g.id)},false,null),30)"><span class="uv-esp-ico" aria-hidden="true">${sp.ico}</span><b>${esc(g.name)}</b><small>${esc(sp.txt)}</small></button>`; }).join('')}</div>`);
   };
   window.universoAtrasados = function (secId) {
     const alvo = document.getElementById('uv-atencao'); if (alvo) { alvo.scrollIntoView({behavior: 'smooth', block: 'center'}); return; }
@@ -253,7 +260,7 @@
       const copy = card.querySelector('.secretary-launch-copy');
       if (copy && !copy.querySelector('.uv-card-mundo')) {
         const st = sec ? estat(gruposDa(sec.id)) : null;
-        copy.insertAdjacentHTML('afterbegin', `<em class="uv-card-mundo">${esc(m.nome)}</em>`);
+        if (m.nome) copy.insertAdjacentHTML('afterbegin', `<em class="uv-card-mundo">${esc(m.nome)}</em>`);
         if (st && st.atrasados.length) copy.insertAdjacentHTML('beforeend', `<i class="uv-card-alerta">⏰ ${plural(st.atrasados.length, 'atrasado', 'atrasados')}</i>`);
       }
       const art2 = document.createElement('span'); art2.className = 'uv-card-art'; art2.innerHTML = art(m.art); card.appendChild(art2);
@@ -271,7 +278,7 @@
     if (head && !head.querySelector('.uv-selo')) {
       const sp = espacoDe(g, m);
       head.classList.add('uv-head');
-      head.insertAdjacentHTML('afterbegin', `<span class="uv-selo">${m.emoji} ${esc(m.nome)}${sec?.name ? ` <i>· ${esc(sec.name)}</i>` : ''}</span>`);
+      head.insertAdjacentHTML('afterbegin', `<span class="uv-selo">${m.emoji} ${m.nome ? esc(m.nome) : ''}${sec?.name ? ` <i>${m.nome ? '· ' : ''}${esc(sec.name)}</i>` : ''}</span>`);
       const t = head.querySelector('.page-title'); if (t && !t.querySelector('.uv-esp')) t.insertAdjacentHTML('afterbegin', `<span class="uv-esp" aria-hidden="true">${sp.ico}</span>`);
     }
   };
@@ -287,7 +294,7 @@
   window.universoDecorarWorkspace = function (sec) {
     const m = mundoDe(sec?.name), box = document.querySelector('#content .secretary-workspace'); if (!box) return;
     aplicarMundo(m, 'escolha'); box.classList.add('uv-ws');
-    const h = box.querySelector('header'); if (h && !h.querySelector('.uv-art')) { h.insertAdjacentHTML('beforeend', `<div class="uv-ws-art">${art(m.art)}</div>`); const k = h.querySelector('.workspace-kicker'); if (k) k.textContent = `${m.emoji} ${m.nome}`; }
+    const h = box.querySelector('header'); if (h && !h.querySelector('.uv-art')) { h.insertAdjacentHTML('beforeend', `<div class="uv-ws-art">${art(m.art)}</div>`); const k = h.querySelector('.workspace-kicker'); if (k) k.textContent = `${m.emoji} ${m.rotulo}`; }
   };
   window.universoDecorarSidebar = function (host) {
     (host || document).querySelectorAll('.sidebar-secretary-link').forEach(a => {
@@ -295,7 +302,7 @@
       const m = mundoDe(a.querySelector('span:not(.demand-dot)')?.textContent || a.textContent);
       a.style.setProperty('--uv-b', m.b);
       a.dataset.emoji = m.emoji; a.classList.add('uv-side'); // emoji pelo CSS: não entra no texto (leitores de tela e testes leem só o nome)
-      a.title = `${m.nome} · ${a.textContent.replace('›', '').trim()}`;
+      a.title = `${m.nome ? m.nome + ' · ' : ''}${a.textContent.replace('›', '').trim()}`;
     });
   };
 })();
