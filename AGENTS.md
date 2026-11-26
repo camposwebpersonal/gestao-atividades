@@ -685,3 +685,4 @@
 
 ## PDF da ficha da Mulher (26/11/2026)
 - `mulherPdf` mostra TODOS os campos do cadastro (FICHA) em 4 cartões coloridos, mesmo vazios: vazio = linha pontilhada para preencher à mão; opções curtas = ○/●; listas (multi) = ☐/☑. Topo com 4 sinais (situação, medida, nº ocorrências, último registro); linha do tempo com título em negrito. Logo respeita a proporção (w/h do loadB64). Meta: caber em 1 página.
+- 26/11/2026: dados cadastrais das 77 fichas completados a partir dos documentos (BOE/INFOPOL "Envolvidos", termos de declaração, imagens de qualificação dos e-mails do TJPE, relatórios CREAS/CRAS/hospital). Merge com `novo || extra_fields` (o que já existia na ficha prevalece). Renomeadas: GILVANEIDE → GILVANEIDE DOS SANTOS SILVA, MARIA DO CARMO (idosa) → MARIA DO CARMO CARDOSO RIBEIRO, MARIA CRISTINA GALINDO VAZ → CRISTINA GALINDO VAZ VERAS DE QUEIROZ.
