@@ -72,7 +72,7 @@ const txt = async (page, sel) => (await page.textContent(sel)).replace(/\s+/g, '
     const {b64, name} = await page.evaluate(() => window.__pdf); const f = os.tmpdir() + `/mulher-${W}.pdf`; fs.writeFileSync(f, Buffer.from(b64, 'base64'));
     const t = execFileSync('pdftotext', ['-layout', f, '-']).toString();
     assert.equal(name, 'FICHA-MARIA-DAS-DORES-SILVA.pdf');
-    for (const p of ['SECRETARIA DA MULHER', 'MARIA DAS DORES SILVA', 'Medida protetiva', 'CREAS, DEAM / Delegacia', 'OCORRÊNCIAS (1)', 'Acolhimento inicial', 'Escaneie para ver esta ficha', 'somente leitura', 'Página 1 de']) assert.ok(t.includes(p), 'PDF sem: ' + p);
+    for (const p of ['SECRETARIA DA MULHER', 'MARIA DAS DORES SILVA', 'Medida protetiva', 'DEAM / Delegacia', 'Encaminhamentos', 'Contato de confiança', 'Renda familiar', 'LINHA DO TEMPO', '1 OCORRÊNCIA', 'Acolhimento inicial', 'Escaneie para ver esta ficha', 'somente leitura', 'Página 1 de']) assert.ok(t.includes(p), 'PDF sem: ' + p);
     execFileSync('pdftoppm', ['-r', '60', '-png', '-f', '1', '-l', '1', f, os.tmpdir() + `/mulher-pdf-${W}`]);
   }
   // levantamento

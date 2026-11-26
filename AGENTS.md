@@ -682,3 +682,6 @@
 ## FRASES das secretarias (25/11/2026)
 - "Abraço Social", "Roça Viva", "Coração da Gestão"… (nome do mundo em `js/universo.js`) são editáveis ou removíveis por secretaria: Personalizar → "✏️ Frases das secretarias" (`uvFrases` em `js/blocos.js`, só admin).
 - Gravado em app_settings 'blocos'.value.frases[NOME NORMALIZADO] = {nome, lema}; nome '' = sem frase. `mundoDe()` aplica e expõe `m.rotulo` (frase ou nome da secretaria) para frases como "Espaços de …". Escritas de blocos preservam `frases` e vice-versa.
+
+## PDF da ficha da Mulher (26/11/2026)
+- `mulherPdf` mostra TODOS os campos do cadastro (FICHA) em 4 cartões coloridos, mesmo vazios: vazio = linha pontilhada para preencher à mão; opções curtas = ○/●; listas (multi) = ☐/☑. Topo com 4 sinais (situação, medida, nº ocorrências, último registro); linha do tempo com título em negrito. Logo respeita a proporção (w/h do loadB64). Meta: caber em 1 página.

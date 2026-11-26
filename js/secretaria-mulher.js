@@ -284,54 +284,122 @@
     if (!t) { t = token(); try { await window.updateDoc(window.doc(window.db, 'items', id), {extra_fields: {...ef(m), mulher_token: t}}); await window.loadData(); } catch { /* segue sem salvar */ } }
     const qrNota = [op.horas ? `QR válido até ${new Date(Date.now() + op.horas * 3600e3).toLocaleString('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}` : 'QR sem prazo', op.pin ? 'protegido por PIN' : ''].filter(Boolean).join(' · ');
     const url = publicUrl(t), {jsPDF} = window.jspdf, doc = new jsPDF({unit: 'mm', format: 'a4'}); window.safePdf?.(doc);
-    const W = 210, H = 297, mx = 12, cw = W - mx * 2, oc = ocorrencias(m), a = idade(val(m, 'Data de nascimento'));
-    let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 120); } catch { /* sem logo */ }
+    /* Ficha em 1 página sempre que possível (neuroarquitetura): cabeçalho calmo → 4 sinais de situação → TODOS os campos
+     * do cadastro em 4 cartões (vazios viram linha para preencher à mão; opções curtas viram ○/● e listas viram ☐/☑) →
+     * observações → linha do tempo das ocorrências → rodapé com QR. Cores: lilás (identidade), verde-água (contato),
+     * âmbar (família), rosa (proteção). Texto sempre escuro sobre fundo claro (AA). */
+    const W = 210, H = 297, mx = 10, cw = W - mx * 2, oc = ocorrencias(m), a = idade(val(m, 'Data de nascimento')), FOOT = 19;
+    const LINE = [221, 214, 254], WHITE = [255, 255, 255];
+    const TEMA = [{c: [109, 40, 217], bg: [245, 243, 255]}, {c: [15, 118, 110], bg: [240, 253, 250]}, {c: [180, 83, 9], bg: [255, 251, 235]}, {c: [190, 18, 60], bg: [255, 241, 242]}];
+    const limpa = s => String(s ?? '').replace(/[^\x09\x0a\x0d\x20-ɏ–—…•·→]/g, '').replace(/[ \t]+\n/g, '\n').trim();
+    const fmt = (k, v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? dBR(v) + (k === 'Data de nascimento' && a != null ? `  (${a} anos)` : '') : limpa(Array.isArray(v) ? v.join(', ') : v);
+    let logo = null; try { logo = await window.loadB64?.('img/logo_sertania.png', 'png', 360); } catch { /* sem logo */ }
+    const font = (st, sz, cor) => { doc.setFont('helvetica', st); doc.setFontSize(sz); doc.setTextColor(...cor); };
+    const chip = (x, y, txt, cor, bg) => { font('bold', 7, cor); const w = doc.getTextWidth(txt) + 4.4; doc.setFillColor(...bg); doc.roundedRect(x, y - 3.3, w, 4.6, 2.3, 2.3, 'F'); doc.text(txt, x + 2.2, y); return x + w + 1.6; };
+    const sit = val(m, 'Situação do acompanhamento'), med = val(m, 'Medida protetiva');
     const header = () => {
-      doc.setFillColor(...SOFT); doc.rect(0, 0, W, 30, 'F'); doc.setFillColor(...LIL); doc.rect(0, 0, 3.5, 30, 'F');
-      if (logo?.d) doc.addImage(logo.d, 'PNG', mx, 5, 13, 17, undefined, 'FAST');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...LIL); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA · SECRETARIA DA MULHER', mx + 17, 9);
-      doc.setFontSize(14); doc.setTextColor(...INK); const nm = doc.splitTextToSize(String(m.description || '').toUpperCase(), cw - 17 - 30); doc.text(nm[0], mx + 17, 16);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MUT);
-      doc.text([`Ficha de acompanhamento${a != null ? ' · ' + a + ' anos' : ''}${val(m, 'Situação do acompanhamento') ? ' · ' + val(m, 'Situação do acompanhamento') : ''}`, `Emitido em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})} · ${qrNota}`], mx + 17, 21.5);
-      drawQr(doc, url, W - mx - 24, 3, 24);
-      return 36;
+      doc.setFillColor(...LIL); doc.rect(0, 0, W, 2.2, 'F');
+      let tx = mx;
+      if (logo?.d) { const h = 16, w = h * (logo.w / logo.h || 1.43); doc.addImage(logo.d, 'PNG', mx, 6, w, h, undefined, 'FAST'); tx = mx + w + 4; }
+      font('bold', 7.4, LIL); doc.text('PREFEITURA MUNICIPAL DE SERTÂNIA  ·  SECRETARIA DA MULHER', tx, 9.5);
+      const nmW = W - mx - 30 - tx; let fs = 16; font('bold', fs, INK); const nome = String(m.description || '').toUpperCase();
+      while (fs > 11 && doc.getTextWidth(nome) > nmW) { fs -= .5; doc.setFontSize(fs); }
+      doc.text(doc.splitTextToSize(nome, nmW)[0], tx, 16.6);
+      let cx = chip(tx, 22.6, 'FICHA DE ACOMPANHAMENTO', INK, SOFT);
+      if (a != null) cx = chip(cx, 22.6, `${a} ANOS`, INK, SOFT);
+      if (val(m, 'Nome social')) cx = chip(cx, 22.6, `NOME SOCIAL: ${limpa(val(m, 'Nome social')).toUpperCase()}`.slice(0, 48), INK, SOFT);
+      font('normal', 7.2, MUT); doc.text(`Emitida em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}  ·  ${qrNota}`, tx, 28.2);
+      drawQr(doc, url, W - mx - 25, 4, 25); font('bold', 5.8, MUT); doc.text('FICHA ONLINE', W - mx - 12.5, 31.3, {align: 'center'});
+      doc.setDrawColor(...LINE); doc.setLineWidth(.3); doc.line(mx, 34, W - mx, 34);
+      return 38;
     };
     let y = header();
-    // situação em uma frase
-    const med = val(m, 'Medida protetiva'), sit = val(m, 'Situação do acompanhamento');
-    const frase = [`${oc.length} ocorrência(s) registrada(s)`, med && med !== 'Não' ? `medida protetiva: ${med.toLowerCase()}` : '', arr(val(m, 'Encaminhamentos')).length ? `encaminhada para ${arr(val(m, 'Encaminhamentos')).join(', ')}` : ''].filter(Boolean).join(' · ');
-    doc.setFillColor(...SOFT); doc.roundedRect(mx, y, cw, 11, 2, 2, 'F'); doc.setFillColor(...LIL); doc.roundedRect(mx, y, 1.6, 11, .8, .8, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(sit || 'Acompanhamento', mx + 5, y + 4.6);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...TXT); doc.text(doc.splitTextToSize(frase, cw - 10)[0], mx + 5, y + 8.8);
-    y += 15;
-    const P = window.ccnPdf?.table || {};
-    for (const p of FICHA) {
-      const rows = p.campos.map(c => [c.k, val(m, c.k)]).filter(([, v]) => Array.isArray(v) ? v.length : String(v).trim()).map(([k, v]) => [k, Array.isArray(v) ? v.join(', ') : /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? dBR(v) : String(v)]);
-      if (!rows.length) continue;
-      const body = []; for (let i = 0; i < rows.length; i += 2) body.push([rows[i][0], rows[i][1], rows[i + 1]?.[0] || '', rows[i + 1]?.[1] || '']);
-      if (y > H - 40) { doc.addPage(); y = header(); }
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(p.passo.replace(/^\S+\s/, '').toUpperCase(), mx, y + 3.5); y += 5;
-      doc.autoTable({...P, startY: y, margin: {left: mx, right: mx, top: 36, bottom: 30}, theme: 'grid', body, styles: {fontSize: 8.4, cellPadding: 1.6, textColor: TXT, lineColor: [226, 222, 245], lineWidth: .15, overflow: 'linebreak'},
-        columnStyles: {0: {cellWidth: 34, fontStyle: 'bold', textColor: MUT, fillColor: [250, 249, 255]}, 1: {cellWidth: cw / 2 - 34}, 2: {cellWidth: 34, fontStyle: 'bold', textColor: MUT, fillColor: [250, 249, 255]}, 3: {cellWidth: 'auto'}},
-        didDrawPage: () => { if (doc.internal.getCurrentPageInfo().pageNumber > 1) header(); }});
-      y = doc.lastAutoTable.finalY + 5;
+    // ── 4 sinais (o que importa primeiro) ──
+    const corMed = {Concedida: [[4, 120, 87], [236, 253, 245]], Solicitada: [[161, 98, 7], [254, 252, 232]], Vencida: [[71, 85, 105], [241, 245, 249]], 'Não': [[71, 85, 105], [248, 250, 252]]}[med] || [MUT, [248, 250, 252]];
+    const ult = oc[0], sinais = [
+      ['SITUAÇÃO', sit || 'Não informada', INK, SOFT],
+      ['MEDIDA PROTETIVA', med || 'Não informada', corMed[0], corMed[1]],
+      ['OCORRÊNCIAS', `${oc.length} registro${oc.length === 1 ? '' : 's'}`, [15, 118, 110], [240, 253, 250]],
+      ['ÚLTIMO REGISTRO', ult ? `${dBR(val(ult, 'Data') || String(ult.created_at || '').slice(0, 10))} · ${limpa(val(ult, 'Tipo') || 'Registro')}` : '—', [180, 83, 9], [255, 251, 235]]];
+    const sw = (cw - 3 * 3) / 4;
+    sinais.forEach(([r, v, cor, bg], i) => { const x = mx + i * (sw + 3); doc.setFillColor(...bg); doc.roundedRect(x, y, sw, 13, 2.2, 2.2, 'F'); doc.setFillColor(...cor); doc.roundedRect(x, y, 1.4, 13, .7, .7, 'F');
+      font('bold', 6.2, MUT); doc.text(r, x + 4, y + 4.6); let fs = 10; font('bold', fs, cor); while (fs > 7 && doc.getTextWidth(v) > sw - 6) { fs -= .5; doc.setFontSize(fs); } doc.text(v, x + 4, y + 10); });
+    y += 17;
+    // ── cartões com TODOS os campos ──
+    const colW = (cw - 4) / 2, LBL = 29;
+    const card = (p, idx, x, y0, draw) => {
+      const T = TEMA[idx], vx = x + LBL + 3, vw = colW - LBL - 6; let yy = y0 + 8;
+      if (draw) { doc.setFillColor(...T.bg); doc.roundedRect(x, y0, colW, 7, 2.2, 2.2, 'F'); doc.rect(x, y0 + 3.5, colW, 3.5, 'F');
+        doc.setFillColor(...T.c); doc.circle(x + 4.2, y0 + 3.5, 2.2, 'F'); font('bold', 7.4, WHITE); doc.text(String(idx + 1), x + 4.2, y0 + 4.6, {align: 'center'});
+        font('bold', 8.6, INK); doc.text(p.passo.replace(/^\S+\s/, '').toUpperCase(), x + 8.4, y0 + 4.7); }
+      p.campos.forEach((c, ci) => {
+        const v = val(m, c.k), opts = c.o || [], sel = c.t === 'multi' ? arr(v) : [String(v || '')].filter(Boolean);
+        let h;
+        if (c.t === 'multi' || (opts.length && opts.length <= 4)) {
+          const extra = sel.filter(s => !opts.includes(s)), all = [...opts, ...extra];
+          font('bold', 7.2, INK); const larg = Math.max(...all.map(o => doc.getTextWidth(limpa(o)))) + 5;
+          const inline = c.t !== 'multi' && larg * all.length <= vw && doc.getTextWidth(c.k) * 6.9 / 7.2 <= LBL;
+          const cols = inline ? all.length : Math.max(1, Math.min(all.length, Math.floor((colW - 6) / larg), c.t === 'multi' ? 3 : 4));
+          const ow = inline ? vw / Math.max(cols, 1) : (colW - 6) / cols, ox0 = inline ? vx : x + 3, top = inline ? yy : yy + 4.2;
+          const rows = Math.ceil(all.length / (inline ? all.length : cols)); h = (inline ? 0 : 4.2) + rows * 4.1 + 1.6;
+          if (draw) { font('normal', 6.9, MUT); doc.text(c.k, x + 3, yy + 3.2);
+            all.forEach((o, i) => { const r = inline ? 0 : Math.floor(i / cols), cc = inline ? i : i % cols, ox = ox0 + cc * ow, oy = top + r * 4.1 + 3.1, on = sel.includes(o);
+              doc.setDrawColor(...(on ? T.c : [148, 140, 180])); doc.setLineWidth(.3);
+              if (c.t === 'multi') { doc.roundedRect(ox, oy - 2.3, 2.6, 2.6, .5, .5, on ? 'FD' : 'S'); if (on) { doc.setFillColor(...T.c); doc.roundedRect(ox, oy - 2.3, 2.6, 2.6, .5, .5, 'F'); doc.setDrawColor(...WHITE); doc.setLineWidth(.45); doc.line(ox + .55, oy - 1, ox + 1.15, oy - .45); doc.line(ox + 1.15, oy - .45, ox + 2.1, oy - 1.85); } }
+              else { doc.circle(ox + 1.3, oy - 1, 1.3, 'S'); if (on) { doc.setFillColor(...T.c); doc.circle(ox + 1.3, oy - 1, .8, 'F'); } }
+              font(on ? 'bold' : 'normal', 7.2, on ? INK : MUT); doc.text(doc.splitTextToSize(limpa(o), ow - 4.2)[0], ox + 3.6, oy); }); }
+        } else {
+          const txt = String(v).trim() ? fmt(c.k, v) : ''; font('bold', 8.2, TXT); const ls = txt ? doc.splitTextToSize(txt, vw) : ['']; font('normal', 6.9, MUT); const lk = doc.splitTextToSize(c.k, LBL); h = Math.max(5.6, ls.length * 3.5 + 2.2, lk.length * 2.9 + 2.8);
+          if (draw) { font('normal', 6.9, MUT); doc.text(lk, x + 3, yy + 3.6, {lineHeightFactor: 1.2});
+            if (txt) { font('bold', 8.2, TXT); doc.text(ls, vx, yy + 3.7); } else { doc.setDrawColor(196, 188, 230); doc.setLineWidth(.2); doc.setLineDashPattern([.6, .8], 0); doc.line(vx, yy + 4.1, x + colW - 3, yy + 4.1); doc.setLineDashPattern([], 0); } }
+        }
+        if (draw && ci < p.campos.length - 1) { doc.setDrawColor(240, 237, 252); doc.setLineWidth(.2); doc.line(x + 3, yy + h, x + colW - 3, yy + h); }
+        yy += h;
+      });
+      const total = yy - y0 + 1.5;
+      if (draw) { doc.setDrawColor(...LINE); doc.setLineWidth(.3); doc.roundedRect(x, y0, colW, total, 2.2, 2.2, 'S'); }
+      return total;
+    };
+    const colunas = [[0, 1], [2, 3]], yc = [y, y];
+    colunas.forEach((ids, col) => ids.forEach(i => { const x = mx + col * (colW + 4), h = card(FICHA[i], i, x, yc[col], false);
+      if (yc[col] + h > H - FOOT - 4) { doc.addPage(); yc[0] = yc[1] = header(); }
+      card(FICHA[i], i, x, yc[col], true); yc[col] += h + 3; }));
+    y = Math.max(...yc) + 1;
+    // ── observações ──
+    if (String(m.observacao || '').trim()) {
+      font('normal', 7.8, TXT); const l = doc.splitTextToSize(limpa(m.observacao), cw - 8), h = l.length * 3.3 + 7.5;
+      if (y + h > H - FOOT - 4) { doc.addPage(); y = header(); }
+      doc.setFillColor(250, 250, 252); doc.setDrawColor(...LINE); doc.setLineWidth(.3); doc.roundedRect(mx, y, cw, h, 2.2, 2.2, 'FD');
+      font('bold', 7, MUT); doc.text('OBSERVAÇÕES', mx + 4, y + 4.4); font('normal', 7.8, TXT); doc.text(l, mx + 4, y + 8.3); y += h + 4;
     }
-    if (m.observacao) { if (y > H - 40) { doc.addPage(); y = header(); } doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text('OBSERVAÇÕES', mx, y + 3.5); doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6); doc.setTextColor(...TXT); const l = doc.splitTextToSize(m.observacao, cw); doc.text(l, mx, y + 8.5); y += 9 + l.length * 3.8; }
-    if (y > H - 50) { doc.addPage(); y = header(); }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(`OCORRÊNCIAS (${oc.length})`, mx, y + 3.5); y += 5;
-    if (oc.length) doc.autoTable({startY: y, margin: {left: mx, right: mx, top: 36, bottom: 30}, theme: 'grid', head: [['Data', 'Ocorrência', 'Tipo', 'Relato', 'Profissional / encaminhamento']],
-      body: oc.map(o => [dBR(val(o, 'Data') || String(o.created_at || '').slice(0, 10)), o.description || '', val(o, 'Tipo') || '—', o.observacao || '', [val(o, 'Profissional'), val(o, 'Encaminhado para') ? '→ ' + val(o, 'Encaminhado para') : '', val(o, 'Próximo retorno') ? 'Retorno ' + dBR(val(o, 'Próximo retorno')) : ''].filter(Boolean).join('\n')]),
-      headStyles: {fillColor: LIL, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8}, styles: {fontSize: 8, cellPadding: 1.6, textColor: TXT, lineColor: [226, 222, 245], lineWidth: .15, overflow: 'linebreak', valign: 'top'},
-      alternateRowStyles: {fillColor: [250, 249, 255]}, columnStyles: {0: {cellWidth: 19}, 1: {cellWidth: 36, fontStyle: 'bold'}, 2: {cellWidth: 26}, 3: {cellWidth: 'auto'}, 4: {cellWidth: 40}},
+    // ── linha do tempo ──
+    if (y > H - FOOT - 28) { doc.addPage(); y = header(); }
+    doc.setFillColor(...LIL); doc.roundedRect(mx, y, 1.4, 6, .7, .7, 'F'); font('bold', 9.4, INK); doc.text(`LINHA DO TEMPO  ·  ${oc.length} OCORRÊNCIA${oc.length === 1 ? '' : 'S'}`, mx + 4, y + 4.4); y += 7.5;
+    const TIPO_COR = {'Medida protetiva': [4, 120, 87], 'Boletim de ocorrência': [190, 18, 60], Encaminhamento: [15, 118, 110], Acolhimento: [109, 40, 217], Atendimento: [29, 78, 216], 'Visita domiciliar': [180, 83, 9], Retorno: [71, 85, 105]};
+    const RW = cw - 17 - 25 - 34 - 4, linhas = new Map();
+    const corpo = oc.map(o => { font('bold', 7.5, INK); const tl = doc.splitTextToSize(limpa(o.description || 'Registro'), RW); font('normal', 7.5, TXT); const rel = limpa(o.observacao || ''), rl = rel ? doc.splitTextToSize(rel, RW) : [];
+      return {tl, rl}; });
+    if (oc.length) doc.autoTable({startY: y, margin: {left: mx, right: mx, top: 38, bottom: FOOT + 4}, theme: 'plain',
+      head: [['DATA', 'TIPO', 'OCORRÊNCIA E RELATO', 'PROFISSIONAL / REDE']],
+      body: oc.map(o => [dBR(val(o, 'Data') || String(o.created_at || '').slice(0, 10)), limpa(val(o, 'Tipo') || 'Registro'), (() => { const {tl, rl} = corpo[oc.indexOf(o)]; return [...tl, ...rl].join('\n'); })(),
+        [limpa(val(o, 'Profissional')), val(o, 'Encaminhado para') ? '→ ' + limpa(val(o, 'Encaminhado para')) : '', val(o, 'Próximo retorno') ? 'Retorno: ' + dBR(val(o, 'Próximo retorno')) : ''].filter(Boolean).join('\n') || '—']),
+      headStyles: {fillColor: SOFT, textColor: INK, fontStyle: 'bold', fontSize: 6.8, cellPadding: {top: 1.6, bottom: 1.6, left: 2, right: 2}},
+      styles: {font: 'helvetica', fontSize: 7.5, cellPadding: {top: 2, bottom: 2, left: 2, right: 2}, textColor: TXT, overflow: 'linebreak', valign: 'top', lineColor: LINE, lineWidth: {bottom: .25}},
+      columnStyles: {0: {cellWidth: 17, fontStyle: 'bold', textColor: INK}, 1: {cellWidth: 25, fontStyle: 'bold'}, 2: {cellWidth: RW + 4}, 3: {cellWidth: 34, textColor: MUT}},
+      didParseCell: d => { if (d.section === 'body' && d.column.index === 1) d.cell.styles.textColor = TIPO_COR[d.cell.raw] || MUT; },
+      willDrawCell: d => { if (d.section === 'body' && d.column.index === 2) { linhas.set(d.cell, d.cell.text.slice()); d.cell.text = []; } },
+      didDrawCell: d => { if (d.section === 'body' && d.column.index === 2) { const ls = linhas.get(d.cell) || [], n = corpo[d.row.index]?.tl.length || 1, lh = 7.5 * 1.15 * .3528, x0 = d.cell.x + 2, y0 = d.cell.y + 2;
+        font('bold', 7.5, INK); doc.text(ls.slice(0, n), x0, y0, {baseline: 'top', lineHeightFactor: 1.15}); font('normal', 7.5, TXT); if (ls.length > n) doc.text(ls.slice(n), x0, y0 + n * lh + .6, {baseline: 'top', lineHeightFactor: 1.15}); } },
       didDrawPage: () => { if (doc.internal.getCurrentPageInfo().pageNumber > 1) header(); }});
-    else { doc.setFont('helvetica', 'normal'); doc.setFontSize(8.6); doc.setTextColor(...MUT); doc.text('Nenhuma ocorrência registrada.', mx, y + 4); }
+    else { doc.setFillColor(250, 250, 252); doc.roundedRect(mx, y, cw, 9, 2, 2, 'F'); font('normal', 8, MUT); doc.text('Nenhuma ocorrência registrada até o momento.', mx + 4, y + 5.6); }
+    // ── rodapé ──
     const pages = doc.internal.getNumberOfPages();
     for (let pg = 1; pg <= pages; pg++) {
-      doc.setPage(pg); doc.setFillColor(...SOFT); doc.rect(0, H - 24, W, 24, 'F'); doc.setFillColor(...LIL); doc.rect(0, H - 24, W, .8, 'F');
-      drawQr(doc, url, mx, H - 22, 20);
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...INK); doc.text(`Escaneie para ver esta ficha e todas as ocorrências (somente leitura)${op.pin ? ' — pede PIN' : ''}`, mx + 24, H - 15);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(...MUT); doc.text(`${qrNota} · Documento com dados pessoais e sensíveis (LGPD) — guarde em local seguro.`, mx + 24, H - 10.5);
-      doc.text(`Página ${pg} de ${pages}`, W - mx, H - 5, {align: 'right'}); doc.text('Prefeitura Municipal de Sertânia · Gestão de Atividades', mx + 24, H - 5);
+      doc.setPage(pg); doc.setFillColor(...SOFT); doc.rect(0, H - FOOT, W, FOOT, 'F'); doc.setFillColor(...LIL); doc.rect(0, H - FOOT, W, .7, 'F');
+      drawQr(doc, url, mx, H - FOOT + 2, 15);
+      font('bold', 8, INK); doc.text(`Escaneie para ver esta ficha e todas as ocorrências (somente leitura)${op.pin ? ' — pede PIN' : ''}`, mx + 19, H - FOOT + 6.5);
+      font('normal', 6.8, MUT); doc.text(`${qrNota}  ·  Documento com dados pessoais e sensíveis (LGPD) — guarde em local seguro.`, mx + 19, H - FOOT + 10.8);
+      doc.text('Prefeitura Municipal de Sertânia · Gestão de Atividades', mx + 19, H - FOOT + 14.8); font('bold', 6.8, INK); doc.text(`Página ${pg} de ${pages}`, W - mx, H - FOOT + 14.8, {align: 'right'});
     }
     const slug = String(m.description || 'ficha').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '');
     doc.save(`FICHA-${slug}.pdf`);
